@@ -12,6 +12,7 @@ class Display:
     root=1
     def __init__(self,popups):self.popups=popups;self.top=20
     def popup_surfaces(self):return self.popups
+    def window_tokens(self,xids):return {xid: str(xid) for xid in xids}
     def geometry(self,xid):return {'width':100,'height':100}
     def surface_at(self,x,y):return self.top
 
@@ -53,10 +54,11 @@ class PopupTests(unittest.TestCase):
             with self.subTest(owner=owner),self.assertRaises(DesktopError) as e:d._popup_point(owner,popup,'s',60,60)
             self.assertEqual(e.exception.code,'STALE_TARGET')
     def test_vanished_moved_or_new_popup_rejected(self,identity):
-        for change in ('vanish','move','new'):
+        for change in ('vanish','move','new','reuse'):
             d=Driver();token=d.capture()
             if change=='vanish':d.x.popups=[]
             elif change=='move':d.x.popups[0]['bounds']['x']+=1
+            elif change=='reuse':d.x.window_tokens=lambda xids: {xid:'new' for xid in xids}
             else:d.x.popups.append({**POPUP,'xid':30})
             with self.subTest(change=change),self.assertRaises(DesktopError) as e:d._popup_point('owner',token,'s',60,60)
             self.assertEqual(e.exception.code,'STALE_OBSERVATION')

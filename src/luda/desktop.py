@@ -101,6 +101,13 @@ class Desktop(InteractionMixin):
                 return []
             raise
         active = self.active()
+        parsed = [line.split(None, 4) for line in rows]
+        xids = [int(fields[0],16) for fields in parsed if len(fields)>=4 and int(fields[2])>0]
+        bounds_by_id, generations = {}, {}
+        for offset in range(0,len(xids),512):
+            batch = xids[offset:offset+512]
+            bounds_by_id.update(self.display().geometries(batch))
+            generations.update(self.display().window_tokens(batch))
         result = []
         for line in rows:
             fields = line.split(None, 4)
@@ -111,8 +118,9 @@ class Desktop(InteractionMixin):
                 continue
             try:
                 start = process_identity(pid)
-                bounds = self.display().geometry(xid)
-            except DesktopError:
+                bounds = bounds_by_id[xid]
+                generation = generations[xid]
+            except (DesktopError, KeyError):
                 continue
             frame = dict(bounds)
             prop = run(['xprop','-id',str(xid),'_NET_FRAME_EXTENTS','WM_CLASS']).decode()
@@ -123,7 +131,7 @@ class Desktop(InteractionMixin):
                 if len(values)==4:
                     left,right,top,bottom=values
                     frame={'x':bounds['x']-left,'y':bounds['y']-top,'width':bounds['width']+left+right,'height':bounds['height']+top+bottom}
-            token = f'{xid:x}:{pid}:{start}'
+            token = f'{xid:x}:{pid}:{start}:{generation}'
             item = {'window_id':token,'xid':xid,'pid':pid,'start':start,
                     'title':fields[4][:512] if len(fields)>4 else '', 'workspace':workspace,
                     'bounds':bounds,'frame_bounds':frame,'active':xid==active,'wm_class':wm_class}
@@ -157,6 +165,7 @@ class Desktop(InteractionMixin):
         if not 320 <= max_width <= 2560:
             raise DesktopError('INVALID_ARGUMENT','max_width must be 320–2560.')
         before = self.list_windows()
+        before_popups = self.observe_popups(before)
         with tempfile.TemporaryDirectory(dir=self.runtime) as directory:
             path = str(Path(directory)/'screen.png')
             run(['scrot','--overwrite',path],timeout=4)
@@ -167,19 +176,20 @@ class Desktop(InteractionMixin):
                 source = source.convert('RGB').resize((width,height))
                 buf = io.BytesIO();source.save(buf,format='PNG')
         after = self.list_windows()
-        if self.signature(before)!=self.signature(after):
+        after_popups = self.observe_popups(after)
+        if self.signature(before)!=self.signature(after) or self.popup_signature(before_popups)!=self.popup_signature(after_popups):
             raise DesktopError('DESKTOP_CHANGED','Window layout changed during capture; observe again.')
         token = uuid.uuid4().hex
         now = time.monotonic()
         self.snapshots = {k:v for k,v in self.snapshots.items() if now-v['time']<15}
-        snapshot = {'time':now,'signature':self.signature(after),'native':native,'image':(width,height)}
+        snapshot = {'time':now,'signature':self.signature(after),'native':native,'image':(width,height),'popups':after_popups}
         self.snapshots[token] = snapshot
         while len(self.snapshots)>16:self.snapshots.pop(next(iter(self.snapshots)))
         return {'snapshot_id':token,'expires_after_seconds':15,
                 'coordinate_space':'returned image pixels; pass snapshot_id with pointer actions',
                 'image_size':{'width':width,'height':height},
                 'desktop_size':{'width':native[0],'height':native[1]},
-                'windows':after,'image_base64':base64.b64encode(buf.getvalue()).decode()}
+                'windows':after,'popups':after_popups,'image_base64':base64.b64encode(buf.getvalue()).decode()}
 
     def point(self, window_id, snapshot_id, x, y):
         snap = self.snapshots.get(snapshot_id)

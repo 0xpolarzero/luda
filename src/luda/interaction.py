@@ -139,7 +139,7 @@ class InteractionMixin:
 
     @staticmethod
     def popup_signature(popups):
-        return [(p['xid'],p['pid'],p['start'],p['owner_window_id'],p['transient_for'],p['bounds']) for p in popups]
+        return [(p['xid'],p['generation'],p['pid'],p['start'],p['owner_window_id'],p['transient_for'],p['bounds']) for p in popups]
 
     def observe_popups(self, windows=None):
         """Only mapped surfaces linked by ICCCM owner hints to a live window.
@@ -149,10 +149,12 @@ class InteractionMixin:
         """
         if windows is None: windows=self.list_windows()
         raw=self.display().popup_surfaces()
+        generations=self.display().window_tokens([p['xid'] for p in raw])
         surfaces={p['xid']:p for p in raw}
         owners={w['xid']:w for w in windows}
         result=[]
         for popup in raw:
+            if popup['xid'] not in generations:continue
             owner=None; current=popup; visited=set()
             for _ in range(16):
                 if current['xid'] in visited:break
@@ -167,7 +169,7 @@ class InteractionMixin:
                 start=process_identity(popup['pid'])
             except DesktopError:continue
             if start!=owner['start']:continue
-            result.append({**popup,'bounds':dict(popup['bounds']),'start':start,'owner_window_id':owner['window_id'],'popup_id':uuid.uuid4().hex})
+            result.append({**popup,'bounds':dict(popup['bounds']),'start':start,'generation':generations[popup['xid']],'owner_window_id':owner['window_id'],'popup_id':uuid.uuid4().hex})
         return result
 
     def _popup_point(self, owner_window_id, popup_id, snapshot_id, x, y):
