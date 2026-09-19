@@ -4,6 +4,7 @@ from dataclasses import dataclass
 import os
 import signal
 import subprocess
+import tempfile
 import threading
 import time
 
@@ -68,14 +69,23 @@ def run(args, *, data=None, timeout=3, effect="none", cleanup=False):
     """
     if not cleanup:
         checkpoint()
+    # A seekable private input file lets communicate() be polled without losing
+    # partially written stdin after TimeoutExpired (CPython only resumes reads).
+    source = tempfile.TemporaryFile() if data is not None else None
     try:
-        process = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE, start_new_session=True)
+        if source:
+            source.write(data)
+            source.seek(0)
+        process = subprocess.Popen(args, stdin=source if source else subprocess.DEVNULL,
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                   start_new_session=True)
     except FileNotFoundError as exc:
         raise DesktopError("DEPENDENCY_MISSING", f"Missing executable: {args[0]}") from exc
+    finally:
+        if source:
+            source.close()
     mark_effect(effect)
     deadline = time.monotonic() + timeout
-    first = True
     try:
         while True:
             if not cleanup:
@@ -84,10 +94,10 @@ def run(args, *, data=None, timeout=3, effect="none", cleanup=False):
             if remaining <= 0:
                 raise DesktopError("TIMEOUT", "Command timed out. Inspect before retrying.", effect=effect)
             try:
-                output, error = process.communicate(input=data if first else None, timeout=min(remaining, .05))
+                output, error = process.communicate(timeout=min(remaining, .05))
                 break
             except subprocess.TimeoutExpired:
-                first = False
+                continue
         if process.returncode:
             raise DesktopError("BACKEND_ERROR", error.decode(errors="replace")[:600], effect=effect)
         return output
@@ -96,7 +106,14 @@ def run(args, *, data=None, timeout=3, effect="none", cleanup=False):
             os.killpg(process.pid, signal.SIGKILL)
         except ProcessLookupError:
             pass
-        process.communicate()
+        try:
+            process.communicate(timeout=1)
+        except subprocess.TimeoutExpired:
+            # A descendant could have detached while retaining stdout. Do not
+            # let an inherited pipe defeat the overall cancellation bound.
+            process.stdout.close()
+            process.stderr.close()
+            process.wait(timeout=1)
         raise
 
 
