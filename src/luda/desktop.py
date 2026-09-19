@@ -4,6 +4,7 @@ import fcntl
 import hashlib
 import io
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -15,13 +16,14 @@ import time
 import uuid
 
 from PIL import Image
-from .common import DesktopError, process_identity, run, validate_text
+from .common import DesktopError, checkpoint, mark_effect, process_identity, run, stop_process, validate_text
 from .x11 import X11
 
 
 class Desktop:
     def __init__(self):
         self.x = None
+        self.closed = False
         self.snapshots = {}
         self.elements = {}
         self.windows = {}
@@ -37,6 +39,9 @@ class Desktop:
 
     @contextmanager
     def transaction(self):
+        if self.closed:
+            raise DesktopError('CLOSED', 'Server backend has been closed.')
+        checkpoint()
         if not self.local_lock.acquire(blocking=False):
             raise DesktopError('BUSY', 'Another operation is in progress; no input sent.')
         try:
@@ -185,6 +190,15 @@ class Desktop:
         return px,py
 
     def pointer(self, window_id, snapshot_id, x, y, kind='click', button='left', count=1, end_x=None,end_y=None,direction='down'):
+        if kind not in ('click', 'scroll', 'drag'):
+            raise DesktopError('INVALID_ARGUMENT', 'Unknown pointer action; no input sent.')
+        if direction not in ('up', 'down', 'left', 'right'):
+            raise DesktopError('INVALID_ARGUMENT', 'Invalid scroll direction; no input sent.')
+        if isinstance(count, bool) or not isinstance(count, int):
+            raise DesktopError('INVALID_ARGUMENT', 'Count must be an integer.')
+        coordinates = (x, y, end_x, end_y) if kind == 'drag' else (x, y)
+        if any(isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v) for v in coordinates):
+            raise DesktopError('INVALID_ARGUMENT', 'Coordinates must be finite numbers.')
         px,py = self.point(window_id,snapshot_id,x,y)
         end = self.point(window_id,snapshot_id,end_x,end_y) if kind=='drag' else None
         buttons = {'left':'1','middle':'2','right':'3'}
@@ -205,7 +219,7 @@ class Desktop:
                     ax=round(px+(end[0]-px)*step/10);ay=round(py+(end[1]-py)*step/10)
                     run(['xdotool','mousemove',str(ax),str(ay)],effect='uncertain');time.sleep(.02)
             finally:
-                run(['xdotool','mouseup',buttons[button]],effect='uncertain')
+                run(['xdotool','mouseup',buttons[button]],effect='uncertain',cleanup=True,timeout=1)
         return {'effect':'dispatched','verification':'Observe the resulting application state.'}
 
     def key(self, window_id, chord):
@@ -265,16 +279,20 @@ class Desktop:
             return {'effect':'none','reason':'Empty paste is a no-op; use set_text to clear an editable element.'}
         payload=text.encode('utf-8')
         if self.clipboard_owner:
-            self.clipboard_owner.terminate();self.clipboard_owner.wait(timeout=2)
+            mark_effect();stop_process(self.clipboard_owner)
         with tempfile.NamedTemporaryFile(dir=self.runtime) as source:
             source.write(payload);source.flush()
+            mark_effect()
             self.clipboard_owner=subprocess.Popen(['xclip','-quiet','-selection','clipboard','-in',source.name],stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
             deadline=time.monotonic()+1
             while True:
                 try:
                     observed=run(['xclip','-selection','clipboard','-out'],timeout=.3)
                     if observed==payload:break
-                except DesktopError:pass
+                except DesktopError as exc:
+                    if exc.code in ('CANCELLED', 'TIMEOUT'):
+                        checkpoint()
+                checkpoint()
                 if time.monotonic()>deadline:
                     raise DesktopError('CLIPBOARD_FAILED','Could not verify clipboard ownership; no paste key sent.',effect='uncertain')
                 time.sleep(.03)
@@ -292,7 +310,15 @@ class Desktop:
                 'warning':'Shift+Insert can select PRIMARY in some terminals. A terminal may execute pasted newlines; no confirmation dialog is automatically accepted.'}
 
     def close(self):
-        if self.clipboard_owner and self.clipboard_owner.poll() is None:
-            self.clipboard_owner.terminate();self.clipboard_owner.wait(timeout=2)
-        if self.x:self.x.close()
-        os.close(self.lockfd)
+        if self.closed:
+            return
+        self.closed = True
+        errors = []
+        for cleanup in (lambda: stop_process(self.clipboard_owner) if self.clipboard_owner else None,
+                        lambda: self.x.close() if self.x else None,
+                        lambda: os.close(self.lockfd)):
+            try:
+                cleanup()
+            except Exception as exc:
+                errors.append(str(exc))
+        self.cleanup_errors = errors
