@@ -4,6 +4,7 @@ import argparse
 from collections import Counter
 from datetime import datetime, timezone
 import hashlib
+from importlib.metadata import version
 import json
 from pathlib import Path
 import platform
@@ -107,7 +108,9 @@ def main():
     report = {'schema_version': 1, 'created_at': datetime.now(timezone.utc).isoformat(),
               'revision': revision, 'source': source_fingerprint(ROOT),
               'environment': {'system': platform.system(), 'release': platform.release(),
-                              'architecture': platform.machine(), 'python': platform.python_version()},
+                              'architecture': platform.machine(), 'python': platform.python_version(),
+                              'distribution': platform.freedesktop_os_release() if platform.system() == 'Linux' else {},
+                              'packages': {name: version(name) for name in ('luda', 'mcp', 'Pillow')}},
               'suite': 'unit', 'outcomes': result.outcomes, 'requirements': cases,
               'summary': dict(Counter(c['test_status'] for c in cases)),
               'policy': 'Local tests are evidence for named assertions only. No case is automatically release-qualified.'}

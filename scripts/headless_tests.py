@@ -6,6 +6,8 @@ Usage: xvfb-run -a -s '-screen 0 1440x900x24 -nolisten tcp' dbus-run-session -- 
 import json
 import os
 from pathlib import Path
+import platform
+from qualify import source_fingerprint
 import signal
 import subprocess
 import sys
@@ -73,7 +75,12 @@ def main():
                                     'seconds': round(time.monotonic() - began, 3)})
             finally:
                 stop(wm)
-                (output / 'results.json').write_text(json.dumps(results, indent=2) + '\n')
+                (output / 'results.json').write_text(json.dumps({'schema_version': 1, 'suites': results,
+                    'source': source_fingerprint(ROOT),
+                    'environment': {'architecture': platform.machine(), 'python': platform.python_version(),
+                                    'distribution': platform.freedesktop_os_release(),
+                                    'backend': 'isolated Xvfb + XFWM4 + session D-Bus',
+                                    'uid': os.getuid()}}, indent=2) + '\n')
     print(json.dumps(results, indent=2))
     return 0 if len(results) == 2 and all(r['status'] == 'passed' for r in results) else 1
 
