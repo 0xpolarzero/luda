@@ -1,0 +1,41 @@
+name: Desktop contracts
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  unit:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -e .
+      - run: python scripts/qualify.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: unit-evidence
+          path: artifacts/qualification/
+  headless-x11:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install real desktop dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb xfwm4 dbus-x11 at-spi2-core python3-gi gir1.2-atspi-2.0 gir1.2-gtk-3.0 xdotool wmctrl scrot xclip x11-utils
+          python -m venv .venv
+          .venv/bin/python -m pip install -e .
+      - name: Native and MCP workflows on an isolated display
+        run: LUDA_ISOLATED_TEST_DISPLAY=1 xvfb-run -a -s '-screen 0 1440x900x24 -nolisten tcp' dbus-run-session -- .venv/bin/python scripts/headless_tests.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: headless-x11-evidence
+          path: artifacts/
