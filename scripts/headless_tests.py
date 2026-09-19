@@ -16,13 +16,21 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def stop(child):
-    if child.poll() is None:
+    # A failed suite can exit while its fixture still lives in the suite's
+    # dedicated process group. Cleanup must not depend on parent liveness.
+    try:
         os.killpg(child.pid, signal.SIGTERM)
-        try:
-            child.wait(timeout=3)
-        except subprocess.TimeoutExpired:
-            os.killpg(child.pid, signal.SIGKILL)
-            child.wait(timeout=3)
+    except ProcessLookupError:
+        pass
+    try:
+        child.wait(timeout=3)
+    except subprocess.TimeoutExpired:
+        pass
+    try:
+        os.killpg(child.pid, signal.SIGKILL)
+    except ProcessLookupError:
+        pass
+    child.wait(timeout=3)
 
 
 def main():
