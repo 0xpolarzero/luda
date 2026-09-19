@@ -1,0 +1,10 @@
+<!doctype html><meta charset="utf-8"><title>Luda Offline Browser Qualification</title>
+<style>body{font:18px sans-serif;padding:20px}textarea,[contenteditable]{display:block;width:650px;height:120px;border:2px solid #333;margin:10px}button,input{font:inherit;margin:8px}</style>
+<label>Contract textarea<textarea id="textarea" aria-label="Contract textarea"></textarea></label>
+<div id="editable" contenteditable="true" role="textbox" aria-label="Contract rich editor"></div>
+<label>Read only<input id="readonly" aria-label="Contract read only" value="must stay unchanged" readonly></label>
+<label>Disabled<input id="disabled" aria-label="Contract disabled" value="must stay unchanged" disabled></label>
+<button id="alert" onclick="alert('Luda synthetic alert');document.querySelector('#dialog-result').textContent='alert closed'">Show synthetic alert</button>
+<button id="confirm" onclick="document.querySelector('#dialog-result').textContent=confirm('Luda synthetic confirm')?'confirmed':'cancelled'">Show synthetic confirm</button>
+<label>Upload synthetic file<input id="upload" aria-label="Upload synthetic file" type="file"></label>
+<output id="dialog-result"></output>
