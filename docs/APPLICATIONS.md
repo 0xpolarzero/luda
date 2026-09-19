@@ -19,3 +19,9 @@ Ten unit tests cover input validation, local URI encoding, malformed URI rejecti
 `tests/live_application_services.py` uses a private session bus and temporary service registry. A Terminal=true entry executed inside an independently observed terminal window. A Gtk.Application singleton was activated and then received the exact requested file URI in the same process; empty spawn-PID hints correctly represented D-Bus activation. A deliberately slow open request exceeded the helper operation deadline: the existing singleton stayed alive and independently recorded the delivered request, demonstrating why timed-out launches must not be retried blindly.
 
 Gio performs D-Bus activation asynchronously even when its launch function returns success. The helper therefore waits, boundedly, for AppLaunchContext's launched/launch-failed signal before exiting. This verifies desktop-service acceptance, not application readiness. Helper stderr and Gio exception text are redacted so launch arguments are not echoed in errors.
+
+## Agent tools
+
+The MCP tools are `desktop_applications(query, limit)` and `desktop_launch(application_id, files_or_uris)`. Discovery is observational and remains available while cooperating agent input is paused; launching uses the existing transaction, pause guard, operation deadline, cancellation and status history. After a dispatched launch, use `desktop_windows` to find the new or existing application. No new window or process is promised for singleton applications.
+
+`tests/live_mcp_applications.py` exercised a real stdio MCP client/server: schema discovery, application search while paused, blocked launch while paused, resumed launch, independent Unicode argv readback, subsequent visible window and recorded dispatched operation history. Missing applications returned a structured error. Test cleanup restores the prior control state.

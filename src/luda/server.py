@@ -15,6 +15,7 @@ from mcp.types import CallToolResult, ImageContent, TextContent
 
 from .common import DesktopError, operation_scope
 from .desktop import Desktop
+from .apps import list_applications, launch_application
 
 mcp = FastMCP('luda', instructions='Local desktop: observe, select a window, inspect its controls, then act. Screenshot coordinates use the returned image, with its snapshot ID. Text replacement and insertion are distinct. Verify dispatched actions before repeating them; cancellation or timeout can leave effects. Use desktop_status to inspect recent operation outcomes.')
 backend = None
@@ -46,12 +47,14 @@ def execute(method, *args, _cancelled=None, **kwargs):
         if _quarantined.is_set():
             raise DesktopError('BUSY', 'Previous cancelled operation is still cleaning up; no new input sent.')
         d = get_backend()
-        observation = method in ('doctor','list_windows','observe','inspect','workspaces','wait_for') or (method=='element' and len(args)>1 and args[1]=='read')
+        observation = method in ('list_applications','doctor','list_windows','observe','inspect','workspaces','wait_for') or (method=='element' and len(args)>1 and args[1]=='read')
         guard = None if observation else d.control.require_active
         with operation_scope(timeout=12, cancelled=_cancelled, guard=guard) as operation:
             try:
                 with d.transaction():
-                    result = getattr(d,method)(*args,**kwargs)
+                    application_methods = {'list_applications':list_applications, 'launch_application':launch_application}
+                    handler = application_methods[method] if method in application_methods else getattr(d,method)
+                    result = handler(*args,**kwargs)
             except DesktopError as exc:
                 if operation.effect != 'none' and exc.effect == 'none':
                     exc.effect = 'uncertain'
@@ -121,6 +124,18 @@ async def desktop_status() -> CallToolResult:
 async def desktop_doctor() -> CallToolResult:
     """Check actual display access, desktop session, dependencies and accessibility availability."""
     return await execute_async('doctor')
+
+
+@mcp.tool()
+async def desktop_applications(query: str = '', limit: int = 50) -> CallToolResult:
+    """Find installed desktop applications by name, description or ID. Returns application_id and file/URI support; works while input is paused. Use an exact returned ID with desktop_launch."""
+    return await execute_async('list_applications',query,limit)
+
+
+@mcp.tool()
+async def desktop_launch(application_id: str, files_or_uris: list[str] | None = None) -> CallToolResult:
+    """Launch an installed application by its desktop_applications ID, optionally opening absolute existing paths or URIs. No command strings. Returns dispatched, not ready: inspect desktop_windows for the new or existing app; never blindly retry an uncertain launch."""
+    return await execute_async('launch_application',application_id,files_or_uris)
 
 
 @mcp.tool()
