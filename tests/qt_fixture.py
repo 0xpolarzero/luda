@@ -11,6 +11,7 @@ editor=QtWidgets.QTextEdit();editor.setAccessibleName('Toolkit text');layout.add
 check=QtWidgets.QCheckBox('Toolkit check');layout.addWidget(check)
 value=QtWidgets.QSlider(QtCore.Qt.Horizontal);value.setRange(0,100);value.setAccessibleName('Toolkit value');layout.addWidget(value)
 secret=QtWidgets.QLineEdit();secret.setEchoMode(QtWidgets.QLineEdit.Password);secret.setAccessibleName('Toolkit secret');layout.addWidget(secret)
+disabled=QtWidgets.QPushButton('Toolkit disabled');disabled.setEnabled(False);layout.addWidget(disabled)
 button=QtWidgets.QPushButton('Open toolkit dialog');layout.addWidget(button)
 modal=None;dialog_count=0
 def show_modal():

@@ -102,6 +102,84 @@ def states_of(node):
     return {s.value_nick for s in node.get_state_set().get_states()}
 
 
+class TextAccess:
+    """Normalize providers that use UTF-16 offsets (Qt) to Unicode code points.
+
+    Never infer offsets from application names. The reported count must agree
+    with either the actual code-point count or UTF-16 count of bounded readback.
+    """
+    def __init__(self, raw):
+        self.raw = raw
+        app = raw.get_application() if hasattr(raw, "get_application") else None
+        self.toolkit = (app.get_toolkit_name() or "") if app else ""
+        self._refresh()
+
+    def _refresh(self):
+        count = Atspi.Text.get_character_count(self.raw)
+        if not 0 <= count <= 2_000_000:
+            raise ValueError("Text provider exceeds the bounded offset-normalization budget.")
+        text = Atspi.Text.get_text(self.raw, 0, count)
+        if len(text) > 1_000_000:
+            raise ValueError("Text provider exceeds the one-million-code-point budget.")
+        if count == len(text):
+            self.utf16 = self.toolkit.casefold() == "qt"
+        elif count == len(text.encode("utf-16-le")) // 2:
+            self.utf16 = True
+        else:
+            raise ValueError("Text changed or provider character offsets are unsupported.")
+        self.text = text
+
+    def insertion_length(self, text):
+        return len(text.encode("utf-16-le")) // 2 if self.utf16 else len(text.encode("utf-8"))
+
+    def provider_offset(self, position):
+        if not 0 <= position <= len(self.text):
+            raise ValueError("Text position is outside the verified content.")
+        return len(self.text[:position].encode("utf-16-le")) // 2 if self.utf16 else position
+
+    def public_offset(self, position):
+        if position < 0:
+            return position
+        if not self.utf16:
+            return position
+        encoded = self.text.encode("utf-16-le")
+        if position * 2 > len(encoded):
+            raise ValueError("Provider position is outside verified text.")
+        return len(encoded[:position * 2].decode("utf-16-le"))
+
+    def get_text(self, start, end):
+        self._refresh()
+        return self.text[start:None if end == -1 else end]
+
+    def get_character_count(self):
+        self._refresh()
+        return len(self.text)
+
+    def get_caret_offset(self):
+        return self.public_offset(Atspi.Text.get_caret_offset(self.raw))
+
+    def set_caret_offset(self, position):
+        return Atspi.Text.set_caret_offset(self.raw, self.provider_offset(position))
+
+    def get_n_selections(self):
+        return Atspi.Text.get_n_selections(self.raw)
+
+    def get_selection(self, index):
+        from types import SimpleNamespace
+        selection = Atspi.Text.get_selection(self.raw, index)
+        return SimpleNamespace(start_offset=self.public_offset(selection.start_offset),
+                               end_offset=self.public_offset(selection.end_offset))
+
+    def add_selection(self, start, end):
+        return Atspi.Text.add_selection(self.raw, self.provider_offset(start), self.provider_offset(end))
+
+    def set_selection(self, index, start, end):
+        return Atspi.Text.set_selection(self.raw, index, self.provider_offset(start), self.provider_offset(end))
+
+    def remove_selection(self, index):
+        return Atspi.Text.remove_selection(self.raw, index)
+
+
 def semantic(node, current, req):
     """Return None for legacy operations. Never emulate unsupported semantics by typing."""
     op = req["op"]
@@ -110,30 +188,30 @@ def semantic(node, current, req):
             return failure("PROTECTED_FIELD", "Protected text cannot be read or changed.")
         if "Text" not in current["interfaces"]:
             return failure("UNSUPPORTED", "Operation requires the Text interface.")
-        t = node.get_text_iface()
-        if Atspi.Text.get_character_count(t) > 1_000_000:
+        t = TextAccess(node.get_text_iface())
+        if t.get_character_count() > 1_000_000:
             return failure("TEXT_TOO_LARGE", "Full verification exceeds the one-million-character budget.")
-        before = Atspi.Text.get_text(t, 0, 1_000_001)
+        before = t.get_text(0, t.get_character_count())
         if len(before) > 1_000_000:
             return failure("TEXT_TOO_LARGE", "Text grew beyond the verification budget.")
         if op == "select":
             start, end = req.get("start_offset"), req.get("end_offset")
             if any(type(x) is not int for x in (start, end)) or not 0 <= start <= end <= len(before):
                 return failure("INVALID_ARGUMENT", "Selection offsets must satisfy 0 <= start <= end <= character count.")
-            count = Atspi.Text.get_n_selections(t)
+            count = t.get_n_selections()
             if count > 1:
                 return failure("UNSUPPORTED", "Multiple selections cannot be changed safely.")
             if start == end:
                 if count:
-                    Atspi.Text.remove_selection(t, 0)
-                accepted = Atspi.Text.set_caret_offset(t, start)
-                matched = verify(lambda: Atspi.Text.get_n_selections(t) == 0 and Atspi.Text.get_caret_offset(t) == start)
+                    t.remove_selection(0)
+                accepted = t.set_caret_offset(start)
+                matched = verify(lambda: t.get_n_selections() == 0 and t.get_caret_offset() == start)
             else:
-                accepted = Atspi.Text.set_selection(t, 0, start, end) if count else Atspi.Text.add_selection(t, start, end)
+                accepted = t.set_selection(0, start, end) if count else t.add_selection(start, end)
                 def selection_matches():
-                    if Atspi.Text.get_n_selections(t) != 1:
+                    if t.get_n_selections() != 1:
                         return False
-                    sel = Atspi.Text.get_selection(t, 0)
+                    sel = t.get_selection(0)
                     return (sel.start_offset, sel.end_offset) == (start, end)
                 matched = verify(selection_matches)
             return {"accepted": bool(accepted), "effect": "verified" if matched else "uncertain",
@@ -143,14 +221,14 @@ def semantic(node, current, req):
             return failure("UNSUPPORTED_TEXT", "Text must be valid Unicode without NUL or CR and at most one million characters.")
         if "EditableText" not in current["interfaces"] or "editable" not in current["states"]:
             return failure("NOT_EDITABLE", "Insertion requires editable Text and EditableText interfaces.")
-        count = Atspi.Text.get_n_selections(t)
+        count = t.get_n_selections()
         if count > 1:
             return failure("UNSUPPORTED", "Multiple selections cannot be replaced safely.")
         if count:
-            selected = Atspi.Text.get_selection(t, 0)
+            selected = t.get_selection(0)
             start, end = sorted((selected.start_offset, selected.end_offset))
         else:
-            start = end = Atspi.Text.get_caret_offset(t)
+            start = end = t.get_caret_offset()
         if not 0 <= start <= end <= len(before):
             return failure("INVALID_SELECTION", "Provider returned invalid caret or selection offsets.")
         expected = before[:start] + text + before[end:]
@@ -158,39 +236,48 @@ def semantic(node, current, req):
             return failure("TEXT_TOO_LARGE", "Result exceeds verification budget.")
         edit = node.get_editable_text_iface()
         # Read again immediately before mutation to refuse a concurrent text edit.
-        current_count = Atspi.Text.get_n_selections(t)
+        current_count = t.get_n_selections()
         if current_count == 1:
-            selection_now = Atspi.Text.get_selection(t, 0)
+            selection_now = t.get_selection(0)
             range_now = tuple(sorted((selection_now.start_offset, selection_now.end_offset)))
         elif current_count == 0:
-            caret_now = Atspi.Text.get_caret_offset(t)
+            caret_now = t.get_caret_offset()
             range_now = (caret_now, caret_now)
         else:
             range_now = None
-        if Atspi.Text.get_text(t, 0, -1) != before or range_now != (start, end):
+        if t.get_text(0, -1) != before or range_now != (start, end):
             return failure("STALE_TARGET", "Text changed before insertion; inspect again.")
         accepted = True
         if end > start:
-            accepted = bool(edit.delete_text(start, end))
-            if not accepted or not verify(lambda: Atspi.Text.get_text(t, 0, -1) == before[:start] + before[end:]):
+            accepted = bool(edit.delete_text(t.provider_offset(start), t.provider_offset(end)))
+            if not accepted or not verify(lambda: t.get_text(0, -1) == before[:start] + before[end:]):
                 return {"effect": "uncertain", "accepted": accepted, "exact_match": False,
                         "verification": "Selection deletion was rejected; inspect before retrying."}
-        # AT-SPI length is UTF-8 bytes, while position is a Unicode character offset.
+        # GTK consumes UTF-8 length; Qt bridge consumes UTF-16 units. Normalize
+        # this separately from public code-point positions to avoid NUL padding.
         if text:
-            accepted = bool(edit.insert_text(start, text, len(text.encode("utf-8"))))
-        matched = verify(lambda: Atspi.Text.get_text(t, 0, -1) == expected)
+            accepted = bool(edit.insert_text(t.provider_offset(start), text, t.insertion_length(text)))
+        matched = verify(lambda: t.get_text(0, -1) == expected)
         caret_verified = False
         if matched:
-            for _ in range(min(Atspi.Text.get_n_selections(t), 100)):
-                if not Atspi.Text.remove_selection(t, 0):
+            for _ in range(min(t.get_n_selections(), 100)):
+                if not t.remove_selection(0):
                     break
-            Atspi.Text.set_caret_offset(t, start + len(text))
-            caret_verified = verify(lambda: Atspi.Text.get_n_selections(t) == 0 and Atspi.Text.get_caret_offset(t) == start + len(text))
+            wanted_caret = start + len(text)
+            caret_verified = t.get_n_selections() == 0 and t.get_caret_offset() == wanted_caret
+            if not caret_verified:
+                try:
+                    t.set_caret_offset(wanted_caret)
+                    caret_verified = verify(lambda: t.get_n_selections() == 0 and t.get_caret_offset() == wanted_caret)
+                except Exception:
+                    # Text is already independently read back exactly. A provider
+                    # lacking caret mutation must not erase that verified outcome.
+                    caret_verified = False
         return {"effect": "verified" if matched else "uncertain", "accepted": accepted,
                 "exact_match": matched, "expected_characters": len(expected),
-                "actual_characters": Atspi.Text.get_character_count(t),
+                "actual_characters": t.get_character_count(),
                 "replaced_characters": end-start, "inserted_characters": len(text),
-                "caret_verified": caret_verified, "caret_offset": Atspi.Text.get_caret_offset(t)}
+                "caret_verified": caret_verified, "caret_offset": t.get_caret_offset()}
     if op == "value":
         value = req.get("value")
         if type(value) not in (int, float) or not math.isfinite(value):
@@ -220,7 +307,7 @@ def semantic(node, current, req):
             return {"effect": "verified", "accepted": True, "changed": False, key: desired}
         actions = current.get("actions", [])
         eligible = ("toggle", "click", "activate") if op == "check" else ("expand or contract", "expand or collapse", "toggle", "activate")
-        action = next((a for a in eligible if a in actions), None)
+        action = next((actual for a in eligible for actual in actions if actual.casefold() == a), None)
         if action is None:
             return failure("UNSUPPORTED_ACTION", "No recognized semantic state-changing action is available.")
         accepted = bool(node.get_action_iface().do_action(actions.index(action)))
@@ -243,13 +330,27 @@ def main(req):
             return failure("INVALID_ARGUMENT", "Inspection limit must be an integer from 1 to 500.")
         bounds = req["bounds"]
         roots = []
-        for candidate, depth in candidates(pid, limit=200, depth=1):
+        fallback_roots = []
+        title_size_matches = []
+        scope_stats = {}
+        for candidate, depth in candidates(pid, limit=200, depth=1, stats=scope_stats):
             if depth != 1 or "Component" not in candidate.get_interfaces():
                 continue
             rect = candidate.get_component_iface().get_extents(Atspi.CoordType.SCREEN)
             if any(all(abs(a-b)<=2 for a,b in zip((rect.x,rect.y,rect.width,rect.height),
                        (b["x"],b["y"],b["width"],b["height"]))) for b in (bounds,req["frame_bounds"])):
                 roots.append(candidate.path)
+            if (req.get("window_title") and candidate.get_name() == req["window_title"]
+                    and rect.width == bounds["width"] and rect.height == bounds["height"]):
+                title_size_matches.append(candidate.path)
+                if rect.x == 0 and rect.y == 0:
+                    fallback_roots.append(candidate.path)
+        if scope_stats.get("budget_pruned") or scope_stats.get("unreadable_branches"):
+            return failure("AMBIGUOUS_ACCESSIBILITY_WINDOW", "Cannot prove uniqueness within the top-level traversal budget.")
+        mapping = "screen_bounds"
+        if not roots and len(fallback_roots) == 1 and len(title_size_matches) == 1:
+            roots = fallback_roots
+            mapping = "unique_title_and_size"
         if len(roots) != 1:
             return {"error":"AMBIGUOUS_ACCESSIBILITY_WINDOW", "message":"Cannot uniquely map X11 client bounds to an accessible top-level; use screenshot controls."}
         root_path = roots[0]
@@ -276,6 +377,9 @@ def main(req):
                 value["parent_path"] = parent.path if parent else None
                 value["depth"] = depth
                 value["root_path"] = root_path
+                value["bounds_coordinates"] = "unavailable" if mapping == "unique_title_and_size" else "screen"
+                if mapping == "unique_title_and_size":
+                    value.pop("bounds", None)
                 if any(filters.get(k, "").casefold() not in value[k].casefold() for k in ("name", "role")):
                     continue
                 if not set(filters.get("states", [])).issubset(value["states"]):
@@ -284,7 +388,8 @@ def main(req):
             except Exception:
                 errors += 1
         return {"nodes": nodes, "truncated": truncated or any(traversal.values()), "truncation": {"result_or_time_limit": truncated, **traversal}, "visited_nodes": visited, "max_depth": max_depth, "unreadable_nodes": errors, "unreadable_branches": traversal.get("unreadable_branches", 0),
-                "coverage": "selected accessible top-level window", "available": visited > 0}
+                "coverage": "selected accessible top-level window", "available": visited > 0,
+                "window_mapping": mapping, "bounds_coordinates": "unavailable" if mapping == "unique_title_and_size" else "screen"}
     target = req["target"]
     for node, _ in candidates(pid,root_path=target["root_path"]):
         if node.path != target["path"]:
@@ -293,7 +398,7 @@ def main(req):
         if any(current[k] != target[k] for k in ("role", "name", "start")) or "defunct" in current["states"]:
             return {"error": "STALE_TARGET", "message": "Element identity changed; inspect again."}
         op = req["op"]
-        if op != "read" and not {"enabled", "showing"}.issubset(current["states"]):
+        if op != "read" and ("showing" not in current["states"] or not {"enabled", "sensitive"}.intersection(current["states"])):
             return {"error": "NOT_INTERACTABLE", "message": "Element must be enabled and showing for mutation; inspect the visible target."}
         if op in ("read", "set", "insert", "select", "value") and current["protected"]:
             return {"error": "PROTECTED_FIELD", "message": "This implementation does not read or write protected fields."}
@@ -303,20 +408,20 @@ def main(req):
         if op == "read":
             if "Text" not in current["interfaces"]:
                 return {"error": "UNSUPPORTED", "message": "Element has no Text interface."}
-            t = node.get_text_iface()
-            n = Atspi.Text.get_character_count(t)
+            t = TextAccess(node.get_text_iface())
+            n = t.get_character_count()
             limit = req.get("limit", 16000)
             if type(limit) is not int or not 1 <= limit <= 1_000_000:
                 return failure("INVALID_ARGUMENT", "Text read limit must be 1..1000000.")
-            return {"text": Atspi.Text.get_text(t, 0, min(n, limit)), "characters": n, "truncated": n > limit,
-                    "caret_offset": Atspi.Text.get_caret_offset(t), "offset_units": "Unicode code points",
+            return {"text": t.get_text(0, min(n, limit)), "characters": n, "truncated": n > limit,
+                    "caret_offset": t.get_caret_offset(), "offset_units": "Unicode code points", "provider_offset_units": "UTF-16 code units" if t.utf16 else "Unicode code points",
                     "selections": [{"start_offset": sel.start_offset, "end_offset": sel.end_offset}
-                                   for sel in (Atspi.Text.get_selection(t, i) for i in range(min(Atspi.Text.get_n_selections(t), 100)))],
-                    "selections_truncated": Atspi.Text.get_n_selections(t) > 100}
+                                   for sel in (t.get_selection(i) for i in range(min(t.get_n_selections(), 100)))],
+                    "selections_truncated": t.get_n_selections() > 100}
         if op == "set":
             if "EditableText" not in current["interfaces"] or "Text" not in current["interfaces"]:
                 return {"error": "UNSUPPORTED", "message": "Exact replacement requires EditableText and Text."}
-            if "editable" not in current["states"] or "enabled" not in current["states"]:
+            if "editable" not in current["states"] or not {"enabled", "sensitive"}.intersection(current["states"]):
                 return {"error": "NOT_EDITABLE", "message": "Element is not editable and enabled."}
             text = req["text"]
             accepted = node.get_editable_text_iface().set_text_contents(text)
@@ -325,6 +430,8 @@ def main(req):
                     "exact_match": actual == text, "expected_characters": len(text),
                     "actual_characters": len(actual)}
         if op == "focus":
+            if "focused" in current["states"]:
+                return {"effect": "verified", "accepted": True, "focused": True, "changed": False}
             if "Component" not in current["interfaces"]:
                 return {"error": "UNSUPPORTED", "message": "Element has no Component interface."}
             ok = node.get_component_iface().grab_focus()

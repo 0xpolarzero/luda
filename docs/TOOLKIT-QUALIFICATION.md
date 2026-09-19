@@ -55,3 +55,49 @@ Results are retained under ignored `artifacts/toolkits/`: `results.json`, per-to
 `inspect.json`, fixture state/logs, and `raw-scope.json` when mapping fails. GTK4
 operations blocked by window mapping are not counted as passing or assumed
 supported. Subsequent fixes require a fresh run and an updated evidence section.
+
+## Retest after compatibility fixes
+
+The final retest recorded **Qt5: 29 supported, zero failures**. GTK4 recorded
+**21 supported, 2 unsupported, 3 provider failures and 3 blocked dependent cases**.
+The suite intentionally remains nonzero because GTK4 selection/caret support is
+incomplete. GTK3 regressions also passed: 35 semantic and 31 baseline live checks;
+33 unit tests passed across the branch.
+
+Qt now normalizes its UTF-16 offsets to the public code-point contract, including
+selection after astral characters and caret placement after inserting emoji into
+initially ASCII text. Qt's declared application toolkit also selects UTF-16 units
+for the InsertText length argument. Direct fixture probes established that using
+UTF-8 byte length here pads or corrupts inserted text; independent Qt object
+readback caught the discrepancy even when AT-SPI returned a truncated string.
+GTK retains its UTF-8 insertion length convention. `read` exposes
+`provider_offset_units` diagnostically while all public offsets remain code points.
+
+GTK4 mapping now permits an exact unique top-level title plus client dimensions
+when the provider reports zero-origin extents. Ambiguous names/sizes and incomplete
+top-level enumeration are refused. The parent supplies `window_title`; responses
+report `window_mapping: "unique_title_and_size"` and
+`bounds_coordinates: "unavailable"`. All such node bounds are removed, so clients
+cannot accidentally click zero-origin accessibility geometry. Valid native X11
+window/screenshot coordinates remain available through the desktop layer.
+
+GTK4's sensitive/showing widgets are operable even when `enabled` is omitted;
+independent disabled-button tests still reject mutations. Its passing cases include
+full text replacement, exact Unicode insertion at the current caret, reading,
+already-focused verification, Value changes, protected-field refusal and scoped
+modal opening/closing. Checkbox mutation has no advertised action and is explicitly
+unsupported. Selection and caret-setting APIs raise provider errors. Dependent
+insertion cases are marked `blocked` and not attempted; they do not misrepresent
+otherwise-working insertion. No speculative keyboard fallback was added.
+
+The worker does not discard a verified text result if optional caret positioning
+is unsupported: `exact_match` and `caret_verified` remain separate. It first checks
+whether the provider already placed the caret correctly, avoiding an unnecessary
+unsupported operation.
+
+The test harness provides `window_title` to the worker for branches whose parent
+Desktop adapter has not yet integrated that request field. Application effects
+use bounded independent-oracle polling because action acceptance can precede an
+asynchronous modal appearing. Accessible names are not assumed unique: the fixture
+harness selects the first matching control rather than overwriting it with its
+child label.

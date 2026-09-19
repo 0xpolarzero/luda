@@ -108,4 +108,79 @@ class Semantics(unittest.TestCase):
         for value in (float('nan'),float('inf'),True,'1'):
             self.assertEqual(self.call('value',value=value)['error'],'INVALID_ARGUMENT')
 
+
+class Utf16Text(Text):
+    def get_application(self):return types.SimpleNamespace(get_toolkit_name=lambda:'Qt')
+    def cp(self,raw):return len(self.text.encode('utf-16-le')[:raw*2].decode('utf-16-le'))
+    def get_character_count(self):return len(self.text.encode('utf-16-le'))//2
+    def get_text(self,start,end):
+        count=self.get_character_count()
+        if end > count:return ''  # Qt refuses out-of-range end, unlike GTK.
+        return self.text[self.cp(start):None if end==-1 else self.cp(end)]
+    def insert_text(self,a,text,length):
+        assert length==len(text.encode('utf-16-le'))//2
+        return super().insert_text(self.cp(a),text,len(text.encode('utf-8')))
+    def delete_text(self,a,b):
+        start,end=self.cp(a),self.cp(b)
+        accepted=super().delete_text(start,end)
+        self.caret=a
+        return accepted
+
+class Utf16Semantics(unittest.TestCase):
+    def setUp(self):
+        self.old=w.Atspi;w.Atspi=types.SimpleNamespace(Text=Utf16Text)
+        self.t=Utf16Text();self.current={'protected':False,'interfaces':['Text','EditableText'],'states':['editable','enabled','showing']}
+    def tearDown(self):w.Atspi=self.old
+    def call(self,op,**kw):return w.semantic(self.t,self.current,{'op':op,**kw})
+    def test_insert_astral_into_ascii_normalizes_new_caret(self):
+        r=self.call('insert',text='👩🏽\u200d💻');self.assertEqual(self.t.text,'a👩🏽\u200d💻bc');self.assertTrue(r['caret_verified']);self.assertEqual(r['caret_offset'],5)
+    def test_select_after_astral_and_replace(self):
+        self.t.text='A👩🏽\u200d💻Z'
+        r=self.call('select',start_offset=1,end_offset=5);self.assertTrue(r['exact_match']);self.assertEqual(self.t.selections,[(1,8)])
+        r=self.call('insert',text='é');self.assertTrue(r['exact_match']);self.assertEqual(self.t.text,'AéZ')
+    def test_read_normalizes_count_and_caret(self):
+        self.t.text='A😀Z';self.t.caret=3
+        t=w.TextAccess(self.t);self.assertTrue(t.utf16);self.assertEqual(t.get_character_count(),3);self.assertEqual(t.get_caret_offset(),2)
+    def test_split_surrogate_provider_offset_refused(self):
+        self.t.text='A😀Z';self.t.caret=2
+        with self.assertRaises(UnicodeDecodeError):w.TextAccess(self.t).get_caret_offset()
+
+class ScopeAndState(unittest.TestCase):
+    def setUp(self):
+        self.old=w.Atspi;w.Atspi=types.SimpleNamespace(CoordType=types.SimpleNamespace(SCREEN=0))
+        self.node=types.SimpleNamespace(path='/root',get_interfaces=lambda:['Component'],get_name=lambda:'Fixture',get_parent=lambda:None)
+        self.node.get_component_iface=lambda:types.SimpleNamespace(get_extents=lambda _:types.SimpleNamespace(x=0,y=0,width=100,height=50))
+        self.description={'role':'frame','name':'Fixture','start':'1','states':['sensitive','showing'],'bounds':{'x':0,'y':0,'width':100,'height':50}}
+        self.req={'op':'inspect','pid':42,'bounds':{'x':10,'y':20,'width':100,'height':50},'frame_bounds':{'x':5,'y':15,'width':110,'height':60}}
+    def tearDown(self):w.Atspi=self.old
+    def inspect(self,**kw):
+        with patch.object(w,'candidates',side_effect=[[(self.node,1)],[(self.node,0)]]),patch.object(w,'describe',return_value=dict(self.description)):
+            return w.main({**self.req,**kw})
+    def test_fallback_requires_exact_title(self):
+        self.assertEqual(self.inspect()['error'],'AMBIGUOUS_ACCESSIBILITY_WINDOW')
+        self.assertEqual(self.inspect(window_title='Different')['error'],'AMBIGUOUS_ACCESSIBILITY_WINDOW')
+    def test_fallback_removes_unreliable_bounds(self):
+        r=self.inspect(window_title='Fixture');self.assertEqual(r['window_mapping'],'unique_title_and_size');self.assertEqual(r['nodes'][0]['bounds_coordinates'],'unavailable');self.assertNotIn('bounds',r['nodes'][0])
+    def test_duplicate_fallback_refused(self):
+        with patch.object(w,'candidates',return_value=[(self.node,1),(self.node,1)]):
+            r=w.main({**self.req,'window_title':'Fixture'})
+        self.assertEqual(r['error'],'AMBIGUOUS_ACCESSIBILITY_WINDOW')
+    def test_sensitive_showing_is_interactable_but_disabled_is_not(self):
+        for states,expected in ((['sensitive','showing'],'verified'),(['showing'],'NOT_INTERACTABLE'),(['sensitive'],'NOT_INTERACTABLE')):
+            current={**self.description,'states':states,'protected':False}
+            with patch.object(w,'candidates',return_value=[(self.node,0)]),patch.object(w,'describe',return_value=current),patch.object(w,'semantic',return_value={'effect':'verified'}):
+                r=w.main({'op':'check','pid':42,'checked':True,'target':{**current,'root_path':'/root','path':'/root'}})
+            self.assertEqual(r.get('effect',r.get('error')),expected)
+
+class CaretPostcondition(unittest.TestCase):
+    def test_verified_text_survives_unsupported_caret_mutation(self):
+        old=w.Atspi;w.Atspi=types.SimpleNamespace(Text=Text)
+        try:
+            raw=Text()
+            current={'protected':False,'interfaces':['Text','EditableText'],'states':['editable','enabled','showing']}
+            with patch.object(Text,'set_caret_offset',side_effect=RuntimeError('unsupported')):
+                result=w.semantic(raw,current,{'op':'insert','text':'X'})
+            self.assertTrue(result['exact_match']);self.assertEqual(raw.text,'aXbc');self.assertFalse(result['caret_verified'])
+        finally:w.Atspi=old
+
 if __name__=='__main__':unittest.main()

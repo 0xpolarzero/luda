@@ -102,3 +102,26 @@ This evidence qualifies those GTK controls on the current X11 guest. It does not
 qualify arbitrary Chromium/Electron, Qt, custom canvases, rich text, IME composition,
 virtualized trees, multi-selection editors or AT-SPI providers with different
 semantics. Unsupported interfaces produce explicit refusals, not claimed support.
+
+## Cross-toolkit normalization
+
+Public text offsets always use Unicode code points. The worker validates bounded
+full text against the provider's reported character count and normalizes UTF-16
+providers. Qt declares its toolkit through the AT-SPI Application interface; this
+also selects UTF-16 insertion length when the existing field is entirely ASCII.
+`read.provider_offset_units` documents the provider representation. Normalized
+full readback is bounded to one million code points (at most two million UTF-16
+units). Providers with inconsistent counts are refused instead of guessed.
+
+Inspection accepts `window_title` as an optional strict GTK4 compatibility input.
+A unique exact title and dimensions can map a zero-origin top-level, but all node
+bounds are then removed and marked `bounds_coordinates: "unavailable"`. The
+response `window_mapping` identifies this path. The regular mapping is
+`screen_bounds`. Incomplete top-level enumeration cannot establish uniqueness.
+
+An element is interactable when showing and either enabled or sensitive; GTK4
+omits enabled on otherwise sensitive widgets. Disabled controls remain refused.
+Recognized semantic action names are matched case-insensitively while preserving
+the provider's actual action index. Already-focused targets return verified without
+calling an unsupported focus method. See TOOLKIT-QUALIFICATION.md for the remaining
+GTK4 provider limitations and precise independent test results.

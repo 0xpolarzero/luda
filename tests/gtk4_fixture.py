@@ -18,6 +18,7 @@ def activate(app):
  value=Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL,0,100,1)
  value.update_property([Gtk.AccessibleProperty.LABEL],['Toolkit value']);box.append(value)
  secret=Gtk.PasswordEntry();secret.update_property([Gtk.AccessibleProperty.LABEL],['Toolkit secret']);box.append(secret)
+ disabled=Gtk.Button(label='Toolkit disabled');disabled.set_sensitive(False);box.append(disabled)
  button=Gtk.Button(label='Open toolkit dialog');box.append(button)
  def show_modal(*_):
   global modal,dialog_count
