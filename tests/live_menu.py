@@ -9,7 +9,7 @@ from luda.common import DesktopError, operation_scope
 from luda.desktop import Desktop
 from luda.interaction import InteractionMixin
 
-class Driver(InteractionMixin,Desktop):
+class Driver(Desktop,InteractionMixin):
     def observe(self):
         before=self.observe_popups()
         result=super().observe()

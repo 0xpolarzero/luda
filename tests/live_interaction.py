@@ -5,7 +5,7 @@ import time
 from luda.desktop import Desktop
 from luda.interaction import InteractionMixin
 
-class Driver(InteractionMixin, Desktop): pass
+class Driver(Desktop, InteractionMixin): pass
 
 fixture = '''import gi\ngi.require_version("Gtk", "3.0")\nfrom gi.repository import Gtk\nw=Gtk.Window(title="Luda isolated interaction probe");w.set_default_size(360,220)\nw.connect("destroy",Gtk.main_quit);w.show_all();Gtk.main()'''
 p = subprocess.Popen(['/usr/bin/python3','-c',fixture])

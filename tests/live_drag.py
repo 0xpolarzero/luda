@@ -7,7 +7,7 @@ import time
 from luda.desktop import Desktop
 from luda.interaction import InteractionMixin
 
-class Driver(InteractionMixin, Desktop): pass
+class Driver(Desktop, InteractionMixin): pass
 
 fixture='''import gi,sys\ngi.require_version("Gtk","3.0")\nfrom gi.repository import Gtk,Gdk\nfrom pathlib import Path\ntargets=[Gtk.TargetEntry.new("UTF8_STRING",0,0)]\nw=Gtk.Window(title="Luda DND source");w.set_default_size(240,180)\ns=Gtk.EventBox();s.add(Gtk.Label(label="Drag payload"));w.add(s)\ns.drag_source_set(Gdk.ModifierType.BUTTON1_MASK,targets,Gdk.DragAction.COPY)\ns.connect("drag-data-get",lambda widget,context,data,info,time:data.set_text("luda drag payload 日本語",-1))\nv=Gtk.Window(title="Luda DND destination");v.set_default_size(240,180)\nd=Gtk.EventBox();d.add(Gtk.Label(label="Drop here"));v.add(d)\nd.drag_dest_set(Gtk.DestDefaults.ALL,targets,Gdk.DragAction.COPY)\ndef receive(widget,context,x,y,data,info,time):\n Path(sys.argv[1]).write_text(data.get_text());Gtk.drag_finish(context,True,False,time)\nd.connect("drag-data-received",receive)\nw.show_all();v.show_all();Gtk.main()'''
 with tempfile.TemporaryDirectory() as directory:
