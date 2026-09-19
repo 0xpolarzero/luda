@@ -34,9 +34,12 @@
     "ERR-04": {
       "implementation": "partial",
       "tests": [
-        "test_contracts.Contracts.test_timeout_preserves_uncertain_effect"
+        "test_contracts.Contracts.test_timeout_preserves_uncertain_effect",
+        "test_operation_runtime.OperationRuntime.test_overall_deadline_bounds_multiple_commands",
+        "test_process_cleanup.ProcessCleanup.test_timeout_kills_descendant_before_delayed_effect",
+        "test_process_cleanup.ProcessCleanup.test_cancelled_read_after_mutation_keeps_uncertain_effect"
       ],
-      "limits": "Subprocess timeout only; no late-effect oracle or end-to-end operation budget."
+      "limits": "Real subprocess and descendant timeout/cancellation checks, including absence of delayed file mutation. Actual application late effects remain unqualified."
     },
     "KEY-07": {
       "implementation": "implemented",
@@ -87,6 +90,13 @@
         "test_adversarial.HandleIntegrity.test_process_reuse_rejected_before_accessibility"
       ],
       "limits": "Simulated changed start time, not actual PID recycling."
+    },
+    "EVAL-07": {
+      "implementation": "partial",
+      "tests": [
+        "test_process_cleanup.ProcessCleanup.test_timeout_kills_descendant_before_delayed_effect"
+      ],
+      "limits": "Independent delayed-file oracle for process group cleanup; not yet a desktop-provider delayed-effect test."
     }
   }
 }
