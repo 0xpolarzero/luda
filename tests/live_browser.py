@@ -97,19 +97,72 @@ async def main(executable):
                             await page.locator(selector).evaluate('(e,v)=>{if(e.tagName==="TEXTAREA")e.value=v;else e.textContent=v}',initial)
                             node=await element(name)
                             await call('desktop_focus_element',element_id=node['element_id'])
+                            before_selection=await call('desktop_read_text',element_id=node['element_id'])
                             selected=await session.call_tool('desktop_select',{'element_id':node['element_id'],'start_offset':1,'end_offset':5})
                             if selected.isError:
                                 record('unicode-selection-'+selector[1:],False,response=json.loads(selected.content[0].text))
                             else:
+                                after_selection=await call('desktop_read_text',element_id=node['element_id'])
                                 typed=await session.call_tool('desktop_type',{'element_id':node['element_id'],'text':'日本語','mode':'insert'})
                                 expected='A日本語B e\u0301C'
                                 actual=await probe() if typed.isError else await wait_value(probe,expected)
-                                record('unicode-selection-'+selector[1:],not typed.isError and actual==expected,response=json.loads(typed.content[0].text),actual=actual)
-                                if typed.isError:
-                                    await call('desktop_paste',window_id=wid,text='日本語')
-                                    actual=await wait_value(probe,expected)
-                                    record('unicode-selection-clipboard-'+selector[1:],actual==expected,actual=actual)
-
+                                record('unicode-selection-'+selector[1:],not typed.isError and actual==expected,response=json.loads(typed.content[0].text),actual=actual,before_selection=before_selection,after_selection=after_selection)
+                                # A separate clipboard test starts from fresh state;
+                                # never retry a possibly-applied failed mutation.
+                                await page.locator(selector).evaluate('(e,v)=>{if(e.tagName==="TEXTAREA")e.value=v;else e.textContent=v}',initial)
+                                node=await element(name)
+                                await call('desktop_focus_element',element_id=node['element_id'])
+                                await call('desktop_select',element_id=node['element_id'],start_offset=1,end_offset=5)
+                                await call('desktop_paste',window_id=wid,text='日本語')
+                                actual=await wait_value(probe,expected)
+                                record('unicode-selection-clipboard-'+selector[1:],actual==expected,actual=actual)
+                        # Boundary and hostile application behavior are separate cases,
+                        # each with fresh DOM setup and no retry of uncertain input.
+                        async def setup_text(value):
+                            await page.locator('#textarea').evaluate('(e,v)=>{e.onpaste=null;e.onfocus=null;e.value=v}',value)
+                            return await element('Contract textarea')
+                        node=await setup_text('clear me 日本語')
+                        response=await session.call_tool('desktop_type',{'element_id':node['element_id'],'text':'','mode':'replace'})
+                        actual=await page.locator('#textarea').input_value()
+                        record('empty-replacement-clears',not response.isError and actual=='',response=json.loads(response.content[0].text),actual=actual)
+                        for offset in (0,2,5):
+                            initial='A😀BCZ'
+                            node=await setup_text(initial)
+                            await call('desktop_focus_element',element_id=node['element_id'])
+                            await call('desktop_select',element_id=node['element_id'],start_offset=offset,end_offset=offset)
+                            response=await session.call_tool('desktop_type',{'element_id':node['element_id'],'text':'é','mode':'insert'})
+                            expected=initial[:offset]+'é'+initial[offset:]
+                            actual=await page.locator('#textarea').input_value()
+                            record('collapsed-caret-'+str(offset),not response.isError and actual==expected,response=json.loads(response.content[0].text),actual=actual)
+                        node=await setup_text('original')
+                        await page.locator('#textarea').evaluate('(e)=>{e.onpaste=(event)=>event.preventDefault()}')
+                        response=await session.call_tool('desktop_type',{'element_id':node['element_id'],'text':'rejected','mode':'replace'})
+                        value=json.loads(response.content[0].text)
+                        actual=await page.locator('#textarea').input_value()
+                        record('rejected-paste-is-not-verified',response.isError and value.get('effect')=='uncertain' and actual=='original',response=value,actual=actual)
+                        node=await setup_text('original')
+                        await page.locator('#textarea').evaluate('(e)=>{e.onpaste=(event)=>{event.preventDefault();const value=event.clipboardData.getData("text");setTimeout(()=>{e.value=value;e.dispatchEvent(new Event("input",{bubbles:true}))},180)}}')
+                        began=time.monotonic()
+                        response=await session.call_tool('desktop_type',{'element_id':node['element_id'],'text':'delayed 日本語','mode':'replace'})
+                        actual=await page.locator('#textarea').input_value()
+                        record('delayed-paste-waits-for-result',not response.isError and actual=='delayed 日本語' and time.monotonic()-began>=.18,response=json.loads(response.content[0].text),actual=actual)
+                        node=await setup_text('original')
+                        await page.locator('#textarea').evaluate('(e)=>{e.onpaste=(event)=>{event.preventDefault();e.value=event.clipboardData.getData("text").toUpperCase();e.dispatchEvent(new Event("input",{bubbles:true}))}}')
+                        response=await session.call_tool('desktop_type',{'element_id':node['element_id'],'text':'transformed','mode':'replace'})
+                        value=json.loads(response.content[0].text)
+                        actual=await page.locator('#textarea').input_value()
+                        record('transformed-paste-is-not-verified',response.isError and value.get('effect')=='uncertain' and actual=='TRANSFORMED',response=value,actual=actual)
+                        # Steal widget focus while the server performs its multi-step
+                        # transaction. Both values are independent mutation oracles.
+                        node=await setup_text('original')
+                        await page.locator('#editable').evaluate('(e)=>{e.textContent="do not touch";e.focus()}')
+                        await page.locator('#textarea').evaluate('(e)=>{e.onfocus=()=>setTimeout(()=>document.querySelector("#editable").focus(),30)}')
+                        response=await session.call_tool('desktop_type',{'element_id':node['element_id'],'text':'stolen input','mode':'replace'})
+                        value=json.loads(response.content[0].text)
+                        target_value=await page.locator('#textarea').input_value()
+                        other_value=await page.locator('#editable').inner_text()
+                        record('widget-focus-theft-refused-before-text',response.isError and target_value=='original' and other_value=='do not touch',response=value,target=target_value,other=other_value)
+                        await page.locator('#textarea').evaluate('(e)=>{e.onfocus=null;e.onpaste=null}')
                         for name,selector in [('Contract read only','#readonly'),('Contract disabled','#disabled')]:
                             node=await element(name)
                             response=await session.call_tool('desktop_type',{'element_id':node['element_id'],'text':'must not write','mode':'replace'})

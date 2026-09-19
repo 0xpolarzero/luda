@@ -29,3 +29,11 @@ Environment: Ubuntu ARM64, fresh isolated Xvfb and XFWM4, root-owned synthetic s
 The native GTK file chooser could not be uniquely mapped through Luda accessibility in this run. The retained screenshot supports the pinned-layout Open-button coordinates used by the fixture. This is a specific screenshot workflow, not general file-dialog layout coverage. Return while the location field was focused closed this chooser with a DOM `cancel` event; explicitly clicking Open generated `change` and selected the expected file. Window disappearance alone would have produced a false success claim.
 
 Firefox is not installed and has not been qualified. Browser versions, rendering backends, zoom, IME behavior, cross-origin frames, complex editors and alternate native chooser layouts need additional evidence. The fixture documents its assumptions rather than claiming all browser interactions are covered.
+
+## Verified typing fallback and adversarial application behavior
+
+The post-baseline suite also tests empty replacement, collapsed carets before/after astral characters and at field end, rejected paste events, delayed application updates, transformed input and focus theft to another editable widget. Each scenario starts from fresh synthetic DOM state. An uncertain error is never retried as a clipboard action; the independent clipboard cases reinitialize their own state.
+
+In the first fallback run, textarea multiline, empty replacement, all three collapsed carets, delayed completion, rejected/transformed-paste error classification and the focus-theft negative case passed. Unicode selection readback and contenteditable hypertext exposed further provider discrepancies despite correct DOM effects; those failures remain explicit until corrected and rerun.
+
+`.github/workflows/browser.yml` provisions the pinned Playwright browser in a dedicated setup step and passes its executable to the test. The test itself performs no browser downloads. CI uses a fresh isolated Xvfb display and a 180-second suite watchdog. A configured workflow is not evidence of a hosted CI pass; inspect the uploaded versioned result artifact.
