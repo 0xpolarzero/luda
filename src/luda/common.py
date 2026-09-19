@@ -21,14 +21,15 @@ class Operation:
     deadline: float
     cancelled: threading.Event
     effect: str = "none"
+    guard: object = None
 
 
 _current_operation = contextvars.ContextVar("luda_operation", default=None)
 
 
 @contextmanager
-def operation_scope(timeout=12, cancelled=None):
-    operation = Operation(time.monotonic() + timeout, cancelled or threading.Event())
+def operation_scope(timeout=12, cancelled=None, guard=None):
+    operation = Operation(time.monotonic() + timeout, cancelled or threading.Event(), guard=guard)
     token = _current_operation.set(operation)
     try:
         yield operation
@@ -43,6 +44,13 @@ def checkpoint():
             raise DesktopError("CANCELLED", "Operation cancelled. Inspect state before retrying.", effect=operation.effect)
         if time.monotonic() >= operation.deadline:
             raise DesktopError("TIMEOUT", "Overall operation deadline exceeded. Inspect state before retrying.", effect=operation.effect)
+        if operation.guard:
+            try:
+                operation.guard()
+            except DesktopError as exc:
+                if operation.effect != 'none' and exc.effect == 'none':
+                    exc.effect = 'uncertain'
+                raise
 
 
 def mark_effect(effect="uncertain"):

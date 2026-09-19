@@ -1,4 +1,6 @@
+import argparse
 import asyncio
+from importlib.metadata import version
 import atexit
 from collections import deque
 import json
@@ -43,9 +45,11 @@ def execute(method, *args, _cancelled=None, **kwargs):
     try:
         if _quarantined.is_set():
             raise DesktopError('BUSY', 'Previous cancelled operation is still cleaning up; no new input sent.')
-        with operation_scope(timeout=12, cancelled=_cancelled) as operation:
+        d = get_backend()
+        observation = method in ('doctor','list_windows','observe','inspect','workspaces','wait_for') or (method=='element' and len(args)>1 and args[1]=='read')
+        guard = None if observation else d.control.require_active
+        with operation_scope(timeout=12, cancelled=_cancelled, guard=guard) as operation:
             try:
-                d = get_backend()
                 with d.transaction():
                     result = getattr(d,method)(*args,**kwargs)
             except DesktopError as exc:
@@ -92,6 +96,17 @@ async def execute_async(method, *args, **kwargs):
             else:
                 _quarantined.clear()
         raise
+
+
+@mcp.tool()
+async def desktop_control(action: Literal['status','pause','resume']='status') -> CallToolResult:
+    """Pause/resume cooperating agent input across servers on this display. Pause interrupts at the next checkpoint; already-delivered input is not undone. Observation remains available. This does not stop arbitrary external input programs."""
+    try:
+        control = get_backend().control
+        state = control.status() if action=='status' else control.set_paused(action=='pause')
+        return CallToolResult(content=[TextContent(type='text',text=json.dumps({'ok':True,**state}))])
+    except DesktopError as exc:
+        return result_error(exc.code,str(exc),exc.effect)
 
 
 @mcp.tool()
@@ -243,6 +258,21 @@ async def desktop_wait(condition: Literal['window_present','window_absent','wind
 
 
 def main():
+    parser = argparse.ArgumentParser(description='Luda local desktop MCP server and session controls')
+    parser.add_argument('--version',action='version',version=version('luda'))
+    sub = parser.add_subparsers(dest='command')
+    sub.add_parser('doctor',help='Print real desktop readiness as JSON')
+    control = sub.add_parser('control',help='Coordinate human/agent input on this display')
+    control.add_argument('action',choices=['status','pause','resume'])
+    args = parser.parse_args()
+    if args.command=='doctor':
+        result = execute('doctor')
+        print(result.content[0].text)
+        raise SystemExit(1 if result.isError or not json.loads(result.content[0].text).get('ready') else 0)
+    if args.command=='control':
+        result = asyncio.run(desktop_control(args.action))
+        print(result.content[0].text)
+        raise SystemExit(1 if result.isError else 0)
     mcp.run(transport='stdio')
 
 

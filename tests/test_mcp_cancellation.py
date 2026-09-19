@@ -4,7 +4,7 @@ import json
 import sys
 import threading
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 from luda.common import DesktopError, mark_effect, run
 from luda import server
@@ -13,6 +13,7 @@ from luda import server
 class FakeDesktop:
     def __init__(self):
         self.started = threading.Event()
+        self.control = Mock()
     def transaction(self): return nullcontext()
     def blocked(self):
         self.started.set()

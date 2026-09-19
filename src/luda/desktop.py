@@ -19,6 +19,7 @@ from PIL import Image
 from .common import DesktopError, display_identity, checkpoint, mark_effect, process_identity, run, stop_process, validate_text
 from .x11 import X11
 from .interaction import InteractionMixin
+from .control import Control
 
 
 class Desktop(InteractionMixin):
@@ -37,6 +38,7 @@ class Desktop(InteractionMixin):
             raise DesktopError('UNSAFE_RUNTIME', 'Runtime directory must be owned by this account and mode 0700.')
         self.lockfd = os.open(directory/f'{name}.lock', os.O_CREAT|os.O_RDWR|os.O_NOFOLLOW, 0o600)
         self.runtime = directory
+        self.control = Control(directory, name)
 
     @contextmanager
     def transaction(self):
