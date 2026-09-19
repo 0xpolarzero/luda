@@ -180,9 +180,148 @@ class TextAccess:
         return Atspi.Text.remove_selection(self.raw, index)
 
 
+def choose_combo_option(node, combo):
+    """Commit a popup option, not merely highlight a menu row."""
+    combo_states = states_of(combo)
+    if "showing" not in combo_states or not {"enabled", "sensitive"}.intersection(combo_states):
+        return failure("NOT_INTERACTABLE", "Combo must be sensitive and showing.")
+    if "Selection" not in combo.get_interfaces() or "Action" not in node.get_interfaces():
+        return failure("UNSUPPORTED_ACTION", "Combo option commitment cannot be verified semantically; use the visible popup workflow.")
+    action = node.get_action_iface()
+    recognized = [i for i in range(action.get_n_actions())
+                  if action.get_action_name(i).casefold() in ("click", "press", "activate")]
+    if len(recognized) != 1:
+        return failure("UNSUPPORTED_ACTION", "Combo option has no unambiguous activation action.")
+    selection = combo.get_selection_iface()
+    accepted = bool(action.do_action(recognized[0]))
+    def committed():
+        if Atspi.Selection.get_n_selected_children(selection) != 1:
+            return False
+        return Atspi.Selection.get_selected_child(selection, 0).path == node.path
+    matched = verify(committed)
+    return {"effect": "verified" if matched else "uncertain", "accepted": accepted,
+            "selected": matched, "selection_method": "combo_option_activation"}
+
+
+def choose_by_action(node, parent, current, extend):
+    """Qt list items expose Toggle/selected instead of a Selection container."""
+    if current["role"] != "list item" or "selectable" not in current["states"] or parent.get_role_name() not in ("list", "list box"):
+        return failure("UNSUPPORTED", "Option parent has no supported selection interface.")
+    count = parent.get_child_count()
+    if count > 500:
+        return failure("SELECTION_TOO_LARGE", "Action-based selection is limited to 500 direct options.")
+    siblings = [parent.get_child_at_index(i) for i in range(count)]
+    changes = ([node] if "selected" not in states_of(node) else [])
+    if not extend:
+        changes += [other for other in siblings if other.path != node.path and "selected" in states_of(other)]
+    plan = []
+    for other in changes:
+        if "Action" not in other.get_interfaces():
+            return failure("UNSUPPORTED_ACTION", "Every changed option must advertise a Toggle action.")
+        action = other.get_action_iface()
+        indices = [i for i in range(action.get_n_actions()) if action.get_action_name(i).casefold() == "toggle"]
+        if len(indices) != 1:
+            return failure("UNSUPPORTED_ACTION", "Every changed option must advertise one unambiguous Toggle action.")
+        plan.append((other, action, indices[0]))
+    accepted = True
+    for other, action, index in plan:
+        child_index = other.get_index_in_parent()
+        if child_index < 0 or parent.get_child_at_index(child_index).path != other.path:
+            return {"effect": "uncertain", "accepted": accepted, "selected": False,
+                    "verification": "Option identity changed while selecting; inspect again."}
+        accepted = bool(action.do_action(index)) and accepted
+    matched = verify(lambda: "selected" in states_of(node) and (extend or all(
+        other.path == node.path or "selected" not in states_of(other) for other in siblings)))
+    return {"effect": "verified" if matched else "uncertain", "accepted": accepted,
+            "selected": matched, "changed": bool(plan) and matched, "extend": extend,
+            "selection_method": "advertised_toggle_actions"}
+
+
 def semantic(node, current, req):
     """Return None for legacy operations. Never emulate unsupported semantics by typing."""
     op = req["op"]
+    if op == "secret":
+        if not current["protected"]:
+            return failure("NOT_PROTECTED_FIELD", "Explicit protected input requires an observed protected field.")
+        if "EditableText" not in current["interfaces"] or "editable" not in current["states"]:
+            return failure("UNSUPPORTED", "Protected input requires an editable EditableText interface.")
+        text = req.get("text")
+        if not isinstance(text, str) or len(text) > 1_000_000 or any(c in text for c in ('\0', '\r')) or any(0xD800 <= ord(c) <= 0xDFFF for c in text):
+            return failure("UNSUPPORTED_TEXT", "Protected input must be valid Unicode without NUL or CR, within the text budget.")
+        try:
+            accepted = bool(node.get_editable_text_iface().set_text_contents(text))
+        except Exception:
+            # A provider may echo its argument in an exception. Never expose it.
+            return {"error": "ACCESSIBILITY_ERROR", "message": "Protected input provider failed; outcome is uncertain.", "effect": "uncertain"}
+        return {"effect": "dispatched" if accepted else "uncertain", "accepted": accepted,
+                "verification": "Protected contents are never read back; acceptance does not verify the value."}
+    if op == "choose":
+        if current["protected"]:
+            return failure("PROTECTED_FIELD", "Protected fields are not selectable options.")
+        extend = req.get("extend", False)
+        if type(extend) is not bool:
+            return failure("INVALID_ARGUMENT", "extend must be a boolean.")
+        if current["role"] == "radio button":
+            if extend:
+                return failure("INVALID_ARGUMENT", "Radio choices cannot extend a selection.")
+            return semantic(node, current, {"op": "check", "checked": True})
+        parent = node.get_parent()
+        if parent is None:
+            return failure("UNSUPPORTED", "Option has no accessible parent.")
+        parent_states = states_of(parent)
+        if "showing" not in parent_states or not {"enabled", "sensitive"}.intersection(parent_states):
+            return failure("NOT_INTERACTABLE", "Selection container must be sensitive and showing.")
+        ancestor = parent
+        for _ in range(8):
+            if ancestor.get_role_name() == "combo box":
+                if extend:
+                    return failure("INVALID_ARGUMENT", "Combo options cannot extend a selection.")
+                return choose_combo_option(node, ancestor)
+            if ancestor.get_role_name() in ("frame", "window", "dialog", "application"):
+                break
+            ancestor = ancestor.get_parent()
+            if ancestor is None:
+                break
+        if current["role"] == "menu item":
+            return failure("UNSUPPORTED", "Menu commands require their explicit activation action, not option selection.")
+        index = node.get_index_in_parent()
+        if index < 0 or parent.get_child_at_index(index).path != node.path:
+            return failure("STALE_TARGET", "Option position changed; inspect again.")
+        if "Selection" not in parent.get_interfaces():
+            return choose_by_action(node, parent, current, extend)
+        selection = parent.get_selection_iface()
+        def chosen():
+            return (Atspi.Selection.is_child_selected(selection, index)
+                    and (extend or Atspi.Selection.get_n_selected_children(selection) == 1))
+        if chosen():
+            return {"effect": "verified", "accepted": True, "selected": True, "changed": False}
+        if Atspi.Selection.get_n_selected_children(selection) > 500:
+            return failure("SELECTION_TOO_LARGE", "Selection normalization exceeds the 500-option budget.")
+        # Some GTK containers omit multiselectable even when multiple selections
+        # are enabled. Select first, then remove other actual selected children.
+        accepted = (True if Atspi.Selection.is_child_selected(selection, index)
+                    else bool(Atspi.Selection.select_child(selection, index)))
+        if not extend and accepted:
+            count = Atspi.Selection.get_n_selected_children(selection)
+            if count > 500:
+                return {"effect": "uncertain", "accepted": accepted, "selected": False,
+                        "verification": "Selection grew beyond the normalization budget."}
+            others = [Atspi.Selection.get_selected_child(selection, i) for i in range(count)]
+            for selected_index in range(len(others) - 1, -1, -1):
+                other = others[selected_index]
+                if other.path == node.path:
+                    continue
+                other_index = other.get_index_in_parent()
+                if other_index < 0 or parent.get_child_at_index(other_index).path != other.path:
+                    return {"effect": "uncertain", "accepted": accepted, "selected": False,
+                            "verification": "Selected options changed while normalizing selection."}
+                if Atspi.Selection.get_selected_child(selection, selected_index).path != other.path:
+                    return {"effect": "uncertain", "accepted": accepted, "selected": False,
+                            "verification": "Selected option order changed; inspect again."}
+                accepted = bool(Atspi.Selection.deselect_selected_child(selection, selected_index)) and accepted
+        matched = verify(chosen)
+        return {"effect": "verified" if matched else "uncertain", "accepted": accepted,
+                "selected": matched, "changed": matched, "extend": extend}
     if op in ("insert", "select"):
         if current["protected"]:
             return failure("PROTECTED_FIELD", "Protected text cannot be read or changed.")
@@ -319,7 +458,7 @@ def semantic(node, current, req):
 
 def main(req):
     pid = req["pid"]
-    if req.get("op") not in {"inspect", "read", "set", "focus", "invoke", "insert", "select", "value", "check", "expand"}:
+    if req.get("op") not in {"inspect", "read", "set", "focus", "invoke", "insert", "select", "value", "check", "expand", "secret", "choose"}:
         return failure("UNSUPPORTED_OPERATION", "Unknown accessibility operation.")
     if req.get("start") and identity(pid) != req["start"]:
         return {"error": "STALE_TARGET", "message": "Process identity changed."}

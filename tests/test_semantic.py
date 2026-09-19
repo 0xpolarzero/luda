@@ -183,4 +183,71 @@ class CaretPostcondition(unittest.TestCase):
             self.assertTrue(result['exact_match']);self.assertEqual(raw.text,'aXbc');self.assertFalse(result['caret_verified'])
         finally:w.Atspi=old
 
+
+
+class ProtectedInput(unittest.TestCase):
+    def setUp(self):
+        self.edit=types.SimpleNamespace(set_text_contents=lambda text:True)
+        self.node=types.SimpleNamespace(get_editable_text_iface=lambda:self.edit)
+        self.current={'protected':True,'interfaces':['EditableText'],'states':['editable'],'role':'password text'}
+    def call(self,text='synthetic-secret'):return w.semantic(self.node,self.current,{'op':'secret','text':text})
+    def test_acceptance_never_claims_verified_value(self):
+        r=self.call();self.assertEqual(r['effect'],'dispatched');self.assertNotIn('synthetic-secret',str(r));self.assertNotIn('exact_match',r)
+    def test_provider_exception_cannot_echo_secret(self):
+        def broken(text):raise RuntimeError('provider echoed '+text)
+        self.edit.set_text_contents=broken
+        r=self.call();self.assertEqual(r['effect'],'uncertain');self.assertNotIn('synthetic-secret',str(r));self.assertNotIn('provider echoed',str(r))
+    def test_nonprotected_refused(self):
+        self.current['protected']=False;self.assertEqual(self.call()['error'],'NOT_PROTECTED_FIELD')
+    def test_missing_editable_interface_refused(self):
+        self.current['interfaces']=[];self.assertEqual(self.call()['error'],'UNSUPPORTED')
+    def test_invalid_secret_never_reaches_provider(self):
+        def forbidden(text):raise AssertionError('must not reach provider')
+        self.edit.set_text_contents=forbidden
+        for text in ('\0','\r','\ud800',None):self.assertEqual(self.call(text)['error'],'UNSUPPORTED_TEXT')
+
+class SelectionProvider:
+    def __init__(self):
+        self.selected=set();self.ignore_deselect=False
+        self.nodes=[types.SimpleNamespace(path='/option/'+str(i),get_index_in_parent=lambda i=i:i) for i in range(3)]
+    def get_interfaces(self):return ['Selection']
+    def get_role_name(self):return 'list box'
+    def get_parent(self):return None
+    def get_selection_iface(self):return self
+    def get_child_at_index(self,i):return self.nodes[i]
+    def is_child_selected(self,i):return i in self.selected
+    def get_n_selected_children(self):return len(self.selected)
+    def get_selected_child(self,i):return self.nodes[sorted(self.selected)[i]]
+    def select_child(self,i):self.selected.add(i);return True
+    def deselect_selected_child(self,index):
+        return self.deselect_child(sorted(self.selected)[index])
+    def deselect_child(self,i):
+        if not self.ignore_deselect:self.selected.discard(i)
+        return True
+
+class OptionSelection(unittest.TestCase):
+    def setUp(self):
+        self.old=w.Atspi;w.Atspi=types.SimpleNamespace(Selection=SelectionProvider)
+        self.parent=SelectionProvider();self.node=self.parent.nodes[1];self.node.get_parent=lambda:self.parent
+        self.current={'protected':False,'role':'list item','states':[]}
+        self.states=patch.object(w,'states_of',return_value={'sensitive','showing'});self.states.start()
+        self.verifier=patch.object(w,'verify',lambda fn,**_:fn());self.verifier.start()
+    def tearDown(self):w.Atspi=self.old;self.states.stop();self.verifier.stop()
+    def call(self,**kw):return w.semantic(self.node,self.current,{'op':'choose',**kw})
+    def test_single_choice_is_exclusive_without_multiselectable_flag(self):
+        self.parent.selected={0,2};r=self.call();self.assertEqual(self.parent.selected,{1});self.assertEqual(r['effect'],'verified')
+    def test_extend_preserves_other_choices(self):
+        self.parent.selected={0};self.call(extend=True);self.assertEqual(self.parent.selected,{0,1})
+    def test_already_selected_is_idempotent(self):
+        self.parent.selected={1};r=self.call();self.assertFalse(r['changed'])
+    def test_false_deselection_success_not_verified(self):
+        self.parent.selected={0};self.parent.ignore_deselect=True;r=self.call();self.assertEqual(r['effect'],'uncertain')
+    def test_missing_selection_interface_refused(self):
+        self.parent.get_interfaces=lambda:[];self.assertEqual(self.call()['error'],'UNSUPPORTED')
+    def test_disabled_parent_refused(self):
+        with patch.object(w,'states_of',return_value={'showing'}):self.assertEqual(self.call()['error'],'NOT_INTERACTABLE')
+    def test_stale_child_index_refused(self):
+        self.node.get_index_in_parent=lambda:0;self.assertEqual(self.call()['error'],'STALE_TARGET')
+    def test_invalid_extend_refused(self):self.assertEqual(self.call(extend='yes')['error'],'INVALID_ARGUMENT')
+
 if __name__=='__main__':unittest.main()
