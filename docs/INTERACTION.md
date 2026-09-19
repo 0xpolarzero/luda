@@ -14,6 +14,14 @@ On the Silo Ubuntu 24.04 ARM64 XFCE/KasmVNC guest, `tests/live_interaction.py` v
 
 `tests/test_interaction.py` covers malformed arguments with zero dispatch, finite coordinate validation, screenshot scale and half-open bounds, stale/missing observations, changed layout/resolution, destination prevalidation, input release after failure, release failure preserving the initial error, and unverified state reporting.
 
-Popup descriptors are observation-only. They do not by themselves authorize actions: menus without an owner hint, XID reuse, occlusion, nested popups and application-specific menu interaction remain separate qualification work. Direct Xlib reads assume a responsive local display; process isolation is needed to enforce deadlines against a completely stalled X server.
+Popup descriptors are observation-only. They do not by themselves authorize actions: menus without an owner hint, XID reuse, occlusion, nested popups and application-specific menu interaction remain separate qualification work. All Xlib reads now run in an isolated helper with a two-second timeout and the operation-level deadline/cancellation policy. No native display handle survives a read.
 
 `tests/live_drag.py` additionally passed an actual GTK drag-and-drop between two separately positioned windows: the destination's `drag-data-received` callback wrote the exact UTF-8 payload `luda drag payload 日本語` to an independent file. The tool correctly returned `dispatched`; the test, not the generic tool, verified the application transfer. This qualifies this GTK COPY fixture, not arbitrary file-manager or cross-toolkit transfers. Current-workspace assignment and switching were also verified; cross-workspace animation behavior remains unqualified.
+
+## X11 fault isolation
+
+The public `X11` object launches a fresh `luda._x11_helper` process for each read. Native ctypes calls live only in its private `_NativeX11` implementation. This contains fatal Xlib I/O errors and uses `common.run` to terminate stalled reads. There are no reconnect handles to reset: even the root-window property is fetched from a new connection. `close()` is idempotent and releases no persistent resources.
+
+`tests/live_x11_isolation.py` uses its own disposable Xvfb, never the shared desktop: SIGSTOP produced a TIMEOUT after 2.002 seconds, SIGCONT restored reads, a terminated display reported DISPLAY_UNAVAILABLE, and the same wrapper read the new 800×600 geometry after restart. All three GTK interaction/popup/drag probes passed again with the isolated implementation. Seven helper unit tests cover crashes, malformed replies, cancellation, timeout, bad arguments and per-read process isolation.
+
+The tradeoff is process startup for each metadata read. Window enumeration therefore scales with the number of windows; a batched helper query can reduce overhead without introducing a persistent Xlib connection. Errors from one helper call do not mark a future connection permanently unavailable.

@@ -1,90 +1,62 @@
-"""Read client geometry in root pixels, avoiding window-manager frame offsets."""
-import ctypes as C
-from .common import DesktopError
+"""Bounded X11 metadata reads isolated from the tool server's process.
 
-
-_IGNORE_X_ERROR = C.CFUNCTYPE(C.c_int, C.c_void_p, C.c_void_p)(lambda *_: 0)
+No display connection survives a request. A dead or restarted X server cannot
+terminate this process through Xlib's fatal I/O handler.
+"""
+import json
+import sys
+from .common import DesktopError, run
 
 
 class X11:
     def __init__(self):
-        x = self.lib = C.CDLL('libX11.so.6')
-        x.XOpenDisplay.argtypes = [C.c_char_p]; x.XOpenDisplay.restype = C.c_void_p
-        x.XDefaultRootWindow.argtypes = [C.c_void_p]; x.XDefaultRootWindow.restype = C.c_ulong
-        x.XGetGeometry.argtypes = [C.c_void_p,C.c_ulong,C.POINTER(C.c_ulong),C.POINTER(C.c_int),C.POINTER(C.c_int),C.POINTER(C.c_uint),C.POINTER(C.c_uint),C.POINTER(C.c_uint),C.POINTER(C.c_uint)]
-        x.XTranslateCoordinates.argtypes = [C.c_void_p,C.c_ulong,C.c_ulong,C.c_int,C.c_int,C.POINTER(C.c_int),C.POINTER(C.c_int),C.POINTER(C.c_ulong)]
-        x.XCloseDisplay.argtypes = [C.c_void_p]
-        # Windows can disappear between enumeration and geometry. Do not let Xlib exit the server.
-        self.error_handler = _IGNORE_X_ERROR
-        x.XSetErrorHandler.argtypes = [C.c_void_p]
-        x.XSetErrorHandler(C.cast(self.error_handler, C.c_void_p))
-        self.display = x.XOpenDisplay(None)
-        if not self.display:
-            raise DesktopError('DISPLAY_UNAVAILABLE', 'Cannot open DISPLAY; use the session launcher and run doctor.')
-        self.root = x.XDefaultRootWindow(self.display)
+        # Preserve eager availability checking without retaining an Xlib handle.
+        self._read('root')
+
+    def _read(self, method, argument=None):
+        try:
+            raw = run([sys.executable, '-m', 'luda._x11_helper'],
+                      data=json.dumps({'method':method,'argument':argument}).encode(), timeout=2)
+        except DesktopError as exc:
+            if exc.code == 'BACKEND_ERROR':
+                raise DesktopError('DISPLAY_UNAVAILABLE', 'X11 metadata helper exited unexpectedly; reconnect or run doctor.',
+                                   details={'backend_code':exc.code}) from exc
+            raise
+        try:
+            envelope = json.loads(raw)
+            if not isinstance(envelope, dict): raise ValueError()
+            if 'error' in envelope:
+                error = envelope['error']
+                if not isinstance(error,dict) or not isinstance(error.get('code'),str) or not isinstance(error.get('message'),str):
+                    raise ValueError()
+                raise DesktopError(error['code'],error['message'])
+            return envelope['result']
+        except (ValueError, KeyError, TypeError) as exc:
+            raise DesktopError('BACKEND_ERROR','X11 metadata helper returned an invalid response.') from exc
+
+    @staticmethod
+    def _xid(window):
+        if isinstance(window,bool) or not isinstance(window,int) or not 1 <= window <= 0xffffffff:
+            raise DesktopError('INVALID_ARGUMENT','Window XID must be a positive 32-bit integer.')
+        return window
+
+    @property
+    def root(self):
+        return self._read('root')
 
     def geometry(self, window):
-        root, child = C.c_ulong(), C.c_ulong()
-        x, y = C.c_int(), C.c_int()
-        w, h, border, depth = [C.c_uint() for _ in range(4)]
-        if not self.lib.XGetGeometry(self.display, window, C.byref(root), C.byref(x), C.byref(y), C.byref(w), C.byref(h), C.byref(border), C.byref(depth)):
-            raise DesktopError('STALE_TARGET', 'Window has disappeared.')
-        if not self.lib.XTranslateCoordinates(self.display, window, self.root, 0, 0, C.byref(x), C.byref(y), C.byref(child)):
-            raise DesktopError('STALE_TARGET', 'Cannot translate window coordinates.')
-        return {'x':x.value,'y':y.value,'width':w.value,'height':h.value}
-
-    def close(self):
-        if self.display:
-            self.lib.XCloseDisplay(self.display)
-            self.display = None
+        return self._read('geometry',self._xid(window))
 
     def transient_for(self, window):
-        """ICCCM owner hint, including managed dialogs; zero means no hint."""
-        fn = self.lib.XGetTransientForHint
-        fn.argtypes = [C.c_void_p, C.c_ulong, C.POINTER(C.c_ulong)]
-        fn.restype = C.c_int
-        owner = C.c_ulong()
-        return owner.value if fn(self.display, window, C.byref(owner)) else None
+        return self._read('transient_for',self._xid(window))
 
     def children(self, window):
-        fn = self.lib.XQueryTree
-        fn.argtypes = [C.c_void_p,C.c_ulong,C.POINTER(C.c_ulong),C.POINTER(C.c_ulong),C.POINTER(C.POINTER(C.c_ulong)),C.POINTER(C.c_uint)]
-        fn.restype = C.c_int
-        self.lib.XFree.argtypes = [C.c_void_p]
-        root,parent = C.c_ulong(),C.c_ulong()
-        children = C.POINTER(C.c_ulong)(); count = C.c_uint()
-        if not fn(self.display,window,C.byref(root),C.byref(parent),C.byref(children),C.byref(count)):
-            return []
-        try:
-            return list(children[:count.value])
-        finally:
-            if children: self.lib.XFree(children)
+        return self._read('children',self._xid(window))
 
     def popup_surfaces(self, limit=256):
-        """Mapped override-redirect surfaces, not ordinary application windows.
+        if isinstance(limit,bool) or not isinstance(limit,int) or not 1 <= limit <= 4096:
+            raise DesktopError('INVALID_ARGUMENT','Popup enumeration limit must be an integer from 1 to 4096.')
+        return self._read('popup_surfaces',limit)
 
-        XIDs are observation-only: caller must resolve owner/process identity and
-        revalidate before granting an opaque actionable target token.
-        """
-        class Attributes(C.Structure):
-            _fields_ = [('x',C.c_int),('y',C.c_int),('width',C.c_int),('height',C.c_int),
-                ('border_width',C.c_int),('depth',C.c_int),('visual',C.c_void_p),('root',C.c_ulong),
-                ('class_',C.c_int),('bit_gravity',C.c_int),('win_gravity',C.c_int),('backing_store',C.c_int),
-                ('backing_planes',C.c_ulong),('backing_pixel',C.c_ulong),('save_under',C.c_int),
-                ('colormap',C.c_ulong),('map_installed',C.c_int),('map_state',C.c_int),
-                ('all_event_masks',C.c_long),('your_event_mask',C.c_long),('do_not_propagate_mask',C.c_long),
-                ('override_redirect',C.c_int),('screen',C.c_void_p)]
-        fn = self.lib.XGetWindowAttributes
-        fn.argtypes = [C.c_void_p,C.c_ulong,C.POINTER(Attributes)]; fn.restype = C.c_int
-        surfaces = []
-        # Popup menus normally are direct root children. Do not traverse arbitrary
-        # application trees: it is unbounded and creates ambiguous nested targets.
-        for xid in self.children(self.root)[:limit]:
-            a = Attributes()
-            if fn(self.display,xid,C.byref(a)) and a.map_state == 2 and a.override_redirect and a.class_ == 1:
-                try:
-                    surfaces.append({'xid':xid,'transient_for':self.transient_for(xid),
-                                     'override_redirect':True,'bounds':self.geometry(xid)})
-                except DesktopError:
-                    continue
-        return surfaces
+    def close(self):
+        """No persistent resources; subsequent reads can reconnect normally."""
