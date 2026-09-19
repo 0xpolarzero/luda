@@ -39,3 +39,54 @@ class InteractionTests(unittest.TestCase):
         self.assertEqual(Dummy().workspaces(),[{'workspace':0,'active':True,'name':'Main workspace'},{'workspace':1,'active':False,'name':'Second'}])
 
 if __name__ == '__main__': unittest.main()
+
+class MoreInteractionTests(unittest.TestCase):
+    @patch('luda.interaction.time.sleep')
+    @patch('luda.interaction.run')
+    def test_cleanup_failure_retains_original_error(self, run, sleep):
+        run.side_effect=[b'',DesktopError('CANCELLED','cancel'),DesktopError('BACKEND_ERROR','release')]
+        with self.assertRaises(DesktopError) as caught: Dummy().drag_between('a','b','s',1,2,3,4)
+        self.assertEqual(caught.exception.code,'CANCELLED')
+        self.assertEqual(caught.exception.details['button_release_failed'],'BACKEND_ERROR')
+        self.assertEqual(caught.exception.effect,'uncertain')
+    @patch('luda.interaction.run')
+    def test_invalid_pointer_button_has_no_effect(self, run):
+        with self.assertRaises(DesktopError): Dummy().drag_between('a','b','s',1,2,3,4,button='invalid')
+        run.assert_not_called()
+    def test_nonfinite_pointer_coordinates(self):
+        for v in (None, True, float('inf'),float('nan'),'5'):
+            with self.subTest(value=v),self.assertRaises(DesktopError): InteractionMixin._interaction_point(Dummy(),'a','s',v,4)
+    @patch('luda.interaction.time.sleep')
+    @patch('luda.interaction.time.monotonic',side_effect=[0,0,2])
+    def test_unobserved_effect_not_reported_verified(self, monotonic, sleep):
+        self.assertEqual(Dummy()._await_state(lambda:False,{'action':'close'})['effect'],'dispatched')
+
+class PointTests(unittest.TestCase):
+    def driver(self):
+        import time
+        d=Dummy();d.windows={'a':{'bounds':{'x':10,'y':10,'width':40,'height':30}}}
+        d.snapshots={'s':{'time':time.monotonic(),'native':(100,100),'image':(50,50),'signature':'same'}}
+        d.target_window=lambda *args: d.windows['a']
+        d.signature=lambda windows:'same'
+        class Display:
+            root=1
+            def geometry(self, root): return {'width':100,'height':100}
+        d.display=lambda:Display()
+        return d
+    def test_scales_image_to_root_and_rejects_half_open_edges(self):
+        d=self.driver()
+        self.assertEqual(InteractionMixin._interaction_point(d,'a','s',5,5),(10,10))
+        self.assertEqual(InteractionMixin._interaction_point(d,'a','s',24.9,19.9),(49,39))
+        for x,y in [(25,10),(10,20),(-1,10),(50,10),(10,50),(4,10)]:
+            with self.subTest(x=x,y=y), self.assertRaises(DesktopError): InteractionMixin._interaction_point(d,'a','s',x,y)
+    def test_expired_missing_and_changed_layout_rejected(self):
+        d=self.driver()
+        for token in ('missing',None):
+            with self.assertRaises(DesktopError): InteractionMixin._interaction_point(d,'a',token,5,5)
+        d.snapshots['s']['time']-=16
+        with self.assertRaises(DesktopError): InteractionMixin._interaction_point(d,'a','s',5,5)
+        d=self.driver();d.signature=lambda windows:'changed'
+        with self.assertRaises(DesktopError): InteractionMixin._interaction_point(d,'a','s',5,5)
+    def test_changed_resolution_rejected(self):
+        d=self.driver();d.snapshots['s']['native']=(200,100)
+        with self.assertRaises(DesktopError): InteractionMixin._interaction_point(d,'a','s',5,5)

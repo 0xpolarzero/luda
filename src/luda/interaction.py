@@ -115,12 +115,23 @@ class InteractionMixin:
         start = self._interaction_point(source_window_id,snapshot_id,x,y)
         end = self._interaction_point(target_window_id,snapshot_id,end_x,end_y,False)
         run(['xdotool','mousemove',str(start[0]),str(start[1])],effect='uncertain')
+        failure = None
         try:
             run(['xdotool','mousedown',buttons[button]],effect='uncertain')
             for step in range(1,16):
                 p = [round(start[i]+(end[i]-start[i])*step/15) for i in (0,1)]
                 run(['xdotool','mousemove',str(p[0]),str(p[1])],effect='uncertain')
                 time.sleep(.02)
+        except BaseException as exc:
+            failure = exc
+            raise
         finally:
-            run(['xdotool','mouseup',buttons[button]],effect='uncertain',cleanup=True)
+            try:
+                run(['xdotool','mouseup',buttons[button]],effect='uncertain',cleanup=True)
+            except DesktopError as cleanup_error:
+                if failure is None:
+                    raise
+                if isinstance(failure, DesktopError):
+                    failure.details['button_release_failed'] = cleanup_error.code
+                    failure.effect = 'uncertain'
         return {'effect':'dispatched','verification':'Drag input sent and button released; inspect both applications to verify transfer.'}
