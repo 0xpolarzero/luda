@@ -162,6 +162,18 @@ async def desktop_type(element_id: str, text: str, mode: Literal["insert", "repl
 
 
 @mcp.tool()
+async def desktop_type_secret(element_id: str, text: str) -> CallToolResult:
+    """Replace an observed protected field. Never reads back or echoes the value, uses no clipboard, and reports dispatched only. Requires protected EditableText support; submission is a separate action."""
+    return await execute_async('element',element_id,'secret',text=text)
+
+
+@mcp.tool()
+async def desktop_choose(element_id: str, extend: bool = False) -> CallToolResult:
+    """Choose an observed list option, radio or supported combo option and verify selection. Default makes the choice exclusive; extend preserves other list selections. Open collapsed options and inspect first."""
+    return await execute_async('element',element_id,'choose',extend=extend)
+
+
+@mcp.tool()
 async def desktop_paste(window_id: str, text: str, shortcut: Literal['ctrl_v','ctrl_shift_v','shift_insert'] | None = None) -> CallToolResult:
     """Paste through CLIPBOARD when semantic typing is unavailable. Chooses common app shortcut from window class, with optional override. Destination is unverified; inspect dialogs/read back. Terminals can execute pasted newlines."""
     return await execute_async('paste',window_id,text,shortcut)

@@ -233,7 +233,7 @@ class Desktop(InteractionMixin):
         modifiers={'ctrl','alt','shift','super'}
         named={'Return','Tab','Escape','BackSpace','Delete','Home','End','Left','Right','Up','Down','Page_Up','Page_Down','Insert','space'}
         if not parts or any(p not in modifiers for p in parts[:-1]) or not (parts[-1] in named or re.fullmatch(r'[A-Za-z0-9]|F(?:[1-9]|1[0-9]|2[0-4])',parts[-1])):
-            raise DesktopError('INVALID_KEY','Use e.g. ctrl+s, ctrl+shift+v, Return, Tab, or Escape. Text belongs in enter_text.')
+            raise DesktopError('INVALID_KEY','Use e.g. ctrl+s, ctrl+shift+v, Return, Tab, or Escape. Text belongs in desktop_type.')
         run(['xdotool','key','--clearmodifiers',chord],effect='uncertain')
         return {'effect':'dispatched','verification':'Key delivery does not prove application outcome.'}
 
@@ -282,7 +282,7 @@ class Desktop(InteractionMixin):
         node=target['node']
         if node['start']!=w['start']:
             raise DesktopError('STALE_TARGET','Process identity changed.')
-        if op in ('set','insert'):
+        if op in ('set','insert','secret'):
             validate_text(kwargs['text'])
         return self.ax({'op':op,'pid':w['pid'],'start':w['start'],'target':node,**kwargs},op!='read')
 
