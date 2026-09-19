@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "policy": "Mappings are narrow local evidence, never release qualification. Read limits for scope.",
+  "requirements": {
+    "CONC-01": {
+      "implementation": "partial",
+      "tests": [
+        "test_adversarial.Coordination.test_other_instance_refused_and_recovers"
+      ],
+      "limits": "Rejects competing instances; fair scheduling and actual separate MCP-client mutation remain untested."
+    },
+    "CONC-02": {
+      "implementation": "implemented",
+      "tests": [
+        "test_adversarial.Coordination.test_other_thread_refused_before_body",
+        "test_adversarial.Coordination.test_same_thread_reentry_refused_then_lock_recovers"
+      ],
+      "limits": "Controlled thread contention; no randomized stress test."
+    },
+    "CONC-03": {
+      "implementation": "implemented",
+      "tests": [
+        "test_adversarial.Coordination.test_independent_displays_do_not_contend"
+      ],
+      "limits": "Distinct DISPLAY strings; aliases for one X server are not qualified."
+    },
+    "CONC-04": {
+      "implementation": "implemented",
+      "tests": [
+        "test_adversarial.Coordination.test_crashed_process_releases_file_lock"
+      ],
+      "limits": "Real child process killed while holding lock; does not verify input cleanup on server death."
+    },
+    "ERR-04": {
+      "implementation": "partial",
+      "tests": [
+        "test_contracts.Contracts.test_timeout_preserves_uncertain_effect"
+      ],
+      "limits": "Subprocess timeout only; no late-effect oracle or end-to-end operation budget."
+    },
+    "KEY-07": {
+      "implementation": "implemented",
+      "tests": [
+        "test_adversarial.NoInputOnInvalidRequest.test_bad_chords_send_no_command"
+      ],
+      "limits": "Command dispatch mocked; schema-level coercion tested separately."
+    },
+    "OBS-06": {
+      "implementation": "implemented",
+      "tests": [
+        "test_adversarial.HandleIntegrity.test_expired_screenshot_never_resolves_target"
+      ],
+      "limits": "Expired token rejected before target lookup in unit test."
+    },
+    "SEC-03": {
+      "implementation": "implemented",
+      "tests": [
+        "test_contracts.Contracts.test_shell_metacharacters_remain_arguments"
+      ],
+      "limits": "Real subprocess argv round-trip and sentinel file oracle."
+    },
+    "SEC-04": {
+      "implementation": "partial",
+      "tests": [
+        "test_contracts.Contracts.test_symlink_runtime_refused",
+        "test_contracts.Contracts.test_world_readable_runtime_refused"
+      ],
+      "limits": "Directory checks only; concurrent path substitution and preexisting lock inode remain unqualified."
+    },
+    "STATE-01": {
+      "implementation": "implemented",
+      "tests": [
+        "test_adversarial.HandleIntegrity.test_expired_element_never_resolves_window"
+      ],
+      "limits": "Unit test proves no lookup after expiration."
+    },
+    "STATE-02": {
+      "implementation": "partial",
+      "tests": [
+        "test_adversarial.HandleIntegrity.test_unknown_element_never_calls_accessibility"
+      ],
+      "limits": "Unknown element handle only; window tokens require separate cross-server testing."
+    },
+    "WIN-03": {
+      "implementation": "partial",
+      "tests": [
+        "test_adversarial.HandleIntegrity.test_process_reuse_rejected_before_accessibility"
+      ],
+      "limits": "Simulated changed start time, not actual PID recycling."
+    }
+  }
+}
