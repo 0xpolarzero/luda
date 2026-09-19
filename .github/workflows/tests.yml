@@ -12,7 +12,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: python -m pip install -e .
+      - run: python -m pip install --require-hashes -r requirements.lock
+      - run: python -m pip install --no-deps -e .
       - run: python scripts/qualify.py
       - uses: actions/upload-artifact@v4
         if: always()
@@ -31,7 +32,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y xvfb xfwm4 dbus-x11 at-spi2-core python3-gi gir1.2-atspi-2.0 gir1.2-gtk-3.0 xdotool wmctrl scrot xclip x11-utils
           python -m venv .venv
-          .venv/bin/python -m pip install -e .
+          .venv/bin/python -m pip install --require-hashes -r requirements.lock
+          .venv/bin/python -m pip install --no-deps -e .
       - name: Native and MCP workflows on an isolated display
         run: LUDA_ISOLATED_TEST_DISPLAY=1 xvfb-run -a -s '-screen 0 1440x900x24 -nolisten tcp' dbus-run-session -- .venv/bin/python scripts/headless_tests.py
       - uses: actions/upload-artifact@v4
