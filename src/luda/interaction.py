@@ -100,6 +100,14 @@ class InteractionMixin:
         if not 0 <= x < iw or not 0 <= y < ih:
             raise DesktopError('OUT_OF_BOUNDS', 'Point is outside screenshot.')
         px,py = int(x*nw/iw),int(y*nh/ih)
+        # An owned menu is part of its window's interaction surface. Agents use
+        # the same image coordinates and owner window ID for menus and clients.
+        for popup in reversed(snap.get('popups',[])):
+            b = popup['bounds']
+            if popup['owner_window_id']==window_id and b['x']<=px<b['x']+b['width'] and b['y']<=py<b['y']+b['height']:
+                return self._popup_point(window_id,popup['popup_id'],snapshot_id,x,y)
+        if self.display().surface_at(px,py)!=self.display().root_surface(w['xid']):
+            raise DesktopError('OCCLUDED_TARGET','Another surface covers this point; observe again.')
         b = w['bounds']
         if not b['x'] <= px < b['x']+b['width'] or not b['y'] <= py < b['y']+b['height']:
             raise DesktopError('OUT_OF_BOUNDS', 'Point is outside target client bounds.')

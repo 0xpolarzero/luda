@@ -68,6 +68,9 @@ class X11:
             raise DesktopError('INVALID_ARGUMENT','Surface coordinates must be signed 16-bit integers.')
         return self._read('surface_at',[x,y])
 
+    def root_surface(self, window):
+        return self._read('root_surface',self._xid(window))
+
     def transient_for(self, window):
         return self._read('transient_for',self._xid(window))
 

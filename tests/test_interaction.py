@@ -63,12 +63,14 @@ class MoreInteractionTests(unittest.TestCase):
 class PointTests(unittest.TestCase):
     def driver(self):
         import time
-        d=Dummy();d.windows={'a':{'bounds':{'x':10,'y':10,'width':40,'height':30}}}
+        d=Dummy();d.windows={'a':{'xid':10,'bounds':{'x':10,'y':10,'width':40,'height':30}}}
         d.snapshots={'s':{'time':time.monotonic(),'native':(100,100),'image':(50,50),'signature':'same'}}
         d.target_window=lambda *args: d.windows['a']
         d.signature=lambda windows:'same'
         class Display:
             root=1
+            def surface_at(self,x,y):return 20
+            def root_surface(self,xid):return 20
             def geometry(self, root): return {'width':100,'height':100}
         d.display=lambda:Display()
         return d
@@ -86,6 +88,15 @@ class PointTests(unittest.TestCase):
         with self.assertRaises(DesktopError): InteractionMixin._interaction_point(d,'a','s',5,5)
         d=self.driver();d.signature=lambda windows:'changed'
         with self.assertRaises(DesktopError): InteractionMixin._interaction_point(d,'a','s',5,5)
+    def test_covered_client_refused_before_pointer_input(self):
+        d=self.driver()
+        display=d.display()
+        display.surface_at=lambda x,y:99
+        d.display=lambda:display
+        with self.assertRaises(DesktopError) as caught:
+            InteractionMixin._interaction_point(d,'a','s',5,5)
+        self.assertEqual(caught.exception.code,'OCCLUDED_TARGET')
+
     def test_changed_resolution_rejected(self):
         d=self.driver();d.snapshots['s']['native']=(200,100)
         with self.assertRaises(DesktopError): InteractionMixin._interaction_point(d,'a','s',5,5)

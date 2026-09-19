@@ -70,6 +70,26 @@ class _NativeX11:
         finally:
             if children: self.lib.XFree(children)
 
+    def root_surface(self, window):
+        """Return the root child containing a client (usually its WM frame)."""
+        fn = self.lib.XQueryTree
+        fn.argtypes = [C.c_void_p,C.c_ulong,C.POINTER(C.c_ulong),C.POINTER(C.c_ulong),C.POINTER(C.POINTER(C.c_ulong)),C.POINTER(C.c_uint)]
+        fn.restype = C.c_int
+        self.lib.XFree.argtypes = [C.c_void_p]
+        visited = set()
+        for _ in range(64):
+            if window in visited or window == self.root:
+                break
+            visited.add(window)
+            root,parent = C.c_ulong(),C.c_ulong()
+            children = C.POINTER(C.c_ulong)(); count = C.c_uint()
+            status = fn(self.display,window,C.byref(root),C.byref(parent),C.byref(children),C.byref(count))
+            if children:self.lib.XFree(children)
+            if not status:break
+            if parent.value == self.root:return window
+            window = parent.value
+        raise DesktopError('STALE_TARGET','Cannot resolve the target root surface.')
+
     def cardinal(self, window, name):
         x = self.lib
         x.XInternAtom.argtypes = [C.c_void_p,C.c_char_p,C.c_int]; x.XInternAtom.restype = C.c_ulong
@@ -183,7 +203,7 @@ def main():
         request = json.loads(sys.stdin.buffer.read(65536))
         method = request['method']
         argument = request.get('argument')
-        if method not in {'root','geometry','geometries','window_tokens','surface_at','transient_for','children','popup_surfaces'}:
+        if method not in {'root','geometry','geometries','window_tokens','surface_at','root_surface','transient_for','children','popup_surfaces'}:
             raise DesktopError('INVALID_ARGUMENT','Unknown X11 metadata operation.')
         if method in {'geometries','window_tokens'}:
             if not isinstance(argument,list) or len(argument)>512 or any(isinstance(v,bool) or not isinstance(v,int) or not 1 <= v <= 0xffffffff for v in argument):

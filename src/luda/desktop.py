@@ -192,23 +192,7 @@ class Desktop(InteractionMixin):
                 'windows':after,'popups':after_popups,'image_base64':base64.b64encode(buf.getvalue()).decode()}
 
     def point(self, window_id, snapshot_id, x, y):
-        snap = self.snapshots.get(snapshot_id)
-        if not snap or time.monotonic()-snap['time']>=15:
-            raise DesktopError('STALE_OBSERVATION','Screenshot expired or belongs to another server; observe again.')
-        w = self.target_window(window_id)
-        if self.signature(list(self.windows.values())) != snap['signature']:
-            raise DesktopError('STALE_OBSERVATION','Window layout or focus changed; observe again.')
-        root = self.display().geometry(self.display().root)
-        if (root['width'],root['height']) != tuple(snap['native']):
-            raise DesktopError('STALE_OBSERVATION','Display resolution changed; observe again.')
-        iw, ih = snap['image'];nw, nh = snap['native']
-        if not 0 <= x < iw or not 0 <= y < ih:
-            raise DesktopError('OUT_OF_BOUNDS','Point is outside the returned screenshot.')
-        px, py = int(x*nw/iw),int(y*nh/ih)
-        b = w['bounds']
-        if not b['x'] <= px < b['x']+b['width'] or not b['y'] <= py < b['y']+b['height']:
-            raise DesktopError('OUT_OF_BOUNDS','Point is outside target client bounds; window decorations are excluded.')
-        return px,py
+        return self._interaction_point(window_id,snapshot_id,x,y)
 
     def pointer(self, window_id, snapshot_id, x, y, kind='click', button='left', count=1, end_x=None,end_y=None,direction='down'):
         if kind not in ('click', 'scroll', 'drag'):

@@ -175,7 +175,7 @@ async def desktop_press_keys(window_id: str, chord: str) -> CallToolResult:
 
 @mcp.tool()
 async def desktop_click(window_id: str, snapshot_id: str, x: float, y: float, button: Literal['left','middle','right']='left', count: Literal[1,2,3]=1) -> CallToolResult:
-    """Click screenshot-image coordinates inside the active target client. Rejects expired or changed layouts."""
+    """Click screenshot-image coordinates in the active window or its observed menus. Rejects stale or covered targets."""
     return await execute_async('pointer',window_id,snapshot_id,x,y,button=button,count=count)
 
 
@@ -187,7 +187,7 @@ async def desktop_scroll(window_id: str, snapshot_id: str, x: float, y: float, d
 
 @mcp.tool()
 async def desktop_drag(window_id: str, snapshot_id: str, x: float, y: float, end_x: float, end_y: float, button: Literal['left','middle','right']='left') -> CallToolResult:
-    """Drag between two observed points inside the same active window; always attempts button release. Cross-window drags are not supported yet."""
+    """Drag between two observed points inside the same active window; always attempts button release. Use desktop_drag_to for another destination window."""
     return await execute_async('pointer',window_id,snapshot_id,x,y,kind='drag',button=button,end_x=end_x,end_y=end_y)
 
 

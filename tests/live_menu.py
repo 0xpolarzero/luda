@@ -9,15 +9,7 @@ from luda.common import DesktopError, operation_scope
 from luda.desktop import Desktop
 from luda.interaction import InteractionMixin
 
-class Driver(Desktop,InteractionMixin):
-    def observe(self):
-        before=self.observe_popups()
-        result=super().observe()
-        after=self.observe_popups(result['windows'])
-        assert self.popup_signature(before)==self.popup_signature(after),'popup changed during capture'
-        self.snapshots[result['snapshot_id']]['popups']=after
-        result['popups']=after
-        return result
+Driver = Desktop
 
 fixture='''import gi,sys\ngi.require_version("Gtk","3.0")\nfrom gi.repository import Gtk,Gdk,GLib\nfrom pathlib import Path\nw=Gtk.Window(title="Luda nested menu probe");w.set_default_size(300,200);w.move(150,150)\nb=Gtk.Button(label="Menu anchor");w.add(b)\nm=Gtk.Menu();item=Gtk.MenuItem(label="More actions");sub=Gtk.Menu();child=Gtk.MenuItem(label="Write proof");sub.append(child);item.set_submenu(sub);m.append(item);m.show_all()\nchild.connect("activate",lambda widget:Path(sys.argv[1]).write_text("nested action 日本語"))\ndef show():\n m.popup_at_widget(b,Gdk.Gravity.SOUTH_EAST,Gdk.Gravity.NORTH_WEST,None);return False\nw.show_all();GLib.timeout_add(500,show);Gtk.main()'''
 with tempfile.TemporaryDirectory() as directory:
@@ -39,7 +31,7 @@ with tempfile.TemporaryDirectory() as directory:
             x,y=point(menu,s)
             b=menu['bounds'];ob=owner['bounds']
             assert b['x']+b['width']/2>=ob['x']+ob['width'] or b['y']+b['height']/2>=ob['y']+ob['height'],'test must target outside owner'
-            d.pointer_popup(owner['window_id'],menu['popup_id'],s['snapshot_id'],x,y,kind='hover')
+            d.hover(owner['window_id'],s['snapshot_id'],x,y)
             deadline=time.monotonic()+4
             while len([v for v in d.observe_popups() if v['pid']==p.pid])<2:
                 if time.monotonic()>deadline:raise AssertionError('submenu did not appear')
@@ -49,7 +41,7 @@ with tempfile.TemporaryDirectory() as directory:
             cancelled=threading.Event();cancelled.set()
             try:
                 with operation_scope(cancelled=cancelled):
-                    d.pointer_popup(owner['window_id'],submenu['popup_id'],s['snapshot_id'],x,y)
+                    d.pointer(owner['window_id'],s['snapshot_id'],x,y)
                 raise AssertionError('cancelled operation dispatched')
             except DesktopError as exc:
                 assert exc.code=='CANCELLED',exc.code
@@ -60,19 +52,19 @@ with tempfile.TemporaryDirectory() as directory:
             try:
                 time.sleep(.3)
                 try:
-                    d.pointer_popup(owner['window_id'],submenu['popup_id'],s['snapshot_id'],x,y)
+                    d.pointer(owner['window_id'],s['snapshot_id'],x,y)
                     raise AssertionError('occluded operation dispatched')
                 except DesktopError as exc:
                     assert exc.code=='OCCLUDED_TARGET',exc.code
                 assert not output.exists()
             finally:
                 overlay.terminate();overlay.wait(timeout=5)
-            result=d.pointer_popup(owner['window_id'],submenu['popup_id'],s['snapshot_id'],x,y)
+            result=d.pointer(owner['window_id'],s['snapshot_id'],x,y)
         deadline=time.monotonic()+3
         while not output.exists() and time.monotonic()<deadline:time.sleep(.05)
         assert output.read_text()=='nested action 日本語'
         try:
-            d.pointer_popup(owner['window_id'],submenu['popup_id'],s['snapshot_id'],x,y)
+            d.pointer(owner['window_id'],s['snapshot_id'],x,y)
             raise AssertionError('vanished popup dispatched')
         except DesktopError as exc:
             assert exc.code=='STALE_OBSERVATION',exc.code
