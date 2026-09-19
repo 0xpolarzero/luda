@@ -1,7 +1,8 @@
 """Window-manager and pointer operations; caller holds Desktop.transaction()."""
 import math
 import time
-from .common import DesktopError, run
+import uuid
+from .common import DesktopError, process_identity, run
 
 
 def integer(value, name, low, high):
@@ -135,3 +136,76 @@ class InteractionMixin:
                     failure.details['button_release_failed'] = cleanup_error.code
                     failure.effect = 'uncertain'
         return {'effect':'dispatched','verification':'Drag input sent and button released; inspect both applications to verify transfer.'}
+
+    @staticmethod
+    def popup_signature(popups):
+        return [(p['xid'],p['pid'],p['start'],p['owner_window_id'],p['transient_for'],p['bounds']) for p in popups]
+
+    def observe_popups(self, windows=None):
+        """Only mapped surfaces linked by ICCCM owner hints to a live window.
+
+        A matching process alone is insufficient: one app can own many windows.
+        Tokens authorize only the snapshot in which they were issued.
+        """
+        if windows is None: windows=self.list_windows()
+        raw=self.display().popup_surfaces()
+        surfaces={p['xid']:p for p in raw}
+        owners={w['xid']:w for w in windows}
+        result=[]
+        for popup in raw:
+            owner=None; current=popup; visited=set()
+            for _ in range(16):
+                if current['xid'] in visited:break
+                visited.add(current['xid'])
+                parent=current.get('transient_for')
+                if parent in owners:
+                    owner=owners[parent];break
+                current=surfaces.get(parent)
+                if current is None or current.get('pid')!=popup.get('pid'):break
+            if owner is None or popup.get('pid')!=owner['pid']:continue
+            try:
+                start=process_identity(popup['pid'])
+            except DesktopError:continue
+            if start!=owner['start']:continue
+            result.append({**popup,'bounds':dict(popup['bounds']),'start':start,'owner_window_id':owner['window_id'],'popup_id':uuid.uuid4().hex})
+        return result
+
+    def _popup_point(self, owner_window_id, popup_id, snapshot_id, x, y):
+        if any(isinstance(v,bool) or not isinstance(v,(int,float)) or not math.isfinite(v) for v in (x,y)):
+            raise DesktopError('INVALID_ARGUMENT','Coordinates must be finite numbers.')
+        snap=self.snapshots.get(snapshot_id)
+        if not snap or time.monotonic()-snap['time']>=15:
+            raise DesktopError('STALE_OBSERVATION','Screenshot expired; observe again.')
+        observed=next((p for p in snap.get('popups',[]) if p['popup_id']==popup_id and p['owner_window_id']==owner_window_id),None)
+        if observed is None:raise DesktopError('STALE_TARGET','Popup is not authorized by this screenshot and owner.')
+        self.target_window(owner_window_id)
+        if self.signature(list(self.windows.values()))!=snap['signature']:
+            raise DesktopError('STALE_OBSERVATION','Window layout or focus changed; observe again.')
+        current=self.observe_popups(list(self.windows.values()))
+        if self.popup_signature(current)!=self.popup_signature(snap['popups']):
+            raise DesktopError('STALE_OBSERVATION','Popup layout or ownership changed; observe again.')
+        root=self.display().geometry(self.display().root)
+        if (root['width'],root['height'])!=tuple(snap['native']):
+            raise DesktopError('STALE_OBSERVATION','Display resolution changed; observe again.')
+        iw,ih=snap['image'];nw,nh=snap['native']
+        if not 0<=x<iw or not 0<=y<ih:raise DesktopError('OUT_OF_BOUNDS','Point is outside screenshot.')
+        px,py=int(x*nw/iw),int(y*nh/ih);b=observed['bounds']
+        if not b['x']<=px<b['x']+b['width'] or not b['y']<=py<b['y']+b['height']:
+            raise DesktopError('OUT_OF_BOUNDS','Point is outside popup bounds.')
+        if self.display().surface_at(px,py)!=observed['xid']:
+            raise DesktopError('OCCLUDED_TARGET','Another surface covers this popup point; observe again.')
+        return px,py
+
+    def pointer_popup(self, owner_window_id, popup_id, snapshot_id, x, y, kind='click', button='left', count=1, direction='down'):
+        if kind not in {'click','hover','scroll'}:
+            raise DesktopError('INVALID_ARGUMENT','Popup pointer kind must be click, hover or scroll.')
+        buttons={'left':'1','middle':'2','right':'3'}
+        directions={'up':'4','down':'5','left':'6','right':'7'}
+        integer(count,'count',1,20)
+        if button not in buttons or direction not in directions:
+            raise DesktopError('INVALID_ARGUMENT','Unknown pointer button or scroll direction.')
+        px,py=self._popup_point(owner_window_id,popup_id,snapshot_id,x,y)
+        run(['xdotool','mousemove',str(px),str(py)],effect='uncertain')
+        if kind!='hover':
+            run(['xdotool','click','--repeat',str(count),'--delay','100',buttons[button] if kind=='click' else directions[direction]],effect='uncertain')
+        return {'effect':'dispatched','verification':'Popup input sent; observe the menu or resulting application state.'}
