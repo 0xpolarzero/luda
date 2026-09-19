@@ -22,6 +22,10 @@ try:
             result=d.manage_window(w['window_id'],action,**kwargs)
             results.append(result)
             assert result['effect']=='verified',result
+        workspaces=d.workspaces(); active=next(v['workspace'] for v in workspaces if v['active'])
+        assert d.manage_window(w['window_id'],'workspace',workspace=active)['effect']=='verified'
+        assert d.switch_workspace(active)['effect']=='verified'
+        results.append({'workspace':'existing current workspace assignment and switch verified'})
         d.activate(w['window_id']); snap=d.observe()
         current=next(v for v in snap['windows'] if v['window_id']==w['window_id'])
         b=current['bounds']; sx=snap['image_size']['width']/snap['desktop_size']['width'];sy=snap['image_size']['height']/snap['desktop_size']['height']

@@ -38,7 +38,6 @@ class InteractionTests(unittest.TestCase):
     def test_workspace_names(self, run):
         self.assertEqual(Dummy().workspaces(),[{'workspace':0,'active':True,'name':'Main workspace'},{'workspace':1,'active':False,'name':'Second'}])
 
-if __name__ == '__main__': unittest.main()
 
 class MoreInteractionTests(unittest.TestCase):
     @patch('luda.interaction.time.sleep')
@@ -90,3 +89,5 @@ class PointTests(unittest.TestCase):
     def test_changed_resolution_rejected(self):
         d=self.driver();d.snapshots['s']['native']=(200,100)
         with self.assertRaises(DesktopError): InteractionMixin._interaction_point(d,'a','s',5,5)
+
+if __name__ == "__main__": unittest.main()
