@@ -2,6 +2,8 @@ import importlib.util
 import json
 from pathlib import Path
 import tempfile
+import sys
+import time
 import unittest
 
 spec = importlib.util.spec_from_file_location('manage_install', Path(__file__).resolve().parents[1] / 'scripts/manage_install.py')
@@ -151,6 +153,15 @@ class Installation(unittest.TestCase):
     def test_missing_dependency_is_actionable(self):
         with self.assertRaisesRegex(installer.InstallError, 'Missing dependency'):
             installer.invoke(['/no-such-installer-command'])
+
+    def test_timed_out_build_cannot_write_after_cleanup(self):
+        sentinel = self.root / 'late-build-write'
+        child = 'import pathlib,sys,time;time.sleep(.3);pathlib.Path(sys.argv[1]).write_text("late")'
+        parent = 'import subprocess,sys,time;subprocess.Popen([sys.executable,"-c",sys.argv[1],sys.argv[2]]);time.sleep(30)'
+        with self.assertRaisesRegex(installer.InstallError, 'timed out'):
+            installer.invoke([sys.executable, '-c', parent, child, str(sentinel)], timeout=.1)
+        time.sleep(.35)
+        self.assertFalse(sentinel.exists())
 
     def test_unknown_rollback_is_refused(self):
         installer.install(self.prefix, self.source, self.runner)

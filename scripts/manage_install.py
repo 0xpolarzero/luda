@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
@@ -77,13 +78,24 @@ def state(prefix):
     return value
 
 
-def invoke(argv):
+def invoke(argv, timeout=300):
     try:
-        subprocess.run([str(a) for a in argv], check=True, timeout=300)
+        child = subprocess.Popen([str(a) for a in argv], start_new_session=True)
     except FileNotFoundError as exc:
         raise InstallError(f'Missing dependency: {argv[0]}') from exc
-    except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
-        raise InstallError(f'Installation command failed: {Path(argv[0]).name}; previous release remains selected.') from exc
+    try:
+        code = child.wait(timeout=timeout)
+        if code:
+            raise InstallError(f'Installation command failed: {Path(argv[0]).name}; previous release remains selected.')
+    except BaseException as exc:
+        try:
+            os.killpg(child.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        child.wait(timeout=5)
+        if isinstance(exc, subprocess.TimeoutExpired):
+            raise InstallError(f'Installation command timed out: {Path(argv[0]).name}; previous release remains selected.') from exc
+        raise
 
 
 def release_identity(source):
