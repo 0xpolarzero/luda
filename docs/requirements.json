@@ -1,0 +1,1970 @@
+{
+  "schema_version": 1,
+  "scope": "Silo local Linux X11 desktop; P2 optional expansions",
+  "status_policy": "unqualified means no release-level evidence; implementation alone is not qualification",
+  "features": [
+    {
+      "id": "ENV",
+      "title": "Guest and session attachment",
+      "priority": "P0",
+      "cases": [
+        {
+          "id": "ENV-01",
+          "acceptance": "ARM64 Ubuntu 24.04 fresh VM: install and operate without nested virtualization",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "ENV-02",
+          "acceptance": "AMD64 Ubuntu 24.04 fresh VM: same public tool contract and acceptance workflows",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "ENV-03",
+          "acceptance": "SSH root account: resolve explicit desktop account and drop privileges before GUI access",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "ENV-04",
+          "acceptance": "SSH desktop account: attach without root or sudo",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "ENV-05",
+          "acceptance": "DISPLAY unset in SSH: find the selected desktop session, never assume :0",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "ENV-06",
+          "acceptance": "Multiple desktop sessions: require an explicit selection instead of choosing the first",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "ENV-07",
+          "acceptance": "Missing or stale Xauthority: diagnose without exposing cookie contents",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "ENV-08",
+          "acceptance": "Missing session D-Bus: diagnose and recover through the intended session",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "ENV-09",
+          "acceptance": "Desktop not started yet: bounded readiness wait and actionable failure",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "ENV-10",
+          "acceptance": "Desktop restart: reconnect and invalidate every old observation and element handle",
+          "qualification": "unqualified"
+        }
+      ]
+    },
+    {
+      "id": "LIFE",
+      "title": "Installation and lifecycle",
+      "priority": "P0",
+      "cases": [
+        {
+          "id": "LIFE-01",
+          "acceptance": "Pinned dependency installation: repeatable artifact hashes and no startup downloads",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "LIFE-02",
+          "acceptance": "Idempotent install: preserve unrelated desktop and user configuration",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "LIFE-03",
+          "acceptance": "Upgrade: compatibility check and rollback path for prior release",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "LIFE-04",
+          "acceptance": "Uninstall: remove owned files and services without deleting user documents",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "LIFE-05",
+          "acceptance": "Worker crash: release owned resources and expose failure to the client",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "LIFE-06",
+          "acceptance": "Server restart: reconnect cleanly and reject old handles",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "LIFE-07",
+          "acceptance": "VM suspend and resume: fresh observation required before mutation",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "LIFE-08",
+          "acceptance": "VM shutdown during action: report uncertain outcome, never successful completion",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "LIFE-09",
+          "acceptance": "Read-only or full filesystem: useful startup or artifact error without partial configuration",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "LIFE-10",
+          "acceptance": "Missing dependency: doctor names the actual missing component and readiness is false",
+          "qualification": "unqualified"
+        }
+      ]
+    },
+    {
+      "id": "MCP",
+      "title": "Agent protocol and discovery",
+      "priority": "P0",
+      "cases": [
+        {
+          "id": "MCP-01",
+          "acceptance": "Fresh Codex SSH task: tools and skill discoverable without manual environment instructions",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "MCP-02",
+          "acceptance": "MCP initialization: supported version negotiated through the SDK",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "MCP-03",
+          "acceptance": "Tool listing: explicit schemas with bounded arguments and distinct text/key semantics",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "MCP-04",
+          "acceptance": "Malformed arguments: protocol error before any desktop action",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "MCP-05",
+          "acceptance": "Tool failure: machine-readable code and MCP isError agree",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "MCP-06",
+          "acceptance": "Screenshot result: valid image content plus its coordinate metadata in the same response",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "MCP-07",
+          "acceptance": "Stdout purity: no diagnostic logs corrupt the JSON-RPC stream",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "MCP-08",
+          "acceptance": "Client disconnect: resources cleaned and outstanding mutation not silently retried",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "MCP-09",
+          "acceptance": "Transport cancellation: clear outcome and bounded worker cleanup",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "MCP-10",
+          "acceptance": "Protocol and tool-version changes: versioned migration and backward compatibility policy",
+          "qualification": "unqualified"
+        }
+      ]
+    },
+    {
+      "id": "OBS",
+      "title": "Screenshots and observation",
+      "priority": "P0",
+      "cases": [
+        {
+          "id": "OBS-01",
+          "acceptance": "Native screenshot: returned dimensions match the actual root image",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "OBS-02",
+          "acceptance": "Scaled screenshot: independent horizontal/vertical ratios map to native pixels",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "OBS-03",
+          "acceptance": "Window capture: client versus frame bounds declared and tested",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "OBS-04",
+          "acceptance": "Capture during window movement: reject inconsistent observation",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "OBS-05",
+          "acceptance": "Resolution change after capture: old coordinates rejected",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "OBS-06",
+          "acceptance": "Expired screenshot: pointer actions rejected before input",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "OBS-07",
+          "acceptance": "Screenshot from another server: rejected instead of interpreted locally",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "OBS-08",
+          "acceptance": "Blank or black frame: distinguish real image from failed capture",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "OBS-09",
+          "acceptance": "Very large desktop: bounded image size and memory use",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "OBS-10",
+          "acceptance": "Sensitive observation: no automatic screenshot retention or external upload",
+          "qualification": "unqualified"
+        }
+      ]
+    },
+    {
+      "id": "GEO",
+      "title": "Coordinates and displays",
+      "priority": "P0",
+      "cases": [
+        {
+          "id": "GEO-01",
+          "acceptance": "Decorated window: frame extents obtained from the window manager, not fixed offsets",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "GEO-02",
+          "acceptance": "Borderless window: zero extents handled correctly",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "GEO-03",
+          "acceptance": "Maximized and fullscreen windows: correct origin and bounds",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "GEO-04",
+          "acceptance": "Window partly off-screen: clip visible region and reject unreachable points",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "GEO-05",
+          "acceptance": "Negative monitor origin: declared desktop origin and reversible coordinate mapping",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "GEO-06",
+          "acceptance": "Mixed-DPI monitors: per-monitor mapping or explicit unsupported result",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "GEO-07",
+          "acceptance": "Fractional scaling: edge points map consistently without cumulative rounding",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "GEO-08",
+          "acceptance": "Rotated monitor: coordinate transform or explicit unsupported result",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "GEO-09",
+          "acceptance": "Pointer at right/bottom edge: valid last pixel; exact width/height rejected",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "GEO-10",
+          "acceptance": "Monitor hotplug: invalidate prior coordinates and report new topology",
+          "qualification": "unqualified"
+        }
+      ]
+    },
+    {
+      "id": "WIN",
+      "title": "Window identity and focus",
+      "priority": "P0",
+      "cases": [
+        {
+          "id": "WIN-01",
+          "acceptance": "Duplicate window titles: stable identity rather than title-only targeting",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "WIN-02",
+          "acceptance": "Several windows in one process: semantic actions scoped to selected top-level",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "WIN-03",
+          "acceptance": "PID reuse: process start identity invalidates stale handle",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "WIN-04",
+          "acceptance": "XID reuse in same process: generation or equivalent identity check prevents misdelivery",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "WIN-05",
+          "acceptance": "Focus stolen before input: reject or report uncertainty; never silently retarget",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "WIN-06",
+          "acceptance": "Modal child active: inspect/target dialog rather than typing into its blocked parent",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "WIN-07",
+          "acceptance": "Minimized window: explicit restore/activate with verification",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "WIN-08",
+          "acceptance": "Window on another workspace: explicit activation and updated observation",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "WIN-09",
+          "acceptance": "Window closes between lookup and action: bounded stale-target failure",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "WIN-10",
+          "acceptance": "Human viewer changes focus: no claim that tool serialization excludes human interference",
+          "qualification": "unqualified"
+        }
+      ]
+    },
+    {
+      "id": "WM",
+      "title": "Window management",
+      "priority": "P1",
+      "cases": [
+        {
+          "id": "WM-01",
+          "acceptance": "Move window: verify actual accepted location",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "WM-02",
+          "acceptance": "Resize window: account for app minimum size and size increments",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "WM-03",
+          "acceptance": "Maximize and restore: preserve prior geometry and report resulting state",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "WM-04",
+          "acceptance": "Minimize and restore: do not lose window identity",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "WM-05",
+          "acceptance": "Fullscreen toggle: inspect resulting client/frame layout",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "WM-06",
+          "acceptance": "Close window: expose unsaved-change dialog and do not assume document saved",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "WM-07",
+          "acceptance": "Raise window: distinguish raising from gaining keyboard focus",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "WM-08",
+          "acceptance": "Workspace switch: report active workspace and invalidate old observations",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "WM-09",
+          "acceptance": "Launch known app: return actual window identity with bounded readiness",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "WM-10",
+          "acceptance": "Already-running singleton app: associate new request with correct existing/new window",
+          "qualification": "unqualified"
+        }
+      ]
+    },
+    {
+      "id": "AX",
+      "title": "Accessibility observation",
+      "priority": "P0",
+      "cases": [
+        {
+          "id": "AX-01",
+          "acceptance": "GTK3 app: real role/name/state/action tree",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "AX-02",
+          "acceptance": "GTK4 app: version-specific interfaces tested or declared unsupported",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "AX-03",
+          "acceptance": "Qt app: accessible text and actions validated",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "AX-04",
+          "acceptance": "Electron app: accessibility activation and tree availability diagnosed",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "AX-05",
+          "acceptance": "Canvas-only app: report limited semantic coverage and retain screenshot fallback",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "AX-06",
+          "acceptance": "Large or virtualized tree: bounded traversal, truncation and missing coverage explicit",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "AX-07",
+          "acceptance": "Hung accessibility provider: subprocess deadline bounds the entire call",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "AX-08",
+          "acceptance": "Defunct child during traversal: partial result or meaningful failure",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "AX-09",
+          "acceptance": "Protected field: no secret text returned in ordinary inspection",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "AX-10",
+          "acceptance": "Ambiguous window mapping: fail rather than expose sibling windows as target descendants",
+          "qualification": "unqualified"
+        }
+      ]
+    },
+    {
+      "id": "SEM",
+      "title": "Semantic actions",
+      "priority": "P0",
+      "cases": [
+        {
+          "id": "SEM-01",
+          "acceptance": "Button invocation: exact advertised action name, state observed afterward",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "SEM-02",
+          "acceptance": "Disabled control: reject action or report application refusal",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "SEM-03",
+          "acceptance": "Hidden/off-screen control: explicit semantics, no fabricated visibility",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "SEM-04",
+          "acceptance": "Checkbox and radio: set desired state rather than blind toggle where possible",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "SEM-05",
+          "acceptance": "Combo box and list selection: identify exact option and verify selection",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "SEM-06",
+          "acceptance": "Slider and spinbox: respect ranges, steps and locale representation",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "SEM-07",
+          "acceptance": "Tree expansion: report expanded state and refresh child handles",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "SEM-08",
+          "acceptance": "Focus element: verify actual focus before subsequent text insertion",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "SEM-09",
+          "acceptance": "Element path reused with changed role/name: stale handle rejected",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "SEM-10",
+          "acceptance": "App accepts action but does nothing: dispatched remains distinct from verified",
+          "qualification": "unqualified"
+        }
+      ]
+    },
+    {
+      "id": "TXT",
+      "title": "Literal text content",
+      "priority": "P0",
+      "cases": [
+        {
+          "id": "TXT-01",
+          "acceptance": "ASCII multiline LF: exact line breaks preserved",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "TXT-02",
+          "acceptance": "Trailing newline: not stripped",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "TXT-03",
+          "acceptance": "Several blank lines: all preserved",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "TXT-04",
+          "acceptance": "Leading/trailing spaces: no trimming",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "TXT-05",
+          "acceptance": "Literal tabs: inserted as content, not keyboard navigation",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "TXT-06",
+          "acceptance": "Non-Latin scripts: exact Japanese, Arabic and Hebrew preserved",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "TXT-07",
+          "acceptance": "Emoji with modifiers and ZWJ: no code-point loss",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "TXT-08",
+          "acceptance": "Combining characters: no undocumented Unicode normalization",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "TXT-09",
+          "acceptance": "Empty replacement: clears editable text; empty insertion is no-op",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "TXT-10",
+          "acceptance": "Long payload near limit: complete insertion or explicit refusal before partial delivery",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "TXT-11",
+          "acceptance": "Over-limit payload: reject before touching clipboard or app",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "TXT-12",
+          "acceptance": "NUL and Escape: explicit unsupported error before mutation",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "TXT-13",
+          "acceptance": "CRLF/CR: explicit policy, never silent normalization",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "TXT-14",
+          "acceptance": "Quotes, backticks, dollar signs and backslashes: no shell interpretation",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "TXT-15",
+          "acceptance": "Bidirectional text: preserve stored string independent of visual order",
+          "qualification": "unqualified"
+        }
+      ]
+    },
+    {
+      "id": "EDIT",
+      "title": "Text editing semantics",
+      "priority": "P0",
+      "cases": [
+        {
+          "id": "EDIT-01",
+          "acceptance": "Replacement versus insertion: separate operations and tool descriptions",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "EDIT-02",
+          "acceptance": "Insertion at caret: preserve surrounding text and selection semantics",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "EDIT-03",
+          "acceptance": "Selected range: insert replaces only intended selection",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "EDIT-04",
+          "acceptance": "Read-only field: fail without fallback that mutates another widget",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "EDIT-05",
+          "acceptance": "Single-line field given multiline: explain rejection or detect app transformation",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "EDIT-06",
+          "acceptance": "Undo/redo: characterize whether semantic replacement creates an undo step",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "EDIT-07",
+          "acceptance": "Application formatting/filtering: return mismatch instead of exact-success claim",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "EDIT-08",
+          "acceptance": "Text entry triggers navigation: no automatic second insertion",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "EDIT-09",
+          "acceptance": "Caret and selection indices: define code points versus bytes versus grapheme clusters",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "EDIT-10",
+          "acceptance": "IME composition active: complete/cancel explicitly or refuse conflicting input",
+          "qualification": "unqualified"
+        }
+      ]
+    },
+    {
+      "id": "CLIP",
+      "title": "Clipboard ownership and paste",
+      "priority": "P0",
+      "cases": [
+        {
+          "id": "CLIP-01",
+          "acceptance": "CLIPBOARD vs PRIMARY: named selection and application shortcut are explicit",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "CLIP-02",
+          "acceptance": "Clipboard bytes: verify exact UTF-8 before dispatching paste",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "CLIP-03",
+          "acceptance": "No prior owner: insertion still works",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "CLIP-04",
+          "acceptance": "Owner disappears early: report failure without claiming target changed",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "CLIP-05",
+          "acceptance": "Another app takes ownership before paste: detect or report uncertainty",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "CLIP-06",
+          "acceptance": "Clipboard manager rewrites content: detect mismatch",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "CLIP-07",
+          "acceptance": "Slow paste consumer: retain owned data long enough; do not restore prematurely",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "CLIP-08",
+          "acceptance": "Clipboard restoration: optional explicit policy; never overwrite a newer human copy",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "CLIP-09",
+          "acceptance": "Rich text/image/file clipboard: negotiate types or explicit unsupported result",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "CLIP-10",
+          "acceptance": "Terminal Shift+Insert: do not assume it reads CLIPBOARD",
+          "qualification": "unqualified"
+        }
+      ]
+    },
+    {
+      "id": "KEY",
+      "title": "Keyboard input",
+      "priority": "P0",
+      "cases": [
+        {
+          "id": "KEY-01",
+          "acceptance": "Return and Tab: intentional key events distinct from literal text",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "KEY-02",
+          "acceptance": "Modifier chord: correct ordering and release",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "KEY-03",
+          "acceptance": "Shifted symbols: keyboard layout semantics documented",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "KEY-04",
+          "acceptance": "Non-US keyboard layout: physical versus logical key behavior tested",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "KEY-05",
+          "acceptance": "CapsLock and NumLock active: behavior detected or qualified",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "KEY-06",
+          "acceptance": "Human-held modifier: do not leave modifiers stuck or claim exclusive ownership",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "KEY-07",
+          "acceptance": "Invalid chord or embedded newline: reject before X11 input",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "KEY-08",
+          "acceptance": "Key press interrupted: cleanup releases tool-owned keys",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "KEY-09",
+          "acceptance": "Repeated key with bounded count: no unbounded input flood",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "KEY-10",
+          "acceptance": "Dead key or compose sequence: defined support or clear unsupported response",
+          "qualification": "unqualified"
+        }
+      ]
+    },
+    {
+      "id": "PTR",
+      "title": "Pointer and drag",
+      "priority": "P0",
+      "cases": [
+        {
+          "id": "PTR-01",
+          "acceptance": "Single/double/triple click: timing/count tested in real controls",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "PTR-02",
+          "acceptance": "Right-click menu: inspect resulting menu before choosing an item",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "PTR-03",
+          "acceptance": "Hover tooltip: pointer move without accidental click",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "PTR-04",
+          "acceptance": "Wheel scroll vertical/horizontal: correct target under pointer",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "PTR-05",
+          "acceptance": "Nested scrolling panes: verify which pane moved",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "PTR-06",
+          "acceptance": "Smooth scrolling: support or explicit discrete-wheel semantics",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "PTR-07",
+          "acceptance": "Drag within window: interpolate motion and release button on failure",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "PTR-08",
+          "acceptance": "Cross-window drag: source/target identities and changed focus handled",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "PTR-09",
+          "acceptance": "Drag onto file manager: distinguish copy/move/link and confirmation dialog",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "PTR-10",
+          "acceptance": "Invisible overlay intercepts click: do not equate input dispatch with target activation",
+          "qualification": "unqualified"
+        }
+      ]
+    },
+    {
+      "id": "WAIT",
+      "title": "Waiting and synchronization",
+      "priority": "P0",
+      "cases": [
+        {
+          "id": "WAIT-01",
+          "acceptance": "Window appears: condition-based bounded wait",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "WAIT-02",
+          "acceptance": "Element appears/disappears: fresh tree and explicit timeout",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "WAIT-03",
+          "acceptance": "Text equals/contains: exact condition with truncation considered",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "WAIT-04",
+          "acceptance": "Busy UI stops responding: timeout remains bounded",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "WAIT-05",
+          "acceptance": "Animation after click: settle condition rather than guessed fixed sleep",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "WAIT-06",
+          "acceptance": "Debounced text update: wait for readback within a defined deadline",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "WAIT-07",
+          "acceptance": "Long save operation: verify completion rather than button dismissal",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "WAIT-08",
+          "acceptance": "Clipboard readiness: wait for ownership before input",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "WAIT-09",
+          "acceptance": "Cancellation while waiting: no further input after cancellation",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "WAIT-10",
+          "acceptance": "Clock change: use monotonic deadlines",
+          "qualification": "unqualified"
+        }
+      ]
+    },
+    {
+      "id": "ERR",
+      "title": "Errors, retries and outcomes",
+      "priority": "P0",
+      "cases": [
+        {
+          "id": "ERR-01",
+          "acceptance": "Precondition failure: effect=none only when no input was sent",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "ERR-02",
+          "acceptance": "Dispatched input: never labelled verified application success",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "ERR-03",
+          "acceptance": "Exact readback: state what condition was actually verified",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "ERR-04",
+          "acceptance": "Mid-action timeout: uncertain outcome, no automatic mutation retry",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "ERR-05",
+          "acceptance": "Partial compound action: identify completed portion and remaining uncertainty",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "ERR-06",
+          "acceptance": "Backend exception: structured bounded error without server crash",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "ERR-07",
+          "acceptance": "Client retries same request: idempotency policy for non-idempotent operations",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "ERR-08",
+          "acceptance": "Unknown error: conservative effect classification",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "ERR-09",
+          "acceptance": "Failed cleanup: surface stuck-input risk and recovery instructions",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "ERR-10",
+          "acceptance": "Recovery attempt: inspect state before repeating Save/Send/Delete/Submit",
+          "qualification": "unqualified"
+        }
+      ]
+    },
+    {
+      "id": "CONC",
+      "title": "Concurrency and input ownership",
+      "priority": "P0",
+      "cases": [
+        {
+          "id": "CONC-01",
+          "acceptance": "Two MCP clients: serialize display mutations across processes",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "CONC-02",
+          "acceptance": "Two threads: reject busy mutation predictably",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "CONC-03",
+          "acceptance": "Independent displays: locks do not block unrelated desktops",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "CONC-04",
+          "acceptance": "Lock-holder crashes: operating system releases lock",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "CONC-05",
+          "acceptance": "Human uses viewer simultaneously: declared policy and takeover mechanism",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "CONC-06",
+          "acceptance": "Agent has long drag: human interruption cancels and releases button",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "CONC-07",
+          "acceptance": "Fairness: busy client cannot starve all other clients indefinitely",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "CONC-08",
+          "acceptance": "Read observation during mutation: consistent snapshot or declared inconsistency",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "CONC-09",
+          "acceptance": "Stale queued action: revalidate when lock acquired",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "CONC-10",
+          "acceptance": "Multiple agents share clipboard: no false ownership/verification claims",
+          "qualification": "unqualified"
+        }
+      ]
+    },
+    {
+      "id": "SEC",
+      "title": "Local trust and data handling",
+      "priority": "P0",
+      "cases": [
+        {
+          "id": "SEC-01",
+          "acceptance": "Desktop worker runs as ordinary desktop user, not root",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "SEC-02",
+          "acceptance": "Session selection: do not read another account's desktop accidentally",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "SEC-03",
+          "acceptance": "No shell interpolation: arbitrary text remains data",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "SEC-04",
+          "acceptance": "Runtime directory: private ownership, permissions and symlink checks",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "SEC-05",
+          "acceptance": "No unauthenticated network control listener by default",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "SEC-06",
+          "acceptance": "Text/screenshots not logged or uploaded by default",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "SEC-07",
+          "acceptance": "Secrets in errors: bounded diagnostic without full payload",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "SEC-08",
+          "acceptance": "Untrusted UI instruction: skill treats it as application data, not new user authority",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "SEC-09",
+          "acceptance": "Target protected field: explicit capability boundary and redaction",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "SEC-10",
+          "acceptance": "Dependency supply chain: pinned reproducible install and reviewed artifact provenance",
+          "qualification": "unqualified"
+        }
+      ]
+    },
+    {
+      "id": "DIAG",
+      "title": "Diagnostics and observability",
+      "priority": "P0",
+      "cases": [
+        {
+          "id": "DIAG-01",
+          "acceptance": "Doctor checks actual display access, not only environment variables",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "DIAG-02",
+          "acceptance": "Doctor checks actual accessibility bus/provider response",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "DIAG-03",
+          "acceptance": "Per-capability readiness: partial support not flattened into all-ready",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "DIAG-04",
+          "acceptance": "Errors identify missing dependency without requiring traceback interpretation",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "DIAG-05",
+          "acceptance": "Action timing: measure latency without recording text payload",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "DIAG-06",
+          "acceptance": "Optional trace: explicit local retention and deletion rules",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "DIAG-07",
+          "acceptance": "Trace correlation: observation/action IDs connect steps without leaking secrets",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "DIAG-08",
+          "acceptance": "Mismatch report: expected/actual length/hash without mandatory plaintext dump",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "DIAG-09",
+          "acceptance": "Resource usage: monitor orphan workers and clipboard owners",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "DIAG-10",
+          "acceptance": "Bug reproduction: export minimal sanitized environment and steps",
+          "qualification": "unqualified"
+        }
+      ]
+    },
+    {
+      "id": "PERF",
+      "title": "Performance and resource bounds",
+      "priority": "P0",
+      "cases": [
+        {
+          "id": "PERF-01",
+          "acceptance": "Tool list: compact enough for agent discovery without hundreds of redundant actions",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "PERF-02",
+          "acceptance": "Idle server: no busy polling of desktop",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "PERF-03",
+          "acceptance": "Screenshot latency: measured budget on ARM64 microsandbox",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "PERF-04",
+          "acceptance": "Accessibility latency: bounded even for broken provider",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "PERF-05",
+          "acceptance": "Action latency: measured separately from application completion",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "PERF-06",
+          "acceptance": "Memory growth: bounded handle caches and image buffers",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "PERF-07",
+          "acceptance": "Very many windows: bounded enumeration and useful truncation",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "PERF-08",
+          "acceptance": "Huge selection/paste: enforce limit before allocating unbounded subprocess buffers",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "PERF-09",
+          "acceptance": "Long session: repeated operations do not leak file descriptors or processes",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "PERF-10",
+          "acceptance": "Low CPU/memory: fail usefully instead of wedging desktop",
+          "qualification": "unqualified"
+        }
+      ]
+    },
+    {
+      "id": "FILE",
+      "title": "Native file workflows",
+      "priority": "P0",
+      "cases": [
+        {
+          "id": "FILE-01",
+          "acceptance": "Save existing text file: independent on-disk exact-content verification",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "FILE-02",
+          "acceptance": "Save As new path: operate native dialog and confirm actual file",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "FILE-03",
+          "acceptance": "Filename with spaces/Unicode: preserved exactly",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "FILE-04",
+          "acceptance": "Overwrite existing file: inspect confirmation and follow intended operation",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "FILE-05",
+          "acceptance": "Read-only path: observe error and preserve unsaved contents",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "FILE-06",
+          "acceptance": "Disk full: no successful-save claim",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "FILE-07",
+          "acceptance": "Open dialog: locate intended directory/file rather than typing into wrong field",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "FILE-08",
+          "acceptance": "Unsaved close: Save/Discard/Cancel mapped to user's intent",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "FILE-09",
+          "acceptance": "Download chooser: confirm actual destination and completion",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "FILE-10",
+          "acceptance": "Symlink or renamed destination: verify resulting path, not just dialog dismissal",
+          "qualification": "unqualified"
+        }
+      ]
+    },
+    {
+      "id": "TERM",
+      "title": "Terminal workflows",
+      "priority": "P0",
+      "cases": [
+        {
+          "id": "TERM-01",
+          "acceptance": "Single-line passive reader: exact UTF-8 paste without invoking a shell",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "TERM-02",
+          "acceptance": "Multiline paste confirmation: detect and expose dialog",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "TERM-03",
+          "acceptance": "Bracketed paste enabled: preserve content and distinguish submission",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "TERM-04",
+          "acceptance": "Bracketed paste disabled: warn/contract that newline can execute commands",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "TERM-05",
+          "acceptance": "Tabs in pasted terminal text: not converted to completion key presses",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "TERM-06",
+          "acceptance": "Ctrl+C: distinguish interrupt from clipboard copy",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "TERM-07",
+          "acceptance": "Ctrl+Shift+V: app-specific CLIPBOARD behavior qualified",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "TERM-08",
+          "acceptance": "Shift+Insert: PRIMARY behavior detected and documented",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "TERM-09",
+          "acceptance": "Terminal alternate screen/TUI: screenshot and keyboard interaction supported",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "TERM-10",
+          "acceptance": "Terminal output escape sequences: cannot become tool protocol or new instructions",
+          "qualification": "unqualified"
+        }
+      ]
+    },
+    {
+      "id": "WEB",
+      "title": "Browser integration",
+      "priority": "P0",
+      "cases": [
+        {
+          "id": "WEB-01",
+          "acceptance": "Headed browser runs in same visible guest desktop",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "WEB-02",
+          "acceptance": "Textarea multiline/tab/Unicode: independent DOM readback exact",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "WEB-03",
+          "acceptance": "Contenteditable field: inserted text and line-break representation verified",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "WEB-04",
+          "acceptance": "Browser shortcut conflict: deliberate keypress not mistaken for text",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "WEB-05",
+          "acceptance": "Native file picker: hand off from DOM tools to desktop tools",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "WEB-06",
+          "acceptance": "JavaScript alert/confirm/prompt: identify modal and intended action",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "WEB-07",
+          "acceptance": "Browser permission dialog: do not silently grant unrelated access",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "WEB-08",
+          "acceptance": "Several profiles/windows/tabs: control correct visible session",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "WEB-09",
+          "acceptance": "Canvas/WebGL page: screenshot fallback remains available",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "WEB-10",
+          "acceptance": "Browser DOM tools unavailable: desktop capability degrades clearly",
+          "qualification": "unqualified"
+        }
+      ]
+    },
+    {
+      "id": "APPS",
+      "title": "Application compatibility matrix",
+      "priority": "P0",
+      "cases": [
+        {
+          "id": "APPS-01",
+          "acceptance": "GTK editor: edit, save, reopen and verify file",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "APPS-02",
+          "acceptance": "GTK file manager: navigate, select and open synthetic test files",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "APPS-03",
+          "acceptance": "Qt editor/app: text, menus and modal dialog qualified",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "APPS-04",
+          "acceptance": "Electron editor/app: accessibility and clipboard qualified",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "APPS-05",
+          "acceptance": "Chromium: native and web controls qualified",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "APPS-06",
+          "acceptance": "Firefox: text and dialogs qualified independently of Chromium",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "APPS-07",
+          "acceptance": "XFCE Terminal: passive-reader paste and dialogs qualified",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "APPS-08",
+          "acceptance": "xterm: selection/shortcut differences qualified",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "APPS-09",
+          "acceptance": "Image editor/canvas: drag/select/scroll via pixels qualified",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "APPS-10",
+          "acceptance": "App with no accessibility: usable screenshot-only workflow documented",
+          "qualification": "unqualified"
+        }
+      ]
+    },
+    {
+      "id": "FAULT",
+      "title": "Fault injection",
+      "priority": "P0",
+      "cases": [
+        {
+          "id": "FAULT-01",
+          "acceptance": "Kill target app before action: no delivery to replacement app",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "FAULT-02",
+          "acceptance": "Kill target app during action: uncertain outcome returned",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "FAULT-03",
+          "acceptance": "Freeze target app: control server remains responsive after deadline",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "FAULT-04",
+          "acceptance": "Kill accessibility bus: diagnose and reconnect without stale handles",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "FAULT-05",
+          "acceptance": "Kill X server: bounded failure and reconnection path",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "FAULT-06",
+          "acceptance": "Disconnect SSH: server lifecycle and cleanup tested",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "FAULT-07",
+          "acceptance": "Change screen resolution mid-action: reject or report uncertainty",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "FAULT-08",
+          "acceptance": "Replace clipboard owner mid-paste: detect or report uncertainty",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "FAULT-09",
+          "acceptance": "Fill artifact directory: no global desktop corruption",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "FAULT-10",
+          "acceptance": "Restart MCP mid-drag: release strategy tested and limitations documented",
+          "qualification": "unqualified"
+        }
+      ]
+    },
+    {
+      "id": "SHIP",
+      "title": "Packaging and product acceptance",
+      "priority": "P0",
+      "cases": [
+        {
+          "id": "SHIP-01",
+          "acceptance": "Clean install from Silo GUI: desktop and tools appear together",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "SHIP-02",
+          "acceptance": "Existing VM upgrade: preserve user desktop/files and add control capability",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "SHIP-03",
+          "acceptance": "Fresh Codex remote task: no hand-written environment setup needed",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "SHIP-04",
+          "acceptance": "Skill auto-discovery: correct scope and actual tool names",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "SHIP-05",
+          "acceptance": "Offline startup after install: no vendor login or model API required",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "SHIP-06",
+          "acceptance": "Guest health view: report desktop and tool readiness separately",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "SHIP-07",
+          "acceptance": "Human viewer reconnect: same session as agent controls",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "SHIP-08",
+          "acceptance": "Version reporting: driver, skill and tool schema identifiable",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "SHIP-09",
+          "acceptance": "Reproducible acceptance command: independent observer and recorded failures",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "SHIP-10",
+          "acceptance": "Release gate: no claim of production readiness with unqualified P0 cases",
+          "qualification": "unqualified"
+        }
+      ]
+    },
+    {
+      "id": "WAY",
+      "title": "Wayland and alternative backends",
+      "priority": "P2",
+      "cases": [
+        {
+          "id": "WAY-01",
+          "acceptance": "Wayland session: explicitly rejected until a backend is implemented",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "WAY-02",
+          "acceptance": "Portal permission: no false claim of unattended grant",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "WAY-03",
+          "acceptance": "Remote-desktop portal: session lifecycle and revocation qualified",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "WAY-04",
+          "acceptance": "Compositor-specific input: isolated behind same public contract",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "WAY-05",
+          "acceptance": "XWayland app: do not assume access to native Wayland apps",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "WAY-06",
+          "acceptance": "Headless compositor: supported startup and capture path documented",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "WAY-07",
+          "acceptance": "Wayland clipboard: explicit data-control/portal support",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "WAY-08",
+          "acceptance": "Mixed X11/Wayland: correct capability per target",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "WAY-09",
+          "acceptance": "Selkies viewer: control engine independent of streaming transport",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "WAY-10",
+          "acceptance": "Standard VNC-only client: KasmVNC incompatibility identified",
+          "qualification": "unqualified"
+        }
+      ]
+    },
+    {
+      "id": "MEDIA",
+      "title": "Optional richer desktop capabilities",
+      "priority": "P2",
+      "cases": [
+        {
+          "id": "MEDIA-01",
+          "acceptance": "Screen recording: explicit start/stop, bounded storage and privacy policy",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "MEDIA-02",
+          "acceptance": "Audio playback observation: scoped device capture and timestamps",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "MEDIA-03",
+          "acceptance": "Microphone input: explicit source and lifecycle",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "MEDIA-04",
+          "acceptance": "Webcam injection: explicit source and user intent",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "MEDIA-05",
+          "acceptance": "Touch gestures: coordinate and gesture semantics qualified",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "MEDIA-06",
+          "acceptance": "Stylus pressure: support or explicit unsupported response",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "MEDIA-07",
+          "acceptance": "OCR: optional local grounding with uncertainty and source coordinates",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "MEDIA-08",
+          "acceptance": "Image matching: confidence threshold and stale-image handling",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "MEDIA-09",
+          "acceptance": "Remote file transfer: separate from GUI action with explicit paths",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "MEDIA-10",
+          "acceptance": "Multi-user sessions: strict session isolation and independent input ownership",
+          "qualification": "unqualified"
+        }
+      ]
+    },
+    {
+      "id": "INTEL",
+      "title": "Agent usability and evaluation",
+      "priority": "P0",
+      "cases": [
+        {
+          "id": "INTEL-01",
+          "acceptance": "Agent can infer next action from observation without inspecting driver source",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "INTEL-02",
+          "acceptance": "Missing accessibility: agent switches to visual mode without invented node IDs",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "INTEL-03",
+          "acceptance": "Text failure: agent reads back instead of blindly retyping",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "INTEL-04",
+          "acceptance": "Save timeout: agent checks document/file before retry",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "INTEL-05",
+          "acceptance": "Stale snapshot: agent reobserves and recomputes coordinates",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "INTEL-06",
+          "acceptance": "Paste dialog: agent distinguishes blocked workflow from text loss",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "INTEL-07",
+          "acceptance": "Tool error: concise suggested recovery without hiding uncertainty",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "INTEL-08",
+          "acceptance": "Token cost: bounded trees and screenshot dimensions evaluated on real tasks",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "INTEL-09",
+          "acceptance": "Held-out workflows: evaluate apps/tasks not used to develop the driver",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "INTEL-10",
+          "acceptance": "Repeatability: publish successes, failures, versions and environment, not one lucky demo",
+          "qualification": "unqualified"
+        }
+      ]
+    },
+    {
+      "id": "STATE",
+      "title": "State and handle integrity",
+      "priority": "P0",
+      "cases": [
+        {
+          "id": "STATE-01",
+          "acceptance": "Element expires: reject before invoking application",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "STATE-02",
+          "acceptance": "Server changes: old opaque handles rejected",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "STATE-03",
+          "acceptance": "Role/name changes at same path: identity revalidated",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "STATE-04",
+          "acceptance": "Text read limit: truncation explicit; no false full-value comparison",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "STATE-05",
+          "acceptance": "Window changes title: stable ID preserved when underlying identity unchanged",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "STATE-06",
+          "acceptance": "Tree restructuring: resolve object identity rather than fragile child index",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "STATE-07",
+          "acceptance": "Backend loses node: inspect again rather than broad search-and-click fallback",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "STATE-08",
+          "acceptance": "Observation cache bound: expired entries evicted even in long sessions",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "STATE-09",
+          "acceptance": "Target window moves after semantic inspect: semantics remain scoped or fail safely",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "STATE-10",
+          "acceptance": "Action changes modal topology: old action context invalidated or revalidated",
+          "qualification": "unqualified"
+        }
+      ]
+    },
+    {
+      "id": "AUTH",
+      "title": "Credentials and authentication UI",
+      "priority": "P1",
+      "cases": [
+        {
+          "id": "AUTH-01",
+          "acceptance": "Password entry: explicitly supported secret-input path without plaintext readback or logs",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "AUTH-02",
+          "acceptance": "Masked field observation: do not infer hidden contents from placeholder/bullet count",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "AUTH-03",
+          "acceptance": "Password manager popup: target correct native/browser UI and preserve user intent",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "AUTH-04",
+          "acceptance": "OTP entry: preserve leading zeros and avoid retaining one-time values",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "AUTH-05",
+          "acceptance": "Session expiry during workflow: detect login transition rather than act on old coordinates",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "AUTH-06",
+          "acceptance": "OAuth new window: identify origin/session and resume the intended application",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "AUTH-07",
+          "acceptance": "Credential field blocks clipboard: explicit alternate supported input or limitation",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "AUTH-08",
+          "acceptance": "System authentication dialog: distinguish privileged operation from ordinary application input",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "AUTH-09",
+          "acceptance": "Screen lock: detect locked session and do not claim normal desktop readiness",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "AUTH-10",
+          "acceptance": "CAPTCHA or human-presence step: expose the requirement instead of claiming automation succeeded",
+          "qualification": "unqualified"
+        }
+      ]
+    },
+    {
+      "id": "MENU",
+      "title": "Menus, popups and transient UI",
+      "priority": "P0",
+      "cases": [
+        {
+          "id": "MENU-01",
+          "acceptance": "Application menu bar: open, inspect, choose item and verify effect",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "MENU-02",
+          "acceptance": "Nested submenu: hover/key navigation with bounded opening wait",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "MENU-03",
+          "acceptance": "Context menu outside client bounds: explicit transient target instead of guessed parent coordinates",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "MENU-04",
+          "acceptance": "Unmanaged X11 popup: associate with owner or declare targeting unsupported",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "MENU-05",
+          "acceptance": "Tooltip overlaps target: avoid interpreting tooltip pixels as the underlying control",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "MENU-06",
+          "acceptance": "Notification steals attention: preserve intended target and report focus change",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "MENU-07",
+          "acceptance": "System tray menu: identify actual app/menu rather than panel-wide blind actions",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "MENU-08",
+          "acceptance": "Tear-off or detached menu: new identity and coordinate context",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "MENU-09",
+          "acceptance": "Menu disappears on observation: reject stale target and reopen deliberately",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "MENU-10",
+          "acceptance": "Default button changes in dialog: deliberate action identity rather than blind repeated Return",
+          "qualification": "unqualified"
+        }
+      ]
+    },
+    {
+      "id": "DATA",
+      "title": "Forms, tables and virtualized widgets",
+      "priority": "P1",
+      "cases": [
+        {
+          "id": "DATA-01",
+          "acceptance": "Virtualized table rows: scroll and reacquire item identity rather than reuse index",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "DATA-02",
+          "acceptance": "Sorted/filtered list: act on stable item meaning after order changes",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "DATA-03",
+          "acceptance": "Multi-selection: explicit replace/add/range semantics and verify selected items",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "DATA-04",
+          "acceptance": "Editable grid cell: distinguish entering edit mode from replacing whole widget text",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "DATA-05",
+          "acceptance": "Date/time picker: honor locale, timezone and validation",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "DATA-06",
+          "acceptance": "Numeric field: detect formatting, rounding and range constraints",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "DATA-07",
+          "acceptance": "Rich text editor: distinguish plain text content from markup and formatting",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "DATA-08",
+          "acceptance": "Form validation: observe error rather than mistake submit dispatch for success",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "DATA-09",
+          "acceptance": "Auto-complete suggestion: select intended suggestion without losing literal input",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "DATA-10",
+          "acceptance": "RTL layout: visual navigation and text storage semantics remain distinct",
+          "qualification": "unqualified"
+        }
+      ]
+    },
+    {
+      "id": "EVAL",
+      "title": "Qualification methodology",
+      "priority": "P0",
+      "cases": [
+        {
+          "id": "EVAL-01",
+          "acceptance": "Independent oracle: verify app/file/DOM state rather than echo driver arguments",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "EVAL-02",
+          "acceptance": "Repeat runs: disclose run count and intermittent failures",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "EVAL-03",
+          "acceptance": "Clean guest: reproduce without hidden developer dependencies or prior session state",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "EVAL-04",
+          "acceptance": "Version matrix: record distro, architecture, desktop, toolkit, browser and driver versions",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "EVAL-05",
+          "acceptance": "Held-out tasks: include workflows absent from implementation fixtures",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "EVAL-06",
+          "acceptance": "Negative cases: prove invalid/stale requests do not mutate targets",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "EVAL-07",
+          "acceptance": "Timeout tests: inspect late effects after recovery, not only elapsed duration",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "EVAL-08",
+          "acceptance": "Performance measurements: report distributions and environment instead of an unsupported speed claim",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "EVAL-09",
+          "acceptance": "Evidence retention: synthetic fixtures, failure transcripts and reproducible commands",
+          "qualification": "unqualified"
+        },
+        {
+          "id": "EVAL-10",
+          "acceptance": "Release decision: separate implementation coverage, local test evidence and production qualification",
+          "qualification": "unqualified"
+        }
+      ]
+    }
+  ]
+}

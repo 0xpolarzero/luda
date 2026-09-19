@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "silo-desktop"
+version = "0.1.0"
+description = "Local X11 desktop tools with explicit targeting and observable outcomes"
+requires-python = ">=3.12"
+dependencies = ["mcp==1.30.0", "Pillow>=12.0,<13"]
+
+[project.optional-dependencies]
+test = ["playwright==1.63.0"]
+
+[project.scripts]
+silo-desktop = "silo_desktop.server:main"
+silo-desktop-session = "silo_desktop.session:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.data-files]
+"share/silo-desktop/skills/silo-desktop" = ["skills/silo-desktop/SKILL.md"]
