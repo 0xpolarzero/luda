@@ -2,6 +2,7 @@ import contextvars
 from contextlib import contextmanager
 from dataclasses import dataclass
 import os
+import re
 import signal
 import subprocess
 import tempfile
@@ -136,3 +137,15 @@ def validate_text(text):
     bad = [c for c in text if (ord(c) < 32 and c not in "\n\t") or ord(c) == 127]
     if bad:
         raise DesktopError("UNSUPPORTED_TEXT", "Control characters including CR, NUL and Escape are rejected; LF and Tab are allowed. No normalization is performed.")
+
+
+def display_identity(display):
+    """Equivalent local X display spellings share one input lock, across screens."""
+    match = re.fullmatch(r'(.*?):(\d+)(?:\.\d+)?', display)
+    if not match:
+        return display
+    host, number = match.groups()
+    host = host.casefold()
+    if host in ('', 'unix', 'unix/', 'localhost', '127.0.0.1', '[::1]'):
+        host = 'local'
+    return f'{host}:{int(number)}'

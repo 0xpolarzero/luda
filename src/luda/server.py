@@ -54,7 +54,7 @@ def execute(method, *args, _cancelled=None, **kwargs):
                     exc.details['prior_effects_possible'] = True
                 raise
         if not isinstance(result,dict):
-            result={'windows':result}
+            result={('windows' if method=='list_windows' else 'workspaces' if method=='workspaces' else 'items'):result}
         image = result.pop('image_base64',None)
         result={'ok':True,'operation_id':operation_id,'elapsed_ms':round((time.monotonic()-started)*1000),**result}
         event.update(ok=True, effect=result.get('effect','none'))
@@ -127,9 +127,9 @@ async def desktop_observe(max_width: int = 1280) -> CallToolResult:
 
 
 @mcp.tool()
-async def desktop_inspect(window_id: str, limit: int = 150) -> CallToolResult:
-    """Return a bounded accessibility tree with opaque 60-second element IDs, roles, states and actions."""
-    return await execute_async('inspect',window_id,limit)
+async def desktop_inspect(window_id: str, limit: int = 150, name: str | None = None, role: str | None = None, states: list[str] | None = None, max_depth: int = 30) -> CallToolResult:
+    """Inspect a window or find controls by name/role substring and required states. Returns bounded tree, parent IDs, supported actions and 60-second element IDs. Empty matches and unavailable accessibility are distinct."""
+    return await execute_async('inspect',window_id,limit,name=name,role=role,states=states,max_depth=max_depth)
 
 
 @mcp.tool()
@@ -141,14 +141,14 @@ async def desktop_read_text(element_id: str, limit: int = 16000) -> CallToolResu
 
 
 @mcp.tool()
-async def desktop_set_text(element_id: str, text: str) -> CallToolResult:
-    """Replace all text through accessibility and compare exact readback. Preserves LF, Tab and Unicode; rejects other control characters. Does not submit."""
-    return await execute_async('element',element_id,'set',text=text)
+async def desktop_type(element_id: str, text: str, mode: Literal["insert", "replace"] = "insert") -> CallToolResult:
+    """Type into an editable element and verify exact readback. Default insert preserves surrounding text and replaces the selection; replace changes the entire field. Preserves Unicode/LF/tabs, never adds a submit key."""
+    return await execute_async('element',element_id,'insert' if mode=='insert' else 'set',text=text)
 
 
 @mcp.tool()
-async def desktop_enter_text(window_id: str, text: str, shortcut: Literal['ctrl_v','ctrl_shift_v','shift_insert']) -> CallToolResult:
-    """Paste literal text at the current caret using the application's explicit shortcut. Replaces CLIPBOARD; target contents are NOT verified. Terminals may execute newlines. Observe dialogs/read back before proceeding."""
+async def desktop_paste(window_id: str, text: str, shortcut: Literal['ctrl_v','ctrl_shift_v','shift_insert'] | None = None) -> CallToolResult:
+    """Paste through CLIPBOARD when semantic typing is unavailable. Chooses common app shortcut from window class, with optional override. Destination is unverified; inspect dialogs/read back. Terminals can execute pasted newlines."""
     return await execute_async('paste',window_id,text,shortcut)
 
 
@@ -186,6 +186,60 @@ async def desktop_focus_element(element_id: str) -> CallToolResult:
 async def desktop_invoke(element_id: str, action: str) -> CallToolResult:
     """Invoke an exact action name returned by inspect. Completion means dispatch, not verified application outcome."""
     return await execute_async('element',element_id,'invoke',action=action)
+
+
+@mcp.tool()
+async def desktop_select(element_id: str, start_offset: int, end_offset: int) -> CallToolResult:
+    """Select a text range using Unicode code-point offsets, or place caret when equal; verify the result."""
+    return await execute_async('element',element_id,'select',start_offset=start_offset,end_offset=end_offset)
+
+
+@mcp.tool()
+async def desktop_set_value(element_id: str, value: float) -> CallToolResult:
+    """Set a numeric control to a value within its inspected range and verify the actual value."""
+    return await execute_async('element',element_id,'value',value=value)
+
+
+@mcp.tool()
+async def desktop_set_checked(element_id: str, checked: bool) -> CallToolResult:
+    """Set a checkable control to the requested state; avoid a blind toggle when it already matches."""
+    return await execute_async('element',element_id,'check',checked=checked)
+
+
+@mcp.tool()
+async def desktop_set_expanded(element_id: str, expanded: bool) -> CallToolResult:
+    """Expand or collapse a supported control and verify state. Reinspect newly exposed children."""
+    return await execute_async('element',element_id,'expand',expanded=expanded)
+
+
+@mcp.tool()
+async def desktop_window(window_id: str, action: Literal['move','resize','maximize','minimize','restore','close','workspace'], x: int | None = None, y: int | None = None, width: int | None = None, height: int | None = None, workspace: int | None = None) -> CallToolResult:
+    """Manage one window. move uses frame x/y; resize uses client width/height; workspace requires its index. Other actions take no extra parameters. A close can open a save dialog."""
+    return await execute_async('manage_window',window_id,action,x=x,y=y,width=width,height=height,workspace=workspace)
+
+
+@mcp.tool()
+async def desktop_workspaces(workspace: int | None = None) -> CallToolResult:
+    """List workspaces, or switch to an existing index and verify the active workspace."""
+    return await execute_async('workspaces') if workspace is None else await execute_async('switch_workspace',workspace)
+
+
+@mcp.tool()
+async def desktop_hover(window_id: str, snapshot_id: str, x: float, y: float) -> CallToolResult:
+    """Move the pointer to a recent observed point without clicking; observe tooltips/submenus afterward."""
+    return await execute_async('hover',window_id,snapshot_id,x,y)
+
+
+@mcp.tool()
+async def desktop_drag_to(source_window_id: str, target_window_id: str, snapshot_id: str, x: float, y: float, end_x: float, end_y: float, button: Literal['left','middle','right'] = 'left') -> CallToolResult:
+    """Drag from the active source into a second observed window. Coordinates refer to one screenshot. Verify transfer in the applications; dispatch does not prove a drop was accepted."""
+    return await execute_async('drag_between',source_window_id,target_window_id,snapshot_id,x,y,end_x,end_y,button)
+
+
+@mcp.tool()
+async def desktop_wait(condition: Literal['window_present','window_absent','window_active','text_equals','text_contains'], window_id: str | None = None, element_id: str | None = None, text: str | None = None, timeout: float = 5) -> CallToolResult:
+    """Wait up to 10 seconds for an observable condition without repeating input. Window conditions use window_id; text conditions use element_id and text. A timeout returns matched=false."""
+    return await execute_async('wait_for',condition,window_id=window_id,element_id=element_id,text=text,timeout=timeout)
 
 
 def main():

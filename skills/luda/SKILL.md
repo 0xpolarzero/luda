@@ -10,11 +10,15 @@ List windows and activate the intended window. `desktop_observe` supplies the sc
 Prefer `desktop_inspect` and semantic element actions when available. Element IDs expire after 60 seconds and belong to one server. Reinspect on `STALE_TARGET`; never substitute a similar-looking element without checking its identity. A partial or empty accessibility tree is not proof that the app has no UI; use the screenshot.
 
 For text:
-- `desktop_set_text` replaces the entire editable element and checks exact readback. Empty text clears it. This is distinct from insertion at the caret.
-- `desktop_enter_text` pastes at the caret through CLIPBOARD. Choose the app's shortcut explicitly: commonly ctrl_v for editors/browsers, ctrl_shift_v for terminals. Shift+Insert can use PRIMARY instead in some terminals. This tool only verifies clipboard contents; read the destination or observe the resulting UI.
+- `desktop_type` inserts at the caret or replaces the selection and verifies readback. Use `mode="replace"` to replace the whole field; empty text in replace mode clears it. This is distinct from insertion at the caret.
+- `desktop_paste` pastes at the caret through CLIPBOARD. The shortcut is selected from the window class; override it only for known app-specific bindings. Shift+Insert can use PRIMARY instead in some terminals. This tool only verifies clipboard contents; read the destination or observe the resulting UI.
 - LF, tabs, blank lines and Unicode are preserved by the tool. CR, NUL and other control characters are rejected rather than silently changed.
 - Use `desktop_press_keys` for deliberate Tab, Return, shortcuts and submission. Pasted newlines can execute commands in a terminal. Inspect multiline-paste dialogs and follow the user's intended action; the tool does not accept them automatically.
 
 `effect=verified` names the specific condition checked. `dispatched` means input was sent. `uncertain` means an effect may already have occurred: inspect before retrying, especially for Save, Send, Delete or submission. Do not turn a timeout into an automatic repeated click.
 
-The tool serializes its own clients but does not exclude a human using the guest viewer. Unexpected focus/layout changes require a new observation. Clipboard contents are replaced and are not restored. Protected fields, cross-window drag, Wayland and browser DOM automation are outside this version's implemented support.
+Use `desktop_select` for explicit selection/caret placement, and `desktop_set_checked`, `desktop_set_expanded`, or `desktop_set_value` for desired states. These avoid blind toggles. `desktop_window` manages window state; `desktop_drag_to` transfers between observed windows. Verify application drop effects.
+
+Use `desktop_wait` for an observable text/window condition. It never retries input. After cancellation, `desktop_status` reports recovery and recent outcomes without retaining typed text. A client-side timeout may not send MCP cancellation; even a cancellation acknowledgment can precede worker cleanup. Wait for recovery and inspect effects before another mutation.
+
+The tool serializes its own clients but does not exclude a human using the guest viewer. Unexpected focus/layout changes require a new observation. Clipboard contents are replaced and are not restored. Protected fields, Wayland and browser DOM automation are outside this version's implemented support.

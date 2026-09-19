@@ -16,11 +16,12 @@ import time
 import uuid
 
 from PIL import Image
-from .common import DesktopError, checkpoint, mark_effect, process_identity, run, stop_process, validate_text
+from .common import DesktopError, display_identity, checkpoint, mark_effect, process_identity, run, stop_process, validate_text
 from .x11 import X11
+from .interaction import InteractionMixin
 
 
-class Desktop:
+class Desktop(InteractionMixin):
     def __init__(self):
         self.x = None
         self.closed = False
@@ -29,7 +30,7 @@ class Desktop:
         self.windows = {}
         self.clipboard_owner = None
         self.local_lock = threading.Lock()
-        name = hashlib.sha256(os.environ.get('DISPLAY','').encode()).hexdigest()[:12]
+        name = hashlib.sha256(display_identity(os.environ.get('DISPLAY','')).encode()).hexdigest()[:12]
         directory = Path(tempfile.gettempdir()) / f'silo-desktop-{os.getuid()}'
         directory.mkdir(mode=0o700, exist_ok=True)
         if directory.is_symlink() or directory.stat().st_uid != os.getuid() or directory.stat().st_mode & 0o077:
@@ -112,16 +113,18 @@ class Desktop:
             except DesktopError:
                 continue
             frame = dict(bounds)
-            prop = run(['xprop','-id',str(xid),'_NET_FRAME_EXTENTS']).decode()
-            if '=' in prop:
-                values = [int(v) for v in re.findall(r'\d+',prop.split('=',1)[1])]
+            prop = run(['xprop','-id',str(xid),'_NET_FRAME_EXTENTS','WM_CLASS']).decode()
+            frame_prop = prop.splitlines()[0]
+            wm_class = re.findall(r'"([^"]*)"', prop.partition('WM_CLASS')[2])
+            if '=' in frame_prop:
+                values = [int(v) for v in re.findall(r'\d+',frame_prop.split('=',1)[1])]
                 if len(values)==4:
                     left,right,top,bottom=values
                     frame={'x':bounds['x']-left,'y':bounds['y']-top,'width':bounds['width']+left+right,'height':bounds['height']+top+bottom}
             token = f'{xid:x}:{pid}:{start}'
             item = {'window_id':token,'xid':xid,'pid':pid,'start':start,
                     'title':fields[4][:512] if len(fields)>4 else '', 'workspace':workspace,
-                    'bounds':bounds,'frame_bounds':frame,'active':xid==active}
+                    'bounds':bounds,'frame_bounds':frame,'active':xid==active,'wm_class':wm_class}
             result.append(item)
         self.windows = {w['window_id']:w for w in result}
         return result
@@ -256,17 +259,19 @@ class Desktop:
             mark_effect(result.get('effect', 'dispatched'))
         return result
 
-    def inspect(self, window_id, limit=150):
+    def inspect(self, window_id, limit=150, name=None, role=None, states=None, max_depth=30):
         if not 1 <= limit <= 500:
             raise DesktopError('INVALID_ARGUMENT','limit must be 1–500.')
         w = self.target_window(window_id,False)
-        result = self.ax({'op':'inspect','pid':w['pid'],'start':w['start'],'limit':limit,'bounds':w['bounds'],'frame_bounds':w['frame_bounds']})
+        result = self.ax({'op':'inspect','pid':w['pid'],'start':w['start'],'limit':limit,'bounds':w['bounds'],'frame_bounds':w['frame_bounds'],'window_title':w['title'],'filters':{k:v for k,v in {'name':name,'role':role,'states':states}.items() if v is not None},'max_depth':max_depth})
         now=time.monotonic()
         self.elements={k:v for k,v in self.elements.items() if now-v['time']<60}
+        tokens = {node['path']:uuid.uuid4().hex for node in result['nodes']}
         for node in result['nodes']:
-            token=uuid.uuid4().hex
+            token=tokens[node['path']]
             self.elements[token]={'time':now,'window_id':window_id,'node':dict(node)}
             node['element_id']=token
+            node['parent_element_id']=tokens.get(node.pop('parent_path',None))
             node.pop('path',None);node.pop('start',None);node.pop('root_path',None)
         while len(self.elements)>4000:self.elements.pop(next(iter(self.elements)))
         result['window_id']=window_id
@@ -281,13 +286,19 @@ class Desktop:
         node=target['node']
         if node['start']!=w['start']:
             raise DesktopError('STALE_TARGET','Process identity changed.')
-        if op=='set':
+        if op in ('set','insert'):
             validate_text(kwargs['text'])
         return self.ax({'op':op,'pid':w['pid'],'start':w['start'],'target':node,**kwargs},op!='read')
 
-    def paste(self, window_id, text, shortcut):
+    def paste(self, window_id, text, shortcut=None):
         validate_text(text)
-        self.target_window(window_id)
+        target = self.target_window(window_id)
+        if shortcut is None:
+            terminal_classes = {'xfce4-terminal','gnome-terminal','org.gnome.terminal','konsole','kitty','alacritty'}
+            classes = {v.casefold() for v in target.get('wm_class', [])}
+            if 'xterm' in classes:
+                raise DesktopError('UNSUPPORTED_PASTE', 'xterm clipboard bindings vary. Use an explicit shortcut only after inspecting its configured selection behavior.')
+            shortcut = 'ctrl_shift_v' if classes & terminal_classes else 'ctrl_v'
         chords={'ctrl_v':'ctrl+v','ctrl_shift_v':'ctrl+shift+v','shift_insert':'shift+Insert'}
         if shortcut not in chords:
             raise DesktopError('INVALID_ARGUMENT','Choose the application clipboard shortcut explicitly.')
@@ -322,11 +333,44 @@ class Desktop:
             exc.details['clipboard_changed'] = True
             exc.effect = 'uncertain'
             raise
-        return {'effect':'dispatched','clipboard_exact_match':True,
+        return {'effect':'dispatched','shortcut':shortcut,'clipboard_exact_match':True,
                 'clipboard_verification':'Sampled immediately before shortcut; other clients can still intervene.',
                 'verification':'Destination text is not verified. Inspect for paste dialogs or read the target element.',
                 'clipboard':'CLIPBOARD replaced until another owner takes it or this server exits. PRIMARY is unchanged.',
                 'warning':'Shift+Insert can select PRIMARY in some terminals. A terminal may execute pasted newlines; no confirmation dialog is automatically accepted.'}
+
+    def wait_for(self, condition, window_id=None, element_id=None, text=None, timeout=5):
+        if isinstance(timeout, bool) or not isinstance(timeout, (int,float)) or not 0 <= timeout <= 10:
+            raise DesktopError('INVALID_ARGUMENT', 'timeout must be 0–10 seconds.')
+        conditions = {'window_present', 'window_absent', 'window_active', 'text_equals', 'text_contains'}
+        if condition not in conditions:
+            raise DesktopError('INVALID_ARGUMENT', 'Unknown wait condition.')
+        if condition.startswith('window_'):
+            if not window_id or element_id is not None or text is not None:
+                raise DesktopError('INVALID_ARGUMENT', 'Window conditions require only window_id.')
+        elif not element_id or not isinstance(text,str) or window_id is not None:
+            raise DesktopError('INVALID_ARGUMENT', 'Text conditions require only element_id and text.')
+        deadline = time.monotonic()+timeout
+        polls = 0
+        while True:
+            checkpoint()
+            polls += 1
+            if condition.startswith('window_'):
+                current = next((w for w in self.list_windows() if w['window_id']==window_id),None)
+                matched = (current is not None if condition=='window_present' else
+                           current is None if condition=='window_absent' else
+                           bool(current and current['active']))
+            else:
+                observed = self.element(element_id,'read',limit=1_000_000)
+                if observed['truncated']:
+                    raise DesktopError('VERIFICATION_LIMIT', 'Target text exceeds the full-read verification budget.')
+                matched = observed['text']==text if condition=='text_equals' else text in observed['text']
+            if matched:
+                return {'effect':'verified','condition':condition,'matched':True,'polls':polls}
+            remaining = deadline-time.monotonic()
+            if remaining <= 0:
+                return {'effect':'none','condition':condition,'matched':False,'polls':polls,'reason':'condition_timeout'}
+            time.sleep(min(.1,remaining))
 
     def close(self):
         if self.closed:

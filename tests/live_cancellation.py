@@ -45,7 +45,7 @@ async def main(server):
                 tree = await call(session, 'desktop_inspect', window_id=window['window_id'])
                 element = next(n for n in tree['nodes'] if n['name'] == 'Contract text')
                 sentinel = 'before cancellation\n'
-                await call(session, 'desktop_set_text', element_id=element['element_id'], text=sentinel)
+                await call(session, 'desktop_type', element_id=element['element_id'], text=sentinel, mode='replace')
                 await asyncio.sleep(.15)
                 os.kill(fixture.pid, signal.SIGSTOP)
                 began = time.monotonic()
@@ -54,8 +54,8 @@ async def main(server):
                 # Capture the next ID with no other request pending in this
                 # test; this private SDK detail is isolated to the harness.
                 request_id = session._request_id
-                pending = asyncio.create_task(session.call_tool('desktop_set_text', {
-                    'element_id': element['element_id'], 'text': 'must not arrive after cancellation\n'}))
+                pending = asyncio.create_task(session.call_tool('desktop_type', {
+                    'element_id': element['element_id'], 'mode':'replace', 'text': 'must not arrive after cancellation\n'}))
                 await asyncio.sleep(.15)
                 await session.send_notification(types.ClientNotification(types.CancelledNotification(
                     params=types.CancelledNotificationParams(requestId=request_id, reason='qualification test'))))

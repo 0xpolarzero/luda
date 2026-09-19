@@ -30,7 +30,7 @@ async def main():
     await s.initialize()
     tools=(await s.list_tools()).tools
     (OUT/'tools.json').write_text(json.dumps([t.model_dump() for t in tools],indent=2))
-    record('mcp-discovery',{'desktop_set_text','desktop_enter_text','desktop_press_keys','desktop_observe'} <= {t.name for t in tools})
+    record('mcp-discovery',{'desktop_type','desktop_paste','desktop_press_keys','desktop_observe'} <= {t.name for t in tools})
     async def call(name,**args):
      r=await s.call_tool(name,args)
      assert not r.isError,(name,r)
@@ -41,7 +41,7 @@ async def main():
     tree,_=await call('desktop_inspect',window_id=wid)
     n=next(n for n in tree['nodes'] if n['name']=='Contract text');eid=n['element_id']
     payload='MCP literal text\n日本語 👩🏽\u200d💻\n\tindent\n\n'
-    value,_=await call('desktop_set_text',element_id=eid,text=payload)
+    value,_=await call('desktop_type',element_id=eid,text=payload,mode='replace')
     await asyncio.sleep(.1)
     actual=json.loads((OUT/'state.json').read_text())['text']
     record('mcp-set-text-readback',value['effect']=='verified' and actual==payload)
@@ -56,9 +56,9 @@ async def main():
     bad=await s.call_tool('desktop_click',{'window_id':wid,'snapshot_id':shot['snapshot_id'],'x':10,'y':20,'count':10000})
     record('mcp-schema-validation',bad.isError)
     # Separate insertion from replacement through actual MCP calls.
-    await call('desktop_set_text',element_id=eid,text='')
+    await call('desktop_type',element_id=eid,text='',mode='replace')
     await call('desktop_focus_element',element_id=eid)
-    value,_=await call('desktop_enter_text',window_id=wid,text=payload,shortcut='ctrl_v')
+    value,_=await call('desktop_paste',window_id=wid,text=payload,shortcut='ctrl_v')
     await asyncio.sleep(.15)
     record('mcp-paste-independent-readback',json.loads((OUT/'state.json').read_text())['text']==payload and value['effect']=='dispatched')
  finally:
