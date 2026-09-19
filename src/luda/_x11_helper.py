@@ -1,9 +1,19 @@
 """Read client geometry in root pixels, avoiding window-manager frame offsets."""
 import ctypes as C
+import re
+import secrets
 from .common import DesktopError
 
 
 _IGNORE_X_ERROR = C.CFUNCTYPE(C.c_int, C.c_void_p, C.c_void_p)(lambda *_: 0)
+
+
+def _decode_window_token(actual_type, fmt, raw, remaining):
+    if actual_type == 0:
+        return None
+    if actual_type != 31 or fmt != 8 or remaining or not re.fullmatch(b'[0-9a-f]{32}',raw):
+        raise DesktopError('INVALID_WINDOW_TOKEN','Window generation property is malformed; no token was accepted.')
+    return raw.decode('ascii')
 
 
 class _NativeX11:
@@ -76,6 +86,52 @@ class _NativeX11:
         finally:
             if data:x.XFree(data)
 
+    def window_tokens(self, windows):
+        """Initialize per-resource generation metadata atomically across clients."""
+        x=self.lib
+        x.XInternAtom.argtypes=[C.c_void_p,C.c_char_p,C.c_int];x.XInternAtom.restype=C.c_ulong
+        x.XGetWindowProperty.argtypes=[C.c_void_p,C.c_ulong,C.c_ulong,C.c_long,C.c_long,C.c_int,C.c_ulong,C.POINTER(C.c_ulong),C.POINTER(C.c_int),C.POINTER(C.c_ulong),C.POINTER(C.c_ulong),C.POINTER(C.POINTER(C.c_ubyte))]
+        x.XGetWindowProperty.restype=C.c_int
+        x.XChangeProperty.argtypes=[C.c_void_p,C.c_ulong,C.c_ulong,C.c_ulong,C.c_int,C.c_int,C.POINTER(C.c_ubyte),C.c_int]
+        x.XGrabServer.argtypes=[C.c_void_p];x.XUngrabServer.argtypes=[C.c_void_p]
+        x.XSync.argtypes=[C.c_void_p,C.c_int];x.XFree.argtypes=[C.c_void_p]
+        atom=x.XInternAtom(self.display,b'_LUDA_WINDOW_TOKEN',False)
+        # Generate entropy before holding the server. Bound and deduplicate the
+        # batch at the request boundary; never inspect arbitrary property data.
+        candidates={xid:secrets.token_hex(16) for xid in windows}
+        def read(xid):
+            actual,nitems,remaining=C.c_ulong(),C.c_ulong(),C.c_ulong();fmt=C.c_int();data=C.POINTER(C.c_ubyte)()
+            status=x.XGetWindowProperty(self.display,xid,atom,0,9,False,0,C.byref(actual),C.byref(fmt),C.byref(nitems),C.byref(remaining),C.byref(data))
+            try:
+                if status:raise DesktopError('STALE_TARGET','Window disappeared before generation read.')
+                raw=C.string_at(data,min(nitems.value,36)) if data and fmt.value==8 else b''
+                return _decode_window_token(actual.value,fmt.value,raw,remaining.value)
+            finally:
+                if data:x.XFree(data)
+        result={}
+        x.XGrabServer(self.display)
+        try:
+            # Validate every preexisting property before creating any new token.
+            for xid in candidates:
+                try:result[xid]=read(xid)
+                except DesktopError as exc:
+                    if exc.code!='STALE_TARGET':raise
+            for xid,token in result.items():
+                if token is None:
+                    value=candidates[xid].encode('ascii')
+                    buf=(C.c_ubyte*len(value)).from_buffer_copy(value)
+                    x.XChangeProperty(self.display,xid,atom,31,8,0,buf,len(value))
+                    token=read(xid)
+                    if token!=candidates[xid]:
+                        raise DesktopError('BACKEND_ERROR','Window generation initialization failed.')
+                    result[xid]=token
+            return result
+        finally:
+            # X server also releases the grab if timeout cancellation kills this
+            # helper: it closes the owning connection. Flush the normal release.
+            x.XUngrabServer(self.display)
+            x.XSync(self.display,False)
+
     def geometries(self, windows):
         result={}
         for xid in windows:
@@ -124,14 +180,14 @@ def main():
     import sys
     native = None
     try:
-        request = json.loads(sys.stdin.buffer.read(4096))
+        request = json.loads(sys.stdin.buffer.read(65536))
         method = request['method']
         argument = request.get('argument')
-        if method not in {'root','geometry','geometries','surface_at','transient_for','children','popup_surfaces'}:
+        if method not in {'root','geometry','geometries','window_tokens','surface_at','transient_for','children','popup_surfaces'}:
             raise DesktopError('INVALID_ARGUMENT','Unknown X11 metadata operation.')
-        if method == 'geometries':
+        if method in {'geometries','window_tokens'}:
             if not isinstance(argument,list) or len(argument)>512 or any(isinstance(v,bool) or not isinstance(v,int) or not 1 <= v <= 0xffffffff for v in argument):
-                raise DesktopError('INVALID_ARGUMENT','Invalid geometry batch.')
+                raise DesktopError('INVALID_ARGUMENT','Invalid X11 metadata batch.')
         elif method == 'surface_at':
             if not isinstance(argument,list) or len(argument)!=2 or any(isinstance(v,bool) or not isinstance(v,int) or not -32768 <= v <= 32767 for v in argument):
                 raise DesktopError('INVALID_ARGUMENT','Invalid surface point.')

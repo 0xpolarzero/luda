@@ -53,6 +53,16 @@ class X11:
         result=self._read('geometries',[self._xid(window) for window in windows])
         return {int(xid):bounds for xid,bounds in result.items()}
 
+    def window_tokens(self, windows):
+        """Stable across clients/remaps; changes after real X resource destruction.
+
+        Initializes a private X11 property. Not a malicious-client trust boundary.
+        """
+        if not isinstance(windows,(list,tuple)) or len(windows)>512:
+            raise DesktopError('INVALID_ARGUMENT','Window token batch must contain at most 512 XIDs.')
+        result=self._read('window_tokens',[self._xid(window) for window in windows])
+        return {int(xid):token for xid,token in result.items()}
+
     def surface_at(self, x, y):
         if any(isinstance(v,bool) or not isinstance(v,int) or not -32768 <= v <= 32767 for v in (x,y)):
             raise DesktopError('INVALID_ARGUMENT','Surface coordinates must be signed 16-bit integers.')
