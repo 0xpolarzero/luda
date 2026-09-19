@@ -292,6 +292,69 @@ class Desktop(InteractionMixin):
             validate_text(kwargs['text'])
         return self.ax({'op':op,'pid':w['pid'],'start':w['start'],'target':node,**kwargs},op!='read')
 
+    def type_text(self, element_id, text, mode='insert'):
+        validate_text(text)
+        if mode not in ('insert','replace'):
+            raise DesktopError('INVALID_ARGUMENT','Text mode must be insert or replace.')
+        target = self.elements.get(element_id)
+        if not target or time.monotonic()-target['time']>=60:
+            raise DesktopError('STALE_TARGET','Element expired; inspect again.')
+        node = target['node']
+        if node.get('protected'):
+            raise DesktopError('PROTECTED_FIELD','Ordinary typing does not write protected fields.')
+        if 'EditableText' in node['interfaces']:
+            result = self.element(element_id,'insert' if mode=='insert' else 'set',text=text)
+            if result.get('exact_match') is False:
+                raise DesktopError('TEXT_MISMATCH','Application text does not match the requested result; inspect before retrying.',effect='uncertain',details={k:v for k,v in result.items() if k in ('actual_characters','expected_characters','caret_verified')})
+            return result
+        if 'Text' not in node['interfaces'] or 'editable' not in node['states']:
+            raise DesktopError('NOT_EDITABLE','Target has no verifiable editable-text capability.')
+        # Chromium exposes editable Text without EditableText. Use a verified
+        # selection + clipboard transaction rather than requiring tool guessing.
+        focused = self.element(element_id,'focus')
+        if focused.get('effect')!='verified':
+            raise DesktopError('FOCUS_UNVERIFIED','Cannot verify element focus; no text pasted.',effect=focused.get('effect','uncertain'))
+        before = self.element(element_id,'read',limit=1_000_000)
+        if before['truncated']:
+            raise DesktopError('VERIFICATION_LIMIT','Field exceeds exact readback budget; no text pasted.')
+        selections = before.get('selections',[])
+        if mode=='replace':
+            start,end = 0,len(before['text'])
+            selected = self.element(element_id,'select',start_offset=start,end_offset=end)
+            if selected.get('effect')!='verified':
+                raise DesktopError('SELECTION_UNVERIFIED','Cannot verify replacement selection; no text pasted.',effect='uncertain')
+        elif len(selections)>1:
+            raise DesktopError('UNSUPPORTED_SELECTION','Multiple text selections are not supported for insertion.')
+        elif selections:
+            start,end = selections[0]['start_offset'],selections[0]['end_offset']
+        else:
+            start=end=before.get('caret_offset',-1)
+        if not 0 <= start <= end <= len(before['text']):
+            raise DesktopError('INVALID_CARET','Target did not report a valid code-point caret/selection.')
+        expected = before['text'][:start]+text+before['text'][end:]
+        if len(expected)>1_000_000:
+            raise DesktopError('VERIFICATION_LIMIT','Result would exceed exact readback budget.')
+        current = self.element(element_id,'read',limit=1_000_000)
+        actual_selections = current.get('selections',[])
+        current_range = (actual_selections[0]['start_offset'],actual_selections[0]['end_offset']) if len(actual_selections)==1 else (current.get('caret_offset',-1),)*2 if not actual_selections else None
+        if current['text']!=before['text'] or current_range!=(start,end):
+            raise DesktopError('TEXT_CHANGED','Text or selection changed before paste; no text pasted.',effect='uncertain')
+        if text=='':
+            if start!=end:
+                self.key(target['window_id'],'BackSpace')
+        else:
+            self.paste(target['window_id'],text)
+        deadline=time.monotonic()+2
+        while True:
+            observed=self.element(element_id,'read',limit=1_000_000)
+            if not observed['truncated'] and observed['text']==expected:
+                return {'effect':'verified','exact_match':True,'expected_characters':len(expected),
+                        'actual_characters':len(observed['text']),'caret_verified':observed.get('caret_offset')==start+len(text),
+                        'verification':'Exact destination text readback after clipboard insertion.'}
+            if time.monotonic()>=deadline:
+                raise DesktopError('TEXT_MISMATCH','Destination did not match requested text; inspect paste dialogs and contents before retrying.',effect='uncertain',details={'expected_characters':len(expected),'actual_characters':observed.get('characters')})
+            time.sleep(.05)
+
     def paste(self, window_id, text, shortcut=None):
         validate_text(text)
         target = self.target_window(window_id)

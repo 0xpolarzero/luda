@@ -158,7 +158,7 @@ async def desktop_read_text(element_id: str, limit: int = 16000) -> CallToolResu
 @mcp.tool()
 async def desktop_type(element_id: str, text: str, mode: Literal["insert", "replace"] = "insert") -> CallToolResult:
     """Type into an editable element and verify exact readback. Default insert preserves surrounding text and replaces the selection; replace changes the entire field. Preserves Unicode/LF/tabs, never adds a submit key."""
-    return await execute_async('element',element_id,'insert' if mode=='insert' else 'set',text=text)
+    return await execute_async('type_text',element_id,text,mode)
 
 
 @mcp.tool()
