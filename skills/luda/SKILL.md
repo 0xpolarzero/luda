@@ -1,5 +1,5 @@
 ---
-name: silo-desktop
+name: luda
 description: Operate native applications and desktop dialogs inside a Silo Linux X11 sandbox using the silo-desktop tools. Use for visible desktop interaction; browser DOM tasks can use an available browser tool attached to the same guest.
 ---
 

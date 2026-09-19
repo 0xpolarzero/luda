@@ -1,4 +1,4 @@
-# Silo Desktop
+# Luda
 
 An experimental local Linux desktop MCP server and agent skill, with an explicit feature/acceptance catalog. Runs on the existing microsandbox XFCE/X11/KasmVNC desktop. No AIO/Cua worker, cloud service, model API or nested VM.
 
@@ -9,8 +9,8 @@ An experimental local Linux desktop MCP server and agent skill, with an explicit
 - [345 acceptance cases in 34 feature areas](docs/REQUIREMENTS.md), with [machine-readable catalog](docs/requirements.json).
 - [Architecture and behavioral contracts](docs/DESIGN.md).
 - [Implemented coverage, test evidence and release blockers](docs/VALIDATION.md).
-- [Agent skill](skills/silo-desktop/SKILL.md).
-- `src/silo_desktop`: 14 typed MCP tools, session launcher, X11 geometry, isolated AT-SPI worker, clipboard input and screenshots.
+- [Agent skill](skills/luda/SKILL.md).
+- `src/luda`: 14 typed MCP tools, session launcher, X11 geometry, isolated AT-SPI worker, clipboard input and screenshots.
 - `tests`: native fixture, real application checks and actual stdio MCP integration.
 
 ## Tools
@@ -37,7 +37,7 @@ An experimental local Linux desktop MCP server and agent skill, with an explicit
 For Ubuntu 24.04 with an existing XFCE/X11 desktop:
 
 ```bash
-sudo bash scripts/install.sh /opt/silo-desktop-0.1.0
+sudo bash scripts/install.sh /opt/luda-0.1.0
 ```
 
 The script provisions explicit apt dependencies and installs hash-pinned Python runtime requirements. The Python project itself is built from this checkout. It does not replace the desktop, edit Codex configuration, or start a public network listener. Use a new versioned directory for upgrades; automated upgrade/rollback is not implemented.
@@ -46,7 +46,7 @@ For development with uv:
 
 ```bash
 uv sync --frozen --extra test
-.venv/bin/silo-desktop-session --user silo-desktop -- .venv/bin/silo-desktop
+.venv/bin/luda-session --user silo-desktop -- .venv/bin/luda
 ```
 
 Run the launcher as root or the desktop account. It reads that account's XFCE environment and runs the server as that account. If multiple XFCE sessions exist, pass `--session-pid`. Paths supplied to the server should be absolute in an actual Codex configuration.
@@ -56,14 +56,14 @@ Run the launcher as root or the desktop account. It reads that account's XFCE en
 The following is a configuration example for the **guest execution context**, using the install path above. This example has not been tested through the Mac app's fresh SSH onboarding flow. Verify which Codex configuration the selected remote context loads; configuring the Mac host to run a guest-only path is not sufficient.
 
 ```toml
-[mcp_servers.silo_desktop]
-command = "/opt/silo-desktop-0.1.0/.venv/bin/silo-desktop-session"
-args = ["--user", "silo-desktop", "--", "/opt/silo-desktop-0.1.0/.venv/bin/silo-desktop"]
+[mcp_servers.luda]
+command = "/opt/luda-0.1.0/.venv/bin/luda-session"
+args = ["--user", "silo-desktop", "--", "/opt/luda-0.1.0/.venv/bin/luda"]
 startup_timeout_sec = 20
 tool_timeout_sec = 20
 ```
 
-Copy the included `skills/silo-desktop` folder into the skill directory of the Codex account executing in that guest, for example `~/.codex/skills/silo-desktop`. Do not overwrite an existing skill of that name without inspecting it. A new task should then discover the skill and MCP tools. The current project deliberately does not modify an existing Codex account's global configuration.
+Copy the included `skills/luda` folder into the skill directory of the Codex account executing in that guest, for example `~/.codex/skills/luda`. Do not overwrite an existing skill of that name without inspecting it. A new task should then discover the skill and MCP tools. The current project deliberately does not modify an existing Codex account's global configuration.
 
 ## Test
 
@@ -72,9 +72,9 @@ Tests create only owned fixtures/documents and terminate their own applications.
 ```bash
 python scripts/build_requirements.py
 .venv/bin/python -m unittest discover -s tests -p 'test_*.py'
-.venv/bin/silo-desktop-session -- .venv/bin/python tests/live_backend.py
-.venv/bin/silo-desktop-session -- .venv/bin/python tests/live_mcp.py
-.venv/bin/silo-desktop-session -- .venv/bin/python tests/live_apps.py --browser /absolute/path/to/chromium
+.venv/bin/luda-session -- .venv/bin/python tests/live_backend.py
+.venv/bin/luda-session -- .venv/bin/python tests/live_mcp.py
+.venv/bin/luda-session -- .venv/bin/python tests/live_apps.py --browser /absolute/path/to/chromium
 ```
 
 Use absolute paths if launching from a different directory. `artifacts/` is gitignored and stores local synthetic test evidence. The browser helper uses Playwright only for offline setup and independent readback; desktop input comes from this driver.

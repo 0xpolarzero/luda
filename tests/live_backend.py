@@ -6,8 +6,8 @@ import os
 import signal
 import sys
 import time
-from silo_desktop.desktop import Desktop
-from silo_desktop.common import DesktopError
+from luda.desktop import Desktop
+from luda.common import DesktopError
 
 ROOT=Path(__file__).resolve().parents[1]
 output=ROOT/'artifacts'/'native';output.mkdir(exist_ok=True)

@@ -5,7 +5,7 @@ from pathlib import Path
 import subprocess
 import time
 from playwright.sync_api import sync_playwright
-from silo_desktop.desktop import Desktop
+from luda.desktop import Desktop
 
 ROOT=Path(__file__).resolve().parents[1]
 OUT=ROOT/'artifacts'/'apps';OUT.mkdir(exist_ok=True)
@@ -29,7 +29,7 @@ def editor():
   tree=d.inspect(wid)
   (OUT/'mousepad-tree.json').write_text(json.dumps(tree,indent=2))
   text=next(n for n in tree['nodes'] if 'EditableText' in n['interfaces'] and 'multi-line' in n['states'])
-  value='Saved by Silo desktop\n\tindent\n日本語 👩🏽\u200d💻\n\n'
+  value='Saved by Luda desktop\n\tindent\n日本語 👩🏽\u200d💻\n\n'
   d.element(text['element_id'],'set',text=value);d.element(text['element_id'],'focus');d.key(wid,'ctrl+s')
   for _ in range(30):
    if file.read_text()==value:break

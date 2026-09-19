@@ -16,7 +16,7 @@ This does not make us independent of Linux toolkit bugs. An application can expo
 
 ```text
 Codex MCP client (inside guest remote execution context)
-  └─ silo-desktop-session --user silo-desktop -- silo-desktop
+  └─ luda-session --user silo-desktop -- silo-desktop
        ├─ discovers one explicit user's XFCE session
        ├─ drops to that ordinary user
        └─ stdio MCP server

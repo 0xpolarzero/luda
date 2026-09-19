@@ -9,7 +9,7 @@ from mcp.types import CallToolResult, ImageContent, TextContent
 from .common import DesktopError
 from .desktop import Desktop
 
-mcp = FastMCP('silo-desktop', instructions='Local X11 desktop. Start with desktop_doctor and desktop_observe. Activate an explicit window before input. Pointer actions require the latest screenshot ID and image-pixel coordinates. Use set_text for verified full replacement; enter_text pastes at the caret but requires verification. Never automatically retry an uncertain mutation.')
+mcp = FastMCP('luda', instructions='Local X11 desktop. Start with desktop_doctor and desktop_observe. Activate an explicit window before input. Pointer actions require the latest screenshot ID and image-pixel coordinates. Use set_text for verified full replacement; enter_text pastes at the caret but requires verification. Never automatically retry an uncertain mutation.')
 backend = None
 
 

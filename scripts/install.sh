@@ -18,6 +18,6 @@ python3 -m venv "$prefix/.venv"
 "$prefix/.venv/bin/pip" install --require-hashes -r "$source_dir/requirements.lock"
 "$prefix/.venv/bin/pip" install --no-deps "$source_dir"
 mkdir -p -- "$prefix/skills"
-cp -R -- "$source_dir/skills/silo-desktop" "$prefix/skills/"
-echo "Installed into $prefix. Use silo-desktop-session to attach to the desktop."
+cp -R -- "$source_dir/skills/luda" "$prefix/skills/"
+echo "Installed into $prefix. Use luda-session to attach to the desktop."
 echo 'Codex MCP/skill registration is explicit; see README.md.'

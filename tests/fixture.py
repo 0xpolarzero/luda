@@ -7,7 +7,7 @@ gi.require_version('Gtk','3.0')
 from gi.repository import Gtk, GLib
 
 out=Path(sys.argv[1]);out.mkdir(exist_ok=True)
-window=Gtk.Window(title='Silo Desktop Contract Fixture')
+window=Gtk.Window(title='Luda Contract Fixture')
 window.set_default_size(620,440)
 box=Gtk.Box(orientation=Gtk.Orientation.VERTICAL,spacing=8);window.add(box)
 view=Gtk.TextView();view.set_name('contract-editor');view.get_accessible().set_name('Contract text')

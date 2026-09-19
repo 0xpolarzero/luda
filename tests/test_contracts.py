@@ -7,8 +7,8 @@ import time
 import unittest
 from unittest.mock import patch
 
-from silo_desktop.common import DesktopError, run, validate_text
-from silo_desktop.desktop import Desktop
+from luda.common import DesktopError, run, validate_text
+from luda.desktop import Desktop
 
 
 class Contracts(unittest.TestCase):
@@ -53,7 +53,7 @@ class Contracts(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             target=Path(folder)/'target';target.mkdir()
             (Path(folder)/f'silo-desktop-{os.getuid()}').symlink_to(target,target_is_directory=True)
-            with patch('silo_desktop.desktop.tempfile.gettempdir',return_value=folder):
+            with patch('luda.desktop.tempfile.gettempdir',return_value=folder):
                 with self.assertRaises(DesktopError) as ctx:Desktop()
             self.assertEqual(ctx.exception.code,'UNSAFE_RUNTIME')
             self.assertEqual(list(target.iterdir()),[])
@@ -61,7 +61,7 @@ class Contracts(unittest.TestCase):
     def test_world_readable_runtime_refused(self):
         with tempfile.TemporaryDirectory() as folder:
             target=Path(folder)/f'silo-desktop-{os.getuid()}';target.mkdir(mode=0o755)
-            with patch('silo_desktop.desktop.tempfile.gettempdir',return_value=folder):
+            with patch('luda.desktop.tempfile.gettempdir',return_value=folder):
                 with self.assertRaises(DesktopError) as ctx:Desktop()
             self.assertEqual(ctx.exception.code,'UNSAFE_RUNTIME')
 

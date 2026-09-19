@@ -66,5 +66,5 @@ async def main():
   (OUT/'results.json').write_text(json.dumps(results,ensure_ascii=False,indent=2))
   print(json.dumps(results,ensure_ascii=False))
 
-parser=argparse.ArgumentParser();parser.add_argument('--server',default=str(ROOT/'.venv/bin/silo-desktop'));args=parser.parse_args()
+parser=argparse.ArgumentParser();parser.add_argument('--server',default=str(ROOT/'.venv/bin/luda'));args=parser.parse_args()
 asyncio.run(main())

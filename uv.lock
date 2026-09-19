@@ -743,7 +743,7 @@ wheels = [
 ]
 
 [[package]]
-name = "silo-desktop"
+name = "luda"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
