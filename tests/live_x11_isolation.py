@@ -19,6 +19,7 @@ try:
     with patch.dict(os.environ,{'DISPLAY':':'+number}):
         x=X11(); root=x.root
         assert x.geometry(root)['width']==640
+        batch=x.geometries([root,0xffffffff]);assert batch=={root:x.geometry(root)},batch
         p.send_signal(signal.SIGSTOP)
         started=time.monotonic()
         try:

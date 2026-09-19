@@ -60,6 +60,35 @@ class _NativeX11:
         finally:
             if children: self.lib.XFree(children)
 
+    def cardinal(self, window, name):
+        x = self.lib
+        x.XInternAtom.argtypes = [C.c_void_p,C.c_char_p,C.c_int]; x.XInternAtom.restype = C.c_ulong
+        x.XGetWindowProperty.argtypes = [C.c_void_p,C.c_ulong,C.c_ulong,C.c_long,C.c_long,C.c_int,C.c_ulong,C.POINTER(C.c_ulong),C.POINTER(C.c_int),C.POINTER(C.c_ulong),C.POINTER(C.c_ulong),C.POINTER(C.POINTER(C.c_ubyte))]
+        x.XGetWindowProperty.restype = C.c_int
+        x.XFree.argtypes = [C.c_void_p]
+        atom = x.XInternAtom(self.display,name.encode(),True)
+        if not atom: return None
+        actual,nitems,remaining = C.c_ulong(),C.c_ulong(),C.c_ulong()
+        fmt=C.c_int();data=C.POINTER(C.c_ubyte)()
+        status=x.XGetWindowProperty(self.display,window,atom,0,1,False,0,C.byref(actual),C.byref(fmt),C.byref(nitems),C.byref(remaining),C.byref(data))
+        try:
+            return C.cast(data,C.POINTER(C.c_ulong))[0] if status == 0 and fmt.value == 32 and nitems.value == 1 and data else None
+        finally:
+            if data:x.XFree(data)
+
+    def geometries(self, windows):
+        result={}
+        for xid in windows:
+            try: result[xid]=self.geometry(xid)
+            except DesktopError: pass
+        return result
+
+    def surface_at(self, point):
+        child=C.c_ulong();x=C.c_int();y=C.c_int()
+        if not self.lib.XTranslateCoordinates(self.display,self.root,self.root,point[0],point[1],C.byref(x),C.byref(y),C.byref(child)):
+            raise DesktopError('DISPLAY_UNAVAILABLE','Cannot identify the pointer surface.')
+        return child.value or None
+
     def popup_surfaces(self, limit=256):
         """Mapped override-redirect surfaces, not ordinary application windows.
 
@@ -84,7 +113,7 @@ class _NativeX11:
             if fn(self.display,xid,C.byref(a)) and a.map_state == 2 and a.override_redirect and a.class_ == 1:
                 try:
                     surfaces.append({'xid':xid,'transient_for':self.transient_for(xid),
-                                     'override_redirect':True,'bounds':self.geometry(xid)})
+                                     'override_redirect':True,'pid':self.cardinal(xid,'_NET_WM_PID'),'bounds':self.geometry(xid)})
                 except DesktopError:
                     continue
         return surfaces
@@ -98,9 +127,15 @@ def main():
         request = json.loads(sys.stdin.buffer.read(4096))
         method = request['method']
         argument = request.get('argument')
-        if method not in {'root','geometry','transient_for','children','popup_surfaces'}:
+        if method not in {'root','geometry','geometries','surface_at','transient_for','children','popup_surfaces'}:
             raise DesktopError('INVALID_ARGUMENT','Unknown X11 metadata operation.')
-        if method != 'root' and (isinstance(argument,bool) or not isinstance(argument,int) or not 1 <= argument <= (4096 if method == 'popup_surfaces' else 0xffffffff)):
+        if method == 'geometries':
+            if not isinstance(argument,list) or len(argument)>512 or any(isinstance(v,bool) or not isinstance(v,int) or not 1 <= v <= 0xffffffff for v in argument):
+                raise DesktopError('INVALID_ARGUMENT','Invalid geometry batch.')
+        elif method == 'surface_at':
+            if not isinstance(argument,list) or len(argument)!=2 or any(isinstance(v,bool) or not isinstance(v,int) or not -32768 <= v <= 32767 for v in argument):
+                raise DesktopError('INVALID_ARGUMENT','Invalid surface point.')
+        elif method != 'root' and (isinstance(argument,bool) or not isinstance(argument,int) or not 1 <= argument <= (4096 if method == 'popup_surfaces' else 0xffffffff)):
             raise DesktopError('INVALID_ARGUMENT','Invalid X11 metadata argument.')
         native = _NativeX11()
         result = native.root if method == 'root' else getattr(native,method)(argument)

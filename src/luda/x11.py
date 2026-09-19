@@ -47,6 +47,17 @@ class X11:
     def geometry(self, window):
         return self._read('geometry',self._xid(window))
 
+    def geometries(self, windows):
+        if not isinstance(windows,(list,tuple)) or len(windows)>512:
+            raise DesktopError('INVALID_ARGUMENT','Geometry batch must contain at most 512 XIDs.')
+        result=self._read('geometries',[self._xid(window) for window in windows])
+        return {int(xid):bounds for xid,bounds in result.items()}
+
+    def surface_at(self, x, y):
+        if any(isinstance(v,bool) or not isinstance(v,int) or not -32768 <= v <= 32767 for v in (x,y)):
+            raise DesktopError('INVALID_ARGUMENT','Surface coordinates must be signed 16-bit integers.')
+        return self._read('surface_at',[x,y])
+
     def transient_for(self, window):
         return self._read('transient_for',self._xid(window))
 

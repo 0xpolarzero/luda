@@ -40,4 +40,19 @@ class X11Tests(unittest.TestCase):
             with self.subTest(limit=value),self.assertRaises(DesktopError):x.popup_surfaces(value)
         run.assert_not_called()
 
+class BatchTests(unittest.TestCase):
+    @patch('luda.x11.run',side_effect=[b'{"result":1}',b'{"result":{"12":{"x":1,"y":2,"width":3,"height":4}}}'])
+    def test_batch_uses_one_helper_and_integer_keys(self,run):
+        x=X11();run.reset_mock()
+        self.assertEqual(x.geometries([12,13]),{12:{'x':1,'y':2,'width':3,'height':4}})
+        self.assertEqual(run.call_count,1)
+    @patch('luda.x11.run',return_value=b'{"result":1}')
+    def test_batch_and_surface_arguments_validated(self,run):
+        x=X11();run.reset_mock()
+        for value in ([True],list(range(1,514)),None):
+            with self.assertRaises(DesktopError):x.geometries(value)
+        for a,b in [(True,1),(32768,1),(1,1.1)]:
+            with self.assertRaises(DesktopError):x.surface_at(a,b)
+        run.assert_not_called()
+
 if __name__ == '__main__':unittest.main()
