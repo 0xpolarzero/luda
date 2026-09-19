@@ -59,7 +59,8 @@ def main():
                         raise RuntimeError('Isolated window manager failed to become ready')
                     time.sleep(.1)
                 for suite, arguments in [('native', [str(ROOT / 'tests/live_backend.py')]),
-                                         ('mcp', [str(ROOT / 'tests/live_mcp.py'), '--server', str(Path(sys.executable).parent / 'luda')])]:
+                                         ('mcp', [str(ROOT / 'tests/live_mcp.py'), '--server', str(Path(sys.executable).parent / 'luda')]),
+                                         ('cancellation', [str(ROOT / 'tests/live_cancellation.py'), '--server', str(Path(sys.executable).parent / 'luda')])]:
                     began = time.monotonic()
                     with (output / f'{suite}.log').open('wb') as suite_log:
                         child = subprocess.Popen([sys.executable, *arguments], cwd=ROOT, env=env,
@@ -82,7 +83,7 @@ def main():
                                     'backend': 'isolated Xvfb + XFWM4 + session D-Bus',
                                     'uid': os.getuid()}}, indent=2) + '\n')
     print(json.dumps(results, indent=2))
-    return 0 if len(results) == 2 and all(r['status'] == 'passed' for r in results) else 1
+    return 0 if len(results) == 3 and all(r['status'] == 'passed' for r in results) else 1
 
 
 if __name__ == '__main__':

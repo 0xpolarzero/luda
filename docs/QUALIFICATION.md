@@ -18,10 +18,18 @@ Install the dependencies listed in `.github/workflows/tests.yml`, then run:
 LUDA_ISOLATED_TEST_DISPLAY=1 xvfb-run -a -s '-screen 0 1440x900x24 -nolisten tcp' dbus-run-session -- .venv/bin/python scripts/headless_tests.py
 ```
 
-The runner creates a separate display and D-Bus session, starts its own XFWM4, and exercises the native and real MCP suites against their owned GTK fixtures. Individual suites have a 120-second watchdog. Logs and outcomes are retained on failure. This does not use or modify the human's KasmVNC desktop. Shared `:1` tests must still hold `/tmp/luda-live-tests.lock` for their whole lifetime as required by `AGENTS.md`.
+The runner creates a separate display and D-Bus session, starts its own XFWM4, and exercises the native, real MCP and protocol-cancellation suites against their owned GTK fixtures. Individual suites have a 120-second watchdog. Logs and outcomes are retained on failure. This does not use or modify the human's KasmVNC desktop. Shared `:1` tests must still hold `/tmp/luda-live-tests.lock` for their whole lifetime as required by `AGENTS.md`.
 
 CI runs unit contracts and the isolated desktop job on Ubuntu 24.04 AMD64. A configured workflow is not evidence of a successful hosted CI run. The local environment is ARM64; inspect the actual artifact environment before interpreting results.
 
 ## Remaining release evidence
 
 Fresh microsandbox provisioning, a clean Mac-to-Codex SSH onboarding session, KasmVNC-specific reconnects, repeated held-out workflows, distribution/toolkit/display matrices, human-input interference, rich clipboard formats and protected credential workflows require separate evidence. Headless GTK fixtures do not replace these. Failure transcripts and independent file/DOM/application oracles are required for actual application claims; fixture text is synthetic and should never contain user data.
+
+## Cancellation evidence
+
+The protocol cancellation fixture stops only its own GTK process, begins an MCP text mutation, sends an explicit `notifications/cancelled` message, checks status responsiveness, waits for recorded cancellation and completed cleanup, resumes the app and independently checks that no delayed write occurred. It then verifies inspection recovers. This checks cancellation during blocked target lookup; it does not promise to undo input already delivered.
+
+In MCP SDK 1.30.0, cancelling a local asyncio waiter does not itself send the MCP cancellation notification. A local client timeout can therefore leave a server action running. Tests must deliver the protocol message explicitly; agents must inspect uncertain outcomes before retrying. The fixture uses the pinned SDK's next request counter solely to address that notification.
+
+The MCP cancellation response can arrive before worker cleanup finishes. An observed `recovering=true` is not permission to assume pending input was revoked. The fixture waits for a recorded `CANCELLED` outcome and `recovering=false` before resuming its stopped provider. Input dispatched before that boundary may still have effects.
