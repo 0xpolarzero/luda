@@ -14,9 +14,15 @@ def _text(value, name, maximum):
 
 
 def _call(method, arguments):
-    raw=run(['/usr/bin/python3',str(Path(__file__).with_name('_app_helper.py'))],
-            data=json.dumps({'method':method,**arguments}).encode(),timeout=5,
-            effect='uncertain' if method=='launch' else 'none')
+    try:
+        raw=run(['/usr/bin/python3',str(Path(__file__).with_name('_app_helper.py'))],
+                data=json.dumps({'method':method,**arguments}).encode(),timeout=5,
+                effect='uncertain' if method=='launch' else 'none')
+    except DesktopError as exc:
+        if exc.code=='BACKEND_ERROR':
+            raise DesktopError('LAUNCH_FAILED' if method=='launch' else 'BACKEND_ERROR',
+                               'Application helper exited unexpectedly.',effect=exc.effect) from exc
+        raise
     try:
         result=json.loads(raw)
         if not isinstance(result,dict):raise ValueError()

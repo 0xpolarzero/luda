@@ -41,6 +41,11 @@ class HelperFailureTests(unittest.TestCase):
     def test_timeout_preserved(self,run):
         with self.assertRaises(DesktopError) as exc:launch_application('valid.desktop')
         self.assertEqual(exc.exception.code,'TIMEOUT')
+    @patch('luda.apps.run',side_effect=DesktopError('BACKEND_ERROR','private-uri-secret',effect='uncertain'))
+    def test_helper_stderr_is_not_exposed(self,run):
+        with self.assertRaises(DesktopError) as exc:launch_application('valid.desktop')
+        self.assertNotIn('private-uri-secret',str(exc.exception))
+        self.assertEqual(exc.exception.effect,'uncertain')
     @patch('luda.apps.run',return_value=b'not JSON')
     def test_malformed_helper_response(self,run):
         with self.assertRaises(DesktopError) as exc:list_applications()

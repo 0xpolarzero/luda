@@ -66,6 +66,10 @@ def main():
             context.setenv('QT_LINUX_ACCESSIBILITY_ALWAYS_ON','1')
             context.unsetenv('NO_AT_BRIDGE')
             pids=[]
+            completion={'done':False,'failed':False};loop=GLib.MainLoop()
+            def launched(*unused):completion['done']=True;loop.quit()
+            def launch_failed(*unused):completion['failed']=True;loop.quit()
+            context.connect('launched',launched);context.connect('launch-failed',launch_failed)
             def pid_callback(info,pid,*unused):pids.append(pid)
             def child_setup(*unused):os.setsid()
             # Every launched process receives /dev/null; no inherited MCP pipes.
@@ -76,6 +80,16 @@ def main():
                     GLib.SpawnFlags.SEARCH_PATH|GLib.SpawnFlags.DO_NOT_REAP_CHILD,
                     child_setup,None,pid_callback,None,sink.fileno(),sink.fileno(),sink.fileno())
             if not accepted:raise AppError('LAUNCH_FAILED','Desktop service did not accept the launch request.')
+            if not completion['done'] and not completion['failed']:
+                def expired():
+                    loop.quit()
+                    return False
+                timer=GLib.timeout_add(4000,expired)
+                try:loop.run()
+                finally:
+                    if GLib.MainContext.default().find_source_by_id(timer):GLib.source_remove(timer)
+            if not completion['done'] or completion['failed']:
+                raise AppError('LAUNCH_FAILED','Application activation did not complete; inspect before retrying.')
             result={'effect':'dispatched','application_id':request['application_id'],'spawned_pids':pids,
                     'verification':'Launch accepted; observe windows to confirm readiness. An existing singleton may handle the request.'}
         else:raise AppError('INVALID_ARGUMENT','Unknown application operation.')
