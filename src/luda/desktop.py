@@ -90,7 +90,13 @@ class Desktop:
             return None
 
     def list_windows(self):
-        rows = run(['wmctrl','-lp']).decode(errors='replace').splitlines()
+        try:
+            rows = run(['wmctrl','-lp']).decode(errors='replace').splitlines()
+        except DesktopError as exc:
+            if exc.code == 'BACKEND_ERROR' and 'Cannot get client list properties' in str(exc):
+                self.windows = {}
+                return []
+            raise
         active = self.active()
         result = []
         for line in rows:
@@ -234,10 +240,20 @@ class Desktop:
 
     def ax(self, request, mutating=False):
         worker = str(Path(__file__).with_name('ax_worker.py'))
-        raw = run(['/usr/bin/python3',worker],data=json.dumps(request).encode(),timeout=5,effect='uncertain' if mutating else 'none')
+        try:
+            raw = run(['/usr/bin/python3',worker],data=json.dumps(request).encode(),timeout=5)
+        except DesktopError as exc:
+            if mutating and exc.code != 'DEPENDENCY_MISSING':
+                exc.effect = 'uncertain'
+                mark_effect()
+            raise
         result = json.loads(raw)
         if 'error' in result:
-            raise DesktopError(result['error'],result.get('message','Accessibility failed.'),effect='uncertain' if mutating and result['error']=='ACCESSIBILITY_ERROR' else 'none')
+            effect = result.get('effect', 'uncertain' if mutating and result['error']=='ACCESSIBILITY_ERROR' else 'none')
+            mark_effect(effect)
+            raise DesktopError(result['error'],result.get('message','Accessibility failed.'),effect=effect)
+        if mutating:
+            mark_effect(result.get('effect', 'dispatched'))
         return result
 
     def inspect(self, window_id, limit=150):
@@ -299,12 +315,15 @@ class Desktop:
         # Recheck focus after preparing clipboard. Never activate implicitly during paste.
         try:
             self.target_window(window_id)
+            if self.clipboard_owner.poll() is not None or run(['xclip','-selection','clipboard','-out'],timeout=.5) != payload:
+                raise DesktopError('CLIPBOARD_CHANGED', 'Clipboard ownership or contents changed before paste; no shortcut sent.', effect='uncertain')
             self.key(window_id,chords[shortcut])
         except DesktopError as exc:
             exc.details['clipboard_changed'] = True
             exc.effect = 'uncertain'
             raise
         return {'effect':'dispatched','clipboard_exact_match':True,
+                'clipboard_verification':'Sampled immediately before shortcut; other clients can still intervene.',
                 'verification':'Destination text is not verified. Inspect for paste dialogs or read the target element.',
                 'clipboard':'CLIPBOARD replaced until another owner takes it or this server exits. PRIMARY is unchanged.',
                 'warning':'Shift+Insert can select PRIMARY in some terminals. A terminal may execute pasted newlines; no confirmation dialog is automatically accepted.'}
