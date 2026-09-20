@@ -37,6 +37,19 @@ class VerifiedTyping(unittest.TestCase):
         with self.assertRaises(DesktopError):d.type_text('e','secret')
         d.element.assert_not_called();d.paste.assert_not_called()
 
+    def test_preexisting_hypertext_refused_before_text_input(self):
+        d=self.make();rich={**self.value('a\ufffc'),'plain_text_verification_supported':False,'text_representation':'hypertext'}
+        d.element=Mock(side_effect=[{'effect':'verified'},rich])
+        with self.assertRaises(DesktopError) as caught:d.type_text('e','x')
+        self.assertEqual(caught.exception.code,'TEXT_REPRESENTATION_UNSUPPORTED')
+        self.assertFalse(caught.exception.details['text_input_sent']);d.paste.assert_not_called()
+    def test_new_hypertext_is_uncertain_without_repeating_input(self):
+        d=self.make();rich={**self.value('a\ufffc'),'plain_text_verification_supported':False,'text_representation':'hypertext'}
+        d.element=Mock(side_effect=[{'effect':'verified'},self.value('AZ'),self.value('AZ'),rich])
+        with self.assertRaises(DesktopError) as caught:d.type_text('e','x')
+        self.assertEqual(caught.exception.code,'TEXT_REPRESENTATION_UNSUPPORTED')
+        self.assertEqual(caught.exception.effect,'uncertain');d.paste.assert_called_once()
+
 class ProtectedTransportTests(unittest.TestCase):
     def test_provider_stderr_cannot_echo_protected_input(self):
         d=Desktop.__new__(Desktop)

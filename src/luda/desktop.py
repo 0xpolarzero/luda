@@ -323,6 +323,8 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         if focused.get('effect')!='verified':
             raise DesktopError('FOCUS_UNVERIFIED','Cannot verify element focus; no text pasted.',effect=focused.get('effect','uncertain'))
         before = self.element(element_id,'read',limit=1_000_000)
+        if not before.get('plain_text_verification_supported',True):
+            raise DesktopError('TEXT_REPRESENTATION_UNSUPPORTED','The field exposes embedded objects rather than exact plain text. Use deliberate paste with application-specific verification.',details={'text_representation':before.get('text_representation'),'text_input_sent':False})
         if before['truncated']:
             raise DesktopError('VERIFICATION_LIMIT','Field exceeds exact readback budget; no text pasted.')
         selections = before.get('selections',[])
@@ -355,6 +357,8 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         deadline=elapsed_time()+2
         while True:
             observed=self.element(element_id,'read',limit=1_000_000)
+            if not observed.get('plain_text_verification_supported',True):
+                raise DesktopError('TEXT_REPRESENTATION_UNSUPPORTED','Input was dispatched, but the resulting embedded-object representation cannot verify exact plain text. Inspect before retrying.',effect='uncertain',details={'text_representation':observed.get('text_representation'),'embedded_object_count':len(observed.get('embedded_objects',[]))})
             if not observed['truncated'] and observed['text']==expected:
                 return {'effect':'verified','exact_match':True,'expected_characters':len(expected),
                         'actual_characters':len(observed['text']),'caret_verified':observed.get('caret_offset')==start+len(text),
