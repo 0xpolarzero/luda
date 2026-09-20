@@ -1,5 +1,7 @@
 # Explicit native composition cancellation prototype
 
+> Historical record from before Editor Bridge became a separate add-on. Tool names, source paths and test commands below describe the recorded revision, not the current core installation. For current setup and supported behavior, see [Editor Bridge](../addons/editor-bridge/README.md).
+
 This test-only extension to the [owned rich editor experiment](OWNED-RICH-EDITOR-PROTOTYPE.md)
 qualifies one narrow cancellation correlation in Chromium 153.0.8010.12 on
 Ubuntu 24.04 ARM64 with GTK's simple input method. It is not a production API,

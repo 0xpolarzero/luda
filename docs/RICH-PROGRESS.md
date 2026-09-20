@@ -1,5 +1,7 @@
 # Rich-editor partial progress
 
+> Historical record from before Editor Bridge became a separate add-on. Tool names, source paths and test commands below describe the recorded revision, not the current core installation. For current setup and supported behavior, see [Editor Bridge](../addons/editor-bridge/README.md).
+
 When a valid rich-text segment plan reaches the worker, its final reply can carry
 `progress` on success or `details.progress` on error. This is fixed metadata:
 

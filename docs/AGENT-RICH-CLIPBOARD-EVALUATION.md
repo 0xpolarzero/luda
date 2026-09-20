@@ -1,5 +1,7 @@
 # Fresh-agent rich range editing
 
+> Historical record from before Editor Bridge became a separate add-on. Tool names, source paths and test commands below describe the recorded revision, not the current core installation. For current setup and supported behavior, see [Editor Bridge](../addons/editor-bridge/README.md).
+
 One fresh Codex CLI attempt completed a held-out cooperating ProseMirror task in **57.989 seconds**. This is a single local usability observation, not a reliability estimate or a claim of generic rich-editor compatibility. No prompt tuning, retry selection, model substitution or feedback was supplied during the attempt.
 
 The initial model contained bold `Pré 👩🏽‍💻: `, plain `ancien é`, and italic ` / FIN`. The task asked the agent to replace only the unique middle text with the exact JSON string `"nouveau 日本語\n\tÉté 👩🏽‍💻\n"`, preserve both formatted ends, save through the visible button, verify the result and mention any clipboard side effect. It supplied no offsets, tool sequence, transport option or menu coordinates.

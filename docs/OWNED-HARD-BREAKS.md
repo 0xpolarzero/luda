@@ -1,5 +1,7 @@
 # Explicit cooperating ProseMirror hard breaks
 
+> Historical record from before Editor Bridge became a separate add-on. Tool names, source paths and test commands below describe the recorded revision, not the current core installation. For current setup and supported behavior, see [Editor Bridge](../addons/editor-bridge/README.md).
+
 The new app declaration `{paragraphs:'enter', hard_breaks:'shift-enter'}` supports
 explicit `desktop_type(..., line_breaks='hard_break')`. Existing paragraph-only
 apps remain unchanged. This extends the existing tool, not the supported schema

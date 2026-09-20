@@ -1,6 +1,8 @@
 # Proposed minimal owned-browser adapter
 
-Status: original design record. Ordinary HTML and explicitly cooperating paragraph editors are now implemented; see [owned browser](OWNED-BROWSER.md) and the [ProseMirror bridge](../integrations/prosemirror/README.md) for the narrower current contract. Explicit composition cancellation remains a prototype, not a production tool. The measured
+> Historical record from before Editor Bridge became a separate add-on. Tool names, source paths and test commands below describe the recorded revision, not the current core installation. For current setup and supported behavior, see [Editor Bridge](../addons/editor-bridge/README.md).
+
+Status: original design record. Ordinary HTML and explicitly cooperating paragraph editors are now implemented; see [owned browser](OWNED-BROWSER.md) and the [ProseMirror bridge](../addons/editor-bridge/README.md) for the narrower current contract. Explicit composition cancellation remains a prototype, not a production tool. The measured
 [rich editor](OWNED-RICH-EDITOR-PROTOTYPE.md) and
 [explicit cancellation](OWNED-BROWSER-CANCEL-PROTOTYPE.md) experiments justify
 a useful narrow adapter, not automatic compatibility with every rich editor.

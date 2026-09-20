@@ -1,5 +1,7 @@
 # First-attempt soft-line-break usability evidence
 
+> Historical record from before Editor Bridge became a separate add-on. Tool names, source paths and test commands below describe the recorded revision, not the current core installation. For current setup and supported behavior, see [Editor Bridge](../addons/editor-bridge/README.md).
+
 One fresh Codex CLI attempt completed the requested rich edit and saved the correct model, but **failed the original strict instruction-compliance rubric**. Its initial `list_mcp_resources` call was read-only discovery outside the requested `desktop_*` tool set. This is not reclassified as a strict pass. No second attempt or prompt tuning followed.
 
 The held-out task asked for three specified lines within the same paragraph, like Shift+Enter, replacing only the middle of a note while preserving its bold prefix and italic suffix. It named neither `line_breaks="hard_break"` nor a tool sequence. The agent read the installed skill, observed the editor, selected code-point offsets 8..27 and chose clipboard insertion with `hard_break` on its first typing call. It then unnecessarily selected the new text and dispatched Ctrl+B to remove inherited bold. This fixture has no toggle-bold shortcut binding; readback showed the text still bold, which the final answer correctly disclosed. The task did not prescribe the replacement's formatting.

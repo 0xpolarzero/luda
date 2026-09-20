@@ -1,5 +1,7 @@
 # P1 capability audit at 7783721
 
+> Historical record from before Editor Bridge became a separate add-on. Tool names, source paths and test commands below describe the recorded revision, not the current core installation. For current setup and supported behavior, see [Editor Bridge](../addons/editor-bridge/README.md).
+
 Read-only review of the 30 P1 cases in [requirements.json](requirements.json):
 window management (WM), authentication (AUTH), and forms/tables (DATA).
 This is an implementation planning order, not a catalog priority change,
@@ -45,9 +47,9 @@ The scope is the existing XFCE/X11 desktop and optional owned browser.
   [scoped auth workflows](AUTH-QUALIFICATION.md#scoped-workflows-and-preserved-diagnostics).
   Generic GUI origin/session evidence exists; cryptographic OAuth attestation is
   not silently added to the criterion.
-- **DATA-07:** [current cooperating bridge contract](../integrations/prosemirror/README.md),
+- **DATA-07:** [current cooperating bridge contract](../addons/editor-bridge/README.md),
   [_browser_worker.py](../src/luda/_browser_worker.py),
-  [live_owned_rich_clipboard.py](../tests/live_owned_rich_clipboard.py).
+  [live_owned_rich_clipboard.py](../addons/editor-bridge/tests/live_owned_rich_clipboard.py).
   The updated clipboard range behavior supersedes old gap-audit summaries that
   called all middle selection unsupported.
 - **DATA-01:** [DATA-CONTROLS.md](DATA-CONTROLS.md) explicitly scopes its model and

@@ -1,5 +1,7 @@
 # Rich-editor selection regression investigation
 
+> Historical record from before Editor Bridge became a separate add-on. Tool names, source paths and test commands below describe the recorded revision, not the current core installation. For current setup and supported behavior, see [Editor Bridge](../addons/editor-bridge/README.md).
+
 Hosted runs 35499802558 (`037c3cc`) and 35499926123 (`7783721`) failed while the clipboard suite prepared a fresh editor using ordinary native whole-field replacement. Both returned `SELECTION_UNVERIFIED`, effect uncertain, after roughly 1.27 seconds; one followed the multiline-middle case and the other the third case. Original failure logs and application oracles are retained under `tests/evidence/hosted-rich-selection/`.
 
 The previous response did not distinguish synchronization of the requested selection from caret verification after content input. The last completed application POST showed the reset model and initial caret, but asynchronous oracle delivery means that this **does not conclusively identify the failing stage or prove that no input occurred**. The exact hosted scheduling cause remains unconfirmed.

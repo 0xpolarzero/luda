@@ -1,5 +1,7 @@
 # Cooperating ProseMirror first-tool-use evaluation
 
+> Historical record from before Editor Bridge became a separate add-on. Tool names, source paths and test commands below describe the recorded revision, not the current core installation. For current setup and supported behavior, see [Editor Bridge](../addons/editor-bridge/README.md).
+
 On unchanged production source `0af1a742dffccec5408af120a40432d991e79475`, the
 first public-MCP workflow preserved a visibly bold existing prefix, appended exact
 Unicode paragraphs, explicitly saved through a native accessible button, and

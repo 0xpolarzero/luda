@@ -1,5 +1,7 @@
 # Owned browser rich editor prototype
 
+> Historical record from before Editor Bridge became a separate add-on. Tool names, source paths and test commands below describe the recorded revision, not the current core installation. For current setup and supported behavior, see [Editor Bridge](../addons/editor-bridge/README.md).
+
 This is a test-only readback experiment, not a production browser adapter and
 not qualification of WEB-03 or DATA-07. Native Luda `Desktop` methods provide
 paste, keyboard input, focus and button invocation; this fixture does not test
