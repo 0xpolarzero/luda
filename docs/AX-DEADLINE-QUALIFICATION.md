@@ -34,3 +34,6 @@ From a writable checkout as the ordinary desktop account:
 The script creates the isolated desktop itself. A root-owned checkout needs an ordinary-user-writable `artifacts/ax-deadline` parent. Each default run uses a separate artifact directory; the outer setup/cleanup watchdog is 35 seconds. It requires the normal GTK3/AT-SPI/Xvfb/XFWM live-test dependencies and downloads nothing.
 
 Scope is one stopped GTK application, not a dead accessibility bus, a stopped display server, a whole-OS freeze, every provider failure mode or a universal latency guarantee. The resumed process and its application state are preserved through the test; no user desktop or unrelated process receives input or signals. AX-07 catalog-level qualification is not automatically upgraded by this bounded observation.
+
+The optional `ax-deadline` qualification-matrix registration runs this same private-session
+launcher. Registration adds no pass or qualification claim.

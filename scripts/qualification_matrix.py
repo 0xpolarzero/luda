@@ -27,6 +27,8 @@ def suite(script, ids, *, wm=True, browser=None, electron=None, firefox=None, mo
 
 
 SUITES = {
+    'tui': suite('live_tui.py', 'TERM-09', wm=False, artifacts=('tui',)),
+    'ax-deadline': suite('live_ax_deadline.py', 'AX-07', wm=False, artifacts=('ax-deadline',), gaps=('Stopped-provider call completes under earlier libatspi timeout; does not exercise the five-second worker kill path',)),
     'single-line': suite('live_single_line.py', 'EDIT-05', browser='--executable', modules=('Gtk','Atspi','PyQt5'), artifacts=('single-line',)),
     'tray': suite('live_tray.py', 'MENU-07', wm=False, artifacts=('tray',), gaps=('Observed private XFCE tray screenshot workflow; semantic icon/menu ownership unavailable',)),
     'undo': suite('live_undo.py', 'EDIT-06', artifacts=('undo','files')),
@@ -146,8 +148,7 @@ def dependencies(spec, executable, electron=None, firefox=None):
     commands = ['xvfb-run', 'Xvfb', 'dbus-run-session', 'xfwm4', 'wmctrl', 'xdotool', 'scrot', 'xclip', 'xprop', 'gdbus']
     if spec['script'] in ('live_accessibility_lifecycle.py', 'live_mcp_reconnect.py'):
         commands.append('xfce4-session')
-    if spec['script'] == 'live_tray.py':
-        commands.append('xfce4-panel')
+    commands.extend({'live_tray.py': ['xfce4-panel'], 'live_tui.py': ['xterm']}.get(spec['script'], ()))
     checks = {command: shutil.which(command) is not None for command in commands}
     imports = {'Gtk': "import gi;gi.require_version('Gtk','3.0');from gi.repository import Gtk",
                'Gtk4': "import gi;gi.require_version('Gtk','4.0');from gi.repository import Gtk",

@@ -65,3 +65,6 @@ those separate behaviors.
 No driver defect or runtime change was indicated. This is local TERM-09 evidence;
 release qualification remains unchanged and no current matrix pass is inferred
 from this standalone result.
+
+The optional `tui` qualification-matrix registration runs this same private-session
+launcher. Registration adds no pass or qualification claim.
