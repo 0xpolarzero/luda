@@ -65,11 +65,11 @@ CLIPBOARD is overwritten. PRIMARY is unchanged. The owned clipboard process live
 
 ## Timing, concurrency and recovery
 
-AT-SPI runs in disposable subprocesses so a hung provider cannot indefinitely block the server. Input commands have bounded subprocess deadlines. A timed-out mutation is uncertain. Drag attempts mouse-button release in `finally`, including cooperative cancellation; cleanup commands have their own bounded deadline. An abruptly killed server cannot guarantee release. Xlib operations run in disposable helpers, so X-server death does not terminate the MCP server.
+AT-SPI runs in disposable subprocesses so a hung provider cannot indefinitely block the server. Input commands have bounded subprocess deadlines. A timed-out mutation is uncertain. Drag attempts mouse-button release in `finally`, including cooperative cancellation; cleanup commands have their own bounded deadline. An independent inherited-pipe companion attempts held-mouse release after controller death; a private-X-server test independently observed release after SIGKILL. It cannot guarantee cleanup if the companion or X server is also killed. Xlib operations run in disposable helpers, so X-server death does not terminate the MCP server.
 
 Locks serialize cooperating server instances for the same Unix user/display. They do not lock out human viewer input, other programs or privileged processes. Focus can change between a check and an X11 event. A shared `desktop_control` pause file blocks cooperating clients before and during mutations; observations and status remain available. This is cooperative takeover, not exclusive hardware ownership.
 
-`desktop_wait` polls bounded text/window conditions without retrying input. Metadata helpers reconnect after X-server restart; old window generations no longer resolve. Full session/environment rediscovery after desktop or accessibility-bus replacement, lock-screen handling and live backend hot-reload still need qualification.
+`desktop_wait` polls bounded text/window conditions without retrying input. Metadata helpers reconnect after X-server restart; old window generations no longer resolve. Full session/environment rediscovery after desktop or accessibility-bus replacement, lock/unlock behavior and live backend hot-reload still need qualification. Doctor reports available screensaver/login1 lock hints without activating or unlocking a service.
 
 ## Source references
 

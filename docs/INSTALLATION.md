@@ -22,7 +22,7 @@ Run the guest/session diagnostic:
 python3 scripts/manage_install.py doctor --prefix /opt/luda --user silo-desktop
 ```
 
-This checks the actual selected desktop session, display, accessibility bus and input dependencies. Missing sessions, ambiguous sessions and inaccessible authority files are errors. It does not fabricate readiness from an installed executable. Start the guest desktop before running it.
+This checks the actual selected desktop session, display, accessibility bus and input dependencies. Missing sessions, ambiguous sessions and inaccessible authority files are errors. It does not fabricate readiness from an installed executable. The launcher waits up to five seconds for the selected session by default; `luda-session --wait 0` disables waiting and `--wait 30` is the maximum. Ambiguous sessions fail immediately. It never substitutes another account or session.
 
 ## Generate a reviewable Codex configuration bundle
 

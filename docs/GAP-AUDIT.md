@@ -24,6 +24,12 @@ These require implementation or an explicit supported-scope decision; a fresh Ma
 
 Two more confirmed source-level resource concerns deserve specific tests: subprocess `communicate()` captures unbounded output before parsing, and backend timeout alone does not establish bounded memory use. These are implementation concerns, separate from CPU/memory stress qualification in PERF-10.
 
+## Changes after the audit
+
+The rows above describe the audited snapshot. Subsequent implementation added bounded session readiness (`c0f117f`), suspend-aware expiry/invalidation (`d2cb486`, `6c4630f`, `d2685bb`), fullscreen and verified raise (`50b847b`), fresh-element and sampled-pixel waits (`336226b`, `00d927c`), screenshot pixel bounds (`5514140`), and bounded subprocess output (`2e8a1b3`, `035c792`). Doctor now reports read-only screensaver/login1 hints (`e275dbc`), without claiming unknown means unlocked. A held-mouse companion survives controller death (`bc82396`, `0868298`); this does not establish all keyboard-crash or concurrent-human-input guarantees.
+
+Authoritative Chromium document selections fix the astral-offset discrepancy (`34b5a59`); the rich-text representation gap remains explicit (`4780dce`). Neither these implementations nor their narrow regression tests automatically qualify the associated catalog cases.
+
 ## Provider discrepancies found by live tests
 
 | Cases | Current discrepancy | Evidence |

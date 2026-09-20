@@ -199,10 +199,10 @@ Expand or collapse a supported control and verify state. Reinspect newly exposed
 ## `desktop_window`
 
 ```python
-desktop_window(window_id: str, action: Literal['move', 'resize', 'maximize', 'minimize', 'restore', 'close', 'workspace'], x: int | None=None, y: int | None=None, width: int | None=None, height: int | None=None, workspace: int | None=None)
+desktop_window(window_id: str, action: Literal['move', 'resize', 'maximize', 'minimize', 'fullscreen', 'raise', 'restore', 'close', 'workspace'], x: int | None=None, y: int | None=None, width: int | None=None, height: int | None=None, workspace: int | None=None)
 ```
 
-Manage one window. move uses frame x/y; resize uses client width/height; workspace requires its index. Other actions take no extra parameters. A close can open a save dialog.
+Manage one window. move uses frame x/y; resize uses client width/height; workspace requires its index. fullscreen requests WM fullscreen; restore exits fullscreen/maximization/minimization; raise changes stacking without activation. Other actions take no extra parameters. Close reports an owned blocking dialog without confirming it.
 
 ## `desktop_workspaces`
 
@@ -231,7 +231,7 @@ Drag from the active source into a second observed window. Coordinates refer to 
 ## `desktop_wait`
 
 ```python
-desktop_wait(condition: Literal['window_present', 'window_absent', 'window_active', 'text_equals', 'text_contains'], window_id: str | None=None, element_id: str | None=None, text: str | None=None, timeout: float=5)
+desktop_wait(condition: Literal['window_present', 'window_absent', 'window_active', 'text_equals', 'text_contains', 'element_present', 'element_absent', 'pixels_stable'], window_id: str | None=None, element_id: str | None=None, text: str | None=None, timeout: float=5, name: str | None=None, role: str | None=None, states: list[str] | None=None, stable_for: float=0.3)
 ```
 
-Wait up to 10 seconds for an observable condition without repeating input. Window conditions use window_id; text conditions use element_id and text. A timeout returns matched=false.
+Wait for a bounded observed condition. Element waits use fresh name/role substring and required-state filters; absence requires complete coverage. pixels_stable samples the target client rectangle for stable_for seconds, not general application idleness.
