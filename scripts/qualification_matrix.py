@@ -27,6 +27,7 @@ def suite(script, ids, *, wm=True, browser=None, electron=None, firefox=None, mo
 
 
 SUITES = {
+    'resource-limits': suite('live_resource_limits.py', 'PERF-10 FAULT-04', artifacts=('resource-limits',)),
     'data-entry': suite('live_data_entry.py', 'DATA-05 DATA-06 DATA-08 DATA-09', wm=False, artifacts=('data-entry',)),
     'file-destinations': suite('live_file_destinations.py', 'FILE-10', artifacts=('file-destinations','files')),
     'browser-download': suite('live_browser_download.py', 'FILE-09', browser='--executable', artifacts=('browser-download',), gaps=('Native chooser may lack accessibility; fixed-layout screenshot workflow qualified, interruption/resume not qualified',)),
