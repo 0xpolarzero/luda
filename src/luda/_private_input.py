@@ -12,6 +12,21 @@ from .common import DesktopError
 from ._x11_helper import _NativeX11, _decode_window_token
 
 TOKEN_ENV = 'LUDA_PRIVATE_INPUT'
+ROUTE_ENV = 'LUDA_INPUT_ROUTE'
+
+
+def input_route():
+    route = os.environ.get(ROUTE_ENV, 'private')
+    if route not in ('private', 'shared'):
+        raise DesktopError('INPUT_UNAVAILABLE', 'Unknown internal input route; no input sent.')
+    return route
+
+
+def validate_route(request):
+    route = input_route()
+    if request.get('input_route', 'private') != route:
+        raise DesktopError('INPUT_UNAVAILABLE', 'Input ownership route changed; no input sent or released.')
+    return route
 
 
 class DeviceInfo(C.Structure):
@@ -126,6 +141,7 @@ class Devices:
 
 
 class Binding:
+    route = 'private'
     def __init__(self, native, token):
         self.devices = Devices(native)
         self.token = self.devices.validate(token)
@@ -162,7 +178,51 @@ class Binding:
         return window.value
 
 
+class SharedBinding:
+    """Explicit foreground compatibility route; never selected by token failure."""
+    route = 'shared'
+
+    def __init__(self, native):
+        self.devices = Devices(native)
+        native.window_tokens([native.root])  # Initialize before guarded validation.
+        self.generation = self.devices.generation()
+        selected = C.c_int()
+        if not self.devices.xi.XIGetClientPointer(native.display, 0, C.byref(selected)):
+            raise DesktopError('INPUT_UNAVAILABLE', 'Cannot identify shared input devices.')
+        found = {d['id']: d for d in self.devices.devices()}
+        pointer = found.get(selected.value)
+        keyboard = found.get(pointer['attachment']) if pointer else None
+        if (not pointer or not keyboard or pointer['name'] != 'Virtual core pointer'
+                or keyboard['name'] != 'Virtual core keyboard' or pointer['use'] != 1
+                or keyboard['use'] != 2 or keyboard['attachment'] != pointer['id']
+                or not pointer['enabled'] or not keyboard['enabled']):
+            raise DesktopError('INPUT_UNAVAILABLE', 'Default connection is not bound to the shared core pair.')
+        self.pointer, self.keyboard = pointer['id'], keyboard['id']
+        self._identity = (dict(pointer), dict(keyboard))
+        native.lib.XGetInputFocus.argtypes = [C.c_void_p, C.POINTER(C.c_ulong), C.POINTER(C.c_int)]
+        self.validate()
+
+    def validate(self):
+        if self.devices.generation() != self.generation:
+            raise DesktopError('SESSION_CHANGED', 'Shared input belongs to a previous X server.')
+        selected = C.c_int()
+        if (not self.devices.xi.XIGetClientPointer(self.devices.x.display, 0, C.byref(selected))
+                or selected.value != self.pointer):
+            raise DesktopError('INPUT_UNAVAILABLE', 'Shared input connection binding changed; no input sent.')
+        found = {d['id']: d for d in self.devices.devices()}
+        if tuple(found.get(device) for device in (self.pointer, self.keyboard)) != self._identity:
+            raise DesktopError('INPUT_UNAVAILABLE', 'Shared input devices changed; no input sent.')
+
+    def focus_window(self):
+        self.validate()
+        window, revert = C.c_ulong(), C.c_int()
+        self.devices.x.lib.XGetInputFocus(self.devices.x.display, C.byref(window), C.byref(revert))
+        return window.value
+
+
 def bind_private_input(native, token=None):
+    if input_route() == 'shared':
+        return SharedBinding(native)
     return Binding(native, decode_token(os.environ.get(TOKEN_ENV, '') if token is None else token))
 
 

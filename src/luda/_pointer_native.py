@@ -78,7 +78,7 @@ def plan_pointer(native,request):
         raise DesktopError('UNSUPPORTED_INPUT_STATE','Latched keyboard state is active; no click or scroll sent.')
     if target is not None:
         native.require_focus(target)
-    return {'kind':'pointer','button':request['button'],'count':request['count'],'target':target,'server_generation':current_generation,**({'target_generation':token} if token is not None else {}),**({'position':position} if position is not None else {}),**({'hold':True} if request.get('hold') is True else {})}
+    return {'input_route':getattr(native.private,'route','private'),'kind':'pointer','button':request['button'],'count':request['count'],'target':target,'server_generation':current_generation,**({'target_generation':token} if token is not None else {}),**({'position':position} if position is not None else {}),**({'hold':True} if request.get('hold') is True else {})}
 
 
 def event(native,button,pressed):

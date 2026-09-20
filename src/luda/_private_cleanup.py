@@ -3,7 +3,7 @@ import ctypes as C
 import os
 
 from ._x11_helper import _NativeX11, _decode_window_token
-from ._private_input import Devices, TOKEN_ENV, decode_token
+from ._private_input import Devices, TOKEN_ENV, decode_token, validate_route
 from ._input_native import generation
 from .common import DesktopError
 
@@ -34,6 +34,7 @@ def disconnect_injector(native, client):
 
 def ended_ownership(request):
     """Return a no-release receipt only when the original ownership ended."""
+    route = validate_route(request)
     native = _NativeX11()
     try:
         if generation(native) != request['server_generation']:
@@ -41,6 +42,8 @@ def ended_ownership(request):
         # A removed master resets ClientPointer. Stop an old injector before
         # proving removal; never bind or emit a release on that reset connection.
         disconnect_injector(native, request['client'])
+        if route == 'shared':
+            return None
         token = decode_token(os.environ.get(TOKEN_ENV, ''))
         devices = Devices(native)
         if token['generation'] != request['server_generation']:

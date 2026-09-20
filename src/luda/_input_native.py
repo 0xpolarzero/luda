@@ -26,7 +26,8 @@ def main():
                 if request['operation']=='press':raise DesktopError('SESSION_CHANGED','X server changed before input; no input sent.')
                 result={'released':False,'session_changed':True,'cleanup_skipped':True}
             else:
-                from ._private_input import bind_private_input
+                from ._private_input import bind_private_input, validate_route
+                if 'input_route' in request or request['operation']=='release':validate_route(request)
                 binding=bind_private_input(native)
                 native.lib.XGrabServer.argtypes=[C.c_void_p]
                 native.lib.XUngrabServer.argtypes=[C.c_void_p]

@@ -131,7 +131,7 @@ class Keyboard:
         codes.append(code)
         if len(codes)!=len(set(codes)) or not 1<=len(codes)<=5:
             raise DesktopError('UNSUPPORTED_KEYMAP','Chord has overlapping keycodes.')
-        return {'chord':chord,'target':target,'keycodes':codes,'group':state.group,'locked_mods':state.locked_mods,'server_generation':generation(self.x),'target_generation':target_token,'count':count}
+        return {'input_route':getattr(self.private,'route','private'),'chord':chord,'target':target,'keycodes':codes,'group':state.group,'locked_mods':state.locked_mods,'server_generation':generation(self.x),'target_generation':target_token,'count':count}
     def press_target(self,code,target,target_generation):
         # The server cannot destroy/reuse a target between this identity check
         # and its key-down. Never keep the grab across sleeps or application
@@ -151,6 +151,11 @@ class Keyboard:
 
     def require_focus(self,target):
         self.private.validate()
+        if getattr(self.private,'route','private')=='shared':
+            active=self.x._property(self.x.root,'_NET_ACTIVE_WINDOW',1)
+            if not active or active[0]!=33 or active[1]!=32 or active[2]!=[target] or active[3]:
+                raise DesktopError('FOCUS_CHANGED','Target lost foreground focus; no input sent.')
+            return
         window=self.private.focus_window()
         # Toolkits may focus a child input window. Keep that focus rather than
         # forcing the top-level between each key of an IME or popup interaction.
@@ -185,6 +190,9 @@ class Keyboard:
     def focus_target(self,target,token):
         with self.guard():
             self.target_token(target,token)
+            if getattr(self.private,'route','private')=='shared':
+                self.require_focus(target)
+                return
             try:self.require_focus(target)
             except DesktopError as exc:
                 if exc.code!='FOCUS_CHANGED':raise
@@ -214,11 +222,11 @@ def main():
         keyboard=Keyboard()
         if sys.argv[1]=='probe':
             state=keyboard.state()
-            emit({'available':True,'backend':'private XI2 + XKB + XTest','group':state.group,'locked_mods':state.locked_mods,
+            emit({'available':True,'backend':('foreground shared XKB + XTest' if keyboard.private.route=='shared' else 'private XI2 + XKB + XTest'),'group':state.group,'locked_mods':state.locked_mods,
                   'input_held':bool(keyboard.pressed() or keyboard.buttons() or state.base_mods),
                   'latched_input':bool(state.latched_mods or state.latched_group),
                   'mapping':'Current group, named keys with ordinary Shift; unsupported symbols are refused.',
-                  'cleanup':'Owned injector termination and release on the private agent devices only.'})
+                  'cleanup':('Owned injector termination and release on shared devices; concurrent same-key input cannot be distinguished.' if keyboard.private.route=='shared' else 'Owned injector termination and release on the private agent devices only.')})
         elif sys.argv[1]=='check_focus':
             keyboard.target_token(request['target'],request['target_generation'])
             keyboard.require_focus(request['target'])

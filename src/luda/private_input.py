@@ -7,13 +7,14 @@ import sys
 import threading
 
 from .common import DesktopError
-from ._private_input import TOKEN_ENV, decode_token
+from ._private_input import TOKEN_ENV, ROUTE_ENV, decode_token
 
 
 class PrivateInput:
     def __init__(self, environment=None):
         self._environment = dict(os.environ if environment is None else environment)
         self._environment.pop(TOKEN_ENV, None)
+        self._environment.pop(ROUTE_ENV, None)
         self._process = None
         self._token = None
         self._lock = threading.RLock()
@@ -34,7 +35,7 @@ class PrivateInput:
                 except (OSError, ValueError, TimeoutError, DesktopError):
                     self.close()
                     raise DesktopError('INPUT_UNAVAILABLE', 'Private input could not start; no shared input fallback.') from None
-            return {**self._environment, TOKEN_ENV: json.dumps(self._token, separators=(',', ':'))}
+            return {**self._environment, ROUTE_ENV: 'private', TOKEN_ENV: json.dumps(self._token, separators=(',', ':'))}
 
     def close(self):
         with self._lock:

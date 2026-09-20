@@ -18,6 +18,7 @@ def native_module(request):
 
 def cleanup_request(request,client):
     value={'client':client,'server_generation':request['server_generation']}
+    if 'input_route' in request:value['input_route']=request['input_route']
     if request.get('kind')=='pointer':value.update(kind='pointer',button=request['button'])
     else:value['keycodes']=request['keycodes']
     return value
