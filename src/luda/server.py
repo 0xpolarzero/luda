@@ -243,7 +243,7 @@ async def desktop_type_secret(element_id: str, text: str) -> CallToolResult:
 
 @mcp.tool()
 async def desktop_choose(element_id: str, extend: bool = False) -> CallToolResult:
-    """Choose an observed list option, radio or supported combo option and verify selection. Default makes the choice exclusive; extend preserves other list selections. Open collapsed options and inspect first."""
+    """Choose an observed list/radio/combo option or a visible table cell and verify selection. A table cell selects its whole row. Default makes the choice exclusive; extend preserves other list or table-row selections. Scroll offscreen rows into view and inspect again; reacquire after sorting/filtering. Open collapsed options and inspect first."""
     return await execute_async('element',element_id,'choose',extend=extend)
 
 

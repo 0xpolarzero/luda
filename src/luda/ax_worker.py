@@ -323,6 +323,55 @@ class TextAccess:
         return Atspi.Text.remove_selection(self.raw, index)
 
 
+def choose_table_row(node, current, extend):
+    """Select a row through Table, preserving the exact observed cell identity."""
+    cell = node.get_table_cell()
+    table_node = Atspi.TableCell.get_table(cell)
+    if table_node is None or "Table" not in table_node.get_interfaces():
+        return failure("UNSUPPORTED", "Cell has no accessible Table container.")
+    if "Component" not in current["interfaces"] or "Component" not in table_node.get_interfaces():
+        return failure("UNSUPPORTED", "Cannot establish the table cell's visible viewport.")
+    bounds = node.get_component_iface().get_extents(Atspi.CoordType.SCREEN)
+    viewport = table_node.get_component_iface().get_extents(Atspi.CoordType.SCREEN)
+    # GTK may retain SHOWING on offscreen cells and return G_MININT coordinates.
+    if (min(bounds.x, bounds.y, viewport.x, viewport.y) <= -2147483648 or
+            min(bounds.width, bounds.height, viewport.width, viewport.height) <= 0 or
+            max(bounds.x, viewport.x) >= min(bounds.x + bounds.width, viewport.x + viewport.width) or
+            max(bounds.y, viewport.y) >= min(bounds.y + bounds.height, viewport.y + viewport.height)):
+        return failure("NOT_INTERACTABLE", "Table cell is outside its visible viewport; scroll and inspect again.")
+    table = table_node.get_table_iface()
+    position = Atspi.TableCell.get_position(cell)
+    row, column = position[-2:]
+    def same_cell():
+        position_now = Atspi.TableCell.get_position(cell)
+        actual = table.get_accessible_at(row, column)
+        return (tuple(position_now[-2:]) == (row, column) and actual is not None
+                and actual.path == node.path and node.get_name() == current["name"])
+    if row < 0 or column < 0 or not same_cell():
+        return failure("STALE_TARGET", "Table cell position or meaning changed; inspect again.")
+    selected = table.get_selected_rows()
+    if len(selected) > 500:
+        return failure("SELECTION_TOO_LARGE", "Table row selection normalization exceeds 500 rows.")
+    if not same_cell():
+        return failure("STALE_TARGET", "Table changed while observing selection; inspect again.")
+    expected = set(selected) | {row} if extend else {row}
+    if set(selected) == expected:
+        return {"effect": "verified", "accepted": True, "selected": True, "changed": False,
+                "selection_scope": "table_row"}
+    accepted = bool(table.add_row_selection(row))
+    if accepted and not extend:
+        for old_row in selected:
+            if old_row == row or old_row not in table.get_selected_rows():
+                continue
+            if not same_cell():
+                return {"effect": "uncertain", "accepted": accepted, "selected": False,
+                        "verification": "Table changed while selecting; inspect again."}
+            accepted = bool(table.remove_row_selection(old_row)) and accepted
+    matched = verify(lambda: same_cell() and set(table.get_selected_rows()) == expected)
+    return {"effect": "verified" if matched else "uncertain", "accepted": accepted,
+            "selected": matched, "changed": matched, "selection_scope": "table_row", "extend": extend}
+
+
 def choose_combo_option(node, combo):
     """Commit a popup option, not merely highlight a menu row."""
     combo_states = states_of(combo)
@@ -412,6 +461,8 @@ def semantic(node, current, req):
             if extend:
                 return failure("INVALID_ARGUMENT", "Radio choices cannot extend a selection.")
             return semantic(node, current, {"op": "check", "checked": True})
+        if current["role"] == "table cell" and "TableCell" in current["interfaces"]:
+            return choose_table_row(node, current, extend)
         parent = node.get_parent()
         if parent is None:
             return failure("UNSUPPORTED", "Option has no accessible parent.")

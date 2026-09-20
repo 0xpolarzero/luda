@@ -5,6 +5,7 @@ import sys
 import gi
 gi.require_version('Gtk','3.0')
 from gi.repository import Gtk, GLib
+editing_widget=None
 out=Path(sys.argv[1]);out.mkdir(parents=True,exist_ok=True)
 state={'selected_id':None,'descending':False,'filtered':False,'edited':{},'lazy_loaded':False,'expanded':False}
 w=Gtk.Window(title='Luda Data Qualification');w.set_default_size(1000,720)
@@ -25,6 +26,10 @@ for col,title in [(1,'Identity'),(2,'Editable value')]:
     if row[0]==identifier:row[2]=text;break
    state['edited'][str(identifier)]=text
   renderer.connect('edited',edited)
+  def editing_started(renderer,widget,path):
+   global editing_widget
+   editing_widget=widget;state['editing_path']=path
+  renderer.connect('editing-started',editing_started)
  view.append_column(Gtk.TreeViewColumn(title,renderer,text=col))
 scrolled=Gtk.ScrolledWindow();scrolled.set_policy(Gtk.PolicyType.AUTOMATIC,Gtk.PolicyType.AUTOMATIC);scrolled.add(view);box.pack_start(scrolled,True,True,0)
 def selected(selection):
@@ -48,6 +53,7 @@ def expanded(tree,it,path):
 tree.connect('row-expanded',expanded);tree.connect('row-collapsed',lambda *_:state.update(expanded=False))
 box.pack_start(tree,False,False,0)
 def persist():
+ state['editing_widget_visible']=bool(editing_widget and editing_widget.get_mapped())
  state['expanded']=bool(tree.row_expanded(Gtk.TreePath.new_from_indices([0])))
  visible=view.get_visible_range();state['visible_range']=[p.to_string() for p in visible] if visible else None
  state['row_count']=len(sorted_model);state['first_id']=sorted_model[0][0] if len(sorted_model) else None
