@@ -1,0 +1,28 @@
+{
+  "commit": "20af806b0a68b49f431a9ada97d01e09e0af2b2e",
+  "source_url": "https://github.com/0xpolarzero/luda/archive/20af806b0a68b49f431a9ada97d01e09e0af2b2e.tar.gz",
+  "effective_url": "https://codeload.github.com/0xpolarzero/luda/tar.gz/20af806b0a68b49f431a9ada97d01e09e0af2b2e",
+  "source_sha256": "13e16f90217c480c84427faadd9eb39f4bc40ebcd1133624cb071bc87a942850",
+  "compressed_bytes": 3545071,
+  "expanded_file_bytes": 7176903,
+  "git_files_exact": 672,
+  "tar_entries": 725,
+  "raw_file_modes": [
+    "0o664",
+    "0o775"
+  ],
+  "git_executable_bits_exact": true,
+  "guest_extraction_content_and_normalized_modes_exact": true,
+  "guest_bounded_https_download_second_fetch_identical": true,
+  "downloaded_code_executed": false,
+  "directory_entries_exact": 53,
+  "archive_directory_mode": "0775; guest normalizes0755 inside private0700 destination",
+  "candidate_manifest_validated_only_not_enabled": true,
+  "packaged_harness_rerun": "passed; same672 files/53directories/checksum",
+  "deterministic_builder_comparison": {
+    "sha256": "27cee8f7c9652d9143bcb433d50078b9d74598e5c43eda9ed22166927310993a",
+    "bytes": 3540387,
+    "files": 672,
+    "scope": "Same Git tree, different archive bytes; not the canonical URL checksum"
+  }
+}

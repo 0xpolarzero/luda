@@ -40,3 +40,28 @@ ordinary rename could replace a concurrent empty directory. Both are corrected
 with actual Git/filesystem regressions. Preparing source `9d4f8c0` produced a 1,831,221-byte archive
 containing 613 files; the actual guest extractor accepted it. This local candidate
 was not published or configured in the Silo product.
+
+## Available canonical GitHub source
+
+The [reviewed candidate](../integrations/silo/releases/20af806.json) points to the
+already available full-commit GitHub archive for `20af806b0a68b49f431a9ada97d01e09e0af2b2e`.
+Its actual HTTPS download, checksum, complete Git-tree comparison and guest
+extraction passed; [retained evidence and rerunnable verifier](../tests/evidence/source-archive/README.md)
+record the exact scope. The guest default manifest remains disabled. Selecting
+this candidate requires no separate release upload, but still requires explicit
+integration selection and product acceptance.
+
+These are GitHub's archive bytes, not `prepare_release.py` output. For this same
+commit the canonical download is 3,545,071 bytes with SHA-256
+`13e16f90217c480c84427faadd9eb39f4bc40ebcd1133624cb071bc87a942850`;
+the separately prepared local archive is 3,540,387 bytes with SHA-256
+`27cee8f7c9652d9143bcb433d50078b9d74598e5c43eda9ed22166927310993a`.
+Both contain the same 672 Git files. Never pair the local builder's checksum with
+the canonical URL. The builder intentionally requires its own generated filename,
+so that URL is not an accepted `--source-url` for local preparation.
+
+GitHub may change archive encoding/compression while retaining the commit's tree.
+A pinned checksum then fails closed and requires another review; no automatic
+checksum update is permitted. This proves correspondence to the user-reviewed
+repository commit, not an independent publisher signature, offline installation,
+a release qualification or a real Mac/Silo deployment.

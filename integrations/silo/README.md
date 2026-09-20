@@ -28,8 +28,9 @@ Create the source artifact from a reviewed commit, for example using
 of `COMMIT` with that full commit identifier. Preserve the full tree, including
 `requirements.lock`, `build-requirements.lock`, scripts, skills and package sources.
 Record its SHA-256, serve those exact bytes over HTTPS, and put that URL, checksum
-and commit in the manifest. This project does not currently supply a published
-artifact URL. The archive digest pins bytes; the commit label is integrator-supplied
+and commit in the manifest. A [verified full-commit GitHub archive candidate](releases/20af806.json) is
+already available; see the [source proof](../../tests/evidence/source-archive/README.md).
+The canonical default manifest remains disabled pending integration selection. The archive digest pins bytes; the commit label is integrator-supplied
 provenance, not cryptographic proof of a Git object relationship. Installation
 executes trusted source/build code and can access package repositories using the
 existing locked installer. It is not an offline installation.
@@ -466,7 +467,8 @@ Chromium and already running MCP processes are preserved. New conversations use
 the selected release.
 
 The shipped `guest/agent-tools-release.json` remains disabled. Maintainers must
-first supply an actual verified Luda source archive as described above. That source
+select an actual verified Luda source archive as described above; a reviewed
+full-commit candidate is now available, but is not selected automatically. That source
 must contain managed browser provisioning (`requirements-browser.lock` and
 `src/luda/managed_browser.py`). A configured release may additionally carry a
 `browser` object with exactly these fields:
