@@ -1,0 +1,10 @@
+dbus-daemon[8141]: [session uid=1001 pid=8141] Activating service name='org.a11y.Bus' requested by ':1.1' (uid=1001 pid=8162 comm="/workspace/silo-desktop-research/browsers/chromium")
+dbus-daemon[8141]: [session uid=1001 pid=8141] Successfully activated service 'org.a11y.Bus'
+dbus-daemon[8254]: Activating service name='org.a11y.atspi.Registry' requested by ':1.0' (uid=1001 pid=8162 comm="/workspace/silo-desktop-research/browsers/chromium")
+dbus-daemon[8254]: Successfully activated service 'org.a11y.atspi.Registry'
+SpiRegistry daemon is running with well-known name - org.a11y.atspi.Registry
+{"pid":8162,"version":"153.0.8010.12","effect":"dispatched"}
+before [('tmp/playwright-artifacts-mxkdvu/8de2b381-7c92-469d-89eb-179c23d0c15f', 33)]
+proof b'1'
+after [('tmp/playwright-artifacts-mxkdvu/8de2b381-7c92-469d-89eb-179c23d0c15f', 33)]
+root /tmp/luda-browser-download-probe-sqf3ozlj

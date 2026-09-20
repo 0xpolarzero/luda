@@ -1,0 +1,35 @@
+{
+  "uid": 1001,
+  "records": [
+    {
+      "mode": "eof",
+      "actual_attachment_bytes": 33,
+      "owned_processes": 15,
+      "profile_removed": true,
+      "survivors": [],
+      "external_attachment_files": 0
+    },
+    {
+      "mode": "worker-killed",
+      "actual_attachment_bytes": 33,
+      "owned_processes": 15,
+      "profile_removed": true,
+      "survivors": [],
+      "external_attachment_files": 0
+    },
+    {
+      "mode": "server-killed",
+      "actual_attachment_bytes": 33,
+      "owned_processes": 15,
+      "profile_removed": true,
+      "survivors": [],
+      "external_attachment_files": 0
+    }
+  ],
+  "source_hashes": {
+    "browser.py": "7990ff175fc9df22778468e982af7839afdc35a44b2725c94b0ee25e9fe5ebf7",
+    "_browser_guard.py": "d0087f91f88dc14e962f0292a846bd50a1bc96cc692d002a051924c143031b4e",
+    "_browser_worker.py": "9d539fe8ae5df0ef24e9a962527e981772d9f672c6753c1fca6ee3f9c01845e0"
+  },
+  "root": "/workspace/luda-browser-evidence-output/run1"
+}
