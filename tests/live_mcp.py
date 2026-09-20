@@ -94,8 +94,10 @@ async def main():
     report,response=await call('desktop_report')
     serialized=response.content[0].text
     record('mcp-report-bounded-correlation',report['schema_version']==1 and report['effect']=='none' and report['history_scope']=='current_mcp_process' and len(report['operations'])<=32 and any(row.get('operation_id')==prior_operation and row.get('method')=='paste' for row in report['operations']))
-    record('mcp-report-content-free',len(response.content)==1 and response.content[0].type=='text' and all(sensitive not in serialized for sensitive in (payload,'MCP literal text','Contract text',str(ROOT),str(OUT),wid,eid,shot['snapshot_id'])) and all(set(row)<=set(('operation_id','method','effect','elapsed_ms','ok')) for row in report['operations']))
+    record('mcp-report-content-free',len(response.content)==1 and response.content[0].type=='text' and all(sensitive not in serialized for sensitive in (payload,'MCP literal text','Contract text',str(ROOT),str(OUT),wid,eid,shot['snapshot_id'])) and all(set(row)<=set(('operation_id','method','effect','elapsed_ms','ok','code','action')) for row in report['operations']))
     record('mcp-report-health-and-no-input',report['health']['ready'] is True and json.loads((OUT/'state.json').read_text())['text']==payload)
+    record('mcp-report-safe-error-action-and-identities',any(row.get('code')=='OUT_OF_BOUNDS' for row in report['operations']) and any(row.get('method')=='element' and row.get('action')=='invoke' for row in report['operations']) and report['versions']['tool_schema']['sha256']==expected_schema and report['versions']['bundled_skill']['sha256']==d['versions']['bundled_skill']['sha256'])
+
 
  finally:
   p.terminate();p.wait(timeout=3)
