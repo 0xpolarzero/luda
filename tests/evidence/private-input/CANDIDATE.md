@@ -47,6 +47,11 @@ hide those limits. This branch is reviewable work, not a production release.
 
 ## Evidence
 
+Final integrated run: **950 unit tests passed, one optional build test skipped**;
+all nine public input cases and the cursor/lifecycle/removed-device checks passed.
+[Final revision and runtime hashes](final-validation.json) bind these results to
+the tested source. The browser failure remains a release blocker.
+
 - [Public tool and ownership checks](README.md)
 - [Focus/restore fixtures and counterexamples](../isolated-focus/README.md)
 - `owned-browser.json.gz`: actual passing cases and failed native-IME oracle,

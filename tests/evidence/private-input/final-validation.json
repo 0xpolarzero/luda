@@ -1,0 +1,92 @@
+{
+  "tested_revision": "6251d6fbbc0858ffad89277b9adfe2f72e440cda",
+  "runtime_sha256": {
+    "src/luda/__init__.py": "976d1a2e995c2dbff0ebd0f368a0d4dbf5cd57734edf08c34e9cd75e51e706ca",
+    "src/luda/_app_helper.py": "9339a4b3fb466cc079440e8e95cbda119a26899fbcf937617d30a35144bc77b2",
+    "src/luda/_browser_guard.py": "d226adaa2c7c08635491edb0c6bd2190e159c35470f0941131d0188b9c201b73",
+    "src/luda/_browser_input.py": "3d2d7c1eec081b87fd0186d4504620f85909813ff88b80b4f80f662db9f34e75",
+    "src/luda/_browser_secret.py": "a1a6caf0ccb912f2a85cea4e83dd7f81da4684792745681cf7aa0add7e5faf85",
+    "src/luda/_browser_worker.py": "8fca78979696d66bb5b9e6d22f63534bd30ec112f35b0672e6bce24408451a45",
+    "src/luda/_cursor_overlay.py": "f8665187b136f2d6e3204fedced3fbcc55781aa713d197efdf230a194cdc5c2d",
+    "src/luda/_font_probe.py": "125c31f524770e8c96bb7321026b7c35911e163fc2381019fdf3bc739317cb8d",
+    "src/luda/_input_native.py": "938debe29a5ff70aba6e8157c1458760c9ad81a9973b11c5aeb6630c2dee2844",
+    "src/luda/_keyboard_guard.py": "4858ad90e3ba80ee20c0fd61120dde5b6f63a93d091cba9d0dde887096b48a33",
+    "src/luda/_keyboard_native.py": "9fc6e9735b263ddbf90f5a6339704d6c12b9193e7d4928d7ad55036edac2d936",
+    "src/luda/_match_worker.py": "f0310923d7f9ba6865ef367e2dca531bb757b824d6f11df8c895f93b805d39b3",
+    "src/luda/_pointer_native.py": "ad14a7ff6bcf7d1bd54440ae70874417e0200499dc8f90f348af84ac0ddb40e9",
+    "src/luda/_private_cleanup.py": "3622abe52deae9864a3e58984fefcb732149fafa8a6baf987e82de453650015e",
+    "src/luda/_private_input.py": "0e5c9c7a983f94860b640f2a25eee8e297345632b7114660c9eb44539a79aa0b",
+    "src/luda/_randr.py": "ef0a72bf7088c45a36a5b73b7455f9d0526312c9eeffaec7def1682af7e427e5",
+    "src/luda/_recording_guard.py": "7027fe7657da5c95f7e8d11399a89bc212065b33c110fc061a83f8217c1ade51",
+    "src/luda/_session_state.py": "698bfefa7072eb598363dc2175b18a197383dfc39b1ee8eff25770b062818b4a",
+    "src/luda/_window_map.py": "f9c2088dc05c4190ff2abc1587698ca2243ceb5b3a216dbedb8caa5f50803b15",
+    "src/luda/_x11_helper.py": "152d18b24310f7ae808106716dca3bf0aa8763b94cf312c84378e837ae75cd98",
+    "src/luda/admission.py": "d13b8d0cf7829237b6d934fbacabe292c9194d6c95947b9a12e98847e1e61f9f",
+    "src/luda/apps.py": "607be9265c9bf47d16d754265f9cc57e5abb7818b5e4d6b17ecbdc310f3d3d48",
+    "src/luda/ax_worker.py": "49b14ac9ea64b0d1cffc9482dc9f01334774491b3b90759cc12164001ddf24a0",
+    "src/luda/browser.py": "128c8279931c673d367564e7f4dfa0cc8db9846f7ae3da3d1f285db8705a7e8d",
+    "src/luda/common.py": "768b214fec6dd5f030e019e93e4b91f6060935a040e1dc5189c7208abde0fb53",
+    "src/luda/control.py": "4839f00f8f912c69bff3a4a9f9eeb1a9016ff9988660f7c139511e1025634566",
+    "src/luda/coordinates.py": "ab22234e3d723a88c6bf3c53dbc09ea0b667442a4fbdc6424ad88ef37fc133ed",
+    "src/luda/cursor.py": "f770f123f32c624fe578cc61ca1deb78584b55285527657e3e8d91c7e0e00a61",
+    "src/luda/desktop.py": "b41a0a52dad207b2660577a4d1ba2dc1e6642578289c2397b34e4414ca2afeaa",
+    "src/luda/diagnostics.py": "4ba65e2c599cd456f398a402e5367fd88c00a894a0795e982b23b8a90999f34c",
+    "src/luda/fonts.py": "1e1985d96c55b1c2fdac712d7314209d150523b928ccc86f615f2962dfa9f078",
+    "src/luda/identity.py": "3df40928c964ae5ce32a3f270b03c1a81897ddbace2424ddc1ea8d91ccd24a60",
+    "src/luda/ime.py": "7c38112d509e0cb34e994a37c41a5351bfd78207da11069e0e6dbd8e3bb38233",
+    "src/luda/input_guard.py": "ca7aee0875819ffe6fcdbdbd440a173fdfec93920af2059718a62f298f3cea43",
+    "src/luda/input_validation.py": "7ff4b97a27db957159bab8a9e53abaed183c4317443c90069697c84a04216243",
+    "src/luda/interaction.py": "c469179620f2afca181503c30f3d73c03b6eaea2df2168fffa0703ee961385f1",
+    "src/luda/keyboard.py": "b4b8e2f3ba71622c1af56bbadded492e615821c9fef231f03c032ba24eab4bff",
+    "src/luda/managed_browser.py": "110371dc7d80f8e32b9077b5b1f856c7261e90acba096b9cf3e11112f84ea36c",
+    "src/luda/matching.py": "2c33a616613d2fdaa1044daa1d43d3343b96a0c775550761d7bce301013d10c7",
+    "src/luda/ocr.py": "2dca57acb27a9e4c574392b8c96df119c4c72e65b2e4058465b7c5802f250cd8",
+    "src/luda/pointer_input.py": "263116748202c932eda927b41e7beed9ee833267de982dec54ae5283bdd99c94",
+    "src/luda/private_input.py": "d2f487063945d719c499ac4d512d3e7a7e13077c6a0f44e27f65ad4f2bfabd52",
+    "src/luda/progress.py": "cca5ade7b801e69c0b7018c60999ae0a77e44c88618a403d9a1462e847bb22e0",
+    "src/luda/protocol.py": "c5c71cba5bdf67900c1893cd177c0b1041d96b672f88b3c13246977f4164546a",
+    "src/luda/recording.py": "f0f246f90cdd0dcc983ecb14cb0fafcf18298275da5d3b25bc4eed189bf1b4a2",
+    "src/luda/reporting.py": "caf24819c31a0b05e96cdb7b8f777662f2cc50a521f53b0fc36efddb7760ea3a",
+    "src/luda/server.py": "18b7f360829b9899ffc0f71ca44b7d8a2fae934d20c9e5fb09b9cc7fdef6070a",
+    "src/luda/session.py": "feb65e8655ede2daa95b5e52a3868f0f5b69f936bfac95901ba33fc97a876a3d",
+    "src/luda/session_reconnect.py": "4dd30a4fa312246d6b5ed3a611c88002ab2fb0500915fbf4ec381a22c71f0247",
+    "src/luda/session_state.py": "f21f67948505876b4465692539dbd133115e5276cd1c5c6ee348cd82ae010c5f",
+    "src/luda/storage.py": "daadee153219a1770530d32bcead248c525d88d95b5c7edafa18e4d9c9797ac9",
+    "src/luda/timing.py": "8cd38b8cb8fa587dee0e2f421b28a8368c78aeffb1e821b424516f35c67cbcde",
+    "src/luda/waits.py": "f1ca110e2d11a0acc4c137869c331908c2ad0981da6e9d8c92a73eb4a34da688",
+    "src/luda/window_history.py": "8a5f4c43552da174f9b07958614d805dcfcbd5cf5fbc42691de761af23ae0cdb",
+    "src/luda/x11.py": "635fd691f01dbd0c47cac8e48ac696c0bb11678791184a03faa2c5a6a76deae5"
+  },
+  "unit": {
+    "run": 951,
+    "passed": 950,
+    "skipped": 1,
+    "skip_reason": "optional build regression requires build-requirements.lock"
+  },
+  "public_private_input": {
+    "passed": 9,
+    "failed": 0
+  },
+  "owner_lifecycle": {
+    "passed": true,
+    "checks": 8
+  },
+  "removed_pair_cleanup": {
+    "passed": true,
+    "checks": 5
+  },
+  "cursor": {
+    "passed": true,
+    "scope": "captured pixels and click-through; not all viewer cursor planes"
+  },
+  "owned_browser": {
+    "passed_before_failure": 27,
+    "failed": "native-ime-precondition",
+    "remaining_dependent_cases": "not run"
+  },
+  "release_ready": false,
+  "blockers": [
+    "Chromium native keyboard compatibility",
+    "Application-issued human focus changes"
+  ]
+}
