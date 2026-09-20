@@ -1,7 +1,11 @@
 # Automatic input compatibility validation
 
 2026-09-20, integrated runtime through `e56346a` and `2aeac4b`.
-All runs used isolated Xvfb/XFWM sessions and an independent worktree venv.
+The full unit suite on `2aeac4b` ran 983 tests successfully (one optional test
+skipped). After integrating these evidence and documentation changes, all 16
+contract and live-inventory checks passed on `e05bf60`.
+
+All live runs used isolated Xvfb/XFWM sessions and an independent worktree venv.
 Browser tests ran as the explicitly selected ordinary test account, with
 Chromium 153.0.8010.12 and disk-backed temporary profiles.
 
