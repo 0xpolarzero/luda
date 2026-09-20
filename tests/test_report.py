@@ -85,6 +85,11 @@ class ReportPrivacy(unittest.TestCase):
         self.assertEqual(rows[0], {'method': 'element', 'action': 'invoke', 'code': 'STALE_TARGET'})
         self.assertEqual(rows[1], {'method': 'element'})
         self.assertEqual(rows[2], {'method': 'paste'})
+        for code in ('ACCESSIBILITY_ERROR', 'ACCESSIBILITY_UNAVAILABLE', 'AMBIGUOUS_ACCESSIBILITY_WINDOW', 'INVALID_SELECTION', 'LAUNCH_FAILED', 'NOT_PROTECTED_FIELD', 'SELECTION_TOO_LARGE', 'SELECTION_UNVERIFIABLE', 'TARGET_IDENTITY_UNAVAILABLE', 'UNSUPPORTED_OPERATION'):
+            with self.subTest(code=code):
+                self.assertEqual(r.project_history([{'code': code, 'message': 'SENSITIVE'}]), [{'code': code}])
+        self.assertEqual(r.project_history([{'code': 'PRIVATE_CUSTOM_PROVIDER_ERROR'}]), [])
+
 
     def test_execute_records_only_fixed_semantic_verb_not_invoke_name(self):
         from collections import deque
