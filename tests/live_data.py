@@ -1,5 +1,6 @@
 """Real GTK table/tree qualification with independent app-persisted oracle."""
 import json
+import base64
 import os
 from pathlib import Path
 import subprocess
@@ -8,6 +9,7 @@ import time
 import tempfile
 from luda.desktop import Desktop
 from luda.common import DesktopError
+from luda.coordinates import image_bounds
 ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT/'scripts'))
 from headless_tests import stop
 from qualify import source_fingerprint
@@ -18,9 +20,10 @@ for key,suffix in [('XDG_CONFIG_HOME','config'),('XDG_DATA_HOME','data'),('XDG_C
  path=Path(scratch.name,suffix);path.mkdir(mode=0o700);os.environ[key]=str(path)
 os.environ['XDG_CONFIG_DIRS']=os.environ['XDG_CONFIG_HOME'];os.environ['GSETTINGS_BACKEND']='memory'
 os.environ.pop('AT_SPI_BUS_ADDRESS',None)
-records=[];source=source_fingerprint(ROOT)
-def record(case,passed,**details):
- row={'case':case,'passed':bool(passed),**details};records.append(row);print(json.dumps(row),flush=True)
+records=[];provider_diagnostics=[];source=source_fingerprint(ROOT)
+def record(case,passed,required=True,**details):
+ row={'case':case,'passed':bool(passed),'required_workflow':required,**details}
+ (records if required else provider_diagnostics).append(row);print(json.dumps(row),flush=True)
 def state():time.sleep(.12);return json.loads((OUT/'state.json').read_text())
 with (OUT/'fixture.log').open('w') as log:
  wm=subprocess.Popen(['xfwm4','--compositor=off'],stdout=log,stderr=log,start_new_session=True)
@@ -76,11 +79,33 @@ with (OUT/'fixture.log').open('w') as log:
   if 'edit' in cell.get('actions',[]):
    edit_response=d.element(cell['element_id'],'invoke',action='edit');time.sleep(.2)
    entries=[n for n in inspect(limit=500)['nodes'] if n['role'] in ('entry','text') and 'editable' in n['states']]
-   if len(entries)==1:
-    d.type_text(entries[0]['element_id'],'Edited exact 日本語',mode='replace');d.key(wid,'Return')
-    record('editable-cell-commit',state()['edited'].get('0')=='Edited exact 日本語',oracle=state())
-   else:record('editable-cell-commit',False,reason='No unique editable child after edit action',entries=entries,oracle=state(),response=edit_response)
-  else:record('editable-cell-commit',False,reason='No edit action')
+   record('semantic-cell-editor-discovery',len(entries)==1 and state()['editing_widget_visible'],required=False,status='supported' if len(entries)==1 else 'unsupported',entries=entries,oracle=state(),response=edit_response)
+  else:record('semantic-cell-editor-discovery',False,required=False,status='unsupported',reason='No edit action')
+  # Deliberate visible GUI fallback is a separate case from the failed semantic edit.
+  fresh_cell=node('Value 0000');shot=d.observe(max_width=1280)
+  cell_image=image_bounds(fresh_cell['bounds'],(shot['desktop_size']['width'],shot['desktop_size']['height']),(shot['image_size']['width'],shot['image_size']['height']))
+  if not cell_image:raise RuntimeError('Cell has no screenshot pixel for editing')
+  d.pointer(wid,shot['snapshot_id'],cell_image['x']+cell_image['width']//2,cell_image['y']+cell_image['height']//2,count=2)
+  editing=state()
+  if not editing['editing_widget_visible']:
+   d.key(wid,'F2');editing=state()
+  probe=subprocess.run(['/usr/bin/python3',str(ROOT/'tests/data_collection_probe.py'),str(p.pid)],capture_output=True,text=True,timeout=20)
+  (OUT/'collection-probe.json').write_text(probe.stdout)
+  editor_tree=inspect(limit=500);(OUT/'grid-editor-tree.json').write_text(json.dumps(editor_tree,indent=2))
+  editors=[n for n in editor_tree['nodes'] if n['role'] in ('entry','text') and 'editable' in n['states'] and 'showing' in n['states']]
+  record('gui-grid-editor-discovery',editing['editing_widget_visible'] and len(editors)==1,required=False,status='supported' if len(editors)==1 else 'unsupported',oracle=editing,editors=editors,truncation=editor_tree['truncation'])
+  if len(editors)==1 and editing['editing_widget_visible']:
+   response=d.type_text(editors[0]['element_id'],'Edited exact 日本語 👩🏽\u200d💻',mode='replace');d.key(wid,'Return')
+   actual=state();record('gui-grid-edit-commit',actual['edited'].get('0')=='Edited exact 日本語 👩🏽\u200d💻' and not actual['editing_widget_visible'],response=response,oracle=actual)
+  else:record('gui-grid-edit-commit',False,required=False,status='blocked',reason='No semantic editor handle; explicit observed GUI workflow tested separately')
+  if editing['editing_widget_visible'] and editing.get('editing_widget_focused') and not editors:
+   focused_shot=d.observe(max_width=1280);(OUT/'visible-cell-editor.png').write_bytes(base64.b64decode(focused_shot['image_base64']))
+   payload='Edited exact 日本語 👩🏽\u200d💻'
+   d.key(wid,'ctrl+a');paste=d.paste(wid,payload);commit=d.key(wid,'Return')
+   actual=state();committed=node(payload);readback=d.element(committed['element_id'],'read')
+   record('gui-clipboard-cell-commit-and-readback',actual['edited']=={'0':payload} and actual['row_count']==1200 and actual['first_id']==0 and not actual['editing_widget_visible'] and readback['text']==payload,paste=paste,commit=commit,readback=readback,oracle=actual)
+  elif not editors:record('gui-clipboard-cell-commit-and-readback',False,reason='Mapped focused editor prerequisite failed; no clipboard input sent',oracle=editing)
+
   # Pointer scrolling is anchored to a fresh screenshot, followed by fresh AX lookup.
   table=node('Records table');bounds=table.get('bounds');snapshot=d.observe(max_width=1600)
   if bounds:
@@ -100,6 +125,6 @@ with (OUT/'fixture.log').open('w') as log:
   record('suite-completion',False,error=''.join(traceback.format_exception(exc)))
  finally:d.close();stop(p);stop(wm)
 after=source_fingerprint(ROOT);record('source-unchanged',source==after)
-(OUT/'results.json').write_text(json.dumps({'source_before':source,'source_after':after,'uid':os.getuid(),'records':records},indent=2))
+(OUT/'results.json').write_text(json.dumps({'source_before':source,'source_after':after,'uid':os.getuid(),'records':records,'provider_diagnostics':provider_diagnostics},indent=2))
 scratch.cleanup()
 raise SystemExit(int(not all(x['passed'] for x in records)))

@@ -50,7 +50,7 @@ class Matrix(unittest.TestCase):
             self.assertTrue((m.ROOT/'tests'/suite['script']).is_file())
             self.assertNotIn('agent',suite['script'])
     def test_owned_window_managers_are_not_started_twice(self):
-        for name in ('firefox','ime','ime-browser','accessibility-lifecycle','mcp-reconnect','x11-isolation','window-tokens','window-metadata-capacity'):
+        for name in ('data-controls','firefox','ime','ime-browser','accessibility-lifecycle','mcp-reconnect','x11-isolation','window-tokens','window-metadata-capacity'):
             self.assertFalse(m.SUITES[name]['runner_window_manager'])
     def test_missing_browser_is_explicit(self):
         with patch.object(m.shutil,'which',return_value='/bin/true'),patch.object(m.subprocess,'run',return_value=type('R',(),{'returncode':0})()):

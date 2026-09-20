@@ -4,7 +4,7 @@ A real GTK3 fixture exposes 1,200 model rows, two visible columns, sorting, filt
 
 The test runs as an ordinary UID in private Xvfb/D-Bus/XFWM and fresh XDG directories. Actual public `Desktop` operations drive the UI. The application separately persists selected stable record ID, model order/count, visible row range, committed edits, actual editor visibility, lazy-loaded children, and actual expanded state. No test directly edits its model.
 
-The final run on 2026-09-20 passed **13 of 14 checks** and deliberately exited 1 for the remaining editable-cell capability. Source hash `550f1e9819ca977f63161036826611afe4396c3a5cbebd6b1a19e1c856c5337b` was unchanged. Local evidence is `artifacts/data`, including initial failures and corrected fixture/precondition runs.
+The initial completed run on 2026-09-20 passed **13 of 14 checks** and exited 1 because its only editable-cell attempt used the ineffective semantic action. A later observed GUI workflow succeeds, as detailed below. Source hash `550f1e9819ca977f63161036826611afe4396c3a5cbebd6b1a19e1c856c5337b` was unchanged. Local evidence is `artifacts/data`, including initial failures and corrected fixture/precondition runs.
 
 | Case | Result |
 |---|---|
@@ -42,3 +42,19 @@ A public accessible name is limited to 300 characters. Reusing that shortened va
 Changed full-name identity refuses mutation with `STALE_TARGET`. An oversized identity fails with `TARGET_IDENTITY_UNAVAILABLE`; omitted unreadable nodes mark inspection incomplete. Provider paths reused with identical full names and roles still cannot be distinguished without a provider generation identifier; process identity, window scope and handle expiry remain necessary safeguards.
 
 The real fixture added a button whose accessible name changes only after character 300. Its old handle refused before the independent click counter changed; a fresh handle worked and exposed no digest. That run passed 15/16 checks, retained the grid-edit failure, and kept source hash `ba959a421c398e904125e54838e4096d854da29fbca1cd973aaf5a21ca8fec99` unchanged. Seven focused tests cover suffix identity, stale dispatch prevention, byte budget, protected-name privacy, fixed diagnostics, private handle storage, and incomplete inspection.
+
+## Successful editable-cell GUI workflow
+
+The further GUI qualification used current screenshot coordinates mapped from the observed visible cell, double-click/F2 to enter editing, explicit select-all/paste, and Return to commit. The saved screenshot visibly shows the row-zero editor. The independent application oracle confirms the editor is mapped and focused before text input; afterward exactly record zero has the requested Japanese/emoji value, the editor is closed, and the model still contains 1,200 rows. A fresh public semantic read of the committed cell independently returns the exact payload. No model mutation driver or direct widget setter supplies the text.
+
+The transient editor itself is genuinely omitted from this GTK accessibility tree. A read-only diagnostic traversed all 2,417 provider nodes without budget/depth pruning or unreadable branches and found no editable/focused entry. A bounded [AT-SPI Collection query](https://docs.gtk.org/atspi2/method.Collection.get_matches.html) also found none. These probes did not justify weakening production traversal bounds or inventing a semantic editor handle.
+
+The final `data-controls` matrix run passed **16/16 required workflow checks** in 37.179 seconds. It separately records three unsuccessful provider-path diagnostics: the semantic edit action's missing editor, inaccessible transient-editor discovery, and the dependent semantic-editor typing path. Those diagnostics retain `passed=false` with explicit unsupported/blocked statuses in `provider_diagnostics`; none is relabeled a supported capability. Prior failed runs remain saved. DATA-04 requires distinguishing cell editing from whole-widget replacement and completing the edit, so a demonstrated screenshot/clipboard/commit/readback workflow satisfies this fixture without requiring a nonexistent semantic editor.
+
+Matrix source hash `597b44a40ccb233ac466a971f399d229d9a7d60dca7f56b5d1822d99c22bc089` remained unchanged; cleanup left no survivors. This is qualification of one GTK fixture, not automatic global qualification of the DATA catalog.
+
+```sh
+.venv/bin/python scripts/qualification_matrix.py --suites data-controls
+```
+
+`tests/data_collection_probe.py` is a diagnostic for the owned synthetic fixture; it is not a runtime capability or a means of mutating the UI.

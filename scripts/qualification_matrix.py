@@ -27,6 +27,7 @@ def suite(script, ids, *, wm=True, browser=None, electron=None, firefox=None, mo
 
 
 SUITES = {
+    'data-controls': suite('live_data.py', 'DATA-01 DATA-02 DATA-04 AX-01 AX-06', wm=False, artifacts=('data',), gaps=('GTK cell edit action can be ineffective and transient editor absent from AX; explicit GUI clipboard workflow is verified separately',)),
     'injector-reuse': suite('live_injector_reuse.py', 'KEY-07 LIFE-04', wm=False, artifacts=('injector-reuse',)),
     'firefox': suite('live_firefox.py', 'WEB-02 EDIT-01 EDIT-02 EDIT-03 EDIT-09 SEM-04 AX-09', wm=False, firefox='--executable', artifacts=('firefox',), gaps=('Gecko protected input lacks functional native EditableText; explicit secret case remains failing',)),
     'mcp-input-recovery': suite('live_mcp_input_recovery.py', 'KEY-07 CONC-01', wm=False, artifacts=('mcp-input-recovery',)),

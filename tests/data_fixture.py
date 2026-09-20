@@ -59,6 +59,7 @@ tree.connect('row-expanded',expanded);tree.connect('row-collapsed',lambda *_:sta
 box.pack_start(tree,False,False,0)
 def persist():
  state['editing_widget_visible']=bool(editing_widget and editing_widget.get_mapped())
+ state['editing_widget_focused']=bool(editing_widget and editing_widget.is_focus())
  state['expanded']=bool(tree.row_expanded(Gtk.TreePath.new_from_indices([0])))
  visible=view.get_visible_range();state['visible_range']=[p.to_string() for p in visible] if visible else None
  state['row_count']=len(sorted_model);state['first_id']=sorted_model[0][0] if len(sorted_model) else None
