@@ -20,6 +20,14 @@ desktop_status()
 
 Return recent operation outcomes after timeout/cancellation. No input text or screenshots are retained.
 
+## `desktop_report`
+
+```python
+desktop_report()
+```
+
+Return a sanitized bug-report JSON: fixed environment/dependency versions, projected health and up to 32 recent operation IDs/methods/effects/timings from this MCP process. Excludes desktop content, paths, exceptions and action arguments. No files, uploads or replay. Supply synthetic repro steps separately; explicitly save/delete the returned report if needed.
+
 ## `desktop_recover_input`
 
 ```python

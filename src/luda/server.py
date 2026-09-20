@@ -172,6 +172,25 @@ async def desktop_status() -> CallToolResult:
     return CallToolResult(content=[TextContent(type='text',text=json.dumps({'ok':True,'recovering':_quarantined.is_set(),'operations':history},separators=(',',':')))])
 
 
+async def _collect_report(cli=False):
+    from .reporting import build_report
+    with _history_lock:
+        history = list(_history)
+    try:
+        probe = await execute_async('doctor')
+        health = json.loads(probe.content[0].text) if not probe.isError else {}
+    except Exception:
+        health = {}
+    return await anyio.to_thread.run_sync(lambda: build_report(health, history, cli=cli, recovering=_quarantined.is_set()))
+
+
+@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
+async def desktop_report() -> CallToolResult:
+    """Return a sanitized bug-report JSON: fixed environment/dependency versions, projected health and up to 32 recent operation IDs/methods/effects/timings from this MCP process. Excludes desktop content, paths, exceptions and action arguments. No files, uploads or replay. Supply synthetic repro steps separately; explicitly save/delete the returned report if needed."""
+    report = await _collect_report()
+    return CallToolResult(content=[TextContent(type='text', text=json.dumps(report, separators=(',', ':')))])
+
+
 @mcp.tool()
 async def desktop_recover_input() -> CallToolResult:
     """Retry cleanup of this server's interrupted supervised input, without replaying keys/clicks or resuming a paused desktop. Uses each operation's original session; a replaced X server is left untouched. Unproven cleanup stays blocked. Returns pending_count and recovery proofs; observe again before acting. Returns BUSY if another operation is still running."""
@@ -354,9 +373,13 @@ def main():
     parser.add_argument('--version',action='version',version=version('luda'))
     sub = parser.add_subparsers(dest='command')
     sub.add_parser('doctor',help='Print real desktop readiness as JSON')
+    sub.add_parser('report',help='Print sanitized bug-report JSON; no earlier-process history')
     control = sub.add_parser('control',help='Coordinate human/agent input on this display')
     control.add_argument('action',choices=['status','pause','resume'])
     args = parser.parse_args()
+    if args.command=='report':
+        print(json.dumps(asyncio.run(_collect_report(cli=True)), separators=(',', ':')))
+        return
     if args.command=='doctor':
         result = execute('doctor')
         print(result.content[0].text)
