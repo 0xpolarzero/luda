@@ -1,4 +1,5 @@
 """Restart an owned X server at the exact same DISPLAY and authority path."""
+import argparse
 import ctypes as C
 import json
 import os
@@ -16,7 +17,22 @@ from luda.input_guard import HeldPointer
 from luda import keyboard
 
 
-def main():
+def stop_owned_server(server, timeout=3):
+    """Final fixture cleanup only; never retry assertions or affect other PIDs."""
+    escalated = False
+    if server.poll() is None:
+        server.terminate()
+        try:
+            server.wait(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            escalated = True
+            server.kill()
+            # A failure to reap still fails the test; no process is abandoned.
+            server.wait(timeout=timeout)
+    return {'term_to_kill_escalated': escalated, 'returncode': server.returncode}
+
+
+def main(stall_cleanup=False):
     server=None;oracle=None;key_guard=None;mouse_guard=None;mouse_writer=None
     with tempfile.TemporaryDirectory(prefix='luda-input-generation-') as directory:
         base=Path(directory);authority=base/'authority';authority.touch(mode=0o600)
@@ -116,8 +132,21 @@ def main():
                     if guard.poll() is None:os.kill(guard.pid,signal.SIGCONT);guard.wait(timeout=4)
                     if guard.stdout:guard.stdout.close()
             if oracle:oracle.close()
-            if server and server.poll() is None:server.terminate();server.wait(timeout=3)
-            os.environ.clear();os.environ.update(original_env)
+            if stall_cleanup and server and server.poll() is None:
+                # Inject only after the oracle connection has closed: closing
+                # Xlib against a deliberately stopped server can itself block.
+                os.kill(server.pid,signal.SIGSTOP)
+                wait(lambda:Path(f'/proc/{server.pid}/status').read_text().split('State:',1)[1].lstrip().startswith('T'))
+            try:
+                if server:
+                    cleanup=stop_owned_server(server)
+                    print(json.dumps({'owned_xvfb_cleanup':cleanup}),flush=True)
+                    if stall_cleanup:assert cleanup['term_to_kill_escalated'] and cleanup['returncode']==-signal.SIGKILL,cleanup
+            finally:
+                os.environ.clear();os.environ.update(original_env)
 
 
-if __name__=='__main__':main()
+if __name__=='__main__':
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--exercise-stalled-xvfb-cleanup',action='store_true',help='Stop only the owned replacement Xvfb after all input assertions; require bounded TERM/KILL cleanup.')
+    main(parser.parse_args().exercise_stalled_xvfb_cleanup)
