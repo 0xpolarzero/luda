@@ -1,0 +1,10 @@
+dbus-daemon[28433]: [session uid=1001 pid=28433] Activating service name='org.a11y.Bus' requested by ':1.0' (uid=1001 pid=28440 comm="xfwm4 --compositor=off")
+dbus-daemon[28433]: [session uid=1001 pid=28433] Successfully activated service 'org.a11y.Bus'
+dbus-daemon[28460]: Activating service name='org.a11y.atspi.Registry' requested by ':1.0' (uid=1001 pid=28440 comm="xfwm4 --compositor=off")
+dbus-daemon[28433]: [session uid=1001 pid=28433] Activating service name='org.xfce.Xfconf' requested by ':1.2' (uid=1001 pid=28440 comm="xfwm4 --compositor=off")
+dbus-daemon[28460]: Successfully activated service 'org.a11y.atspi.Registry'
+SpiRegistry daemon is running with well-known name - org.a11y.atspi.Registry
+dbus-daemon[28433]: [session uid=1001 pid=28433] Successfully activated service 'org.xfce.Xfconf'
+{"actual_browser_pid": 28505, "actual_virtual_keydown_observed": true, "physical_pressed_after_keydown": [], "physical_pressed_after_EOF": [], "guardian_exit": 0, "cleanup_proof": "1", "scope": "actual Chromium and Worker.rich_key; test-only pause after completed CDP keyDown and before keyUp"}
+
+(xfconfd:28476): xfconfd-WARNING **: 08:19:00.977: Name org.xfce.Xfconf lost on the message dbus, exiting.
