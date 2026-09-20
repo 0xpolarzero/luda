@@ -418,3 +418,29 @@ remain preserved, reconciliation keeps bundle/profile bytes intact, and the next
 explicit Register or Disconnect succeeds without manual receipt editing. Thirty
 frontend tests and TypeScript checking pass, including the four new explicit
 confirmation labels. Evidence is `artifacts/silo-native-registration/registration-reconcile.json`.
+
+### Registration panel layout (fifteenth patch)
+
+`0015-registration-panel-layout.patch` makes Register the primary action, keeps
+Browse beside each path, and groups Inspect, Review update and Disconnect under
+**Manage existing registration**. The selected profile and VM remain visible.
+Short state-specific feedback gives the next step; hashes, IDs and connectivity
+limitations remain available under details. Confirmation requirements and native
+commands are unchanged. Editing a path clears stale confirmation and feedback;
+new feedback receives focus, and cancelling a review returns focus to its trigger.
+
+The actual React component and Silo CSS were rendered in Chromium 153.0.8010.12
+with only Tauri commands mocked. The original 360px viewport expanded to 636px,
+placing actions outside the viewport. The revised component remains within 360px;
+all ten checked layouts at 360px and 1280px have no horizontal document or visible
+button overflow, including long paths, hashes, expanded details and errors.
+Keyboard tests cover tab order, disclosure, explicit confirmation, cancellation
+focus, stale path edits and no automatic action on editing. All 30 existing frontend
+tests and the full TypeScript check pass. This is browser component evidence, not
+a macOS app, native dialog or live VM qualification.
+
+The optional reproducible harness is `app/SiloUI/tests/registration-panel/README.md`
+after applying the patch. It uses an existing Chromium/Playwright installation and
+a loopback Vite server; it adds no production dependency. Before/after screenshots,
+layout measurements and test logs are retained in
+`artifacts/silo-native-registration/panel/`.
