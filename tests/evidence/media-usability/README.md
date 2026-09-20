@@ -75,7 +75,7 @@ account (or use `runuser -u silo-desktop --` from root):
 
 ```sh
 xvfb-run -a -s '-screen 0 900x650x24 -nolisten tcp -noreset' \
-  dbus-run-session -- sh evidence/media-usability/run.sh
+  dbus-run-session -- sh tests/evidence/media-usability/run.sh
 ```
 
 The runner prints a fresh private request directory. Write sequential
@@ -96,3 +96,7 @@ verified that packaging change. `transcript.json` preserves the original trial,
 including negative results; synthetic PNG/MP4 files remain local rather than
 being committed. This small probe does not qualify audio, dynamic video
 content, platform portability, OCR accuracy generally, or arbitrary icon sets.
+
+## Follow-up schema correction
+
+Root revision `2b49b4f` now advertises the required rectangle fields and bounds, rejects unknown or malformed nested fields before dispatch, and returns schema-derived repair hints without submitted values. Six protocol tests passed; the actual matching suite passed again in 6.288 seconds (`run-1789887063485666173`). The first-use transcript above remains unchanged. This harness was subsequently moved under `tests/evidence` so source fingerprints and source distributions include it.
