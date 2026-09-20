@@ -1,0 +1,19 @@
+# First-attempt delayed-save recovery
+
+This is one retained fresh Codex CLI attempt against an ordinary GTK application, scoped to **INTEL-04**. It does not exercise INTEL-06 terminal paste confirmation or establish a general success rate.
+
+The agent received only the installed skill, public Luda MCP tools and a task: enter an exact Unicode/multiline report, save once, and verify its receipt without a duplicate submission. The prompt did not disclose the stall, tool sequence or fixture oracle. The app's real Save callback records acceptance, paints “Saving report…”, then performs a bounded 20-second synchronous storage stall before atomically writing the saved file and updating its receipt. This deliberately unresponsive test application is representative fault injection, not a claim that ordinary GTK storage always blocks its UI.
+
+An initial setup probe confirmed that even a synchronous custom ATK action returns through AT-SPI asynchronously. Consequently the tested Save operation correctly returned **dispatched**, not a fabricated mutating-tool timeout. During the actual stall, the agent received two `STALE_TARGET` responses and one `ACCESSIBILITY_UNAVAILABLE` response from observation tools, all effect `none`. These are recorded provider failures during the measured stall; **no literal `TIMEOUT` code was returned**.
+
+The agent checked the surviving window and screenshots instead of submitting again. It observed “Saving report…”, waited, then received an image showing “Report saved — receipt 1”. The independent accepted and saved file oracles both reported exactly one submission and the exact requested text, including the tab and final newline. The measured storage stall was 20.007 seconds. The final screenshot was independently inspected with `view_image`; its SHA256 and visual assertion are recorded in `tests/evidence/agent-delayed-save-first-attempt/review.json`.
+
+## Retained result and grading correction
+
+Attempt `run-1789895223002020106` finished in 69.170 seconds with unchanged source and no prompt tuning or rerun. The original automated report returned **failed**: its error-exposure check expected MCP `isError`, which this CLI omitted despite retaining explicit structured `ok:false` payloads, and its receipt check only searched text, while the final receipt was image-only. That original report and complete trace remain unchanged as compressed evidence.
+
+A separate audited review records the successful scoped workflow; it does not rewrite the original automated result. The reusable grader now reads explicit structured failure payloads and labels image-only receipts **visual review required**. It does not infer image content from the agent's final response. Five tests cover exact text, duplicate rejection, actual delay, structured errors without `isError`, and required image review.
+
+There were 16 public tool calls: doctor 1, windows 2, activate 1, observe 3, inspect 2, type 1, read text 3, invoke 1 and wait 2. Reported backend elapsed time summed to 15.322 seconds; that excludes model/transport time. Three screenshots carried 71,300 decoded image bytes. The trace used 293,265 input tokens (260,736 cached; 32,529 uncached) and 992 output tokens. CLI version was 0.155.1; the resolved model was not exposed and remains unknown. All command executions were permitted skill reads; no fixture/source/oracle access or direct file writes occurred.
+
+The desktop/MCP ran as UID1001 on private Xvfb/D-Bus/XDG; the CLI used already available root-account authentication without reading or changing credential files. No global configuration or shared desktop was changed. Run `sudo .venv/bin/python scripts/agent_save_eval.py --timeout 180` only where this explicitly authorized existing CLI account is available; it consumes model usage. The independent fixture is `tests/agent_delayed_save_fixture.py`. No production runtime was changed.

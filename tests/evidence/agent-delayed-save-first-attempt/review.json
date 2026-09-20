@@ -1,0 +1,19 @@
+{
+  "attempt": 1,
+  "rerun": false,
+  "original_automated_passed": false,
+  "original_result_preserved": true,
+  "posthoc_trace_grade": {
+    "observation_error_exposed": true,
+    "saved_receipt_exposed_as_text": false,
+    "receipt_visual_review_required": true
+  },
+  "visual_review": {
+    "reviewer": "implementing agent",
+    "image": "last-observation.png",
+    "sha256": "a307313d1796c51ec4f042ee0f53719959b651e3a003c318d954091cacfeb2ae",
+    "observed_status": "Report saved \u2014 receipt 1"
+  },
+  "workflow_oracle_passed": true,
+  "scoped_reviewed_outcome": "First attempt saved exactly once and verified receipt visually after real provider observation failures; no literal TIMEOUT code was exposed."
+}
