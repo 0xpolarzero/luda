@@ -31,3 +31,5 @@ under the selected output directory, including on failure. Rust cache accelerate
 later runs but sources and lockfile remain authoritative. Hosted execution is only
 claimed once that workflow actually completes; adding the workflow itself is not
 a hosted pass.
+
+Hosted [run 35496295721](https://github.com/0xpolarzero/luda/actions/runs/35496295721) passed at Luda `e78adab`: 30 frontend tests, TypeScript, ten actual native tests with zero ignored, including all five actual Codex CLI scenarios. The native test stage took 36.86 seconds; full build duration is separate. This remains Linux source-level evidence, not packaged Mac or live VM acceptance.
