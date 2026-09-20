@@ -253,11 +253,13 @@ class Desktop(InteractionMixin):
     def ax(self, request, mutating=False):
         worker = str(Path(__file__).with_name('ax_worker.py'))
         try:
-            raw = run(['/usr/bin/python3',worker],data=json.dumps(request).encode(),timeout=5)
+            raw = run(['/usr/bin/python3',worker],data=json.dumps(request,ensure_ascii=False).encode(),timeout=5)
         except DesktopError as exc:
             if mutating and exc.code != 'DEPENDENCY_MISSING':
                 exc.effect = 'uncertain'
                 mark_effect()
+            if request.get('op')=='secret':
+                raise DesktopError(exc.code,'Protected input failed; inspect state before retrying.',effect=exc.effect) from exc
             raise
         result = json.loads(raw)
         if 'error' in result:

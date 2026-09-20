@@ -36,3 +36,12 @@ class VerifiedTyping(unittest.TestCase):
         d=self.make();d.elements['e']['node']['protected']=True;d.element=Mock()
         with self.assertRaises(DesktopError):d.type_text('e','secret')
         d.element.assert_not_called();d.paste.assert_not_called()
+
+class ProtectedTransportTests(unittest.TestCase):
+    def test_provider_stderr_cannot_echo_protected_input(self):
+        d=Desktop.__new__(Desktop)
+        from unittest.mock import patch
+        with patch('luda.desktop.run',side_effect=DesktopError('BACKEND_ERROR','synthetic-secret',effect='uncertain')):
+            with self.assertRaises(DesktopError) as caught:d.ax({'op':'secret','text':'synthetic-secret'},True)
+        self.assertNotIn('synthetic-secret',str(caught.exception))
+        self.assertEqual(caught.exception.effect,'uncertain')
