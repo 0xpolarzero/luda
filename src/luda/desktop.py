@@ -26,6 +26,7 @@ from types import MappingProxyType
 from .common import environment_scope, subprocess_environment
 from .input_guard import held_button
 from .session_state import session_state
+from .ime import composition_capability
 
 
 class Desktop(InteractionMixin, ConditionWaitsMixin):
@@ -86,6 +87,7 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         result = {'version':'0.1.0','backend':'X11 + AT-SPI','dependencies':dependencies,
                   'display':self.environment.get('DISPLAY'),'session_bus':bool(self.environment.get('DBUS_SESSION_BUS_ADDRESS')),
                   'uid':os.getuid(),'transport':'stdio','support':'experimental X11; Wayland unsupported',
+                  'ime_composition':composition_capability(),
                   'limitations':['Human viewer input is not locked out.','No automatic clipboard restoration.',
                                  'Accessibility mapping requires a uniquely identified application window.','No automatic retry of mutations.']}
         try:
