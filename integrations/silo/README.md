@@ -540,3 +540,5 @@ Patch 0022 documents the explicit owned-browser password-entry exception, includ
 Patch 0023 aligns the bundled skill with inclusive observed list/table ranges, explicit replacement/addition, and the same-inspection endpoint requirement.
 
 Patch 0024 aligns the bundled skill with explicitly declared rich hard breaks, structural boundary readback, and the distinction between paragraph and Shift+Enter policies.
+
+Patch 0025 aligns the skill with direct desktop-tool startup and application-specific formatting guidance derived from the retained first-attempt hard-break evaluation. It adds no formatting operation.

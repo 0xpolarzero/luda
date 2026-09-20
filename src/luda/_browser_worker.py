@@ -468,7 +468,8 @@ class Worker:
                 'clipboard_changed':self.clipboard_changed,'clipboard':'Final nonempty segment remains until another owner replaces it or the temporary browser session closes; PRIMARY unchanged.' if self.clipboard_changed else 'CLIPBOARD and PRIMARY unchanged by this request.',
                 'expected_characters':len(expected),'actual_characters':len(current['text']),'caret_verified':True,
                 'text_representation':'paragraphs_with_hard_breaks' if before.get('hard_breaks_supported') else 'paragraphs','line_breaks':line_breaks or 'paragraph','model':current['model'],'stored_marks':current['stored_marks'],
-                'existing_formatting':'preserved' if mode=='insert' else 'replaced_with_field'}
+                'existing_formatting':'preserved' if mode=='insert' else 'replaced_with_field',
+                'verification':'Exact paragraph text, structure and unaffected existing marks; new formatting follows application behavior. Application commit is separate.'}
 
     def dispatch(self, request):
         self.effect = 'none'

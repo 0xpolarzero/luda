@@ -73,6 +73,16 @@ class RichClipboardTests(unittest.TestCase):
         with self.assertRaises(Refused) as exc:w.rich_clipboard_type('t','x','insert',None,before)
         self.assertEqual(exc.exception.code,'FORMATTING_CHANGED');w.clipboard.prepare_key.assert_called_once()
 
+    def test_success_explains_application_defined_new_marks(self):
+        marks=[{'type':'strong'}]
+        before=selected('abc',1,2,marks);after=selected('axc',2,2,marks)
+        w=self.worker([before,before,before,before,after])
+        result=w.rich_clipboard_type('t','x','insert',None,before)
+        self.assertEqual(result['existing_formatting'],'preserved')
+        self.assertEqual(result['model'],after['model'])
+        self.assertEqual(result['verification'],'Exact paragraph text, structure and unaffected existing marks; new formatting follows application behavior. Application commit is separate.')
+        self.assertTrue(result['exact_match'])
+
     def test_empty_selected_text_deliberately_deletes_without_clipboard(self):
         before=selected('abc',1,2);after=selected('ac',1,1);w=self.worker([before,before,before,after])
         result=w.rich_clipboard_type('t','','insert',None,before)
