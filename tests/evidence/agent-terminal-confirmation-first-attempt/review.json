@@ -1,0 +1,29 @@
+{
+  "attempt": 1,
+  "rerun": false,
+  "original_result_preserved": true,
+  "original_automated_passed": false,
+  "workflow_oracle_passed": true,
+  "independent_confirmation": {
+    "dialog_observed": true,
+    "preapproval_hex": "",
+    "title": "Warning: Potentially Unsafe Paste",
+    "buttons": [
+      "",
+      "cancel",
+      "paste"
+    ]
+  },
+  "visual_review": {
+    "reviewer": "implementing agent",
+    "image": "last-observation.png",
+    "sha256": "d4e0a33da12ccb2d5350a6c2cb553b589ef26351b5d4364a8763f05b82bb5ec2",
+    "observed_receipt": "Received bytes: 64; JSON receipt with escaped LF, tab and final LF. Emoji renders as separate component glyphs; exact Unicode established by byte oracle."
+  },
+  "scoped_reviewed_outcome": "First attempt recognized real paste dialog, approved the intended paste once, and verified receiver after accessibility read errors. This is not general terminal or agent reliability qualification.",
+  "confirmation_visual_review": {
+    "image": "paste-confirmation.png",
+    "sha256": "381f8e3d785e0a66d0d9ec75c6c9916170a1ccd2aae97c1da78647569887d692",
+    "observed": "Real terminal warning with payload, Paste/Cancel and background receiver count0."
+  }
+}
