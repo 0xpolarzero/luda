@@ -11,7 +11,7 @@ integration, model credentials, or public network listener is required.
 
 ## Implementation scope
 
-Native routing identifies the application’s AT-SPI toolkit without activating it. Positively identified GTK3 providers use independent input; unknown providers and other toolkits use foreground compatibility input. Owned-browser field operations retain directly addressed CDP input. Missing private-device initialization can select shared input before dispatch; an uncertain action is never replayed.
+Native routing identifies the application’s AT-SPI toolkit without activating it. Positively identified GTK3 providers use independent input; unknown providers and other toolkits use foreground compatibility input. Owned-browser field operations retain directly addressed CDP input, native identity checks and DOM focus without needing independent keyboard focus. Independent devices are retired before browser startup or shared native input so applications can use the ordinary input hierarchy. Missing private-device initialization can select shared input before dispatch; an uncertain action is never replayed.
 
 | Action | Route |
 | --- | --- |
