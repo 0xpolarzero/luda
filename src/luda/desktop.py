@@ -20,12 +20,14 @@ from .common import DesktopError, display_identity, checkpoint, mark_effect, pro
 from .x11 import X11
 from .interaction import InteractionMixin
 from .control import Control
+from .timing import elapsed_time, suspend_offset
 
 
 class Desktop(InteractionMixin):
     def __init__(self):
         self.x = None
         self.closed = False
+        self._suspend_offset = suspend_offset()
         self.snapshots = {}
         self.elements = {}
         self.windows = {}
@@ -53,6 +55,11 @@ class Desktop(InteractionMixin):
             except BlockingIOError as exc:
                 raise DesktopError('BUSY', 'Another tool server controls this display; no input sent.') from exc
             try:
+                offset = suspend_offset()
+                if abs(offset-self._suspend_offset) > .05:
+                    self.snapshots.clear()
+                    self.elements.clear()
+                self._suspend_offset = offset
                 yield
             finally:
                 fcntl.flock(self.lockfd, fcntl.LOCK_UN)
@@ -151,8 +158,8 @@ class Desktop(InteractionMixin):
     def activate(self, window_id):
         w = self.target_window(window_id,False)
         run(['xdotool','windowactivate',str(w['xid'])],effect='uncertain')
-        deadline = time.monotonic()+1.5
-        while time.monotonic()<deadline:
+        deadline = elapsed_time()+1.5
+        while elapsed_time()<deadline:
             if self.active()==w['xid']:
                 return {'effect':'verified','window_id':window_id,'verification':'active window matches'}
             time.sleep(.04)
@@ -180,7 +187,7 @@ class Desktop(InteractionMixin):
         if self.signature(before)!=self.signature(after) or self.popup_signature(before_popups)!=self.popup_signature(after_popups):
             raise DesktopError('DESKTOP_CHANGED','Window layout changed during capture; observe again.')
         token = uuid.uuid4().hex
-        now = time.monotonic()
+        now = elapsed_time()
         self.snapshots = {k:v for k,v in self.snapshots.items() if now-v['time']<15}
         snapshot = {'time':now,'signature':self.signature(after),'native':native,'image':(width,height),'popups':after_popups}
         self.snapshots[token] = snapshot
@@ -260,7 +267,7 @@ class Desktop(InteractionMixin):
             raise DesktopError('INVALID_ARGUMENT','limit must be 1–500.')
         w = self.target_window(window_id,False)
         result = self.ax({'op':'inspect','pid':w['pid'],'start':w['start'],'limit':limit,'bounds':w['bounds'],'frame_bounds':w['frame_bounds'],'window_title':w['title'],'filters':{k:v for k,v in {'name':name,'role':role,'states':states}.items() if v is not None},'max_depth':max_depth})
-        now=time.monotonic()
+        now=elapsed_time()
         self.elements={k:v for k,v in self.elements.items() if now-v['time']<60}
         tokens = {node['path']:uuid.uuid4().hex for node in result['nodes']}
         for node in result['nodes']:
@@ -276,7 +283,7 @@ class Desktop(InteractionMixin):
 
     def element(self, element_id, op, **kwargs):
         target=self.elements.get(element_id)
-        if not target or time.monotonic()-target['time']>=60:
+        if not target or elapsed_time()-target['time']>=60:
             raise DesktopError('STALE_TARGET','Element expired or belongs to another server; inspect again.')
         w=self.target_window(target['window_id'],op!='read')
         node=target['node']
@@ -291,7 +298,7 @@ class Desktop(InteractionMixin):
         if mode not in ('insert','replace'):
             raise DesktopError('INVALID_ARGUMENT','Text mode must be insert or replace.')
         target = self.elements.get(element_id)
-        if not target or time.monotonic()-target['time']>=60:
+        if not target or elapsed_time()-target['time']>=60:
             raise DesktopError('STALE_TARGET','Element expired; inspect again.')
         node = target['node']
         if node.get('protected'):
@@ -338,14 +345,14 @@ class Desktop(InteractionMixin):
                 self.key(target['window_id'],'BackSpace')
         else:
             self.paste(target['window_id'],text)
-        deadline=time.monotonic()+2
+        deadline=elapsed_time()+2
         while True:
             observed=self.element(element_id,'read',limit=1_000_000)
             if not observed['truncated'] and observed['text']==expected:
                 return {'effect':'verified','exact_match':True,'expected_characters':len(expected),
                         'actual_characters':len(observed['text']),'caret_verified':observed.get('caret_offset')==start+len(text),
                         'verification':'Exact destination text readback after clipboard insertion.'}
-            if time.monotonic()>=deadline:
+            if elapsed_time()>=deadline:
                 raise DesktopError('TEXT_MISMATCH','Destination did not match requested text; inspect paste dialogs and contents before retrying.',effect='uncertain',details={'expected_characters':len(expected),'actual_characters':observed.get('characters')})
             time.sleep(.05)
 
@@ -370,7 +377,7 @@ class Desktop(InteractionMixin):
             source.write(payload);source.flush()
             mark_effect()
             self.clipboard_owner=subprocess.Popen(['xclip','-quiet','-selection','clipboard','-in',source.name],stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
-            deadline=time.monotonic()+1
+            deadline=elapsed_time()+1
             while True:
                 try:
                     observed=run(['xclip','-selection','clipboard','-out'],timeout=.3)
@@ -379,7 +386,7 @@ class Desktop(InteractionMixin):
                     if exc.code in ('CANCELLED', 'TIMEOUT'):
                         checkpoint()
                 checkpoint()
-                if time.monotonic()>deadline:
+                if elapsed_time()>deadline:
                     raise DesktopError('CLIPBOARD_FAILED','Could not verify clipboard ownership; no paste key sent.',effect='uncertain')
                 time.sleep(.03)
         # Recheck focus after preparing clipboard. Never activate implicitly during paste.
@@ -409,7 +416,7 @@ class Desktop(InteractionMixin):
                 raise DesktopError('INVALID_ARGUMENT', 'Window conditions require only window_id.')
         elif not element_id or not isinstance(text,str) or window_id is not None:
             raise DesktopError('INVALID_ARGUMENT', 'Text conditions require only element_id and text.')
-        deadline = time.monotonic()+timeout
+        deadline = elapsed_time()+timeout
         polls = 0
         while True:
             checkpoint()
@@ -426,7 +433,7 @@ class Desktop(InteractionMixin):
                 matched = observed['text']==text if condition=='text_equals' else text in observed['text']
             if matched:
                 return {'effect':'verified','condition':condition,'matched':True,'polls':polls}
-            remaining = deadline-time.monotonic()
+            remaining = deadline-elapsed_time()
             if remaining <= 0:
                 return {'effect':'none','condition':condition,'matched':False,'polls':polls,'reason':'condition_timeout'}
             time.sleep(min(.1,remaining))
