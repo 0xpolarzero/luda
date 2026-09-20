@@ -524,3 +524,5 @@ browser launch check. The contradictory-result regression and full guest integra
 suite pass (27 tests); the patch applies cleanly after0018.
 
 Patch 0020 refreshes the embedded agent skill for explicitly selected cooperating-editor clipboard transport, including clipboard effects and unsupported generic-editor boundaries.
+
+Patch 0021 clarifies the owned-browser field focus prerequisite before selecting text, following the held-out rich-editor agent evaluation.

@@ -371,7 +371,7 @@ async def desktop_invoke(element_id: str, action: str | None = None) -> CallTool
 
 @mcp.tool()
 async def desktop_select(element_id: str, start_offset: int, end_offset: int) -> CallToolResult:
-    """Select a text range using Unicode code-point offsets, or place caret when equal; verify the result. Cooperating paragraph editors currently support only the complete range (0 to the characters count from readback) or a collapsed caret at that end. Their middle ranges and middle carets are refused before selection; ordinary HTML fields support code-point ranges."""
+    """Select a text range using Unicode code-point offsets, or place the caret when equal; verify the result. For owned-browser fields, call desktop_focus_element first. Cooperating paragraph editors with the updated bridge accept code-point ranges; writing at a middle range or caret requires desktop_type with explicit transport="clipboard". Their default native typing supports whole-field replacement or append at the end. Ordinary HTML fields support code-point ranges; native edits inside graphemes can be refused."""
     return await execute_async('element',element_id,'select',start_offset=start_offset,end_offset=end_offset)
 
 
