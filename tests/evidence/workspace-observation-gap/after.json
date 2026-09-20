@@ -1,0 +1,15 @@
+{
+  "requirement": "WM-08",
+  "backend": "deterministic fake WM, no GUI input",
+  "switch": {
+    "effect": "verified",
+    "verification": "Window-manager state matches request.",
+    "workspace": 1,
+    "screenshot_ids_invalidated": 1
+  },
+  "old_screenshot": {
+    "accepted": false,
+    "code": "STALE_OBSERVATION"
+  },
+  "retained": []
+}

@@ -411,7 +411,7 @@ async def desktop_window(window_id: str, action: Literal['move','resize','maximi
 
 @mcp.tool()
 async def desktop_workspaces(workspace: int | None = None) -> CallToolResult:
-    """List workspaces, or switch to an existing index and verify the active workspace."""
+    """List workspaces, or switch to an existing index and verify the active workspace. Every dispatched switch expires this server’s screenshots, even when requesting the current workspace; observe again before using coordinates. External workspace changes between observations are not continuously tracked."""
     return await execute_async('workspaces') if workspace is None else await execute_async('switch_workspace',workspace)
 
 

@@ -45,9 +45,14 @@ class InteractionMixin:
 
     def switch_workspace(self, workspace):
         self._workspace(workspace)
+        # Even an unchanged request is dispatched. Its outcome may be uncertain,
+        # and a sticky active window can leave the normal layout signature equal.
+        snapshots=getattr(self,'snapshots',{})
+        invalidated=len(snapshots)
+        snapshots.clear()
         run(['wmctrl', '-s', str(workspace)], effect='uncertain')
         return self._await_state(lambda: any(w['workspace'] == workspace and w['active'] for w in self.workspaces()),
-                                 {'workspace': workspace})
+                                 {'workspace': workspace, 'screenshot_ids_invalidated':invalidated})
 
     def _await_state(self, predicate, extra):
         deadline = time.monotonic() + 1.5

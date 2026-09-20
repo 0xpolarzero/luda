@@ -1,0 +1,22 @@
+[
+  {
+    "case": "same sticky target reactivated after switch",
+    "old_snapshot_refused": true,
+    "independent_clicks": 0,
+    "active_workspace": 1
+  },
+  {
+    "case": "switch away and back does not revive snapshot",
+    "old_snapshot_refused": true,
+    "independent_clicks": 0,
+    "active_workspace": 0
+  },
+  {
+    "case": "fresh screenshot coordinates accepted",
+    "point": [
+      720,
+      512
+    ],
+    "independent_clicks": 0
+  }
+]

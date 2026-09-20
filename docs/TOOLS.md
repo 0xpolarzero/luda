@@ -266,7 +266,7 @@ Manage one window. move uses frame x/y; resize uses client width/height; workspa
 desktop_workspaces(workspace: int | None=None)
 ```
 
-List workspaces, or switch to an existing index and verify the active workspace.
+List workspaces, or switch to an existing index and verify the active workspace. Every dispatched switch expires this server’s screenshots, even when requesting the current workspace; observe again before using coordinates. External workspace changes between observations are not continuously tracked.
 
 ## `desktop_hover`
 

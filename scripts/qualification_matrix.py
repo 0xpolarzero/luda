@@ -27,6 +27,7 @@ def suite(script, ids, *, wm=True, browser=None, electron=None, firefox=None, mo
 
 
 SUITES = {
+    'workspace-snapshots': suite('live_workspace_snapshots.py', 'WM-08', artifacts=('workspace-snapshots',), gaps=('Explicit switch invalidates local screenshots; external workspace changes are not continuously tracked',)),
     'owned-pages-probe': suite('live_owned_pages_probe.py', 'AUTH-06', browser='--executable', artifacts=('owned-pages-probe',), gaps=('Native AX inspection retained during owned multi-page scope refusal; no multi-page DOM binding or exact origin attestation',)),
     'recycled-rows': suite('live_recycled_rows.py', 'DATA-01', artifacts=('recycled-rows',), gaps=('Four persistent GTK row slots across delayed pages; stable business identity is an app oracle, not a provider-path guarantee',)),
     'range-selection': suite('live_range_selection.py', 'DATA-03', artifacts=('range-selection',), gaps=('Observed visible same-inspection GTK ranges; no virtualized or implicit range inference',)),
