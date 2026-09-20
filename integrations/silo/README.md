@@ -538,3 +538,5 @@ Patch 0021 clarifies the owned-browser field focus prerequisite before selecting
 Patch 0022 documents the explicit owned-browser password-entry exception, including dispatch-only results and clipboard preservation. Other protected-field text tools remain unsupported.
 
 Patch 0023 aligns the bundled skill with inclusive observed list/table ranges, explicit replacement/addition, and the same-inspection endpoint requirement.
+
+Patch 0024 aligns the bundled skill with explicitly declared rich hard breaks, structural boundary readback, and the distinction between paragraph and Shift+Enter policies.
