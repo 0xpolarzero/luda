@@ -1,0 +1,184 @@
+diff --git a/app/SiloUI/src-tauri/src/codex_desktop.rs b/app/SiloUI/src-tauri/src/codex_desktop.rs
+index 82d12ff..31f9c44 100644
+--- a/app/SiloUI/src-tauri/src/codex_desktop.rs
++++ b/app/SiloUI/src-tauri/src/codex_desktop.rs
+@@ -532,13 +532,35 @@ fn recovery_files(source:&Path,meta:&Value)->Result<Vec<(String,Vec<u8>)>,String
+     if catalog!=json!({"name":meta["marketplace"],"plugins":[{"name":name,"source":{"source":"local","path":format!("./plugins/{name}")},"policy":{"installation":"AVAILABLE","authentication":"ON_INSTALL"},"category":"Productivity"}]}){return Err("Recovery catalog differs. Nothing was modified.".into())}
+     Ok(files)
+ }
++fn inspect_registration_state(home:&Path,market:&Path,id:&str,context:&Value,receipt:Value,run:&mut dyn FnMut(&[&str])->Result<Value,String>)->Result<RecoveryPlan,String>{
++    let uuid=uuid::Uuid::parse_str(id).map_err(|_|fail())?;let hex=uuid.simple().to_string();let name=format!("luda-{hex}");let market_name=format!("silo-{hex}");let server=format!("ld-{hex}");let selector=format!("{name}@{market_name}");
++    let meta=&receipt["identity"]["metadata"];
++    if receipt["identity"]["pluginId"]!=selector || receipt["identity"]["marketplaceRoot"]!=json!(market) || meta["vmId"]!=uuid.to_string() || meta["plugin"]!=name || meta["marketplace"]!=market_name || meta["serverName"]!=server{return Err("Receipt identity differs from this VM/profile. Nothing was modified.".into())}
++    let source=recovery_files(market,meta)?;
++    let markets=run(&["plugin","marketplace","list"])?;let matches:Vec<_>=markets["marketplaces"].as_array().ok_or_else(fail)?.iter().filter(|row|row["name"]==market_name).collect();
++    if matches.len()>1 || matches.first().is_some_and(|row|row["marketplaceSource"]!=json!({"sourceType":"local","source":market})){return Err("The marketplace source changed in Codex. Inspection will not reset that external choice.".into())}
++    let plugins=run(&["plugin","list"])?;let installed:Vec<_>=plugins["installed"].as_array().ok_or_else(fail)?.iter().filter(|row|row["pluginId"]==selector).collect();
++    let servers=run(&["mcp","list"])?;let effective:Vec<_>=servers.as_array().ok_or_else(fail)?.iter().filter(|row|row["name"]==server).collect();
++    let removing=receipt["state"]=="removal-pending" || receipt["state"]=="removal-unconfirmed";
++    let (action,proof)=if installed.is_empty() && effective.is_empty(){
++        (if removing{"confirm-disconnected"}else{"reset-registration"},json!({"pluginAbsent":true,"serverAbsent":true}))
++    }else{
++        if installed.len()!=1 || effective.len()!=1{return Err("Plugin and server state disagree. Inspection cannot confirm either registration or removal.".into())}
++        (if removing{"keep-registration"}else{"confirm-registration"},verify_live(home,market,meta,run)?)
++    };
++    let config=home.join("config.toml");let config_hash=if config.try_exists().map_err(|_|fail())?{json!(hash(&recovery_read(&config)?))}else{Value::Null};
++    let target=market.parent().ok_or_else(fail)?;
++    let token=hash(&serde_json::to_vec(&json!({"home":home,"market":market,"context":context,"receipt":receipt,"config":config_hash,"source":source.iter().map(|(name,data)|json!([name,hash(data)])).collect::<Vec<_>>(),"markets":matches,"installed":installed,"effective":effective,"proof":proof,"sshConfig":hash(&recovery_read(&target.join("transport/ssh_config"))?),"knownHosts":hash(&recovery_read(&target.join("transport/known_hosts"))?)})).map_err(|_|fail())?);
++    Ok(RecoveryPlan{token,action,meta:meta.clone(),receipt,files:Vec::new()})
++}
+ fn inspect_recovery(home:&Path,market:&Path,id:&str,context:&Value,run:&mut dyn FnMut(&[&str])->Result<Value,String>)->Result<RecoveryPlan,String>{
+     let uuid=uuid::Uuid::parse_str(id).map_err(|_|fail())?;let hex=uuid.simple().to_string();
+     let name=format!("luda-{hex}");let market_name=format!("silo-{hex}");let server=format!("ld-{hex}");let selector=format!("{name}@{market_name}");
+     let target=market.parent().ok_or_else(fail)?;owned(target,true)?;
+     let receipt_path=home.join("luda-registrations").join(format!("{name}.json"));
+     let receipt:Value=serde_json::from_slice(&recovery_read(&receipt_path)?).map_err(|_|fail())?;
+-    if !["update-unconfirmed","recovery-unconfirmed"].iter().any(|state|receipt["state"]==*state){return Err("No interrupted update needs recovery. Use Register or Review update for normal changes.".into())}
++    if ["pending","unconfirmed","removal-pending","removal-unconfirmed"].iter().any(|state|receipt["state"]==*state){return inspect_registration_state(home,market,id,context,receipt,run)}
++    if !["update-unconfirmed","recovery-unconfirmed"].iter().any(|state|receipt["state"]==*state){return Err("No uncertain registration needs reconciliation. Use Register, Disconnect or Review update for normal changes.".into())}
+     let old=&receipt["identity"]["metadata"];let new=&receipt["candidateIdentity"]["metadata"];
+     for (identity,meta) in [(&receipt["identity"],old),(&receipt["candidateIdentity"],new)] {
+         if identity["pluginId"]!=selector || identity["marketplaceRoot"]!=json!(market) || meta["vmId"]!=uuid.to_string() || meta["plugin"]!=name || meta["marketplace"]!=market_name || meta["serverName"]!=server {return Err("Recovery receipt does not match this VM/profile. Nothing was modified.".into())}
+@@ -592,6 +614,12 @@ fn inspect_recovery(home:&Path,market:&Path,id:&str,context:&Value,run:&mut dyn
+ fn recover_with(home:&Path,market:&Path,plan:RecoveryPlan,confirmation:&str,run:&mut dyn FnMut(&[&str])->Result<Value,String>,step:&mut dyn FnMut(&str)->Result<(),String>)->Result<Value,String>{
+     if confirmation!=plan.token{return Err("Recovery inspection is stale. Inspect again; nothing was modified.".into())}
+     let target=market.parent().ok_or_else(fail)?;let name=plan.meta["plugin"].as_str().ok_or_else(fail)?;
++    if ["confirm-registration","keep-registration","confirm-disconnected","reset-registration"].contains(&plan.action){
++        let removed=["confirm-disconnected","reset-registration"].contains(&plan.action);
++        let mut receipt=plan.receipt.clone();receipt["state"]=json!(if removed{"removed"}else{"registered"});
++        step("write-verified-receipt")?;write_json(&home.join("luda-registrations").join(format!("{name}.json")),&receipt)?;
++        return Ok(json!({"state":if removed{"disconnected-confirmed"}else{"registration-confirmed"},"vmId":plan.meta["vmId"],"serverName":plan.meta["serverName"],"runtimeVerified":false}));
++    }
+     let candidate=target.join(format!("recovery-candidate-{}",plan.token));
+     if candidate.exists(){for (path,data) in &plan.files{if recovery_read(&candidate.join(path))?!=*data{return Err(fail())}}}else{
+         let stage=tempfile::tempdir_in(target).map_err(|_|fail())?;
+@@ -624,7 +652,7 @@ pub async fn recover_desktop_codex(app:AppHandle,window:tauri::Window,workspace:
+         crate::editor::verify_private_transport(&paths,&workspace,&target.join("transport"))?;
+         let stat=fs::metadata(&executable).map_err(|_|fail())?;let context=json!({"executable":executable,"device":stat.dev(),"inode":stat.ino(),"mtime":stat.mtime(),"mtimeNsec":stat.mtime_nsec(),"size":stat.len(),"workspace":workspace,"vmId":id});
+         let mut run=|args:&[&str]|cli(&executable,&home,args);let plan=inspect_recovery(&home,&market,&id,&context,&mut run)?;
+-        if let Some(token)=confirmation{recover_with(&home,&market,plan,&token,&mut run,&mut|_|Ok(()))}else{Ok(json!({"state":"recovery-inspection","token":plan.token,"action":plan.action,"vmId":id,"serverName":plan.meta["serverName"],"version":plan.meta["version"],"proof":"installed-cache-and-effective-config","runtimeVerified":false}))}
++        if let Some(token)=confirmation{recover_with(&home,&market,plan,&token,&mut run,&mut|_|Ok(()))}else{Ok(json!({"state":"recovery-inspection","token":plan.token,"action":plan.action,"vmId":id,"serverName":plan.meta["serverName"],"version":plan.meta["version"],"proof":if ["confirm-disconnected","reset-registration"].contains(&plan.action){"plugin-and-server-absent"}else{"installed-cache-and-effective-config"},"runtimeVerified":false}))}
+     }).await.map_err(|_|"Recovery worker stopped; inspect again before acting.".to_string())?
+ }
+ 
+@@ -851,6 +879,55 @@ mod tests {
+     }
+     #[test]
+     #[ignore = "Requires SILO_TEST_CODEX actual CLI; run explicitly with --ignored"]
++    fn actual_cli_registration_and_removal_reconcile_without_replay() {
++        let executable=PathBuf::from(std::env::var_os("SILO_TEST_CODEX").unwrap());
++        for phase in ["before-market","after-market","pending-registration","lost-registration","failed-remove","pending-remove","lost-remove"] {
++            let root=tempfile::tempdir().unwrap();let (market,meta)=setup(root.path(),41);let target=market.parent().unwrap();
++            let transport=target.join("transport");fs::create_dir(&transport).unwrap();fs::write(transport.join("ssh_config"),b"owned config").unwrap();fs::write(transport.join("known_hosts"),b"owned pin").unwrap();
++            let receipt_path=root.path().join("luda-registrations").join(format!("{}.json",meta["plugin"].as_str().unwrap()));
++            let removing=phase.contains("remove");
++            let mut runner=|args:&[&str]|cli(&executable,root.path(),args);
++            if removing {
++                register_with(root.path(),&market,&meta,&mut runner).unwrap();
++                let mut removed=false;
++                let mut failure=|args:&[&str]|{
++                    if args.starts_with(&["plugin","remove"]){if phase=="lost-remove" {cli(&executable,root.path(),args)?;removed=true;}return Err("synthetic lost remove result".into())}
++                    if removed{return Err("verification channel unavailable".into())}cli(&executable,root.path(),args)
++                };
++                assert_eq!(disconnect_with(root.path(),&market,&meta,&mut failure).unwrap()["state"],"removal-unconfirmed");
++            } else {
++                let mut failure=|args:&[&str]|{
++                    if phase=="before-market" && args.starts_with(&["plugin","marketplace","add"]){return Err("before marketplace mutation".into())}
++                    if args.starts_with(&["plugin","add"]){if phase=="lost-registration"{cli(&executable,root.path(),args)?;}return Err("lost add result".into())}cli(&executable,root.path(),args)
++                };
++                assert_eq!(register_with(root.path(),&market,&meta,&mut failure).unwrap()["state"],"unconfirmed");
++            }
++            if phase=="pending-registration" || phase=="pending-remove"{let mut receipt=read_json(&receipt_path).unwrap();receipt["state"]=json!(if removing{"removal-pending"}else{"pending"});write_json(&receipt_path,&receipt).unwrap();}
++            let config_path=root.path().join("config.toml");let config_before=fs::read(&config_path).ok();let bundle_before=read(&market.join("host-registration.json")).unwrap();let receipt_before=read(&receipt_path).unwrap();
++            let mut readonly=|args:&[&str]|{assert!(!args.windows(2).any(|a|a==["plugin","add"] || a==["plugin","remove"] || a==["marketplace","add"]));cli(&executable,root.path(),args)};
++            let context=json!({"executable":executable});let inspected=inspect_recovery(root.path(),&market,meta["vmId"].as_str().unwrap(),&context,&mut readonly).unwrap();
++            let absent=["before-market","after-market","pending-registration","lost-remove"].contains(&phase);
++            assert_eq!(inspected.action,if absent{if removing{"confirm-disconnected"}else{"reset-registration"}}else if removing{"keep-registration"}else{"confirm-registration"});
++            assert_eq!(fs::read(&config_path).ok(),config_before);assert_eq!(read(&receipt_path).unwrap(),receipt_before);
++            assert!(recover_with(root.path(),&market,inspected,"stale",&mut readonly,&mut|_|Ok(())).is_err());assert_eq!(read(&receipt_path).unwrap(),receipt_before);
++            let baseline=config_before.as_ref().map(|v|String::from_utf8(v.clone()).unwrap()).unwrap_or_default();
++            let changed=format!("{baseline}\n[mcp_servers.{}]\ncommand = \"/independent-choice\"\n",meta["serverName"].as_str().unwrap());fs::write(&config_path,&changed).unwrap();
++            assert!(inspect_recovery(root.path(),&market,meta["vmId"].as_str().unwrap(),&context,&mut readonly).is_err());assert_eq!(fs::read_to_string(&config_path).unwrap(),changed);
++            if let Some(bytes)=&config_before{fs::write(&config_path,bytes).unwrap()}else{fs::remove_file(&config_path).unwrap()}
++            if !absent {
++                let disabled=baseline.replace("enabled = true","enabled = false");fs::write(&config_path,&disabled).unwrap();assert!(inspect_recovery(root.path(),&market,meta["vmId"].as_str().unwrap(),&context,&mut readonly).is_err());fs::write(&config_path,&baseline).unwrap();
++                let cached=root.path().join("plugins/cache").join(meta["marketplace"].as_str().unwrap()).join(meta["plugin"].as_str().unwrap()).join(meta["version"].as_str().unwrap()).join("skills/luda/SKILL.md");let original=read(&cached).unwrap();write(&cached,b"independent changed cached skill").unwrap();assert!(inspect_recovery(root.path(),&market,meta["vmId"].as_str().unwrap(),&context,&mut readonly).is_err());write(&cached,&original).unwrap();
++            }
++            let inspected=inspect_recovery(root.path(),&market,meta["vmId"].as_str().unwrap(),&context,&mut readonly).unwrap();let token=inspected.token.clone();
++            let result=recover_with(root.path(),&market,inspected,&token,&mut readonly,&mut|_|Ok(())).unwrap();assert_eq!(result["state"],if absent{"disconnected-confirmed"}else{"registration-confirmed"});
++            assert_eq!(read_json(&receipt_path).unwrap()["state"],if absent{"removed"}else{"registered"});assert_eq!(fs::read(&config_path).ok(),config_before);assert_eq!(read(&market.join("host-registration.json")).unwrap(),bundle_before);
++            // Next normal operation remains a separate explicit action.
++            if absent {assert_eq!(register_with(root.path(),&market,&meta,&mut runner).unwrap()["state"],"registered");}
++            else {assert_eq!(disconnect_with(root.path(),&market,&meta,&mut runner).unwrap()["state"],"removed");}
++        }
++    }
++    #[test]
++    #[ignore = "Requires SILO_TEST_CODEX actual CLI; run explicitly with --ignored"]
+     fn actual_cli_recovery_repairs_only_proven_source_and_receipt_without_install_replay() {
+         let executable=PathBuf::from(std::env::var_os("SILO_TEST_CODEX").unwrap());
+         for phase in ["before-publish","missing-source","old-installed","new-installed"] {
+diff --git a/app/SiloUI/src/desktop/codex-desktop-registration.test.tsx b/app/SiloUI/src/desktop/codex-desktop-registration.test.tsx
+index 182937d..492b653 100644
+--- a/app/SiloUI/src/desktop/codex-desktop-registration.test.tsx
++++ b/app/SiloUI/src/desktop/codex-desktop-registration.test.tsx
+@@ -84,7 +84,7 @@ it.each([["finish-update","Finish verified update"],["keep-previous","Keep previ
+   const user=userEvent.setup();render(<CodexDesktopRegistration workspace="selected-vm" name="VM" onClose={() => {}} />)
+   await user.type(screen.getByRole("textbox",{name:"Codex executable"}),"/codex")
+   await user.type(screen.getByRole("textbox",{name:"Codex profile directory"}),"/profile")
+-  await user.click(screen.getByRole("button",{name:"Inspect interrupted update"}))
++  await user.click(screen.getByRole("button",{name:"Inspect registration"}))
+   expect(invoke).toHaveBeenCalledExactlyOnceWith("recover_desktop_codex",{workspace:"selected-vm",codexExecutable:"/codex",codexHome:"/profile",confirmation:null})
+   expect(screen.getByLabelText("Inspect Codex recovery")).toHaveTextContent("Live SSH connectivity was not tested")
+   await user.click(screen.getByRole("button",{name:label}))
+@@ -92,3 +92,14 @@ it.each([["finish-update","Finish verified update"],["keep-previous","Keep previ
+   expect(await screen.findByRole("status")).toHaveTextContent("registration record reconciled")
+   expect(invoke.mock.calls.every(call=>call[0]==="recover_desktop_codex")).toBe(true)
+ })
++
++it.each([["confirm-registration","Confirm registration",false],["keep-registration","Keep registration",false],["confirm-disconnected","Confirm disconnected",true],["reset-registration","Reset incomplete registration",true]])("registration inspection offers only proven %s action", async (action,label,absent) => {
++  invoke.mockResolvedValueOnce({state:"recovery-inspection",token:"proven",action,vmId:"vm",serverName:"server",version:"v1",proof:absent?"plugin-and-server-absent":"installed-cache-and-effective-config",runtimeVerified:false}).mockResolvedValueOnce({state:absent?"disconnected-confirmed":"registration-confirmed",vmId:"vm",serverName:"server",runtimeVerified:false})
++  const user=userEvent.setup();render(<CodexDesktopRegistration workspace="selected-vm" name="VM" onClose={() => {}} />)
++  await user.type(screen.getByRole("textbox",{name:"Codex executable"}),"/codex");await user.type(screen.getByRole("textbox",{name:"Codex profile directory"}),"/profile")
++  await user.click(screen.getByRole("button",{name:"Inspect registration"}));expect(invoke).toHaveBeenCalledTimes(1)
++  expect(screen.getByLabelText("Inspect Codex recovery")).toHaveTextContent(absent?"both the plugin and its VM server are absent":"Verified installed cache")
++  await user.click(screen.getByRole("button",{name:label}));expect(invoke).toHaveBeenLastCalledWith("recover_desktop_codex",{workspace:"selected-vm",codexExecutable:"/codex",codexHome:"/profile",confirmation:"proven"})
++  expect(await screen.findByRole("status")).toHaveTextContent(absent?"absence confirmed":"Matching registration confirmed")
++  expect(invoke.mock.calls.every(call=>call[0]==="recover_desktop_codex")).toBe(true)
++})
+diff --git a/app/SiloUI/src/desktop/codex-desktop-registration.tsx b/app/SiloUI/src/desktop/codex-desktop-registration.tsx
+index 76e2b37..bdb7026 100644
+--- a/app/SiloUI/src/desktop/codex-desktop-registration.tsx
++++ b/app/SiloUI/src/desktop/codex-desktop-registration.tsx
+@@ -4,13 +4,15 @@ import { z } from "zod"
+ import { Button } from "@/components/ui/button"
+ 
+ const resultSchema = z.object({
+-  state: z.enum(["registered", "already-registered", "unconfirmed", "removed", "removal-unconfirmed", "updated", "update-unconfirmed", "recovered", "recovery-unconfirmed"]),
++  state: z.enum(["registered", "already-registered", "unconfirmed", "removed", "removal-unconfirmed", "updated", "update-unconfirmed", "recovered", "recovery-unconfirmed", "registration-confirmed", "disconnected-confirmed"]),
+   vmId: z.string(), serverName: z.string(), runtimeVerified: z.literal(false),
+ })
+ 
+ const previewSchema=z.object({state:z.literal("preview"),token:z.string(),vmId:z.string(),serverName:z.string(),oldVersion:z.string(),newVersion:z.string(),oldSkillSha256:z.string(),newSkillSha256:z.string(),runtimeVerified:z.literal(false)})
+ 
+-const recoverySchema=z.object({state:z.literal("recovery-inspection"),token:z.string(),action:z.enum(["finish-update","keep-previous"]),vmId:z.string(),serverName:z.string(),version:z.string(),proof:z.literal("installed-cache-and-effective-config"),runtimeVerified:z.literal(false)})
++const recoverySchema=z.object({state:z.literal("recovery-inspection"),token:z.string(),action:z.enum(["finish-update","keep-previous","confirm-registration","keep-registration","confirm-disconnected","reset-registration"]),vmId:z.string(),serverName:z.string(),version:z.string(),proof:z.enum(["installed-cache-and-effective-config","plugin-and-server-absent"]),runtimeVerified:z.literal(false)})
++
++const recoveryLabels={"finish-update":"Finish verified update","keep-previous":"Keep previous version","confirm-registration":"Confirm registration","keep-registration":"Keep registration","confirm-disconnected":"Confirm disconnected","reset-registration":"Reset incomplete registration"} as const
+ 
+ export function CodexDesktopRegistration({ workspace, name, onClose }: { workspace: string; name: string; onClose: () => void }) {
+   const [executable, setExecutable] = useState("")
+@@ -75,11 +77,11 @@ export function CodexDesktopRegistration({ workspace, name, onClose }: { workspa
+     <label className="grid gap-1">Codex executable<input aria-label="Codex executable" value={executable} onChange={event => { setExecutable(event.target.value); setResult(null); setPreview(null);setInspection(null) }} disabled={busy} placeholder="Absolute path to the host Codex CLI" className="rounded border p-1" /></label><Button size="xs" variant="outline" disabled={busy} onClick={() => { void browse(false) }}>Browse executable</Button>
+     <label className="grid gap-1">Codex profile directory<input aria-label="Codex profile directory" value={profile} onChange={event => { setProfile(event.target.value); setResult(null); setPreview(null);setInspection(null) }} disabled={busy} placeholder="Absolute path to the intended existing Codex profile" className="rounded border p-1" /></label><Button size="xs" variant="outline" disabled={busy} onClick={() => { void browse(true) }}>Browse profile</Button>
+     <p>Review the displayed profile before registering. Finding or browsing paths does not register anything. Registering changes only this selected profile; it does not add or select a Codex SSH workspace.</p>
+-    <div className="flex gap-2"><Button size="xs" disabled={busy || !executable.startsWith("/") || !profile.startsWith("/")} onClick={() => { void operate() }}>{busy ? "Working…" : "Register in this profile"}</Button><Button size="xs" variant="outline" disabled={busy || !executable.startsWith("/") || !profile.startsWith("/")} onClick={() => { void operate(true) }}>Disconnect from this profile</Button><Button size="xs" variant="outline" disabled={busy || !executable.startsWith("/") || !profile.startsWith("/")} onClick={() => { void update() }}>Review update</Button><Button size="xs" variant="outline" disabled={busy || !executable.startsWith("/") || !profile.startsWith("/")} onClick={() => { void recover() }}>Inspect interrupted update</Button><Button size="xs" variant="outline" disabled={busy} onClick={onClose}>Close</Button></div>
++    <div className="flex gap-2"><Button size="xs" disabled={busy || !executable.startsWith("/") || !profile.startsWith("/")} onClick={() => { void operate() }}>{busy ? "Working…" : "Register in this profile"}</Button><Button size="xs" variant="outline" disabled={busy || !executable.startsWith("/") || !profile.startsWith("/")} onClick={() => { void operate(true) }}>Disconnect from this profile</Button><Button size="xs" variant="outline" disabled={busy || !executable.startsWith("/") || !profile.startsWith("/")} onClick={() => { void update() }}>Review update</Button><Button size="xs" variant="outline" disabled={busy || !executable.startsWith("/") || !profile.startsWith("/")} onClick={() => { void recover() }}>Inspect registration</Button><Button size="xs" variant="outline" disabled={busy} onClick={onClose}>Close</Button></div>
+     <p>Disconnect removes only this VM’s verified registration from the selected profile: <strong>{profile || "none selected"}</strong>. Existing conversations may continue running; no process is stopped. Transport files are retained.</p>
+     {preview && <div aria-label="Review Codex update"><p>Update <strong>{name}</strong> in <strong>{profile}</strong>: {preview.oldVersion} → {preview.newVersion}</p><p>Only the reviewed skill/version changes; SSH transport stays unchanged. Codex may replace its old cache. Start a new conversation afterward. Existing MCP processes are not stopped.</p><details><summary>Reviewed skill hashes</summary><p>Old: {preview.oldSkillSha256}</p><p>New: {preview.newSkillSha256}</p><p>VM: {preview.vmId} · Server: {preview.serverName}</p></details><Button size="xs" disabled={busy} onClick={() => { void update(true) }}>Confirm this update</Button><Button size="xs" variant="outline" disabled={busy} onClick={() => { setPreview(null);setInspection(null) }}>Cancel update</Button></div>}
+-    {inspection && <div aria-label="Inspect Codex recovery"><p>Verified installed cache and effective server configuration for <strong>{name}</strong> in <strong>{profile}</strong>, version {inspection.version}. Live SSH connectivity was not tested.</p><p>{inspection.action === "finish-update" ? "The reviewed updated version is already installed." : "The previous version is still installed."} This action restores matching source files and records the verified state. It does not install, remove or restart anything. Other versions and retained sources are preserved.</p><Button size="xs" disabled={busy} onClick={() => { void recover(true) }}>{inspection.action === "finish-update" ? "Finish verified update" : "Keep previous version"}</Button><Button size="xs" variant="outline" disabled={busy} onClick={() => setInspection(null)}>Cancel recovery</Button></div>}
++    {inspection && <div aria-label="Inspect Codex recovery"><p>{inspection.proof === "plugin-and-server-absent" ? "Verified that both the plugin and its VM server are absent from" : "Verified installed cache and effective server configuration in"} <strong>{profile}</strong> for <strong>{name}</strong>. Live SSH connectivity was not tested.</p><p>{inspection.action === "finish-update" || inspection.action === "keep-previous" ? `Version ${inspection.version} is installed. This action restores its matching source files and records the verified state.` : "This action records the verified state; it does not change the selected profile configuration or retained bundle."} It does not install, remove or restart anything.</p><Button size="xs" disabled={busy} onClick={() => { void recover(true) }}>{recoveryLabels[inspection.action]}</Button><Button size="xs" variant="outline" disabled={busy} onClick={() => setInspection(null)}>Cancel recovery</Button></div>}
+     {error && <p role="alert">{error}</p>}
+-    {result && <div role="status">{result.state === "recovered" ? "Source and registration record reconciled with the verified installed version. Live SSH connectivity was not tested; existing processes were not restarted." : result.state === "recovery-unconfirmed" ? "Recovery is unconfirmed. Retained sources are preserved. Inspect the interrupted update again before acting." : result.state === "updated" ? "Updated profile verified. Start a new conversation; the old cache may have been replaced. Existing MCP processes were not stopped." : result.state === "update-unconfirmed" ? "Update is unconfirmed. The previous bundle and transport were retained; inspect the profile before another operation." : result.state === "removed" ? "Profile removal verified. New conversations will not receive this plugin from this profile. Existing processes were not stopped." : result.state === "removal-unconfirmed" ? "Removal is unconfirmed. Inspect the profile; no automatic retry will occur." : result.state === "unconfirmed" ? "Registration is unconfirmed. Inspect the selected profile before retrying." : "Profile registration verified. Start a new Codex conversation and verify the intended VM with desktop_doctor and desktop_observe before input."}<p>VM: {result.vmId} · Server: {result.serverName}</p><p>Guest runtime readiness and active conversation discovery were not verified. The Luda skill is generic guidance; use this VM-specific server.</p></div>}
++    {result && <div role="status">{result.state === "registration-confirmed" ? "Matching registration confirmed. Register and Disconnect remain separate explicit actions. Live SSH connectivity was not tested." : result.state === "disconnected-confirmed" ? "Plugin and VM server absence confirmed. You can explicitly Register again when intended; no plugin was installed or removed by this check." : result.state === "recovered" ? "Source and registration record reconciled with the verified installed version. Live SSH connectivity was not tested; existing processes were not restarted." : result.state === "recovery-unconfirmed" ? "Recovery is unconfirmed. Retained sources are preserved. Inspect registration again before acting." : result.state === "updated" ? "Updated profile verified. Start a new conversation; the old cache may have been replaced. Existing MCP processes were not stopped." : result.state === "update-unconfirmed" ? "Update is unconfirmed. The previous bundle and transport were retained; inspect the profile before another operation." : result.state === "removed" ? "Profile removal verified. New conversations will not receive this plugin from this profile. Existing processes were not stopped." : result.state === "removal-unconfirmed" ? "Removal is unconfirmed. Inspect the profile; no automatic retry will occur." : result.state === "unconfirmed" ? "Registration is unconfirmed. Inspect the selected profile before retrying." : "Profile registration verified. Start a new Codex conversation and verify the intended VM with desktop_doctor and desktop_observe before input."}<p>VM: {result.vmId} · Server: {result.serverName}</p><p>Guest runtime readiness and active conversation discovery were not verified. The Luda skill is generic guidance; use this VM-specific server.</p></div>}
+   </section>
+ }

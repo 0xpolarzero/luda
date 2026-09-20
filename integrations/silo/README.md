@@ -386,3 +386,35 @@ and TypeScript checking pass, including inspection before either explicit action
 and the distinction from SSH readiness. Initial implementation's TOML parsing failure
 and corrected runs are retained in `artifacts/silo-native-registration/`; no new
 macOS, live microsandbox or GUI authentication acceptance is claimed.
+
+### Registration and removal reconciliation (thirteenth patch)
+
+`0013-reconcile-registration-state.patch` extends the same token-bound inspection
+API/UI to `pending`, `unconfirmed`, `removal-pending` and `removal-unconfirmed`.
+The button is now **Inspect registration**. A matching installed plugin, verified
+cache and effective server permit an explicit **Confirm registration** or **Keep
+registration** action. Only proven absence of both the plugin entry and VM server
+permits **Reset incomplete registration** or **Confirm disconnected**. These actions
+change only the owned receipt to registered/removed. They never publish source,
+change the Codex profile, install/remove a plugin or restart a process. The normal
+Register or Disconnect action remains a separate explicit choice afterward.
+
+Inspection validates the retained bundle and identity, configured marketplace
+source when present, relevant CLI entries, cache and transport proof. The token
+includes profile/source/receipt/context fingerprints. Missing-marketplace initial
+failures are allowed only when the plugin and server are both absent. Disabled,
+changed, conflicting or partially present entries are not treated as absence;
+independent overrides and changed caches refuse without mutation. The UI distinguishes
+absence proof from installed-cache/configuration proof and never implies live SSH
+connectivity from either.
+
+Ten native registration tests passed, including five actual CLI tests. The new
+seven-scenario test covers failure before marketplace registration, failure after
+marketplace add, interrupted pending registration, installed-but-lost registration
+reply, failed removal, pending removal and removal with lost verification. It
+asserts inspection makes no marketplace-add/plugin-add/plugin-remove request,
+stale confirmation refuses, independent MCP overrides/disabled plugins/cache changes
+remain preserved, reconciliation keeps bundle/profile bytes intact, and the next
+explicit Register or Disconnect succeeds without manual receipt editing. Thirty
+frontend tests and TypeScript checking pass, including the four new explicit
+confirmation labels. Evidence is `artifacts/silo-native-registration/registration-reconcile.json`.
