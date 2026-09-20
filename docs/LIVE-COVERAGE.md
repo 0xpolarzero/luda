@@ -121,6 +121,7 @@ These existing live scripts are not registered in the three inventoried runners.
 - [live_private_polkit.py](../tests/live_private_polkit.py)
 - [live_private_portal_cleanup.py](../tests/live_private_portal_cleanup.py)
 - [live_randr_backends.py](../tests/live_randr_backends.py)
+- [live_shared_fallback.py](../tests/live_shared_fallback.py)
 - [live_ssh_loss.py](../tests/live_ssh_loss.py)
 - [live_storage_filesystem.py](../tests/live_storage_filesystem.py)
 - [live_wayland_probe.py](../tests/live_wayland_probe.py)

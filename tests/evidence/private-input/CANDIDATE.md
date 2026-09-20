@@ -1,3 +1,5 @@
+> Historical private-only candidate. Current routing uses shared foreground input for unsupported native targets, including Chromium, while retaining private GTK3 input and background CDP field operations. These original failures remain evidence of private-only limitations; they do not claim private Chromium support.
+
 # Candidate status: not ready to replace the default backend
 
 This branch implements private XI2 input behind the existing tools. It is kept

@@ -295,7 +295,7 @@ async def desktop_windows(query: str | None = None, limit: int = 50, offset: int
 
 @mcp.tool()
 async def desktop_activate(window_id: str) -> CallToolResult:
-    """Reveal a window from desktop_windows and focus the agent keyboard without selecting the human keyboard. Observe again afterward."""
+    """Reveal a window from desktop_windows and establish input focus using the automatically selected route. Observe again afterward."""
     return await execute_async('activate',window_id)
 
 
@@ -321,7 +321,7 @@ async def desktop_read_text(element_id: str, limit: int = 16000) -> CallToolResu
 
 @mcp.tool()
 async def desktop_type(element_id: str, text: str, mode: Literal["insert", "replace"] = "insert") -> CallToolResult:
-    """Type into an editable element and verify exact readback. Native supported edits address the control in the background; native input uses the agent keyboard and focuses its target automatically. Insert replaces the selection; replace changes the entire field. Preserves Unicode, LF and tabs without submitting. Owned HTML fields require complete grapheme boundaries. Exact readback does not confirm saving or application commit; inspect before an explicit commit or suggestion selection."""
+    """Type into an editable element and verify exact readback. Native supported edits address the control in the background; native input chooses independent or foreground control automatically. Insert replaces the selection; replace changes the entire field. Preserves Unicode, LF and tabs without submitting. Owned HTML fields require complete grapheme boundaries. Exact readback does not confirm saving or application commit; inspect before an explicit commit or suggestion selection."""
     return await execute_async('type_text',element_id,text,mode)
 
 
@@ -339,31 +339,31 @@ async def desktop_choose(element_id: str, extend: bool = False, range_end_id: st
 
 @mcp.tool()
 async def desktop_paste(window_id: str, text: str, shortcut: Literal['ctrl_v','ctrl_shift_v','shift_insert'] | None = None) -> CallToolResult:
-    """Paste through the shared CLIPBOARD when semantic typing is unavailable, automatically focusing the agent keyboard on the target. Chooses common app shortcut from window class, with optional override. Destination is unverified; inspect dialogs/read back. Terminals can execute pasted newlines."""
+    """Paste through the shared CLIPBOARD when semantic typing is unavailable, automatically choosing independent or foreground input for the target. Chooses common app shortcut from window class, with optional override. Destination is unverified; inspect dialogs/read back. Terminals can execute pasted newlines."""
     return await execute_async('paste',window_id,text,shortcut)
 
 
 @mcp.tool()
 async def desktop_press_keys(window_id: str, chord: str, count: int = 1) -> CallToolResult:
-    """Send a deliberate chord, e.g. ctrl+s, ctrl+plus, ctrl+minus, Return, Tab, Escape or Down. Punctuation uses X11 names (plus, equal, bracketleft, slash); implicit Shift follows the current layout. count is 1–20 complete press/release repetitions, default 1. Revalidates target identity, focus and input state between repetitions; stops on the first failure and never retries. Automatically focuses the agent keyboard before dispatch, refuses conflicting agent-held keys/buttons, and preserves its keyboard mapping. Human-held keys/buttons are separate. Unavailable symbols return UNSUPPORTED_KEYMAP; text belongs in desktop_type. When a final companion receipt is available, progress reports fully dispatched, possibly partial and not-started repetitions. Dispatched count is not application completion."""
+    """Send a deliberate chord, e.g. ctrl+s, ctrl+plus, ctrl+minus, Return, Tab, Escape or Down. Punctuation uses X11 names (plus, equal, bracketleft, slash); implicit Shift follows the current layout. count is 1–20 complete press/release repetitions, default 1. Revalidates target identity, focus and input state between repetitions; stops on the first failure and never retries. Automatically chooses independent input where supported or foreground control otherwise. Refuses held input on the selected devices and preserves their keyboard mapping. Foreground fallback can change human focus. Unavailable symbols return UNSUPPORTED_KEYMAP; text belongs in desktop_type. When a final companion receipt is available, progress reports fully dispatched, possibly partial and not-started repetitions. Dispatched count is not application completion."""
     return await execute_async('key',window_id,chord,count)
 
 
 @mcp.tool()
 async def desktop_click(window_id: str, snapshot_id: str, x: float, y: float, button: Literal['left','middle','right']='left', count: Literal[1,2,3]=1) -> CallToolResult:
-    """Click screenshot-image coordinates in the target window or its observed menus, using the agent pointer after target validation. Rejects expired snapshots, changed window layout/identity and covered targets. Snapshot validity does not prove unchanged application content; observe again after content transitions before selecting a control."""
+    """Click screenshot-image coordinates in the target window or its observed menus, automatically choosing independent or foreground pointer input after target validation. Rejects expired snapshots, changed window layout/identity and covered targets. Snapshot validity does not prove unchanged application content; observe again after content transitions before selecting a control."""
     return await execute_async('pointer',window_id,snapshot_id,x,y,button=button,count=count)
 
 
 @mcp.tool()
 async def desktop_scroll(window_id: str, snapshot_id: str, x: float, y: float, direction: Literal['up','down','left','right'], ticks: int=3) -> CallToolResult:
-    """Scroll 1–20 wheel ticks at a point in the observed target, using the agent pointer after validation. Read resulting state to confirm."""
+    """Scroll 1–20 wheel ticks at a point in the observed target, automatically choosing independent or foreground pointer input after validation. Read resulting state to confirm."""
     return await execute_async('pointer',window_id,snapshot_id,x,y,kind='scroll',direction=direction,count=ticks)
 
 
 @mcp.tool()
 async def desktop_drag(window_id: str, snapshot_id: str, x: float, y: float, end_x: float, end_y: float, button: Literal['left','middle','right']='left') -> CallToolResult:
-    """Drag between two observed points inside the same window, using the agent pointer after validation; always attempts release of its own button. Use desktop_drag_to for another destination window."""
+    """Drag between two observed points inside the same window, automatically choosing independent or foreground pointer input after validation; always attempts release of its own button. Use desktop_drag_to for another destination window."""
     return await execute_async('pointer',window_id,snapshot_id,x,y,kind='drag',button=button,end_x=end_x,end_y=end_y)
 
 

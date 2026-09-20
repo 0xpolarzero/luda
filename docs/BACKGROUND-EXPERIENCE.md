@@ -1,14 +1,9 @@
 # Visible agent actions and automatic input routing
 
-**Review candidate, not a default-backend release.** Chromium native keyboard
-compatibility and application-issued focus remain blockers. See the
-[candidate status and evidence](../tests/evidence/private-input/CANDIDATE.md).
+Luda prioritizes working computer use: background and independent input are preferred, with automatic shared foreground fallback for compatibility. The earlier [private-only candidate findings](../tests/evidence/private-input/CANDIDATE.md) remain historical evidence, not a claim that Chromium now supports private native keys.
 
 Luda keeps the same tools and selects the input route internally. Supported
-accessibility actions address the control directly. Native clicks, drags, wheel
-input and chords use a session-owned XI2 pointer/keyboard pair; they never fall
-back to the human devices. Device-specific focus lets the agent type without
-requiring the window manager’s foreground window to change.
+accessibility actions address the control directly. Compatible native clicks, drags, wheel input and chords use a session-owned XI2 pointer/keyboard pair. Other targets automatically receive ordinary foreground input. Device-specific focus avoids changing human focus where supported; shared fallback activates the target and may move the human pointer.
 
 The agent indicator is rendered directly into the existing Linux X11 desktop.
 Ordinary desktop viewers can display those pixels. No separate preview, Silo
@@ -16,18 +11,18 @@ integration, model credentials, or public network listener is required.
 
 ## Implementation scope
 
+Native routing identifies the application’s AT-SPI toolkit without activating it. Positively identified GTK3 providers use independent input; unknown providers and other toolkits use foreground compatibility input. Owned-browser field operations retain directly addressed CDP input. Missing private-device initialization can select shared input before dispatch; an uncertain action is never replayed.
+
 | Action | Route |
 | --- | --- |
 | Supported native accessibility mutations | Address the observed control directly |
-| Shortcuts and clipboard paste | Focus the private agent keyboard and validate before input; CLIPBOARD itself remains shared |
-| Screenshot clicks, hover, scrolling, and drags | Validate observed points and use the private agent pointer |
-| Explicit window activation | Reveal the target and focus the agent keyboard |
+| Shortcuts and clipboard paste | Choose independent or foreground input for the target and validate before input; CLIPBOARD itself remains shared |
+| Screenshot clicks, hover, scrolling, and drags | Validate observed points and choose independent or shared foreground pointer input |
+| Explicit window activation | Reveal the target and establish input focus for its selected route |
 | Visible action feedback | Best-effort click-through cursor overlay without moving the human pointer |
 
 The private pair disables core event emulation. This avoids the tested XFWM
-legacy focus path while retaining XI2-aware application input. Applications that
-require core events, other toolkits, and other window managers need separate
-qualification. The implementation does not guarantee that arbitrary application
+legacy focus path while retaining qualified XI2-aware application input. Targets without established independent-input compatibility use shared foreground input before dispatch, rather than risking a lost action and retry. Other window managers still need separate qualification. The implementation does not guarantee that arbitrary application
 callbacks cannot change shared windows, selection, dialogs, or focus. In particular,
 GTK accessibility focus can call `gtk_window_present_with_time`, requesting WM
 activation and redirecting human keyboard focus; private device ownership does

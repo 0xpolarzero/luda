@@ -45,7 +45,7 @@ For other Linux distributions, existing dependencies, updates, and removal, see 
 - **Use the screen:** screenshots, clicks, drags, scrolling, and keyboard shortcuts. Optional OCR, image matching, and recording provide additional ways to observe.
 - **Handle interruptions:** wait for changes, cancel work, pause agent input, and recover owned input after a disconnect.
 
-Luda uses its own X11 pointer and keyboard for native input, leaving human input devices untouched. Existing tools automatically address supported controls in the background or focus the agent keyboard; revealing a covered window remains a normal window action. A distinct agent cursor is drawn into desktop pixels when available, so ordinary desktop viewers can display it. Applications and window managers can still change shared windows or focus; compatibility is qualified per application, not universal. There is no shared-device fallback or agent mode to choose. See [independent input evidence](tests/evidence/private-input/README.md).
+Luda automatically chooses background actions or independent input where supported, and uses ordinary foreground mouse/keyboard control when needed for compatibility. The agent uses the same tools with no mode selection. A distinct agent cursor appears in desktop pixels when available, so ordinary desktop viewers can display it. Foreground fallback can move your pointer and change focus; application callbacks can also bring windows forward. See [input routing and evidence](docs/BACKGROUND-EXPERIENCE.md).
 
 The optional browser provider opens a temporary Chromium session for ordinary web fields. Existing browser profiles are not attached automatically.
 

@@ -1,22 +1,18 @@
 # Independent input: implementation research and acceptance design
 
-**Review candidate, not a default-backend release.** Chromium native keyboard
-compatibility and application-issued focus remain blockers. See the
-[candidate status and evidence](../tests/evidence/private-input/CANDIDATE.md).
+Luda prioritizes working computer use: background and independent input are preferred, with automatic shared foreground fallback for compatibility. The earlier [private-only candidate findings](../tests/evidence/private-input/CANDIDATE.md) remain historical evidence, not a claim that Chromium now supports private native keys.
 
-Status: private-device routing implemented; bounded GTK/XFWM and lifecycle checks pass. Research and validation date: 2026-09-20. See [current evidence](../tests/evidence/private-input/README.md). Broader toolkit, legacy-client, and window-manager qualification remains open. GTK accessibility focus can request WM activation and redirect human focus; native device isolation does not prevent that callback. The earlier runtime at `556d699` used shared devices; its passing routing tests do not qualify independent input.
+Status: automatic routing uses private devices for identified GTK3 providers and shared foreground input for other native targets; owned-browser fields retain CDP operations. Bounded GTK/XFWM and lifecycle checks pass. Research and validation date: 2026-09-20. See [current evidence](../tests/evidence/private-input/README.md). Broader toolkit, legacy-client, and window-manager qualification remains open. GTK accessibility focus can request WM activation and redirect human focus; native device isolation does not prevent that callback. The earlier runtime at `556d699` used shared devices; its passing routing tests do not qualify independent input.
 
 ## Requirements
 
-- Never inject into, move, release, or capture the human's input devices.
+- Prefer independent input, but automatically use ordinary foreground mouse/keyboard control when needed to complete the action reliably.
 - Prefer background actions; expose windows only when the action requires it.
 - Show agent activity in the existing desktop pixels, with no viewer integration.
 - Keep the existing tools and automatic routing. No separate agent modes, desktop,
   Silo dependency, or replacement window manager.
 
-Raising a window when necessary is authorized. Redirecting the human's typing or
-causing an application to grab their devices is not equivalent to raising it and
-does not satisfy the first requirement. Shared application content remains shared:
+Foreground activation and shared input are permitted when independent operation is unavailable. Select the route before dispatch; uncertain application effects never justify replaying the same action. Shared application content remains shared:
 two keyboards cannot create independent selections or dialogs in a legacy app.
 
 ## What existing implementations establish
@@ -98,8 +94,7 @@ Observation of a covered window does not enable clicking through its covering wi
    Never identify owned devices by a loose name substring or reuse stale IDs.
 2. Pointer, keyboard, held-state, release, crash recovery, and browser native
    focus operations bind to that pair together. Relevant existing files are `_pointer_native.py`,
-   `_keyboard_native.py`, `_input_native.py`, and `_browser_input.py`. Never silently
-   fall back to the human devices if private initialization or recovery fails.
+   `_keyboard_native.py`, `_input_native.py`, and `_browser_input.py`. Compatibility routing may select shared input before dispatch. Recovery of an interrupted private action must still remain on its original devices; never replay it through shared input.
 3. Separate agent keyboard focus from global activation. Use device-specific
    focus; prefer raising without activation when pixels must become reachable.
    Preserve identity, geometry, coverage, popup, and stale-observation checks.
@@ -112,9 +107,7 @@ Observation of a covered window does not enable clicking through its covering wi
    behind existing observation tools with explicit source/freshness metadata, so
    covered pixels cannot accidentally authorize an unsafe root-coordinate click.
 
-The first delivery gate—device isolation plus ordinary GTK input and cleanup—has bounded passing evidence. The private pair uses `send_core=False`, which avoids the tested XFWM core-focus interference; legacy clients relying only on core events are not qualified. The second is WM/toolkit compatibility, especially grabs. If the second
-gate fails, the complete user requirement remains unresolved; neither a passing
-click demo nor an input-refusal-only backend counts as fully working computer use.
+The first delivery gate—device isolation plus ordinary GTK input and cleanup—has bounded passing evidence. The private pair uses `send_core=False`, which avoids the tested XFWM core-focus interference; legacy clients relying only on core events are not qualified. The second is WM/toolkit compatibility, especially grabs. An unsupported independent route uses ordinary foreground control. Neither a passing click demo nor refusing every unsupported independent action counts as fully working computer use.
 These sources do not establish a generic solution to every WM/grab interaction.
 
 ## Validation that distinguishes delivery from success

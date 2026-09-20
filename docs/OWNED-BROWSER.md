@@ -51,3 +51,7 @@ The final ordinary-account private MCP run `run-1789890908181255632` passed in 1
 A follow-up independently reproduced native Backspace expanding an interior emoji selection and deleting the whole emoji. Empty-text selected-range deletion now receives the same preflight and immediate-dispatch guard. Full-field clearing remains allowed; an empty collapsed request does not require segmentation. Actual private MCP run `run-1789891304330310696` passed in 15.927 seconds, including unchanged text/caret on interior emoji and accent deletion refusal and the existing full-field clear path. Twelve focused browser units passed.
 
 The native preedit fixtures explicitly select GTK's canonical `gtk-im-context-simple` context. The previous `simple` value could silently select IBus after desktop dependencies installed its module; [the retained regression and private-module A/B evidence](../tests/evidence/browser-simple-ime/README.md) distinguish that fixture failure from browser runtime behavior.
+
+## Automatic native compatibility
+
+Owned-field type and selection use background CDP operations. Native shortcuts and IME actions in Chromium use automatic foreground input because the private XI2-only keyboard did not deliver the required events in the tested browser. Foreground focus is checked from the actual core keyboard, not only `_NET_ACTIVE_WINDOW`; MPX can leave that WM property stale. This is compatibility fallback, not private native Chromium qualification.

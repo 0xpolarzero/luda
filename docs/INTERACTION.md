@@ -6,7 +6,7 @@
 
 `workspaces()` and `switch_workspace(workspace)` use existing workspace indexes. Creation/deletion is deliberately outside this contract.
 
-`hover` uses screenshot image pixels. `drag_between` accepts source and destination window identities with a single fresh screenshot. The source receives agent-keyboard focus automatically; the destination must be present at its observed bounds. Native motion and button events use Luda’s private pointer, not the human pointer. Pointer operations validate both endpoints before button-down and always attempt button release after a failure. A dispatched drag does not prove that an application accepted a drop. Occlusion, human interference and application drag semantics need post-action observation.
+`hover` uses screenshot image pixels. `drag_between` accepts source and destination window identities with a single fresh screenshot. The source receives input focus automatically; the destination must be present at its observed bounds. Luda selects independent pointer input where supported, otherwise ordinary shared foreground input. Pointer operations validate both endpoints before button-down and always attempt button release after a failure. A dispatched drag does not prove that an application accepted a drop. Occlusion, human interference and application drag semantics need post-action observation.
 
 ## Evidence
 

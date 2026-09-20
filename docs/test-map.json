@@ -992,7 +992,7 @@
         "test_keyboard.KeyboardContract.test_held_keys_and_extended_buttons_refused_before_plan",
         "test_keyboard.KeyboardContract.test_latched_state_refused"
       ],
-      "limits": "Conflicting agent-held keys/buttons and latched state refuse. Native input now binds a private XI2 pair; human same-key isolation has separate live evidence, not a claim established by these unit tests."
+      "limits": "Held keys/buttons and latched state are checked on the selected input devices. Private routes isolate matching human input; shared fallback retains the same-key human race limitation. Independent live evidence is separate from these unit assertions."
     },
     "KEY-08": {
       "implementation": "partial",
@@ -1017,7 +1017,7 @@
       "tests": [
         "test_pointer_routing.PointerRouting.test_held_input_refused_before_any_initial_movement"
       ],
-      "limits": "Hover/initial movement refuses conflicting agent-held input before movement. Native input uses a private pointer; shared application state can still change and tooltip content/timing is application-specific."
+      "limits": "Hover/initial movement refuses conflicting held input before movement on the selected private or shared route. Shared application state can still change and tooltip content/timing is application-specific."
     },
     "OBS-11": {
       "implementation": "implemented",
