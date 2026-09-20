@@ -27,6 +27,7 @@ def suite(script, ids, *, wm=True, browser=None, electron=None, firefox=None, mo
 
 
 SUITES = {
+    'rtl': suite('live_rtl.py', 'DATA-10', wm=False, artifacts=('rtl',)),
     'nested-scroll': suite('live_nested_scroll.py', 'PTR-05', artifacts=('nested-scroll',)),
     'detached-menu': suite('live_detached_menu.py', 'MENU-08', artifacts=('detached-menu',), gaps=('Native GTK3 tear-off fixture and observed screenshot row only; no tray or other toolkit qualification',)),
     'mcp-disconnect': suite('live_mcp_disconnect.py', 'MCP-08', artifacts=('mcp-disconnect',), gaps=('Real stdin EOF only; no claim to undo delivered input or arbitrary network disconnection',)),

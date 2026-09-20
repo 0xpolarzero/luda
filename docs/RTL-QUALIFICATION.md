@@ -55,5 +55,5 @@ without pretending they are identical. Logical code-point offsets are not visual
 columns or grapheme counts.
 
 No driver defect or runtime change was indicated. This source-bound result is
-local evidence for DATA-10; the catalog remains release-unqualified. The suite is
-standalone and not automatically counted as a current passing matrix run.
+local evidence for DATA-10; the catalog remains release-unqualified. The suite also has an optional `rtl` matrix registration, which retains its own
+private-session launcher. Registration is not evidence of a current passing run.
