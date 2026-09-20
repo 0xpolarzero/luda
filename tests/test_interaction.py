@@ -1,10 +1,19 @@
 import unittest
 from unittest.mock import patch
+from contextlib import nullcontext
 from luda.interaction import InteractionMixin, integer
 from luda.common import DesktopError
 
 class Dummy(InteractionMixin):
-    snapshots={'s':{'topology':{'server_generation':'generation'}}}
+    def __init__(self):
+        self.snapshots={'s':{'topology':{'server_generation':'generation'},'signature':[],'popups':[]}}
+    def input_scope(self):return nullcontext()
+    def focus_input(self,window):pass
+    def signature(self,windows):return []
+    def observe_popups(self,windows):return []
+    def display(self):
+        from types import SimpleNamespace
+        return SimpleNamespace(topology=lambda:{'server_generation':'generation'})
     def target_window(self,*args): return {'xid':42,'window_id':'observed:window-token'}
     def _interaction_point(self, window,*args): return (10,20) if window == 'a' else (40,50)
     def list_windows(self): return []
