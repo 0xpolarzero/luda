@@ -1,0 +1,3 @@
+# Managed doctor identity regression
+
+At source f4abde0 the updated managed diagnostic ran as the existing ordinary desktop account against installed release `0.1.0-2d841f3b6d26f20e`. The shared-desktop lock covered the entire read-only diagnostic. It returned ready and the installed canonical CLI's driver, tool-schema and bundled-skill identities (retained result). This intentionally identifies that existing installed release, not the newer source skill. An initial root invocation correctly refused the ordinary-owned prefix before launch; rerunning as its actual owner passed. No desktop input was sent and no installation changed. Four focused contract tests cover immutable release routing, readiness failure, session failure and absent selection.
