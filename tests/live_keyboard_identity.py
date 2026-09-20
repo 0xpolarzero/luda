@@ -2,6 +2,8 @@
 import ctypes as C
 import json,os,select,subprocess,sys,time
 from unittest.mock import patch
+# This suite specifically qualifies foreground compatibility device cleanup.
+os.environ['LUDA_INPUT_ROUTE'] = 'shared'
 from luda.x11 import X11
 
 class Cookie(C.Structure):_fields_=[('sequence',C.c_uint)]

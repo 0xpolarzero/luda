@@ -10,6 +10,8 @@ import time
 import threading
 from pathlib import Path
 from live_keyboard_guard import descendants
+# This suite specifically qualifies foreground compatibility device cleanup.
+os.environ['LUDA_INPUT_ROUTE'] = 'shared'
 from luda.common import DesktopError,checkpoint,operation_scope
 from luda.input_guard import held_button
 from unittest.mock import patch

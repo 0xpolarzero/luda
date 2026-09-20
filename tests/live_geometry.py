@@ -9,6 +9,9 @@ import time
 from PIL import Image
 from luda.common import DesktopError
 from luda.desktop import Desktop
+from luda._x11_helper import _NativeX11
+from luda._private_input import bind_private_input, TOKEN_ENV
+from live_private_input_owner import pointer as query_pointer
 
 if os.environ.get('LUDA_ISOLATED_TEST_DISPLAY') != '1':
     raise SystemExit('Requires an explicitly isolated Xvfb/XFWM/D-Bus session.')
@@ -29,6 +32,16 @@ def check_error(callback,code):
     else:raise AssertionError('Expected '+code)
 def pointer():
     return {k:int(v) for k,v in re.findall(r'^(X|Y)=([0-9]+)$',subprocess.check_output(['xdotool','getmouselocation','--shell']).decode(),re.M)}
+def agent_pointer():
+    # Independent XQueryPointer readback on a client bound to the agent device.
+    native = _NativeX11()
+    try:
+        bind_private_input(native, d.private_input.environment()[TOKEN_ENV])
+        coords, _ = query_pointer(native)
+        assert pointer() == human_pointer, 'agent moved the human pointer'
+        return {'X': coords[0], 'Y': coords[1]}
+    finally:
+        native.close()
 def independent_bounds(xid):
     text=subprocess.check_output(['xwininfo','-id',str(xid)]).decode()
     labels={'x':'Absolute upper-left X','y':'Absolute upper-left Y','width':'Width','height':'Height'}
@@ -47,6 +60,7 @@ def snapshot(window,width):
     image=Image.open(io.BytesIO(base64.b64decode(snap['image_base64'])))
     assert image.size==(snap['image_size']['width'],snap['image_size']['height'])
     return snap,observed,image
+human_pointer = pointer()
 try:
     for style in ('decorated','borderless'):
         app=subprocess.Popen(['/usr/bin/python3','-c',fixture,style],stdout=subprocess.DEVNULL)
@@ -68,9 +82,9 @@ try:
                     area=w['image_bounds']
                     ix=area['x']+area['width']//2;iy=area['y']+area['height']//2
                     d.hover(window['window_id'],snap['snapshot_id'],ix,iy)
-                    assert pointer()=={'X':ix*nw//iw,'Y':iy*nh//ih}
+                    assert agent_pointer()=={'X':ix*nw//iw,'Y':iy*nh//ih}
                     d.hover(window['window_id'],snap['snapshot_id'],x,y)
-                    assert pointer()=={'X':int(x*nw/iw),'Y':int(y*nh/ih)}
+                    assert agent_pointer()=={'X':int(x*nw/iw),'Y':int(y*nh/ih)}
                     for a,c in ((iw,y),(x,ih),(-.1,y),(x,-.1)):
                         check_error(lambda:d.hover(window['window_id'],snap['snapshot_id'],a,c),'OUT_OF_BOUNDS')
                     results.append({'style':style,'returned_width':width,'pixel_and_pointer_oracles':True})
@@ -99,13 +113,13 @@ try:
                 assert w['bounds']['x']<0,w
                 x=20*image.width/snap['desktop_size']['width'];y=(w['bounds']['y']+30)*image.height/snap['desktop_size']['height']
                 d.hover(window['window_id'],snap['snapshot_id'],x,y)
-                assert pointer()['X']==20
+                assert agent_pointer()['X']==20
                 results.append({'style':style,'partially_offscreen_visible_region':True,'moved_snapshot_refused':True})
                 d.manage_window(window['window_id'],'fullscreen')
                 snap,w,image=snapshot(window,2560)
                 assert w['bounds']=={'x':0,'y':0,**snap['desktop_size']},w
                 d.hover(window['window_id'],snap['snapshot_id'],image.width-1,image.height-1)
-                assert pointer()=={'X':image.width-1,'Y':image.height-1}
+                assert agent_pointer()=={'X':image.width-1,'Y':image.height-1}
                 results.append({'style':style,'fullscreen_last_native_pixel':True})
         finally:
             app.terminate();app.wait(timeout=5)

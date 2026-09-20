@@ -6,6 +6,11 @@ from luda.common import DesktopError,operation_scope
 from luda.desktop import Desktop
 from luda.pointer_input import click_button,check_pointer_ready,move_pointer
 from luda.input_guard import held_button
+class SharedDesktop(Desktop):
+    def input_scope(self, window=None, *, force_shared=False):
+        return super().input_scope(window, force_shared=True)
+
+Desktop = SharedDesktop
 ROOT=Path(__file__).resolve().parents[1]
 
 
@@ -84,6 +89,8 @@ def child():
 
 
 def main():
+ # Qualify compatibility cleanup using the shared core devices explicitly.
+ os.environ['LUDA_INPUT_ROUTE'] = 'shared'
  if '--child' in sys.argv:return child()
  with tempfile.TemporaryDirectory(prefix='luda-private-pointer-session-') as directory:
   env=dict(os.environ)

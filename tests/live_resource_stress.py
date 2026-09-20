@@ -44,7 +44,11 @@ try:
         gc.collect()
         sample=usage();sample.update(iteration=index,elements=len(d.elements),snapshots=len(d.snapshots))
         assert sample['elements']<=4000 and sample['snapshots']<=16,sample
-        assert sample['children']==[str(app.pid)],sample
+        owner = d.private_input._process
+        assert owner is not None and owner.poll() is None
+        assert set(sample['children']) == {str(app.pid), str(owner.pid)}, sample
+        # The same owner persists across observations; no per-action children leak.
+        if samples: assert sample['children'] == samples[0]['children'], sample
         samples.append(sample)
     # Warm-up allocations are not leakage; compare the steady repeated phase.
     steady=samples[5:]
@@ -52,6 +56,7 @@ try:
     assert max(v['rss_kib'] for v in steady)-min(v['rss_kib'] for v in steady)<128*1024,samples
     d.close()
     assert not d.elements and not d.snapshots
+    assert usage()['children'] == [str(app.pid)], usage()
     closed=usage()
     assert closed['fds']<samples[-1]['fds'],(closed,samples[-1])
     print(json.dumps({'iterations':28,'nodes_per_inspection':500,'samples':samples,'after_close':closed,

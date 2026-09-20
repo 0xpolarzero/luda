@@ -13,6 +13,11 @@ import time
 from luda.common import DesktopError, operation_scope
 from luda.desktop import Desktop
 from luda.keyboard import send_chord
+class SharedDesktop(Desktop):
+    def input_scope(self, window=None, *, force_shared=False):
+        return super().input_scope(window, force_shared=True)
+
+Desktop = SharedDesktop
 ROOT=Path(__file__).resolve().parents[1]
 
 
@@ -270,6 +275,8 @@ main()
 
 
 def main():
+    # Qualify compatibility cleanup using the shared core devices explicitly.
+    os.environ['LUDA_INPUT_ROUTE'] = 'shared'
     if '--child' in sys.argv:return run_child()
     # The external command creates both display and bus and bounds the entire
     # suite. No shared display input or application is touched.

@@ -46,6 +46,8 @@ def read_proof(stream, timeout=4):
 
 
 def main(stall_cleanup=False):
+    # Qualify compatibility cleanup using the shared core devices explicitly.
+    os.environ['LUDA_INPUT_ROUTE'] = 'shared'
     server=None;oracle=None;key_guard=None;mouse_guard=None;mouse_writer=None
     with tempfile.TemporaryDirectory(prefix='luda-input-generation-') as directory:
         base=Path(directory);authority=base/'authority';authority.touch(mode=0o600)
@@ -63,7 +65,10 @@ def main(stall_cleanup=False):
             os.environ.update(DISPLAY=env['DISPLAY'],XAUTHORITY=env['XAUTHORITY'])
             oracle=Oracle();x=oracle.x
             x.XCreateSimpleWindow.argtypes=[C.c_void_p,C.c_ulong,C.c_int,C.c_int,C.c_uint,C.c_uint,C.c_uint,C.c_ulong,C.c_ulong];x.XCreateSimpleWindow.restype=C.c_ulong
-            window=x.XCreateSimpleWindow(oracle.d,x.XDefaultRootWindow(oracle.d),0,0,200,100,0,0,0);x.XSync(oracle.d,False)
+            window=x.XCreateSimpleWindow(oracle.d,x.XDefaultRootWindow(oracle.d),0,0,200,100,0,0,0)
+            x.XMapWindow.argtypes=[C.c_void_p,C.c_ulong]
+            x.XSetInputFocus.argtypes=[C.c_void_p,C.c_ulong,C.c_int,C.c_ulong]
+            x.XMapWindow(oracle.d,window);x.XSetInputFocus(oracle.d,window,1,0);x.XSync(oracle.d,False)
             command('xprop','-root','-f','_NET_ACTIVE_WINDOW','32x','-set','_NET_ACTIVE_WINDOW',hex(window))
             plan=json.loads(subprocess.check_output([sys.executable,'-m','luda._keyboard_native','plan'],input=json.dumps({'chord':'ctrl+shift+alt+F12','target':window}).encode()+b'\n',env=env,timeout=3))
             assert 'server_generation' in plan,plan
