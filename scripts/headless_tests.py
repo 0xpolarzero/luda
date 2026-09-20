@@ -63,7 +63,10 @@ def main():
                           ('cancellation', [str(ROOT / 'tests/live_cancellation.py'), '--server', str(Path(sys.executable).parent / 'luda')]),
                           ('control', [str(ROOT / 'tests/live_control.py')]),
                           ('mcp-controls', [str(ROOT / 'tests/live_mcp_controls.py')]),
-                          ('menus', [str(ROOT / 'tests/live_menu.py')])]
+                          ('menus', [str(ROOT / 'tests/live_menu.py')]),
+                          ('waits', [str(ROOT / 'tests/live_waits.py')]),
+                          ('input-guard', [str(ROOT / 'tests/live_input_guard.py')]),
+                          ('session-state', [str(ROOT / 'tests/live_session_state.py')])]
                 for suite, arguments in suites:
                     began = time.monotonic()
                     with (output / f'{suite}.log').open('wb') as suite_log:
