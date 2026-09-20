@@ -11,7 +11,7 @@ import uuid
 
 import anyio
 from mcp.server.fastmcp import FastMCP
-from mcp.types import CallToolResult, ImageContent, TextContent
+from mcp.types import CallToolResult, ImageContent, TextContent, ToolAnnotations
 
 from .common import DesktopError, operation_scope
 from .desktop import Desktop
@@ -112,7 +112,7 @@ async def desktop_control(action: Literal['status','pause','resume']='status') -
         return result_error(exc.code,str(exc),exc.effect)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
 async def desktop_status() -> CallToolResult:
     """Return recent operation outcomes after timeout/cancellation. No input text or screenshots are retained."""
     with _history_lock:
@@ -120,13 +120,13 @@ async def desktop_status() -> CallToolResult:
     return CallToolResult(content=[TextContent(type='text',text=json.dumps({'ok':True,'recovering':_quarantined.is_set(),'operations':history}))])
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
 async def desktop_doctor() -> CallToolResult:
     """Check actual display access, desktop session, dependencies and accessibility availability."""
     return await execute_async('doctor')
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
 async def desktop_applications(query: str = '', limit: int = 50) -> CallToolResult:
     """Find installed desktop applications by name, description or ID. Returns application_id and file/URI support; works while input is paused. Use an exact returned ID with desktop_launch."""
     return await execute_async('list_applications',query,limit)
@@ -138,7 +138,7 @@ async def desktop_launch(application_id: str, files_or_uris: list[str] | None = 
     return await execute_async('launch_application',application_id,files_or_uris)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
 async def desktop_windows() -> CallToolResult:
     """List window identities, titles, process identity, focus and native client bounds."""
     return await execute_async('list_windows')
@@ -150,19 +150,19 @@ async def desktop_activate(window_id: str) -> CallToolResult:
     return await execute_async('activate',window_id)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
 async def desktop_observe(max_width: int = 1280) -> CallToolResult:
     """Return screenshot plus window layout and a 15-second snapshot ID. Coordinates are image pixels."""
     return await execute_async('observe',max_width)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
 async def desktop_inspect(window_id: str, limit: int = 150, name: str | None = None, role: str | None = None, states: list[str] | None = None, max_depth: int = 30) -> CallToolResult:
     """Inspect a window or find controls by name/role substring and required states. Returns bounded tree, parent IDs, supported actions and 60-second element IDs. Empty matches and unavailable accessibility are distinct."""
     return await execute_async('inspect',window_id,limit,name=name,role=role,states=states,max_depth=max_depth)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
 async def desktop_read_text(element_id: str, limit: int = 16000) -> CallToolResult:
     """Read exact accessible text, preserving whitespace. Protected fields are unsupported. Maximum 1 MB."""
     if not 1<=limit<=1_000_000:
@@ -278,7 +278,7 @@ async def desktop_drag_to(source_window_id: str, target_window_id: str, snapshot
     return await execute_async('drag_between',source_window_id,target_window_id,snapshot_id,x,y,end_x,end_y,button)
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
 async def desktop_wait(condition: Literal['window_present','window_absent','window_active','text_equals','text_contains','element_present','element_absent','pixels_stable'], window_id: str | None = None, element_id: str | None = None, text: str | None = None, timeout: float = 5, name: str | None = None, role: str | None = None, states: list[str] | None = None, stable_for: float = .3) -> CallToolResult:
     """Wait for a bounded observed condition. Element waits use fresh name/role substring and required-state filters; absence requires complete coverage. pixels_stable samples the target client rectangle for stable_for seconds, not general application idleness."""
     return await execute_async('wait_condition',condition,window_id=window_id,element_id=element_id,text=text,timeout=timeout,name=name,role=role,states=states,stable_for=stable_for)
