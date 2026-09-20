@@ -29,6 +29,7 @@ def suite(script, ids, *, wm=True, browser=None, electron=None, firefox=None, mo
 SUITES = {
     'undo': suite('live_undo.py', 'EDIT-06', artifacts=('undo','files')),
     'rtl': suite('live_rtl.py', 'DATA-10', wm=False, artifacts=('rtl',)),
+    'thunar-drag': suite('live_thunar_drag.py', 'PTR-09', artifacts=('thunar-drag',), gaps=('Thunar 4.18 native right-drag menu with screenshot-derived rows; requires thunar, no modifier or cross-filesystem qualification',)),
     'nested-scroll': suite('live_nested_scroll.py', 'PTR-05', artifacts=('nested-scroll',)),
     'detached-menu': suite('live_detached_menu.py', 'MENU-08', artifacts=('detached-menu',), gaps=('Native GTK3 tear-off fixture and observed screenshot row only; no tray or other toolkit qualification',)),
     'mcp-disconnect': suite('live_mcp_disconnect.py', 'MCP-08', artifacts=('mcp-disconnect',), gaps=('Real stdin EOF only; no claim to undo delivered input or arbitrary network disconnection',)),
