@@ -9,7 +9,15 @@ description = "Optional ProseMirror editing tools and skill for applications you
 readme = "README.md"
 requires-python = ">=3.12"
 license = "MIT"
+authors = [{name = "polarzero"}]
+keywords = ["mcp", "linux", "prosemirror", "agent-skills"]
 dependencies = ["luda[browser]==0.1.0"]
+
+[project.urls]
+Homepage = "https://github.com/0xpolarzero/luda/tree/main/addons/editor-bridge"
+Source = "https://github.com/0xpolarzero/luda"
+Issues = "https://github.com/0xpolarzero/luda/issues"
+Releases = "https://github.com/0xpolarzero/luda/releases"
 
 [project.scripts]
 luda-editor-bridge = "luda_editor_bridge.server:main"
