@@ -227,7 +227,10 @@ class OwnedBrowser:
         return value
 
     def element(self, target, op, **kwargs):
-        window=self.scoped(target['window_id'],op!='read')
+        window=self.scoped(target['window_id'])
+        if op != 'read':
+            feedback = getattr(self.desktop, 'agent_feedback', None)
+            if feedback: feedback(target['window_id'])
         return self.request(op,token=target['browser_token'],native_target={'xid':window['xid'],'generation':window['window_id'].rsplit(':',1)[-1]},**kwargs)
 
     def close(self):

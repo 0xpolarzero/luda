@@ -623,7 +623,6 @@ def choose_range(node, current, req):
             for child,parent in zip(ancestors,ancestors[1:]):
                 actual=child.get_parent()
                 if actual is None or (provider_identity(actual),actual.path)!=(provider_identity(parent),parent.path):refuse('STALE_TARGET','Selection container changed window ancestry.')
-            if 'active' not in states_of(root):refuse('FOCUS_CHANGED','Observed selection window is no longer active.')
             clip=None
             for parent in ancestors:
                 if 'Component' not in parent.get_interfaces():continue

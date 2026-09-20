@@ -18,12 +18,12 @@ class VerifiedTyping(unittest.TestCase):
         d.element=Mock(side_effect=[{'effect':'verified'},self.value('AZ'),self.value('AZ'),self.value('A👩🏽\u200d💻\nZ',6)])
         result=d.type_text('e','👩🏽\u200d💻\n')
         self.assertEqual(result['effect'],'verified');self.assertTrue(result['caret_verified'])
-        d.paste.assert_called_once_with('w','👩🏽\u200d💻\n')
+        d.paste.assert_called_once_with('w','👩🏽\u200d💻\n', _activate=False)
     def test_known_noop_editable_provider_uses_verified_clipboard(self):
         d=self.make();d.elements['e']['node'].update(interfaces=['Text','EditableText'],native_text_mutation_supported=False)
         d.element=Mock(side_effect=[{'effect':'verified'},self.value('AZ'),self.value('AZ'),self.value('AxZ',2)])
         self.assertEqual(d.type_text('e','x')['effect'],'verified')
-        d.paste.assert_called_once_with('w','x')
+        d.paste.assert_called_once_with('w','x', _activate=False)
         self.assertEqual(d.element.call_args_list[0].args,('e','focus'))
     def test_selection_change_prevents_paste(self):
         d=self.make();d.element=Mock(side_effect=[{'effect':'verified'},self.value('AZ'),self.value('AZ',2)])

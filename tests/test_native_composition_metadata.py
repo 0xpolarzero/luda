@@ -50,7 +50,7 @@ class NativeCompositionTests(unittest.TestCase):
         d.element=Mock(side_effect=[{'effect':'verified'},before,before,after]);d.paste=Mock()
         result=d.type_text('field','X')
         self.assertTrue(result['exact_match']);self.assertEqual(result['composition'],{'known':False,'active':None})
-        d.paste.assert_called_once_with('window','X')
+        d.paste.assert_called_once_with('window','X', _activate=False)
     def test_actual_public_read_projection_preserves_null_and_text(self):
         d=self.desktop()
         backend=SimpleNamespace(control=SimpleNamespace(require_active=lambda:None),transaction=nullcontext,require_supported_backend=lambda:None,element=d.element)

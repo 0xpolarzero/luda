@@ -413,10 +413,21 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
                         time.sleep(.02)
         return {'effect':'dispatched','verification':'Observe the resulting application state.'}
 
-    def key(self, window_id, chord, count=1):
+    def prepare_input_window(self, window_id):
+        """Activate only for input whose destination is the foreground window."""
+        target = self.target_window(window_id, False)
+        if target.get('active') is False:
+            self.activate(window_id)
+        # Activation is not proof that focus survived until dispatch. Native
+        # input helpers perform another check immediately before sending input.
+        return self.target_window(window_id)
+
+    def key(self, window_id, chord, count=1, *, _activate=True):
         validate_chord(chord)
         validate_key_count(count)
-        target = self.target_window(window_id)
+        target = self.prepare_input_window(window_id) if _activate else self.target_window(window_id)
+        feedback = getattr(self, 'agent_feedback', None)
+        if feedback: feedback(window_id)
         return send_chord(chord, target['xid'], target_generation=target['window_id'].rsplit(':',1)[-1],count=count)
 
     def ax(self, request, mutating=False):
@@ -512,7 +523,7 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         if target.get('provider') == 'owned_browser':
             if op=='secret':validate_text(kwargs['text'])
             return self.browser.element(target,op,**kwargs)
-        w=self.target_window(target['window_id'],op!='read')
+        w=self.target_window(target['window_id'],False)
         node=target['node']
         if node['start']!=w['start']:
             raise DesktopError('STALE_TARGET','Process identity changed.')
@@ -530,6 +541,13 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
             kwargs['action'] = action
         if op in ('set','insert','secret'):
             validate_text(kwargs['text'])
+        if op == 'focus':
+            if 'Component' not in node.get('interfaces', []):
+                raise DesktopError('UNSUPPORTED','Element has no Component interface.')
+            w = self.prepare_input_window(target['window_id'])
+        if op != 'read':
+            feedback = getattr(self, 'agent_feedback', None)
+            if feedback: feedback(target['window_id'], element_id=element_id)
         result=self.ax({'op':op,'pid':w['pid'],'start':w['start'],'target':node,**kwargs},op!='read')
         return native_text_readback(result) if op in ('read','set','insert') else result
 
@@ -586,9 +604,9 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
             raise DesktopError('TEXT_CHANGED','Text or selection changed before paste; no text pasted.',effect='uncertain')
         if text=='':
             if start!=end:
-                self.key(target['window_id'],'BackSpace')
+                self.key(target['window_id'],'BackSpace', _activate=False)
         else:
-            self.paste(target['window_id'],text)
+            self.paste(target['window_id'],text, _activate=False)
         deadline=elapsed_time()+2
         while True:
             observed=self.element(element_id,'read',limit=1_000_000)
@@ -602,9 +620,9 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
             time.sleep(.05)
 
     @storage_errors('prepare or dispatch clipboard paste', effect='uncertain')
-    def paste(self, window_id, text, shortcut=None):
+    def paste(self, window_id, text, shortcut=None, *, _activate=True):
         validate_text(text)
-        target = self.target_window(window_id)
+        target = self.target_window(window_id, False)
         if shortcut is None:
             terminal_classes = {'xfce4-terminal','gnome-terminal','org.gnome.terminal','konsole','kitty','alacritty'}
             classes = {v.casefold() for v in target.get('wm_class', [])}
@@ -616,6 +634,10 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
             raise DesktopError('INVALID_ARGUMENT','Choose the application clipboard shortcut explicitly.')
         if not text:
             return {'effect':'none','reason':'Empty paste is a no-op; use set_text to clear an editable element.'}
+        if _activate:
+            self.prepare_input_window(window_id)
+        else:
+            self.target_window(window_id)
         payload=text.encode('utf-8')
         # Preserve the previous clipboard until the replacement is fully staged.
         with staged_payload(self.runtime, payload) as payload_path:
@@ -638,12 +660,13 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
                 if elapsed_time()>deadline:
                     raise DesktopError('CLIPBOARD_FAILED','Could not verify clipboard ownership; no paste key sent.',effect='uncertain')
                 time.sleep(.03)
-        # Recheck focus after preparing clipboard. Never activate implicitly during paste.
+        # Recheck focus after preparing clipboard. Do not reacquire a window
+        # that lost focus during this transaction: its intended field may differ.
         try:
             self.target_window(window_id)
             if self.clipboard_owner.poll() is not None or run(['xclip','-selection','clipboard','-out'],timeout=.5) != payload:
                 raise DesktopError('CLIPBOARD_CHANGED', 'Clipboard ownership or contents changed before paste; no shortcut sent.', effect='uncertain')
-            self.key(window_id,chords[shortcut])
+            self.key(window_id, chords[shortcut], _activate=False)
         except DesktopError as exc:
             exc.details['clipboard_changed'] = True
             exc.effect = 'uncertain'

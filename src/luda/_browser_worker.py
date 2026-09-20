@@ -187,9 +187,14 @@ class Worker:
         return {'effect':'verified','focused':True}
 
     def select(self, token, start, end):
-        item, before = self.snapshot(token, mutation=True, focus=True)
+        item, before = self.snapshot(token, mutation=True)
         if type(start) is not int or type(end) is not int or not 0<=start<=end<=len(before['text']):
             raise Refused('INVALID_ARGUMENT')
+        if not before['focused']:
+            self.focus(token)
+            _, focused = self.snapshot(token, mutation=True, focus=True)
+            if focused['text'] != before['text']:
+                raise Refused('TEXT_CHANGED')
         self.effect = 'uncertain'
         # Fixed selection-only operation: never assigns value or model content.
         item['node'].evaluate("""(node,range)=>{const chars=Array.from(node.value);node.setSelectionRange(chars.slice(0,range[0]).join('').length,chars.slice(0,range[1]).join('').length,'forward');}""",[start,end])

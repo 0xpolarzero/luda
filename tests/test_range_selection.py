@@ -63,16 +63,9 @@ class RangeTests(unittest.TestCase):
   self.table.cells[2].name=self.table.cells[1].name;self.assertEqual(self.call()['error'],'UNSUPPORTED');self.assertEqual(self.table.calls,[])
  def test_sort_after_first_step_stops_without_replay(self):
   self.table.callback=lambda:self.table.cells.reverse();r=self.call();self.assertEqual(r['effect'],'uncertain');self.assertEqual(r['error'],'STALE_TARGET');self.assertEqual(len(self.table.calls),1);self.assertEqual(self.receipt['progress']['current_uncertain'],1)
- def test_focus_change_after_verified_step_stops(self):
-  calls=0
-  def states(n):
-   nonlocal calls
-   if n is self.table.frame:
-    calls+=1
-    if calls>=6:return {'showing','enabled'}
-   return n.states
-  with patch.object(w,'states_of',states):r=self.call()
-  self.assertEqual(r['error'],'FOCUS_CHANGED');self.assertEqual(len(self.table.calls),1);self.assertEqual(self.receipt['progress']['verified_completed'],1)
+ def test_background_range_selection_survives_focus_change(self):
+  self.table.callback=lambda:self.table.frame.states.discard('active')
+  r=self.call();self.assertEqual(r['effect'],'verified');self.assertEqual(self.table.rows,{1,2,3})
  def test_false_provider_acceptance_never_verified(self):
   self.table.ignore=True;r=self.call();self.assertEqual(r['effect'],'uncertain');self.assertEqual(r['error'],'SELECTION_UNVERIFIABLE');self.assertEqual(self.receipt['progress']['verified_completed'],0);self.assertEqual(len(self.table.calls),1)
  def test_same_path_recycled_name_refused(self):
