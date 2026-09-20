@@ -119,3 +119,52 @@ class BackgroundRouting(unittest.TestCase):
         w.focus.reset_mock()
         with self.assertRaises(Refused): w.select('token', -1, 3)
         w.focus.assert_not_called()
+
+    def test_no_effect_background_focus_refusal_retries_once_in_foreground(self):
+        for code in ('FOCUS_CHANGED', 'NOT_INTERACTABLE'):
+            d = self.driver()
+            d.ax.side_effect = [DesktopError(code, 'preflight refusal'), {'effect': 'dispatched'}]
+            self.assertEqual(d.element('field', 'invoke')['effect'], 'dispatched')
+            d.activate.assert_called_once_with('window')
+            self.assertEqual(d.ax.call_count, 2)
+
+    def test_hidden_background_target_still_refuses_after_one_foreground_try(self):
+        d = self.driver()
+        d.ax.side_effect = DesktopError('NOT_INTERACTABLE', 'hidden')
+        with self.assertRaises(DesktopError) as caught: d.element('field', 'invoke')
+        self.assertEqual(caught.exception.effect, 'uncertain')
+        self.assertEqual(d.ax.call_count, 2)
+        d.activate.assert_called_once()
+
+    def test_direct_key_and_focus_errors_include_prior_activation(self):
+        for code in ('STALE_TARGET', 'INPUT_HELD', 'UNSUPPORTED', 'TIMEOUT'):
+            for operation in ('key', 'focus'):
+                with self.subTest(code=code, operation=operation):
+                    d = self.driver()
+                    with patch('luda.desktop.keyboard_capabilities', return_value={'input_held': False}), patch('luda.desktop.send_chord', side_effect=DesktopError(code, 'refused')):
+                        d.ax.side_effect = DesktopError(code, 'refused')
+                        with self.assertRaises(DesktopError) as caught:
+                            if operation == 'key': d.key('window', 'Return')
+                            else: d.element('field', 'focus')
+                    self.assertEqual(caught.exception.effect, 'uncertain')
+                    d.activate.assert_called_once()
+
+    def test_held_input_before_activation_has_no_effect(self):
+        for operation in ('key', 'focus', 'paste'):
+            d = self.driver()
+            with patch('luda.desktop.keyboard_capabilities', return_value={'input_held': True}):
+                with self.assertRaises(DesktopError) as caught:
+                    if operation == 'key': d.key('window', 'Return')
+                    elif operation == 'focus': d.element('field', 'focus')
+                    else: d.paste('window', 'hello')
+            self.assertEqual(caught.exception.code, 'INPUT_HELD')
+            self.assertEqual(caught.exception.effect, 'none')
+            d.activate.assert_not_called()
+
+    def test_paste_failure_after_activation_includes_prior_effect(self):
+        d = self.driver()
+        d.runtime = None
+        with patch('luda.desktop.keyboard_capabilities', return_value={'input_held': False}), patch('luda.desktop.staged_payload', side_effect=DesktopError('STALE_TARGET', 'refused')):
+            with self.assertRaises(DesktopError) as caught: d.paste('window', 'hello')
+        self.assertEqual(caught.exception.effect, 'uncertain')
+        d.activate.assert_called_once()

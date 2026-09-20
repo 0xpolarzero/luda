@@ -21,6 +21,11 @@
       "passed": true
     },
     {
+      "case": "minimized-target-automatic-routing",
+      "passed": true,
+      "became_foreground": false
+    },
+    {
       "case": "concurrent-user-typing-and-background-set-invoke",
       "passed": true,
       "user_text_exact": true,

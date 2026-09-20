@@ -413,22 +413,32 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
                         time.sleep(.02)
         return {'effect':'dispatched','verification':'Observe the resulting application state.'}
 
-    def prepare_input_window(self, window_id):
-        """Activate only for input whose destination is the foreground window."""
-        target = self.target_window(window_id, False)
-        if target.get('active') is False:
-            self.activate(window_id)
-        # Activation is not proof that focus survived until dispatch. Native
-        # input helpers perform another check immediately before sending input.
-        return self.target_window(window_id)
+    @contextmanager
+    def prepare_input_window(self, window_id, *, activate=True):
+        """Keep activation effects attached to failures later in an input action."""
+        changed = False
+        try:
+            target = self.target_window(window_id, False)
+            if activate and target.get('active') is False:
+                # This target-independent probe catches already-held user input
+                # before focus changes. Native dispatch checks again for races.
+                if keyboard_capabilities().get('input_held') is True:
+                    raise DesktopError('INPUT_HELD','Keys or pointer buttons are already held; no foreground input sent.')
+                self.activate(window_id)
+                changed = True
+            yield self.target_window(window_id)
+        except DesktopError as exc:
+            if changed and exc.effect == 'none':
+                exc.effect = 'uncertain'
+            raise
 
     def key(self, window_id, chord, count=1, *, _activate=True):
         validate_chord(chord)
         validate_key_count(count)
-        target = self.prepare_input_window(window_id) if _activate else self.target_window(window_id)
-        feedback = getattr(self, 'agent_feedback', None)
-        if feedback: feedback(window_id)
-        return send_chord(chord, target['xid'], target_generation=target['window_id'].rsplit(':',1)[-1],count=count)
+        with self.prepare_input_window(window_id, activate=_activate) as target:
+            feedback = getattr(self, 'agent_feedback', None)
+            if feedback: feedback(window_id)
+            return send_chord(chord, target['xid'], target_generation=target['window_id'].rsplit(':',1)[-1],count=count)
 
     def ax(self, request, mutating=False):
         worker = str(Path(__file__).with_name('ax_worker.py'))
@@ -544,11 +554,26 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         if op == 'focus':
             if 'Component' not in node.get('interfaces', []):
                 raise DesktopError('UNSUPPORTED','Element has no Component interface.')
-            w = self.prepare_input_window(target['window_id'])
-        if op != 'read':
-            feedback = getattr(self, 'agent_feedback', None)
-            if feedback: feedback(target['window_id'], element_id=element_id)
-        result=self.ax({'op':op,'pid':w['pid'],'start':w['start'],'target':node,**kwargs},op!='read')
+        def dispatch(window):
+            if op != 'read':
+                feedback = getattr(self, 'agent_feedback', None)
+                if feedback: feedback(target['window_id'], element_id=element_id)
+            return self.ax({'op':op,'pid':window['pid'],'start':window['start'],'target':node,**kwargs},op!='read')
+
+        if op == 'focus':
+            with self.prepare_input_window(target['window_id']) as current:
+                result = dispatch(current)
+        else:
+            try:
+                result = dispatch(w)
+            except DesktopError as exc:
+                # Only a provider refusal proven to precede mutation permits a
+                # single foreground retry. Never replay uncertain app effects.
+                if (op == 'read' or w.get('active') is not False or exc.effect != 'none'
+                        or exc.code not in ('FOCUS_CHANGED', 'NOT_INTERACTABLE')):
+                    raise
+                with self.prepare_input_window(target['window_id']) as current:
+                    result = dispatch(current)
         return native_text_readback(result) if op in ('read','set','insert') else result
 
     def type_text(self, element_id, text, mode='insert'):
@@ -634,48 +659,45 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
             raise DesktopError('INVALID_ARGUMENT','Choose the application clipboard shortcut explicitly.')
         if not text:
             return {'effect':'none','reason':'Empty paste is a no-op; use set_text to clear an editable element.'}
-        if _activate:
-            self.prepare_input_window(window_id)
-        else:
-            self.target_window(window_id)
-        payload=text.encode('utf-8')
-        # Preserve the previous clipboard until the replacement is fully staged.
-        with staged_payload(self.runtime, payload) as payload_path:
-            if self.clipboard_owner:
-                mark_effect();stop_process(self.clipboard_owner)
-            mark_effect()
-            try:
-                self.clipboard_owner=subprocess.Popen(['xclip','-quiet','-selection','clipboard','-in',payload_path],stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,env=subprocess_environment())
-            except FileNotFoundError as exc:
-                raise DesktopError('DEPENDENCY_MISSING', 'Missing executable: xclip', effect='uncertain') from exc
-            deadline=elapsed_time()+1
-            while True:
+        with self.prepare_input_window(window_id, activate=_activate):
+            payload=text.encode('utf-8')
+            # Preserve the previous clipboard until the replacement is fully staged.
+            with staged_payload(self.runtime, payload) as payload_path:
+                if self.clipboard_owner:
+                    mark_effect();stop_process(self.clipboard_owner)
+                mark_effect()
                 try:
-                    observed=run(['xclip','-selection','clipboard','-out'],timeout=.3)
-                    if observed==payload:break
-                except DesktopError as exc:
-                    if exc.code in ('CANCELLED', 'TIMEOUT'):
-                        checkpoint()
-                checkpoint()
-                if elapsed_time()>deadline:
-                    raise DesktopError('CLIPBOARD_FAILED','Could not verify clipboard ownership; no paste key sent.',effect='uncertain')
-                time.sleep(.03)
-        # Recheck focus after preparing clipboard. Do not reacquire a window
-        # that lost focus during this transaction: its intended field may differ.
-        try:
-            self.target_window(window_id)
-            if self.clipboard_owner.poll() is not None or run(['xclip','-selection','clipboard','-out'],timeout=.5) != payload:
-                raise DesktopError('CLIPBOARD_CHANGED', 'Clipboard ownership or contents changed before paste; no shortcut sent.', effect='uncertain')
-            self.key(window_id, chords[shortcut], _activate=False)
-        except DesktopError as exc:
-            exc.details['clipboard_changed'] = True
-            exc.effect = 'uncertain'
-            raise
-        return {'effect':'dispatched','shortcut':shortcut,'clipboard_exact_match':True,
-                'clipboard_verification':'Sampled immediately before shortcut; other clients can still intervene.',
-                'verification':'Destination text is not verified. Inspect for paste dialogs or read the target element.',
-                'clipboard':'CLIPBOARD replaced until another owner takes it or this server exits. PRIMARY is unchanged.',
-                'warning':'Shift+Insert can select PRIMARY in some terminals. A terminal may execute pasted newlines; no confirmation dialog is automatically accepted.'}
+                    self.clipboard_owner=subprocess.Popen(['xclip','-quiet','-selection','clipboard','-in',payload_path],stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,env=subprocess_environment())
+                except FileNotFoundError as exc:
+                    raise DesktopError('DEPENDENCY_MISSING', 'Missing executable: xclip', effect='uncertain') from exc
+                deadline=elapsed_time()+1
+                while True:
+                    try:
+                        observed=run(['xclip','-selection','clipboard','-out'],timeout=.3)
+                        if observed==payload:break
+                    except DesktopError as exc:
+                        if exc.code in ('CANCELLED', 'TIMEOUT'):
+                            checkpoint()
+                    checkpoint()
+                    if elapsed_time()>deadline:
+                        raise DesktopError('CLIPBOARD_FAILED','Could not verify clipboard ownership; no paste key sent.',effect='uncertain')
+                    time.sleep(.03)
+            # Recheck focus after preparing clipboard. Do not reacquire a window
+            # that lost focus during this transaction: its intended field may differ.
+            try:
+                self.target_window(window_id)
+                if self.clipboard_owner.poll() is not None or run(['xclip','-selection','clipboard','-out'],timeout=.5) != payload:
+                    raise DesktopError('CLIPBOARD_CHANGED', 'Clipboard ownership or contents changed before paste; no shortcut sent.', effect='uncertain')
+                self.key(window_id, chords[shortcut], _activate=False)
+            except DesktopError as exc:
+                exc.details['clipboard_changed'] = True
+                exc.effect = 'uncertain'
+                raise
+            return {'effect':'dispatched','shortcut':shortcut,'clipboard_exact_match':True,
+                    'clipboard_verification':'Sampled immediately before shortcut; other clients can still intervene.',
+                    'verification':'Destination text is not verified. Inspect for paste dialogs or read the target element.',
+                    'clipboard':'CLIPBOARD replaced until another owner takes it or this server exits. PRIMARY is unchanged.',
+                    'warning':'Shift+Insert can select PRIMARY in some terminals. A terminal may execute pasted newlines; no confirmation dialog is automatically accepted.'}
 
     def wait_for(self, condition, window_id=None, element_id=None, text=None, timeout=5):
         if isinstance(timeout, bool) or not isinstance(timeout, (int,float)) or not 0 <= timeout <= 10:

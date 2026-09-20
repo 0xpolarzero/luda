@@ -122,6 +122,17 @@ def main():
             wait(lambda: oracle('semantic/state.json')['text'] == 'background probe! pasted')
             rows.append({'case': 'automatic-paste-foreground-independent-text-oracle', 'passed': True})
 
+            # A minimized target can refuse background interaction. Luda may
+            # restore it once only when that refusal proves no mutation occurred.
+            minimized_id = element(sw, 'Contract text')
+            command('xdotool', 'windowminimize', str(sw['xid']))
+            wait(lambda: not d.target_window(sw['window_id'], False)['active'])
+            result = d.type_text(minimized_id, 'minimized target replacement', mode='replace')
+            wait(lambda: oracle('semantic/state.json')['text'] == 'minimized target replacement')
+            assert result['exact_match']
+            rows.append({'case': 'minimized-target-automatic-routing', 'passed': True,
+                         'became_foreground': d.target_window(sw['window_id'], False)['active']})
+
             # The independent user stream types into a different foreground app
             # while Luda mutates two background apps through their public tools.
             user = launch('/usr/bin/python3', str(ROOT / 'tests/semantic_fixture.py'), str(base / 'user'))
