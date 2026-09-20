@@ -41,12 +41,29 @@ def send(pid,start,signum):
 
 
 def run(argv, timeout, evidence):
+    interrupted = []
+    def request_cleanup(signum, _frame):
+        # Repeated termination requests must not interrupt descendant cleanup.
+        if not interrupted:
+            interrupted.append(signal.Signals(signum).name)
+    previous = {number: signal.getsignal(number) for number in (signal.SIGTERM, signal.SIGINT)}
+    try:
+        for number in previous:
+            signal.signal(number, request_cleanup)
+        return supervise(argv, timeout, evidence, interrupted)
+    finally:
+        for number, handler in previous.items():
+            signal.signal(number, handler)
+
+
+def supervise(argv, timeout, evidence, interrupted):
     if ctypes.CDLL(None).prctl(36,1,0,0,0)!=0:raise RuntimeError('CI stage requires Linux subreaper support')
     parent=os.getppid();child=subprocess.Popen(argv,start_new_session=True)
     reason='completed';seen={};code=None
     try:
         deadline=time.monotonic()+timeout
         while True:
+            if interrupted:reason='signal';break
             seen.update(descendants(os.getpid(),processes()))
             code=child.poll()
             if code is not None:break
@@ -76,7 +93,8 @@ def run(argv, timeout, evidence):
             empty=empty+1 if not survivors else 0
             if empty>=2 or time.monotonic()-started>=5:break
             time.sleep(.02)
-        value={'reason':reason,'exit_code':code,'cleanup_confirmed':not survivors,
+        if interrupted:reason='signal'
+        value={'reason':reason,'signal':interrupted[0] if interrupted else None,'exit_code':code,'cleanup_confirmed':not survivors,
                'owned_processes_seen':len(seen),'survivors':list(survivors),'cleanup_seconds':round(time.monotonic()-started,3)}
         evidence.write_text(json.dumps(value,indent=2)+'\n')
     return 0 if reason=='completed' and code==0 and not survivors else 1

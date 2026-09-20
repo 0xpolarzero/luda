@@ -31,6 +31,43 @@ class CiStage(unittest.TestCase):
                     time.sleep(2.1);self.assertFalse(marker.exists(),'Detached writer survived cleanup')
                 finally:peer.terminate();peer.wait(timeout=3)
 
+    def test_termination_signals_reap_owned_children_and_preserve_peer(self):
+        for requested in (signal.SIGTERM, signal.SIGINT):
+            with self.subTest(signal=requested), tempfile.TemporaryDirectory() as directory:
+                root=Path(directory);pidfile=root/'child';marker=root/'late';receipt=root/'receipt.json'
+                child=root/'child.py'
+                child.write_text('import os,signal,time\nfrom pathlib import Path\nos.setsid()\nsignal.signal(signal.SIGTERM,signal.SIG_IGN)\nPath('+repr(str(pidfile))+').write_text(str(os.getpid()))\nos.kill(os.getpid(),signal.SIGSTOP)\ntime.sleep(2)\nPath('+repr(str(marker))+').write_text("late")\n')
+                parent=root/'parent.py'
+                parent.write_text('import subprocess,sys,time\nsubprocess.Popen([sys.executable,'+repr(str(child))+'])\ntime.sleep(30)\n')
+                peer=subprocess.Popen([sys.executable,'-c','import time;time.sleep(20)'])
+                owner=subprocess.Popen([sys.executable,str(ROOT/'scripts/ci_stage.py'),'--timeout','30','--evidence',str(receipt),'--',sys.executable,str(parent)],stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
+                try:
+                    deadline=time.monotonic()+3
+                    while not pidfile.exists() and time.monotonic()<deadline:time.sleep(.005)
+                    self.assertTrue(pidfile.exists(),'Owned child did not start')
+                    # Wait for actual stopped state, not merely publication of PID.
+                    pid=int(pidfile.read_text())
+                    while time.monotonic()<deadline:
+                        state=Path('/proc',str(pid),'stat').read_text().rsplit(')',1)[1].split()[0]
+                        if state=='T':break
+                        time.sleep(.005)
+                    self.assertEqual(state,'T')
+                    started=time.monotonic();owner.send_signal(requested)
+                    time.sleep(.1)
+                    owner.send_signal(signal.SIGINT if requested==signal.SIGTERM else signal.SIGTERM)
+                    _,errors=owner.communicate(timeout=7)
+                    self.assertEqual(owner.returncode,1,errors)
+                    self.assertLess(time.monotonic()-started,6)
+                    proof=json.loads(receipt.read_text())
+                    self.assertEqual(proof['reason'],'signal');self.assertEqual(proof['signal'],requested.name)
+                    self.assertTrue(proof['cleanup_confirmed']);self.assertEqual(proof['survivors'],[])
+                    self.assertFalse(Path('/proc',str(pid)).exists(),'Owned child was not reaped')
+                    self.assertIsNone(peer.poll(),'Unrelated same-UID peer was signalled')
+                    time.sleep(2.1);self.assertFalse(marker.exists(),'Late writer survived signal cleanup')
+                finally:
+                    if owner.poll() is None:owner.terminate();owner.wait(timeout=7)
+                    peer.terminate();peer.wait(timeout=3)
+
     def test_wrapper_preserves_failure_receipt_and_does_not_accept_cleaned_failure(self):
         sys.path.insert(0,str(ROOT/'scripts'))
         try:

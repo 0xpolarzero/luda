@@ -56,7 +56,7 @@ CI stage watchdogs now use `scripts/ci_stage.py`, an isolated Linux subreaper fo
 each installer, import, regression and live-probe stage. Detached process groups
 remain descendants (or are adopted by that stage owner); ownership is never inferred
 from a shared UID or executable name. PID/start identity plus pidfd signalling
-avoids signalling a recycled PID. A stage timeout or caller disappearance starts
+avoids signalling a recycled PID. A stage timeout, caller disappearance, or SIGTERM/SIGINT request starts
 bounded cleanup; successful stage exit also cleans leftover descendants. Stopped
 children are resumed, then terminated, with escalation to SIGKILL after one second.
 Cleanup waits up to five seconds and writes a separate `*-cleanup.json` receipt.
@@ -69,3 +69,5 @@ marker and survival of an unrelated same-UID peer. It passes under root and the
 ordinary UID1001 test account. This is CI fixture containment; it does not promise
 cleanup if the supervisor itself is SIGKILLed, the kernel cannot complete signals,
 or the entire job/VM disappears. It does not undo effects dispatched before cleanup.
+
+Actual signal regressions also stop an owned detached writer and deliver SIGTERM or SIGINT to the stage supervisor, followed by the other signal during cleanup. Both retain the first signal in the receipt (`reason="signal"`), return nonzero, reap the writer, prevent its delayed write, and preserve an unrelated same-UID peer. Signal handlers request cleanup rather than raising through it. This support does not extend to SIGKILL or prevent effects already dispatched.
