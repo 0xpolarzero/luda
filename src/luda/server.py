@@ -387,7 +387,7 @@ def main():
         print(json.dumps(asyncio.run(_collect_report(cli=True)), separators=(',', ':')))
         return
     if args.command=='doctor':
-        result = execute('doctor')
+        result = asyncio.run(desktop_doctor())
         print(result.content[0].text)
         raise SystemExit(1 if result.isError or not json.loads(result.content[0].text).get('ready') else 0)
     if args.command=='control':

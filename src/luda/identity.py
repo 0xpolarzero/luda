@@ -1,6 +1,6 @@
 """Content identities for the running tool declarations and bundled skill."""
 import hashlib
-from importlib.metadata import distribution
+from importlib.metadata import distribution, PackageNotFoundError
 import json
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
@@ -23,7 +23,7 @@ def bundled_skill_identity(dist):
         if len(content) > 262144:
             return {'status': 'unavailable', 'reason': 'artifact_size_limit', 'scope': scope}
         return {'status': 'identified', 'sha256': hashlib.sha256(content).hexdigest(), 'scope': scope}
-    except (OSError, ValueError, TypeError, AttributeError):
+    except (OSError, ValueError, TypeError, AttributeError, LookupError):
         return {'status': 'unavailable', 'reason': 'artifact_unreadable', 'scope': scope}
 
 
@@ -32,8 +32,15 @@ def version_identity(tool_definitions):
     declarations = sorted(tool_definitions, key=lambda tool: tool['name'])
     canonical = json.dumps(declarations, sort_keys=True, ensure_ascii=False,
                            separators=(',', ':'), allow_nan=False).encode('utf-8')
-    dist = distribution('luda')
-    return {'identity_format': 1, 'driver_version': dist.version,
+    try:
+        dist = distribution('luda')
+        driver_version = dist.version
+        if not isinstance(driver_version, str) or not driver_version:
+            driver_version = None
+    except (PackageNotFoundError, OSError, ValueError, TypeError, AttributeError, LookupError):
+        dist = None
+        driver_version = None
+    return {'identity_format': 1, 'driver_version': driver_version,
             'tool_schema': {'sha256': hashlib.sha256(canonical).hexdigest(),
                             'algorithm': 'sha256-canonical-tools-list-v1',
                             'scope': 'Complete tools/list declarations, including descriptions and annotations.'},

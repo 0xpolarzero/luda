@@ -12,11 +12,12 @@ The stdio transport is the supported runtime interface. Generated configurations
 
 ## Identifying a running contract
 
-`desktop_doctor.versions` adds identity format 1 without changing the existing
+`desktop_doctor.versions` (also returned by `luda doctor`) adds identity format 1 without changing the existing
 `version`, health or capability fields:
 
 - `driver_version` is the installed Luda distribution version, also advertised
-  during MCP initialization.
+  during MCP initialization. If distribution metadata becomes unreadable after
+  startup, this additive field is null rather than failing an otherwise ready doctor.
 - `tool_schema.sha256` fingerprints the actual complete `tools/list` declarations.
   Algorithm `sha256-canonical-tools-list-v1` sorts tools by name, serializes their
   JSON-mode declarations with absent optional fields omitted, sorts object keys,
@@ -40,3 +41,10 @@ schema migration or cross-version interoperability is qualified here. Focused
 public-tool tests cover SHIP-08's additive identity reporting, schema-order
 stability, changed schema/skill bytes and unavailable skill artifacts. They do not
 prove a remote client's skill discovery or an upgrade between released versions.
+
+CLI and MCP doctor use the same discovery/identity path. A focused CLI regression
+checks matching identities and preserves readiness/exit status. Distribution-record
+fixtures exercise installed skill lookup and malformed metadata. A separately
+built wheel was installed offline into a disposable virtual environment and its
+reported skill SHA-256 matched the actual installed `share/luda/skills/luda/SKILL.md`
+bytes; this verifies the wheel layout rather than only editable-source discovery.
