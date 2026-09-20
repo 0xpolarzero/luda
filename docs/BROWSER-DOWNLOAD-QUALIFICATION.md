@@ -1,0 +1,16 @@
+# Browser download destination and completion
+
+`tests/live_browser_download.py --executable PATH` qualifies one local synthetic FILE-09 workflow. It requires an ordinary user and a private Xvfb/D-Bus/Xfwm4 session with private XDG directories established before D-Bus and `LUDA_ISOLATED_TEST_DISPLAY=1`. Browser installation is an explicit test dependency; the suite never downloads a browser. A temporary profile enables the Save dialog. No existing browser profile is opened or changed.
+
+Observed on Ubuntu 24.04 ARM64, UID 1001, Chromium for Testing 153.0.8010.12:
+
+1. Public Desktop semantic invocation clicks the owned localhost download link. A native Save File dialog appears.
+2. That dialog has no matching AT-SPI top-level. Luda correctly returns `ACCESSIBILITY_UNAVAILABLE`; provider candidates and the requested X11 window are retained independently. The screenshot shows the filename field focused. Public keyboard/clipboard input supplies the chosen absolute path, and a fresh screenshot-bound pointer click presses its visible Save button.
+3. The local HTTP server deliberately withholds the response after its first 65,536 bytes. The browser reports a download in progress, a temporary `.crdownload` exists, and the chosen final filename does not yet exist. Receiving headers or dispatching Save is not counted as completion.
+4. After the test server releases the remaining bytes, the browser exposes Show in folder, the temporary file disappears, and the independently read final file matches all 1,474,560 bytes. SHA-256: `4d9f2dae8f90d0be8f7abcb10bf2ab35458f2323c72dd9e742dd4e0d1d6ffe65`. The chosen name is `chosen 日本語.txt`; no file is written under the suggested default name.
+
+All four assertions passed; bounded process cleanup found no surviving tagged processes. `artifacts/browser-download/` retains results, dialog screenshot, provider/window metadata and progress/final trees. All content is synthetic. Only a loopback HTTP listener is used, browser background networking is disabled, and external hostname resolution is blocked. Safe Browsing is disabled in this temporary synthetic test profile; this is not an installation recommendation.
+
+Earlier failing attempts remain in the artifact directory: an invalid inspection limit, an accessibility-startup race, unavailable semantic filename discovery, a Return key that did not submit the dialog, and assumptions about Pause/Cancel controls that had moved behind More actions in this browser version. The final workflow uses the actually observed Save button and in-progress indicator. An initially suspected wrong-window tree was a stale diagnostic file from an earlier successful inspection; a fresh dialog request returned the correct unavailable error. No runtime fix was needed.
+
+Limits: the Save click uses the observed fixed English GTK dialog layout and is a fixture workflow, not general file-dialog recognition. Native chooser accessibility remains unavailable. Network failures, interrupted/resumed downloads, duplicate names, security warnings, cancellation, other browser versions/locales and arbitrary document types remain unqualified. These checks do not turn the separate browser rich-text and protected-input failures into passes.
