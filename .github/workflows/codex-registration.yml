@@ -1,4 +1,4 @@
-name: Codex host registration
+name: Codex plugin registration
 on:
   push:
   pull_request:

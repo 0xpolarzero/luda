@@ -19,3 +19,9 @@ Known limitations:
 Product defects are failures of documented contracts. Test-harness defects concern fixtures, timing, cleanup or evidence collection and are recorded separately; fixing a harness does not diagnose a historical product failure. Unsupported environments produce capability errors rather than new architecture requirements.
 
 The [existing acceptance inventory](REQUIREMENTS.md) is retained with sandbox-specific cases removed. Local tests do not automatically qualify an entire requirement. Historical reports and original failures remain in test evidence or Git history; they are not current installation instructions or release gates.
+
+## Standalone acceptance
+
+Source `830a3c4` passed [the retained standalone checks](../tests/evidence/standalone-830a3c4/README.md): 920 unit cases (919 root passes, 917 ordinary-account passes, remaining cases explicitly skipped), all 17 private native GUI suites, semantic/workspace regressions, an actual locked installation matching all 50 modules and the skill, and native/MCP workflows through that installed executable. Three build regressions separately passed with locked build tools. Plugin schema validation and actual temporary-profile plugin registration also passed.
+
+This completes local supported-core acceptance. Optional backend CI results are tracked separately. The limitations above remain support boundaries, not open integration projects.
