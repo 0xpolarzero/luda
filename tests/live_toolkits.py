@@ -8,6 +8,7 @@ import subprocess
 import time
 from luda.desktop import Desktop
 from luda.common import DesktopError
+from toolkit_readiness import wait_for_accessibility
 ROOT=Path(__file__).resolve().parents[1]
 OUT=ROOT/'artifacts/toolkits';OUT.mkdir(parents=True,exist_ok=True)
 results=[]
@@ -61,7 +62,9 @@ for n,_ in w.candidates(int(sys.argv[1])):
    time.sleep(.1)
   if w is None:raise RuntimeError('Fixture window did not appear')
   wid=w['window_id'];d.activate(wid);time.sleep(.3)
-  tree=attempt('scoped-tree',lambda:d.inspect(wid))
+  readiness=[]
+  tree=attempt('scoped-tree',lambda:wait_for_accessibility(lambda:d.inspect(wid),evidence=readiness))
+  (out/'accessibility-ready.json').write_text(json.dumps(readiness,indent=2))
   if not tree:
    script = """import json,sys,gi
 sys.path.insert(0,sys.argv[2])
