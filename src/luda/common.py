@@ -3,6 +3,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from types import MappingProxyType
 import os
+import errno
 import math
 import re
 import selectors
@@ -107,25 +108,27 @@ def run(args, *, data=None, timeout=3, effect="none", cleanup=False,
         raise DesktopError("INVALID_ARGUMENT", "Output byte limit must be a nonnegative integer.")
     if not cleanup:
         checkpoint()
-    source = tempfile.TemporaryFile() if data is not None else None
+    source = None
+    process = None
+    streams = None
     try:
+        source = tempfile.TemporaryFile() if data is not None else None
         if source:
             source.write(data)
             source.seek(0)
-        process = subprocess.Popen(args, stdin=source if source else subprocess.DEVNULL,
-                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                   start_new_session=True, env=subprocess_environment())
-    except FileNotFoundError as exc:
-        raise DesktopError("DEPENDENCY_MISSING", f"Missing executable: {args[0]}") from exc
-    finally:
+        try:
+            process = subprocess.Popen(args, stdin=source if source else subprocess.DEVNULL,
+                                       stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                       start_new_session=True, env=subprocess_environment())
+        except FileNotFoundError as exc:
+            raise DesktopError("DEPENDENCY_MISSING", f"Missing executable: {args[0]}") from exc
+        mark_effect(effect)
         if source:
             source.close()
-    mark_effect(effect)
-    deadline = elapsed_time() + timeout
-    streams = None
-    output, error = bytearray(), bytearray()
-    total = 0
-    try:
+            source = None
+        deadline = elapsed_time() + timeout
+        output, error = bytearray(), bytearray()
+        total = 0
         streams = selectors.DefaultSelector()
         for pipe, buffer in ((process.stdout, output), (process.stderr, error)):
             os.set_blocking(pipe.fileno(), False)
@@ -138,8 +141,8 @@ def run(args, *, data=None, timeout=3, effect="none", cleanup=False,
                 raise DesktopError("TIMEOUT", "Command timed out. Inspect before retrying.", effect=effect)
             for key, _ in streams.select(timeout=min(remaining, .05)):
                 try:
-                    # Read at most one byte beyond the allowance to detect an
-                    # overflow without allocating a large temporary payload.
+                    # One byte beyond the allowance detects overflow without
+                    # allocating an unbounded intermediate output chunk.
                     chunk = os.read(key.fd, min(65536, max_output_bytes - total + 1))
                 except BlockingIOError:
                     continue
@@ -154,23 +157,40 @@ def run(args, *, data=None, timeout=3, effect="none", cleanup=False,
         if process.returncode:
             raise DesktopError("BACKEND_ERROR", error[:600].decode(errors="replace"), effect=effect)
         return bytes(output)
-    except BaseException:
-        try:
-            os.killpg(process.pid, signal.SIGKILL)
-        except ProcessLookupError:
-            pass
-        try:
-            process.wait(timeout=1)
-        except subprocess.TimeoutExpired:
-            # Do not let cleanup conceal the original error. The owned group
-            # was signalled, and inherited pipes are closed below independently.
-            pass
+    except BaseException as exc:
+        if process is not None:
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            try:
+                process.wait(timeout=1)
+            except subprocess.TimeoutExpired:
+                # The owned group was signalled; close inherited pipes below.
+                pass
+        if isinstance(exc, MemoryError) or (isinstance(exc, OSError) and exc.errno in
+                                             (errno.EMFILE, errno.ENFILE, errno.ENOMEM, errno.EAGAIN)):
+            failure_effect = effect if process is not None else 'none'
+            operation = _current_operation.get()
+            if not cleanup and operation:
+                if operation.effect != 'none':
+                    failure_effect = 'uncertain'
+                if operation.cancelled.is_set():
+                    raise DesktopError('CANCELLED', 'Operation cancelled. Inspect state before retrying.', effect=failure_effect) from exc
+                if elapsed_time() >= operation.deadline:
+                    raise DesktopError('TIMEOUT', 'Overall operation deadline exceeded. Inspect state before retrying.', effect=failure_effect) from exc
+            raise DesktopError('RESOURCE_UNAVAILABLE',
+                               'Backend helper exhausted memory or file/process resources. Release resources or increase the account limit; inspect state before retrying.',
+                               effect=failure_effect) from exc
         raise
     finally:
+        if source is not None:
+            source.close()
         if streams is not None:
             streams.close()
-        process.stdout.close()
-        process.stderr.close()
+        if process is not None:
+            process.stdout.close()
+            process.stderr.close()
 
 
 def process_identity(pid):
