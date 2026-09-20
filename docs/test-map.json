@@ -1193,6 +1193,9 @@
         "test_report.ReportPrivacy.test_unexpected_environment_and_doctor_exceptions_are_content_free",
         "test_report.ReportPrivacy.test_malformed_doctor_payload_cannot_escape_projection",
         "test_report.ReportPrivacy.test_mcp_uses_snapshot_of_prior_metadata_not_doctor_payload",
+        "test_report.ReportPrivacy.test_codes_and_semantic_verbs_use_fixed_vocabulary",
+        "test_report.ReportPrivacy.test_execute_records_only_fixed_semantic_verb_not_invoke_name",
+        "test_report.ReportPrivacy.test_identity_projection_reuses_doctor_without_arbitrary_fields",
         "test_report.ReportPrivacy.test_schema_readonly_no_free_text_parameters",
         "test_report.ReportPrivacy.test_cli_fresh_history_and_stdout_json_without_desktop_environment"
       ],

@@ -77,6 +77,41 @@ class ReportPrivacy(unittest.TestCase):
         self.assertEqual(value['operations'][0]['method'], 'drag_between')
         self.assertNotIn('SENSITIVE', json.dumps(value))
 
+    def test_codes_and_semantic_verbs_use_fixed_vocabulary(self):
+        rows = r.project_history([
+            {'method': 'element', 'action': 'invoke', 'code': 'STALE_TARGET'},
+            {'method': 'element', 'action': 'SENSITIVE', 'code': 'SENSITIVE'},
+            {'method': 'paste', 'action': 'secret', 'code': ['INTERNAL_ERROR']}])
+        self.assertEqual(rows[0], {'method': 'element', 'action': 'invoke', 'code': 'STALE_TARGET'})
+        self.assertEqual(rows[1], {'method': 'element'})
+        self.assertEqual(rows[2], {'method': 'paste'})
+
+    def test_execute_records_only_fixed_semantic_verb_not_invoke_name(self):
+        from collections import deque
+        from luda.common import DesktopError
+        history = deque(maxlen=32)
+        with patch.object(server, '_history', history), patch.object(server, 'get_backend', side_effect=DesktopError('STALE_TARGET', 'SENSITIVE')):
+            server.execute('element', 'SENSITIVE-ELEMENT', 'invoke', action='SENSITIVE-NATIVE-ACTION')
+            server.execute('element', 'SENSITIVE-ELEMENT', 'SENSITIVE-VERB')
+        self.assertEqual(history[0]['action'], 'invoke')
+        self.assertEqual(history[0]['code'], 'STALE_TARGET')
+        self.assertNotIn('action', history[1])
+        self.assertNotIn('SENSITIVE', json.dumps(history.copy(), default=list))
+        rows = r.project_history(history)
+        self.assertEqual(rows[0]['action'], 'invoke')
+        self.assertEqual(rows[0]['code'], 'STALE_TARGET')
+
+    def test_identity_projection_reuses_doctor_without_arbitrary_fields(self):
+        health = {'versions': {'driver_version': '0.1.0', 'tool_schema': {'sha256': 'a'*64, 'scope': 'SENSITIVE'}, 'bundled_skill': {'sha256': 'SENSITIVE', 'status': 'SENSITIVE', 'reason': 'SENSITIVE'}}}
+        response = CallToolResult(content=[TextContent(type='text', text=json.dumps(health))])
+        with patch.object(server, 'desktop_doctor', new=AsyncMock(return_value=response)) as doctor, patch.object(r, 'environment_summary', return_value={}):
+            value = json.loads(asyncio.run(server.desktop_report()).content[0].text)
+        doctor.assert_awaited_once()
+        self.assertEqual(value['versions']['tool_schema']['sha256'], 'a'*64)
+        self.assertIsNone(value['versions']['bundled_skill']['sha256'])
+        self.assertIsNone(value['versions']['bundled_skill']['status'])
+        self.assertNotIn('SENSITIVE', json.dumps(value))
+
     def test_schema_readonly_no_free_text_parameters(self):
         tool=next(t for t in asyncio.run(server.mcp.list_tools()) if t.name=='desktop_report')
         self.assertTrue(tool.annotations.readOnlyHint)

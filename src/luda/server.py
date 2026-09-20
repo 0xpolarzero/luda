@@ -67,6 +67,10 @@ def execute(method, *args, _cancelled=None, **kwargs):
     started = time.monotonic()
     operation_id = uuid.uuid4().hex
     event = {'operation_id':operation_id, 'method':method}
+    if method == 'element' and len(args) > 1:
+        from .reporting import ELEMENT_ACTIONS
+        if isinstance(args[1], str) and args[1] in ELEMENT_ACTIONS:
+            event['action'] = args[1]
     try:
         if _quarantined.is_set() and method != 'recover_input':
             raise DesktopError('BUSY', 'Previous cancelled operation is still cleaning up; no new input sent.')
@@ -178,7 +182,7 @@ async def _collect_report(cli=False):
     with _history_lock:
         history = list(_history)
     try:
-        probe = await execute_async('doctor')
+        probe = await desktop_doctor()
         health = json.loads(probe.content[0].text) if not probe.isError else {}
     except Exception:
         health = {}
@@ -187,7 +191,7 @@ async def _collect_report(cli=False):
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
 async def desktop_report() -> CallToolResult:
-    """Return a sanitized bug-report JSON: fixed environment/dependency versions, projected health and up to 32 recent operation IDs/methods/effects/timings from this MCP process. Excludes desktop content, paths, exceptions and action arguments. No files, uploads or replay. Supply synthetic repro steps separately; explicitly save/delete the returned report if needed."""
+    """Return a sanitized bug-report JSON: fixed environment/dependency versions, projected health and up to 32 recent operation IDs/methods/effects/timings, fixed error codes and semantic verbs from this MCP process. Excludes desktop content, paths, exceptions and action arguments. No files, uploads or replay. Supply synthetic repro steps separately; explicitly save/delete the returned report if needed."""
     report = await _collect_report()
     return CallToolResult(content=[TextContent(type='text', text=json.dumps(report, separators=(',', ':')))])
 

@@ -6,6 +6,9 @@ import re
 from .common import run
 
 METHODS = frozenset('doctor list_windows window_overview observe inspect workspaces wait_for wait_condition reconnect recover_input list_applications launch_application activate pointer pointer_popup hover drag_between key paste element type_text manage_window switch_workspace'.split())
+# Deliberate fixed vocabulary; never infer safety from arbitrary uppercase text.
+CODES = frozenset('ACTION_REQUIRED ACTIVATION_FAILED ADMISSION_UNAVAILABLE BACKEND_ERROR BUSY CANCELLED CLIPBOARD_CHANGED CLIPBOARD_FAILED CLOSED CONTROL_PAUSED CONTROL_UNAVAILABLE DEPENDENCY_MISSING DESKTOP_CHANGED DISPLAY_UNAVAILABLE FOCUS_CHANGED FOCUS_UNVERIFIED INPUT_CLEANUP_PENDING INPUT_HELD INPUT_RELEASE_UNVERIFIED INPUT_STATE_CHANGED INPUT_UNAVAILABLE INTERNAL_ERROR INVALID_ARGUMENT INVALID_CARET INVALID_KEY INVALID_PROPERTY INVALID_WINDOW_TOKEN KEYBOARD_CLEANUP_PENDING KEYBOARD_UNAVAILABLE KEYMAP_CHANGED NOT_EDITABLE NOT_INTERACTABLE OCCLUDED_TARGET OUTPUT_LIMIT OUT_OF_BOUNDS PROTECTED_FIELD RESOURCE_UNAVAILABLE SCREENSHOT_LIMIT SCREENSHOT_UNAVAILABLE SELECTION_UNVERIFIED SESSION_BLOCKED SESSION_CHANGED STALE_OBSERVATION STALE_TARGET TEXT_CHANGED TEXT_MISMATCH TEXT_REPRESENTATION_UNSUPPORTED TEXT_TOO_LARGE TIMEOUT TOPOLOGY_UNAVAILABLE UNSAFE_RUNTIME UNSUPPORTED UNSUPPORTED_ACTION UNSUPPORTED_INPUT_STATE UNSUPPORTED_KEYMAP UNSUPPORTED_PASTE UNSUPPORTED_SELECTION UNSUPPORTED_TEXT VERIFICATION_LIMIT'.split())
+ELEMENT_ACTIONS = frozenset('read secret choose focus invoke select value check expand'.split())
 EFFECTS = frozenset(('none', 'dispatched', 'verified', 'uncertain'))
 PACKAGES = ('xdotool', 'wmctrl', 'scrot', 'xclip', 'x11-utils', 'at-spi2-core', 'libgtk-3-0t64', 'xfwm4')
 DEPENDENCIES = ('xdotool', 'wmctrl', 'scrot', 'xclip', 'xprop')
@@ -70,6 +73,21 @@ def project_health(value):
     return result
 
 
+def project_versions(health):
+    value = health.get('versions') if isinstance(health, dict) else None
+    value = value if isinstance(value, dict) else {}
+    result = {'driver_version': safe_version(value.get('driver_version'))}
+    for name in ('tool_schema', 'bundled_skill'):
+        item = value.get(name)
+        item = item if isinstance(item, dict) else {}
+        digest = item.get('sha256')
+        result[name] = {'sha256': digest if isinstance(digest, str) and re.fullmatch(r'[0-9a-f]{64}', digest) else None}
+        if name == 'bundled_skill':
+            status = item.get('status')
+            result[name]['status'] = status if isinstance(status, str) and status in ('identified', 'unavailable') else None
+    return result
+
+
 def project_history(history):
     result = []
     for value in list(history)[-32:]:
@@ -85,6 +103,12 @@ def project_history(history):
         effect = value.get('effect')
         if isinstance(effect, str) and effect in EFFECTS:
             row['effect'] = effect
+        code = value.get('code')
+        if isinstance(code, str) and code in CODES:
+            row['code'] = code
+        action = value.get('action')
+        if method == 'element' and isinstance(action, str) and action in ELEMENT_ACTIONS:
+            row['action'] = action
         elapsed = value.get('elapsed_ms')
         if type(elapsed) in (int, float) and math.isfinite(elapsed) and 0 <= elapsed <= 86400000:
             row['elapsed_ms'] = round(elapsed, 3)
@@ -102,7 +126,7 @@ def build_report(health, history, *, cli=False, recovering=False):
         # A diagnostic failure is not permission to serialize its exception.
         environment = empty_environment()
     return {'schema_version': 1, 'effect': 'none', 'environment': environment,
-            'health': project_health(health), 'recovering': recovering is True,
+            'health': project_health(health), 'versions': project_versions(health), 'recovering': recovering is True,
             'history_scope': 'fresh_cli_process' if cli else 'current_mcp_process',
             'history_limit': 32, 'operations': project_history(history),
             'omitted': ['screenshots', 'window_titles', 'input_text', 'clipboard', 'paths',
