@@ -73,7 +73,9 @@ class Worker:
         # Initial blank page existed before monitor registration: navigate fresh.
         self.page.goto(url, wait_until='domcontentloaded', timeout=5000)
         self.protocol = self.context.new_cdp_session(self.page)
-        self.protocol.send('Emulation.setFocusEmulationEnabled', {'enabled':False})
+        # CDP input is addressed to this owned page. Keep its document active
+        # without asking the desktop window manager for the human keyboard.
+        self.protocol.send('Emulation.setFocusEmulationEnabled', {'enabled':True})
         session = self.context.browser.new_browser_cdp_session()
         pid = next(int(p['id']) for p in session.send('SystemInfo.getProcessInfo')['processInfo'] if p['type']=='browser')
         session.detach()
@@ -148,7 +150,9 @@ class Worker:
             current = False
         if not current:
             raise Refused('STALE_TARGET')
-        self.protocol.send('Emulation.setFocusEmulationEnabled', {'enabled':False})
+        # CDP input is addressed to this owned page. Keep its document active
+        # without asking the desktop window manager for the human keyboard.
+        self.protocol.send('Emulation.setFocusEmulationEnabled', {'enabled':True})
         value = self.read_value(item, secret)
         if 'error' in value:
             raise Refused(value['error'])

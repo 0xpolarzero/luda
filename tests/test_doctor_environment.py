@@ -1,3 +1,4 @@
+from contextlib import nullcontext
 import os
 import tempfile
 import unittest
@@ -15,7 +16,7 @@ class DoctorEnvironment(unittest.TestCase):
             d=Desktop(dict(os.environ,PATH=directory,DISPLAY=':selected',DBUS_SESSION_BUS_ADDRESS='selected'))
             self.addCleanup(d.close);d.x=Mock();d.x.root=1;d.x.geometry.return_value={'width':100,'height':100}
             d.x.topology.return_value={'root':d.x.geometry.return_value,'randr':{'version':[1,6],'monitors':[],'crtcs':[]}}
-            with patch.dict(os.environ,PATH='/nonexistent'),patch('luda.desktop.run',return_value=b'1'),patch('luda.desktop.session_state',return_value={'input_ready':None}),patch('luda.desktop.keyboard_capabilities',return_value={'available':True}):
+            with patch.dict(os.environ,PATH='/nonexistent'),patch('luda.desktop.run',return_value=b'1'),patch('luda.desktop.session_state',return_value={'input_ready':None}),patch('luda.desktop.keyboard_capabilities',return_value={'available':True}),patch.object(Desktop,'input_scope',return_value=nullcontext()):
                 self.assertTrue(d.doctor()['ready'])
                 (Path(directory)/'scrot').unlink()
                 result=d.doctor();self.assertFalse(result['ready']);self.assertFalse(result['dependencies']['scrot'])
@@ -25,7 +26,7 @@ class DoctorEnvironment(unittest.TestCase):
             d=Desktop(dict(os.environ,PATH=directory));self.addCleanup(d.close)
             d.x=Mock();d.x.geometry.return_value={'width':100,'height':100}
             d.x.topology.return_value={'root':d.x.geometry.return_value,'randr':{'version':[1,6],'monitors':[],'crtcs':[]}}
-            with patch('luda.desktop.run',return_value=b'1'),patch('luda.desktop.session_state',return_value={'input_ready':None}),patch('luda.desktop.keyboard_capabilities',return_value={'available':True}):
+            with patch('luda.desktop.run',return_value=b'1'),patch('luda.desktop.session_state',return_value={'input_ready':None}),patch('luda.desktop.keyboard_capabilities',return_value={'available':True}),patch.object(Desktop,'input_scope',return_value=nullcontext()):
                 result=d.doctor()
             self.assertFalse(result['dependencies']['wmctrl'])
             self.assertEqual(result['capabilities']['accessibility_read'],'unavailable')
@@ -39,7 +40,7 @@ class DoctorEnvironment(unittest.TestCase):
         d=Desktop();self.addCleanup(d.close);d.x=Mock();d.x.geometry.return_value={}
         d.x.topology.return_value={'root':d.x.geometry.return_value,'randr':{'version':[1,6],'monitors':[],'crtcs':[]}}
         for output in (b'synthetic-private-provider-output',b'-1'):
-            with patch('luda.desktop.run',return_value=output),patch('luda.desktop.session_state',return_value={'input_ready':None}),patch('luda.desktop.keyboard_capabilities',return_value={'available':True}):
+            with patch('luda.desktop.run',return_value=output),patch('luda.desktop.session_state',return_value={'input_ready':None}),patch('luda.desktop.keyboard_capabilities',return_value={'available':True}),patch.object(Desktop,'input_scope',return_value=nullcontext()):
                 result=d.doctor()
                 self.assertFalse(result['accessibility_available']);self.assertFalse(result['ready'])
                 self.assertNotIn(output.decode(),result['accessibility_error'])

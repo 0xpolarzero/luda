@@ -1,3 +1,4 @@
+from contextlib import nullcontext
 """Font coverage is bounded, honest and advisory under provider failure."""
 import errno
 from contextlib import redirect_stdout
@@ -52,7 +53,7 @@ class FontCoverage(unittest.TestCase):
         d=Desktop(dict(os.environ,DBUS_SESSION_BUS_ADDRESS='fixture'));self.addCleanup(d.close);d.x=Mock();d.x.root=1;d.x.geometry.return_value={'width':100,'height':100}
         d.x.topology.return_value={'root':d.x.geometry.return_value,'randr':{'version':[1,6],'monitors':[],'crtcs':[]}}
         for coverage in ({'available':True,'status':'partial','missing_samples':['Japanese']},{'available':False,'status':'unavailable'}):
-            with patch('luda.desktop.font_coverage',return_value=coverage) as probe,patch('luda.desktop.shutil.which',return_value='/bin/true'),patch('luda.desktop.run',return_value=b'1'),patch('luda.desktop.session_state',return_value={'input_ready':True}),patch('luda.desktop.keyboard_capabilities',return_value={'available':True}):
+            with patch('luda.desktop.font_coverage',return_value=coverage) as probe,patch('luda.desktop.shutil.which',return_value='/bin/true'),patch('luda.desktop.run',return_value=b'1'),patch('luda.desktop.session_state',return_value={'input_ready':True}),patch('luda.desktop.keyboard_capabilities',return_value={'available':True}),patch.object(Desktop,'input_scope',return_value=nullcontext()):
                 report=d.doctor();self.assertTrue(report['ready']);self.assertEqual(report['font_coverage'],coverage)
                 self.assertEqual(report['capabilities']['screen_observation'],'backend_available');self.assertEqual(report['capabilities']['verified_text_editing'],'application_dependent')
                 probe.assert_called_once_with(d.environment)

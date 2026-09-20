@@ -28,18 +28,25 @@ def main():
             else:
                 from ._private_input import bind_private_input
                 binding=bind_private_input(native)
-                binding.validate()
-                test=C.CDLL('libXtst.so.6');test.XTestFakeButtonEvent.argtypes=[C.c_void_p,C.c_uint,C.c_int,C.c_ulong]
-                native.lib.XSync.argtypes=[C.c_void_p,C.c_int]
-                if not test.XTestFakeButtonEvent(native.display,int(request['button']),request['operation']=='press',0):
-                    raise DesktopError('INPUT_UNAVAILABLE','XTest pointer dispatch failed.',effect='uncertain')
-                native.lib.XSync(native.display,False)
-                released=request['operation']=='release'
-                if released and int(request['button'])<=5:
-                    native.lib.XQueryPointer.argtypes=[C.c_void_p,C.c_ulong,C.POINTER(C.c_ulong),C.POINTER(C.c_ulong)]+[C.POINTER(C.c_int)]*4+[C.POINTER(C.c_uint)]
-                    root,child=C.c_ulong(),C.c_ulong();coordinates=[C.c_int() for _ in range(4)];mask=C.c_uint()
-                    okay=native.lib.XQueryPointer(native.display,native.root,C.byref(root),C.byref(child),*[C.byref(value) for value in coordinates],C.byref(mask))
-                    released=bool(okay and not mask.value&(1<<(7+int(request['button']))))
+                native.lib.XGrabServer.argtypes=[C.c_void_p]
+                native.lib.XUngrabServer.argtypes=[C.c_void_p]
+                native.lib.XGrabServer(native.display)
+                try:
+                    binding.validate()
+                    test=C.CDLL('libXtst.so.6');test.XTestFakeButtonEvent.argtypes=[C.c_void_p,C.c_uint,C.c_int,C.c_ulong]
+                    native.lib.XSync.argtypes=[C.c_void_p,C.c_int]
+                    if not test.XTestFakeButtonEvent(native.display,int(request['button']),request['operation']=='press',0):
+                        raise DesktopError('INPUT_UNAVAILABLE','XTest pointer dispatch failed.',effect='uncertain')
+                    native.lib.XSync(native.display,False)
+                    released=request['operation']=='release'
+                    if released and int(request['button'])<=5:
+                        native.lib.XQueryPointer.argtypes=[C.c_void_p,C.c_ulong,C.POINTER(C.c_ulong),C.POINTER(C.c_ulong)]+[C.POINTER(C.c_int)]*4+[C.POINTER(C.c_uint)]
+                        root,child=C.c_ulong(),C.c_ulong();coordinates=[C.c_int() for _ in range(4)];mask=C.c_uint()
+                        okay=native.lib.XQueryPointer(native.display,native.root,C.byref(root),C.byref(child),*[C.byref(value) for value in coordinates],C.byref(mask))
+                        released=bool(okay and not mask.value&(1<<(7+int(request['button']))))
+                finally:
+                    native.lib.XUngrabServer(native.display)
+                    native.lib.XSync(native.display,False)
                 result={'released':released,'pressed':request['operation']=='press','session_changed':False}
         else:raise DesktopError('INVALID_ARGUMENT','Invalid input helper operation.')
         print(json.dumps(result),flush=True)

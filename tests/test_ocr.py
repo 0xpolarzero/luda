@@ -1,3 +1,4 @@
+from contextlib import nullcontext
 import asyncio
 import threading
 import os
@@ -92,7 +93,7 @@ class OCRTests(unittest.TestCase):
     def test_optional_engine_absence_does_not_change_backend_readiness(self):
         d=self.driver();d.x.geometry.return_value={'width':100,'height':100}
         d.environment={'PATH':'/usr/bin','DISPLAY':':77','DBUS_SESSION_BUS_ADDRESS':'owned'}
-        with patch('luda.desktop.shutil.which',side_effect=lambda name,**kw:None if name=='tesseract' else '/usr/bin/'+name),patch('luda.desktop.run',return_value=b'0'),patch('luda.desktop.topology_summary',return_value={}),patch('luda.desktop.font_coverage',return_value={}),patch('luda.desktop.session_state',return_value={'input_ready':True}),patch('luda.desktop.keyboard_capabilities',return_value={'available':True}),patch('luda.desktop.composition_capability',return_value={}),patch.object(d.control,'status',return_value={'paused':False}):
+        with patch('luda.desktop.shutil.which',side_effect=lambda name,**kw:None if name=='tesseract' else '/usr/bin/'+name),patch('luda.desktop.run',return_value=b'0'),patch('luda.desktop.topology_summary',return_value={}),patch('luda.desktop.font_coverage',return_value={}),patch('luda.desktop.session_state',return_value={'input_ready':True}),patch('luda.desktop.keyboard_capabilities',return_value={'available':True}),patch.object(Desktop,'input_scope',return_value=nullcontext()),patch('luda.desktop.composition_capability',return_value={}),patch.object(d.control,'status',return_value={'paused':False}):
             result=d.doctor()
         self.assertFalse(result['ocr']['available']);self.assertTrue(result['ready'])
 
