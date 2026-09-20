@@ -12,7 +12,7 @@ source-bound findings.
 
 The [current unit record](UNIT-COVERAGE-CURRENT.md) now contains 730 passing root
 tests and the matching ordinary-account run (722 passed, eight unavailable Codex
-CLI tests skipped). Its map names 138 requirements and 318 distinct unit methods.
+CLI tests skipped). Its map names 145 requirements and 339 distinct unit methods.
 These subsequent results retain their own source revision and fingerprint. The [live inventory](LIVE-COVERAGE.md) registers 78 fixtures and
 162 distinct requirement associations. These overlap and are not a reliability
 percentage or evidence that all associated requirements passed.
