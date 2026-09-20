@@ -1,0 +1,20 @@
+{
+  "run": "run-1789898524358428097",
+  "source_base": "65c6fcc",
+  "source_sha256": "163243b079972a9e62a0841fe5d448085c56f203d8012337c252d23c72ca54c5",
+  "image_sha256": "ca9b9f6657b0d8f1b5d30cb6e9cd06e0955006855d77320b728aadc1b9e05dcd",
+  "reviewer": "qualification agent, view_image after run",
+  "visible_receipt": "Entry received. Not submitted.",
+  "password_masked": true,
+  "reference_visible": "Leave unchanged",
+  "sign_in_not_clicked_oracle": true,
+  "visual_review_passed": true,
+  "scope": "Image establishes masked rendering and receipt, not exact secret value; exactness uses separate app hash. Original automated passed:false is unchanged.",
+  "independent_root_review": {
+    "image_sha256_verified": true,
+    "visible_receipt": "Entry received. Not submitted.",
+    "password_masked": true,
+    "reference_visible": "Leave unchanged",
+    "scope": "Screenshot supports masking and receipt only; exact secret uses separate app hash."
+  }
+}
