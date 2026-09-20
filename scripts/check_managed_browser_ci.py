@@ -52,6 +52,10 @@ def main():
         assert source.read_bytes() == (package / relative).read_bytes(), relative
         hashes[str(relative)] = hashlib.sha256(source.read_bytes()).hexdigest()
     (output / 'runtime-hashes.json').write_text(json.dumps(hashes, indent=2) + '\n')
+    with (output / 'build-regression.log').open('w') as log:
+        subprocess.run([str(installed_python), '-I', '-m', 'unittest', 'discover',
+            '-s', str(ROOT / 'tests'), '-p', 'test_install_build_source.py'],
+            cwd=ROOT, stdout=log, stderr=subprocess.STDOUT, check=True, timeout=90)
     subprocess.run([sys.executable, str(ROOT / 'tests/evidence/managed-browser/run.py'),
         '--repo', str(ROOT), '--prefix', str(args.prefix.resolve()),
         '--output', str(output / 'live')], check=True, timeout=120)
