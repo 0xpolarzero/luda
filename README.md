@@ -20,7 +20,7 @@ The installer creates versioned releases and switches `current` atomically. The 
 ## Agent workflow
 
 1. Check `desktop_doctor`, then list windows and activate the intended one.
-2. Inspect its controls. Use `desktop_type` for verified insertion or whole-field replacement, and desired-state operations for selection, checkboxes, expansion and values.
+2. Inspect its controls. Use `desktop_type` for verified insertion or whole-field replacement where exact text access is supported, and desired-state operations for selection, checkboxes, expansion and values.
 3. When accessibility is unavailable, observe the screenshot and use its coordinates. The same click/hover tools handle owned context menus and submenus.
 4. Read back or wait for the intended state. After an uncertain result, inspect before repeating input.
 
@@ -49,6 +49,6 @@ flock /tmp/luda-live-tests.lock /absolute/luda/.venv/bin/luda-session -- \
 
 ## Contracts and scope
 
-Window identities include process lifetime and an X-resource generation token. Screenshot coordinates expire and are revalidated against display topology, geometry, focus, menus and the topmost surface. Semantic handles are scoped to an observed window and expire. Input is serialized across cooperating clients, and `desktop_control` can pause their mutations. Owned injectors provide bounded cleanup after interruption; unproven cleanup remains blocked, and old cleanup does not touch a replacement X server.
+Window identities include process lifetime and an X-resource generation token. Screenshot coordinates expire and are revalidated against display topology, geometry, focus, menus and the topmost surface. Semantic handles are scoped to an observed window and expire; private full-name fingerprints detect changes beyond displayed name prefixes. Provider reuse of an identical identity remains a limitation; see the [semantic contract](docs/SEMANTIC-CONTROLS.md). Input is serialized across cooperating clients, and `desktop_control` can pause their mutations. Owned injectors provide bounded cleanup after interruption; unproven cleanup remains blocked, and old cleanup does not touch a replacement X server.
 
 X11 does not provide exclusive ownership against human viewer input. Clipboard paste replaces CLIPBOARD, leaves PRIMARY alone and may trigger a terminal paste dialog. Direct typing verifies exact text where supported; browser and toolkit differences remain under qualification. Wayland, rich clipboard formats, OCR and browser DOM automation are outside this implementation. Read the [architecture and behavioral contracts](docs/DESIGN.md) before embedding Luda as a release component.

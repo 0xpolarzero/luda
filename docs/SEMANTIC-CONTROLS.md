@@ -1,129 +1,164 @@
 # Semantic desktop control contract
 
 The isolated AT-SPI worker operates on one previously observed top-level window.
-Requests contain `pid`, Linux process `start` identity and `op`. Element requests
-add the previously observed `target` (root path, element path, role and name).
-The parent server owns token expiry, window activation, serialized access and a
-hard subprocess deadline. Paths are internal; public tools should use opaque IDs.
+The server owns window/process lifetime checks, activation, serialized access,
+60-second element expiry and a hard worker deadline. Public tools accept opaque
+`element_id` values; provider paths and identity fingerprints remain private.
+
+## Scope and identity
+
+Inspection uniquely matches accessible top-level bounds to the observed X11
+window. A strict GTK4 compatibility path permits an exact title and dimensions
+match within the same process when the provider reports a zero-origin top-level.
+It still requires uniqueness and complete top-level enumeration. This path reports
+`window_mapping: "unique_title_and_size"`, removes node bounds and marks
+`bounds_coordinates: "unavailable"`; it must not supply pointer coordinates.
+The regular mapping is `screen_bounds`. Public inspection declares usable bounds
+as `bounds_coordinate_space: "native_x11_root_pixels"`, not screenshot pixels.
+
+Element identity includes the accessible root/path, process start, role and name.
+Public names are limited to 300 characters; a private SHA-256 fingerprint covers
+the complete unprotected name, so changes beyond that prefix invalidate a handle.
+Names over the 1 MiB UTF-8 identity budget are refused or omitted as unreadable,
+not truncated into an identity. The native name getter returns its full value
+before this check; the budget bounds encoding/hashing, not the provider reply.
+Protected names are redacted without reading their original names.
+
+A provider can reuse a path, role and identical full name for another item without
+exposing a generation change. These checks cannot distinguish that reuse. Inspect
+again after sorting, filtering or rebuilding a collection; an index is not stable
+item identity. Missing providers report `ACCESSIBILITY_UNAVAILABLE`; multiple
+matching top-levels are ambiguous. Missing or changed existing targets are stale.
 
 ## Observations
 
-`inspect` requires `bounds` and `frame_bounds` and uniquely matches these to an
-accessible top-level before traversing. Options:
+`inspect` accepts:
 
-- `limit`: integer 1..500, default 150 returned nodes.
-- `max_depth`: integer 0..60, default 30. Zero returns only the root.
-- `filters`: optional `name` and `role` case-insensitive substrings, plus `states`
-  as a list of required state strings. Filtering does not prune matching descendants.
+- `limit`: 1..500 returned nodes, default 150.
+- `max_depth`: 0..60, default 30; zero returns only the root.
+- `filters`: case-insensitive `name`/`role` substrings and required `states`.
+  Filtering does not prune descendants.
 
-Responses include `nodes`, `available`, `visited_nodes`, `max_depth`,
-`unreadable_nodes`, `unreadable_branches`, and `truncated`. `truncation` separates
-result/time limits, depth pruning, traversal budget pruning and unreadable
-branches. `available` means the scoped accessibility provider was reachable;
-zero filter matches does not mean accessibility is unavailable. Traversal visits
-at most 1600 nodes, bounds queue growth and uses a three-second inspection deadline
-in addition to the parent's hard deadline. Slow provider calls can reach the hard
-deadline first. Unreadable branches make the result incomplete.
+Responses include availability, visited-node counts, unreadable nodes/branches and
+truncation reasons. Traversal visits at most 1600 nodes, bounds queue growth and
+has a three-second inspection deadline in addition to the hard worker deadline.
+Unreadable nodes or branches make the result incomplete. A reachable provider
+with zero filter matches is not an unavailable provider. Nodes expose roles,
+states, interfaces, supported actions and available bounds/value metadata. A
+filtered or omitted parent need not have a public parent element ID.
 
-Each node exposes roles, states, supported interfaces, bounds, action names and,
-when supported, numeric `value` limits/increment/current value. Inspection adds
-`parent_path` so the server can remap it to a returned parent element ID. A filtered
-or truncated parent need not be present. Password names are redacted and values
-are omitted.
+`read` accepts `limit` 1..1000000, default 16000. It returns a text prefix, the full
+normalized character count, truncation, caret and up to 100 selection ranges.
+Public offsets always count **Unicode code points**, not bytes, UTF-16 units or
+grapheme clusters. `provider_offset_units`, `provider_text_encoding` and
+`selection_source` describe provider normalization. Protected text is refused.
 
-`read` accepts `limit` 1..1000000 (default 16000). It returns text, full reported
-character count, truncation, caret offset, up to 100 selection ranges, and explicit
-`offset_units: "Unicode code points"`. These are code points, not UTF-8 bytes or
-grapheme clusters. Protected fields are rejected before text access.
+The returned text/count/truncation use the same bounded snapshot. Normalization
+reads the complete field: at most two million provider units and one million
+returned code points before provider decoding. A smaller public read limit does
+not make this a streaming reader. Larger fields produce `VERIFICATION_LIMIT`;
+inconsistent or changing provider counts are refused rather than guessed.
+Same-length concurrent edits and edits after observation remain possible.
+
+## Provider text conventions
+
+Qt uses UTF-16 offsets and insertion lengths, including when the existing text is
+ASCII. GTK providers using code-point offsets receive UTF-8 byte insertion lengths.
+The worker validates reported counts against text before converting public offsets.
+
+Gecko's ATK text inserts one synthetic U+FEFF after each astral character. The
+Gecko-specific decoder validates and removes that padding while preserving actual
+U+FEFF characters, and converts UTF-16 offsets. Firefox's advertised EditableText
+mutations are known no-ops for the qualified text/password controls, so native
+`set`, `insert` and `secret` are refused there. Ordinary public `desktop_type` can
+use verified focus/selection, clipboard input and normalized readback instead.
+It does not use that fallback for protected input.
+
+Chromium's modern Document selection API avoids broken legacy non-BMP selection
+endpoints. The qualified older Electron provider lacks those usable endpoints;
+non-BMP selection is refused with `SELECTION_UNVERIFIABLE`. No inverse offset is
+guessed. Hypertext containing embedded objects reports its representation and
+whether plain-text verification is supported. Public typing refuses an opaque
+initial representation; if paste creates one, the outcome is uncertain with
+`TEXT_REPRESENTATION_UNSUPPORTED`. Copying and flattening rich text is not an exact
+verification substitute. See the provider evidence linked below.
 
 ## Mutations
 
-All mutations reject disabled or non-showing controls and stale identity. Errors
-before a mutation are refusals; unexpected provider exceptions/timeouts during a
-mutation must be reported by the server as an uncertain effect. Never blindly
-retry an uncertain mutation.
+Mutations revalidate identity and require showing plus enabled or sensitive state.
+GTK4 can omit enabled on a sensitive control; disabled controls remain refused.
+Provider showing state alone is not proof that a table row is inside its viewport.
 
-| Worker operation | Arguments | Contract |
-| --- | --- | --- |
-| `set` | `text` | Replace the complete editable text and compare full readback. Parent validates text first. |
-| `insert` | `text` | Replace the current single selection, or insert at the caret, preserving all surrounding text. |
-| `select` | `start_offset`, `end_offset` | Select a code-point range; equal offsets clear selection and set the caret. |
-| `focus` | none | Request focus, then verify the element's focused state. |
-| `value` | finite numeric `value` | Reject values outside provider minimum/maximum, set and compare exact numeric readback. |
-| `check` | boolean `checked` | Idempotently request checked state via a recognized action and verify state. |
-| `expand` | boolean `expanded` | Idempotently request expansion via a recognized action and verify state. |
-| `invoke` | observed `action` | Dispatch an explicitly reported action. Application outcome remains unverified. |
+| Worker operation | Contract |
+| --- | --- |
+| `set(text)` | Replace editable text and compare complete readback. |
+| `insert(text)` | Replace one current selection or insert at the caret, preserving surrounding text. |
+| `select(start_offset, end_offset)` | Select a code-point range; equal offsets clear selection and set the caret. |
+| `secret(text)` | Replace an observed protected EditableText field without reading its contents; acceptance is dispatched, never value-verified. |
+| `focus` | Request focus and verify the current focused state. |
+| `value(value)` | Require a finite value inside provider bounds and compare exact numeric readback; rounding is not silently accepted. |
+| `check(checked)` / `expand(expanded)` | Idempotently request and verify the desired state using a recognized action. |
+| `choose(extend)` | Select an observed option, radio choice or visible table row and verify selection. |
+| `invoke(action)` | Dispatch an explicitly reported action; the application outcome is unverified. |
 
-`insert` requires both Text and EditableText and an editable state. It accepts
-valid Unicode up to one million code points, including LF, tabs and trailing
-whitespace. NUL, CR, surrogates, protected fields and multiple selections are
-rejected. The resulting field must remain within the same verification budget.
-Before mutation, the worker rereads text and selection/caret to catch concurrent
-changes. Selection deletion is verified before insertion proceeds. UTF-8 byte
-length is passed to AT-SPI InsertText; offsets remain code points.
+Native text mutation requires usable Text/EditableText capabilities and editable
+state. Text must be valid Unicode within the verification budget; LF, tabs,
+astral characters and trailing whitespace are preserved. NUL, CR, surrogates,
+protected ordinary input and multiple insertion selections are refused. Insertion
+rechecks text and range before mutation and verifies deletion before inserting.
+Exact text comparison and `caret_verified` are separate postconditions: a provider
+may accept text while not supporting placement of the final caret. `accepted`
+alone never establishes success.
 
-Results include `effect`, `accepted`, `exact_match`, expected/actual character
-counts, replaced/inserted character counts, `caret_verified` and `caret_offset`.
-After exact text readback the worker clears selection and places the caret after
-the inserted text. `exact_match` verifies text; `caret_verified` separately reports
-the caret postcondition. A provider can accept a request without applying it, so
-`accepted` alone never establishes success.
+Public `desktop_type(mode="insert"|"replace")` orchestrates native operations or
+the supported focus/selection/clipboard/readback path. Empty replacement clears
+a field. Known unsupported native providers are selected before mutation; an
+unexpected accepted no-op is not a reason to blindly retry with another backend.
+Protected input has no automatic ordinary-field or clipboard fallback.
 
-Insertion is a bounded sequence of provider calls, not an atomic transaction.
-Human/application edits can race after the last precondition check. A partial
-mutation is reported as uncertain and is not automatically rolled back, which
-could overwrite another edit. The worker does not synthesize unsupported semantic
-operations with arbitrary keystrokes. Callers can explicitly choose a screenshot/
-keyboard workflow instead.
+Focus always requests provider focus before verification. If that request raises,
+a fresh focused state can establish focus with `focus_request_supported: false`.
+Recognized state-changing action names are matched case-insensitively while
+retaining their actual provider index. Missing actions are explicit refusals.
 
-## Evidence and limits
+For a TableCell, `choose` selects its **whole row**, checks table/cell identity and
+viewport intersection, and reports `selection_scope: "table_row"`. Unavailable
+coordinates and offscreen sentinel bounds are refused. `extend=true` preserves
+other list/table-row choices. Scroll and inspect again before choosing offscreen
+rows. This is not generic pagination, virtualized-item lookup or cell editing.
 
-Run deterministic fault tests:
+For editing, enter cell edit mode through an observed action or screenshot input,
+then inspect for its editor. The qualified GTK grid omits that visible editor from
+AT-SPI. Deliberate GUI paste, explicit commit and fresh committed-cell readback
+worked with an independent model oracle; its native edit action did not. These
+are separate provider outcomes, not a claim that generic semantic editing works.
 
-```bash
-.venv/bin/python -m unittest discover -s tests -p test_semantic.py -v
-```
+Preflight failures have no text mutation effect; errors after possible mutation
+and mutating transport timeouts are uncertain. No blind retry or automatic
+rollback is safe. Native exception messages are sanitized because they can echo
+application contents. These bounded sequences are not atomic transactions and do
+not detect pending IME composition or prevent later application/user edits.
 
-Run real GTK tests as the desktop user while holding the shared display lock:
+## Evidence and remaining limits
 
-```bash
-flock /tmp/luda-live-tests.lock .venv/bin/luda-session -- \
-  "$PWD/.venv/bin/python" "$PWD/tests/live_semantic.py"
-```
+Deterministic contract tests include `tests/test_semantic.py` and the provider,
+identity and table regressions in `tests/`. The opt-in
+[qualification matrix](QUALIFICATION-MATRIX.md) runs isolated live suites with
+independent application, file or DOM oracles. Recorded failures remain evidence;
+passing one fixture does not qualify every control from that toolkit.
 
-The 35 live assertions independently read state persisted by a GTK fixture,
-covering exact insertion/selection/caret, Unicode, multiline, tabs, numeric values,
-idempotent check/expansion, protected and hidden refusal, invalid inputs and scoped
-filters/depth. The 16 unit tests include provider false success, rejected deletion,
-concurrent text/caret changes, multiple selections and invalid input matrices.
-Outputs go to ignored `artifacts/semantic/`; they contain synthetic fixture text.
-
-This evidence qualifies those GTK controls on the current X11 guest. It does not
-qualify arbitrary Chromium/Electron, Qt, custom canvases, rich text, IME composition,
-virtualized trees, multi-selection editors or AT-SPI providers with different
-semantics. Unsupported interfaces produce explicit refusals, not claimed support.
-
-## Cross-toolkit normalization
-
-Public text offsets always use Unicode code points. The worker validates bounded
-full text against the provider's reported character count and normalizes UTF-16
-providers. Qt declares its toolkit through the AT-SPI Application interface; this
-also selects UTF-16 insertion length when the existing field is entirely ASCII.
-`read.provider_offset_units` documents the provider representation. Normalized
-full readback is bounded to one million code points (at most two million UTF-16
-units). Providers with inconsistent counts are refused instead of guessed.
-
-Inspection accepts `window_title` as an optional strict GTK4 compatibility input.
-A unique exact title and dimensions can map a zero-origin top-level, but all node
-bounds are then removed and marked `bounds_coordinates: "unavailable"`. The
-response `window_mapping` identifies this path. The regular mapping is
-`screen_bounds`. Incomplete top-level enumeration cannot establish uniqueness.
-
-An element is interactable when showing and either enabled or sensitive; GTK4
-omits enabled on otherwise sensitive widgets. Disabled controls remain refused.
-Recognized semantic action names are matched case-insensitively while preserving
-the provider's actual action index. Already-focused targets return verified without
-calling an unsupported focus method. See TOOLKIT-QUALIFICATION.md for the remaining
-GTK4 provider limitations and precise independent test results.
-
-Text normalization and exact replacement use bounded readback: at most two million provider units and one million Unicode code points. Larger fields refuse with `VERIFICATION_LIMIT`; the worker reports `effect: none` when this happens before text mutation, and `uncertain` if the provider grows beyond the budget after input. Read limits bound the returned prefix, while normalization still reads the bounded complete field to establish truthful public character counts and UTF-16 offset conversions. This is not a streaming large-document reader. Native provider exception messages are not returned because they may echo application contents or input.
+- [GTK3, Qt and GTK4](TOOLKIT-QUALIFICATION.md): concrete selection/caret and missing
+  action limitations remain in GTK4.
+- [Protected and option controls](PROTECTED-AND-OPTION-CONTROLS.md): acceptance-only
+  secret input and supported list/combo/radio behavior.
+- [Browser text](BROWSER-TEXT-CONTRACT.md), [Chromium](BROWSER-QUALIFICATION.md),
+  [Firefox](FIREFOX-QUALIFICATION.md) and [Electron](ELECTRON-QUALIFICATION.md):
+  provider-specific text conventions, rich-text and protected-input gaps.
+- [Provider readback review](PROVIDER-TEXT-REVIEW.md): count/snapshot consistency
+  and the limits of concurrent-edit detection.
+- [Data controls](DATA-CONTROLS.md): viewport selection, sort/filter stale handles,
+  lazy children and the actual editable-cell GUI workflow.
+- [IME composition](IME-COMPOSITION.md): generic preedit visibility is unknown;
+  committed-text verification does not verify a future composition commit.
+- [Accessibility lifecycle](LIFECYCLE-QUALIFICATION.md): some existing providers
+  fail to re-register after bus loss; restarting user apps is not automatic.
