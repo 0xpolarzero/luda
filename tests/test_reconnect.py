@@ -58,12 +58,11 @@ class ReconnectTests(unittest.TestCase):
             proof=Path(directory)/'display'
             import subprocess
             original=subprocess.Popen
-            script='import os,sys,json;from pathlib import Path;from types import SimpleNamespace;from luda import _input_guard as guard;guard.subprocess.run=lambda *a,**k:(Path(sys.argv[4]).write_text(os.environ["DISPLAY"]) or None,SimpleNamespace(returncode=0,stdout=json.dumps(dict(released=True)).encode()))[1];raise SystemExit(guard.main())'
+            script='import os,sys,json;from pathlib import Path;json.loads(sys.stdin.readline());print(json.dumps(dict(held=True)),flush=True);sys.stdin.read();Path(sys.argv[1]).write_text(os.environ["DISPLAY"]);print(json.dumps(dict(done=True,effect="dispatched",cleanup_verified=True)),flush=True)'
             def spawn(args,**kwargs):
-                return original([args[0],'-c',script,*args[3:],str(proof)],**kwargs)
-            with environment_scope(dict(os.environ,DISPLAY=':replacement')),patch('luda.input_guard._native_input',side_effect=[{'server_generation':'a'*32},{'pressed':True},DesktopError('BACKEND_ERROR','release failed')]),patch('luda.input_guard.subprocess.Popen',side_effect=spawn):
-                with self.assertRaises(DesktopError):
-                    with held_button('1'):pass
+                return original([args[0],'-c',script,str(proof)],**kwargs)
+            with environment_scope(dict(os.environ,DISPLAY=':replacement')),patch('luda.input_guard.run',return_value=b'{"kind":"pointer","hold":true,"button":"1","server_generation":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}'),patch('luda.input_guard.subprocess.Popen',side_effect=spawn):
+                with held_button('1'):pass
             self.assertEqual(proof.read_text(),':replacement')
 
     def test_success_retains_pause_and_locks_during_swap(self):

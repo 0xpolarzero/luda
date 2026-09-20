@@ -7,6 +7,11 @@ import signal
 import subprocess
 import sys
 import time
+import threading
+from pathlib import Path
+from live_keyboard_guard import descendants
+from luda.common import DesktopError,checkpoint,operation_scope
+from luda.input_guard import held_button
 from unittest.mock import patch
 from luda._x11_helper import _NativeX11
 
@@ -32,11 +37,33 @@ try:
         assert select.select([controller.stdout],[],[],3)[0],'controller failed to hold input'
         assert controller.stdout.readline()==b'held\n'
         assert buttons()==0x100,'independent X pointer mask must show button down'
+        guards=descendants(controller.pid);assert len(guards)==1
+        injectors=descendants(guards[0]);assert len(injectors)==1
+        os.kill(injectors[0],signal.SIGSTOP)
         began=time.monotonic();controller.kill();controller.wait(timeout=2)
         deadline=time.monotonic()+3
         while buttons()!=0 and time.monotonic()<deadline:time.sleep(.02)
         assert buttons()==0,'parent-death companion did not release button'
-        print(json.dumps({'controller_killed_while_button_down':True,'independent_pointer_mask':0,'release_seconds':round(time.monotonic()-began,3)}))
+        assert not Path('/proc',str(injectors[0])).exists(),'injector must be reaped before release proof'
+        cancelled=threading.Event();errors=[];held=threading.Event()
+        def drag():
+            try:
+                with operation_scope(cancelled=cancelled),held_button('1'):
+                    held.set()
+                    while True:checkpoint();time.sleep(.01)
+            except DesktopError as exc:errors.append(exc)
+        worker=threading.Thread(target=drag);worker.start();assert held.wait(3);assert buttons()==0x100
+        cancelled.set();worker.join(4)
+        assert not worker.is_alive() and errors[0].code=='CANCELLED' and errors[0].details['cleanup_verified']
+        assert buttons()==0
+        subprocess.run(['xdotool','mousedown','1'],check=True)
+        try:
+            try:
+                with held_button('1'):raise AssertionError('preheld accepted')
+            except DesktopError as exc:assert exc.code=='INPUT_HELD'
+            assert buttons()==0x100
+        finally:subprocess.run(['xdotool','mouseup','1'],check=True)
+        print(json.dumps({'controller_killed_while_button_down':True,'stopped_injector_reaped':True,'cancellation_release_verified':True,'preheld_input_preserved':True,'independent_pointer_mask':buttons()}))
 finally:
     if controller:
         if controller.poll() is None:controller.kill();controller.wait(timeout=2)

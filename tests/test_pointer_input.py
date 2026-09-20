@@ -5,7 +5,7 @@ from test_keyboard import FakeKeyboard
 from luda._pointer_native import plan_pointer
 from luda._keyboard_guard import cleanup_request, native_module
 from luda.common import DesktopError
-from luda.pointer_input import click_button
+from luda.pointer_input import click_button,check_pointer_ready
 
 
 class PointerContract(unittest.TestCase):
@@ -15,6 +15,11 @@ class PointerContract(unittest.TestCase):
             with self.subTest(case=(button,count,target)),patch('luda.pointer_input.run') as run,self.assertRaises(DesktopError):
                 click_button(button,count,target)
             run.assert_not_called()
+    def test_readiness_refuses_before_caller_movement(self):
+        with patch('luda.pointer_input.run',return_value=b'{"code":"INPUT_HELD","message":"held"}'),self.assertRaises(DesktopError):check_pointer_ready(99)
+        with patch('luda.pointer_input.run',return_value=b'{"server_generation":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}') as run:
+            self.assertEqual(check_pointer_ready()['effect'],'none')
+        self.assertEqual(json.loads(run.call_args.kwargs['data'])['target'],None)
     def test_held_keys_and_buttons_refuse(self):
         for attribute in ('keys','pointer'):
             native=FakeKeyboard();setattr(native,attribute,[8])

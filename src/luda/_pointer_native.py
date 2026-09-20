@@ -22,7 +22,7 @@ def plan_pointer(native,request):
     if target is not None:
         active=native.x._property(native.x.root,'_NET_ACTIVE_WINDOW',1)
         if not active or active[2]!=[target]:raise DesktopError('FOCUS_CHANGED','Target lost focus before pointer input.')
-    return {'kind':'pointer','button':request['button'],'count':request['count'],'target':target,'server_generation':generation(native.x)}
+    return {'kind':'pointer','button':request['button'],'count':request['count'],'target':target,'server_generation':generation(native.x),**({'hold':True} if request.get('hold') is True else {})}
 
 
 def event(native,button,pressed):
@@ -52,6 +52,11 @@ def main():
             emit({'armed':True,'client':native.client_resource()})
             pressed=False
             try:
+                if request.get('hold'):
+                    pressed=True;event(native,request['button'],True)
+                    emit({'held':True})
+                    time.sleep(60)
+                    raise DesktopError('TIMEOUT','Held button exceeded lifetime.',effect='uncertain')
                 for index in range(request['count']):
                     pressed=True;event(native,request['button'],True)
                     time.sleep(.012)

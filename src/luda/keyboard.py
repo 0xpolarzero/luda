@@ -57,7 +57,7 @@ def _recover_guardian(token,guard,output,release):
                 if len(output)>8192:raise ValueError()
             else:return
         guard.wait(timeout=max(.01,deadline-elapsed_time()))
-        result=json.loads(output)
+        result=json.loads(output.splitlines()[-1])
         proven=_completion_proven(result)
         with _recovery_lock:
             if token in _pending_recoveries:_pending_recoveries[token]['cleanup_request']=result.get('cleanup_request')
@@ -119,7 +119,7 @@ def recover_keyboard_input():
                     proof=json.loads(run([sys.executable,'-m','luda._pointer_native' if record['cleanup_request'].get('kind')=='pointer' else 'luda._keyboard_native','release'],
                         data=json.dumps(record['cleanup_request']).encode()+b'\n',timeout=2,max_output_bytes=4096,effect='uncertain'))
                     if proof.get('released') or (proof.get('session_changed') and proof.get('cleanup_skipped')):
-                        resolved+=int(_resolve_recovery(token));row.update(resolved=True,proof='original_server_replaced' if proof.get('session_changed') else 'owned_keys_released',cleanup_skipped=bool(proof.get('cleanup_skipped')))
+                        resolved+=int(_resolve_recovery(token));row.update(resolved=True,proof='original_server_replaced' if proof.get('session_changed') else ('owned_buttons_released' if record['cleanup_request'].get('kind')=='pointer' else 'owned_keys_released'),cleanup_skipped=bool(proof.get('cleanup_skipped')))
                     else:row['reason']=proof.get('code','cleanup_not_verified')
                 else:row['reason']='cleanup_metadata_not_available'
         except DesktopError as exc:
@@ -129,7 +129,7 @@ def recover_keyboard_input():
         results.append(row)
     with _recovery_lock:pending=len(_pending_recoveries)
     return {'effect':effect,'resolved_count':resolved,'pending_count':pending,'recoveries':results,
-            'next_step':('Reconnect to the new desktop session, then observe again.' if any(row.get('proof')=='original_server_replaced' for row in results) else 'Observe again before acting.') if not pending else 'No chord was replayed. Restore or restart the original desktop session, then retry input recovery; unresolved ownership stays blocked.'}
+            'next_step':('Reconnect to the new desktop session, then observe again.' if any(row.get('proof')=='original_server_replaced' for row in results) else 'Observe again before acting.') if not pending else 'No input was replayed. Restore or restart the original desktop session, then retry input recovery; unresolved ownership stays blocked.'}
 
 
 def validate_chord(chord):
@@ -208,7 +208,7 @@ def _dispatch_plan(plan):
                 output+=chunk
                 if len(output)>8192:raise DesktopError('KEYBOARD_UNAVAILABLE','Input companion response exceeded its bound.',effect='uncertain')
         guard.wait(timeout=max(.01,cleanup_deadline-elapsed_time()))
-        if output:result=json.loads(output)
+        if output:result=json.loads(output.splitlines()[-1])
         proven=_completion_proven(result)
         if result and result.get('armed'):mark_effect()
         if failure:

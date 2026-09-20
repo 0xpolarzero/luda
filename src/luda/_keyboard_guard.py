@@ -47,6 +47,7 @@ def main():
             if not line:continue
             message=json.loads(line)
             if message.get('armed'):armed=True;client=message['client']
+            elif message.get('held'):emit({'held':True})
             elif message.get('done') or message.get('code'):done=message
     try:
         deadline=elapsed_time()+6
@@ -61,6 +62,7 @@ def main():
                 initial+=chunk
                 if len(initial)>4096:raise ValueError()
             request=json.loads(initial)
+            if request.get('hold'):deadline=elapsed_time()+30
             # No controller pipe is inherited by this owned worker.
             worker=subprocess.Popen([sys.executable,'-m',native_module(request),'inject'],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,start_new_session=True)
             worker.stdin.write(json.dumps(request).encode()+b'\n');worker.stdin.close()
@@ -70,7 +72,9 @@ def main():
                 if elapsed_time()>=deadline:reason='TIMEOUT';break
                 for key,_ in watch.select(.05):
                     if key.data=='parent':
-                        if not os.read(sys.stdin.fileno(),4096):reason='CANCELLED';break
+                        control=os.read(sys.stdin.fileno(),4096)
+                        if not control:reason='CANCELLED';break
+                        if request.get('hold') and control==b'D':reason='RELEASED';break
                     else:
                         chunk=os.read(worker.stdout.fileno(),4096)
                         if chunk:buffer+=chunk;consume(chunk)
@@ -91,6 +95,9 @@ def main():
         if armed and (reason or not done or not done.get('done')):
             cleaned=release_owned(request,client)
             result={'code':reason or 'KEYBOARD_INTERRUPTED','message':'Input operation interrupted; owned input release was attempted. Inspect the application before retrying.','effect':'uncertain',**cleaned,'cleanup_request':cleanup_request(request,client)}
+            if reason=='RELEASED':
+                if cleaned['cleanup_verified']:result={'done':True,'effect':'dispatched',**cleaned}
+                else:result['code']='SESSION_CHANGED' if cleaned['session_changed'] else 'INPUT_RELEASE_UNVERIFIED'
         elif reason:
             result={'code':reason,'message':'Input operation cancelled before dispatch.','effect':'none'}
         else:

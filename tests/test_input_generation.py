@@ -36,6 +36,12 @@ class InputRecovery(unittest.TestCase):
         self.assertEqual(result['pending_count'],0)
         self.assertEqual([item[1] for item in calls],[{'DISPLAY':':original'}]*2)
         self.assertEqual(calls[1][0][-1],'release')
+    def test_pointer_recovery_reports_button_proof(self):
+        self.record['cleanup_request'].update(kind='pointer',button='1')
+        with patch('luda.keyboard.run',side_effect=[b'{"session_changed":false}',b'{"released":true}']) as run:
+            result=keyboard.recover_keyboard_input()
+        self.assertEqual(result['recoveries'][0]['proof'],'owned_buttons_released')
+        self.assertIn('luda._pointer_native',run.call_args.args[0])
     def test_failed_cleanup_remains_blocked(self):
         with patch('luda.keyboard.run',side_effect=[b'{"session_changed":false}',b'{"released":false}']):result=keyboard.recover_keyboard_input()
         self.assertEqual(result['pending_count'],1)

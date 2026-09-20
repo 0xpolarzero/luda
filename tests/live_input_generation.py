@@ -42,10 +42,15 @@ def main():
             wait(lambda:oracle.code('Control_L') in oracle.pressed())
             children=descendants(key_guard.pid);assert len(children)==1
             os.kill(children[0],signal.SIGSTOP);os.kill(key_guard.pid,signal.SIGSTOP)
-            mouse_reader,mouse_writer=os.pipe()
-            mouse_guard=subprocess.Popen([sys.executable,'-m','luda._input_guard',str(mouse_reader),'1',old_generation],pass_fds=(mouse_reader,),stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,env=env)
-            os.close(mouse_reader);assert mouse_guard.stdout.read(1)==b'R';os.write(mouse_writer,b'A')
-            assert native({'operation':'press','button':'1','server_generation':old_generation})['pressed']
+            # Clear only this stopped test injector's own keys so the held
+            # pointer planner can independently enforce its preheld-input rule.
+            command('xdotool','keyup','Control_L','Shift_L','Alt_L','F12')
+            mouse_plan=json.loads(subprocess.check_output([sys.executable,'-m','luda._pointer_native','plan'],input=json.dumps({'button':'1','count':1,'target':None,'hold':True}).encode()+b'\n',env=env,timeout=3))
+            mouse_guard=subprocess.Popen([sys.executable,'-m','luda._keyboard_guard'],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,env=env)
+            mouse_guard.stdin.write(json.dumps(mouse_plan).encode()+b'\n');mouse_guard.stdin.flush()
+            assert json.loads(mouse_guard.stdout.readline())['held']
+            mouse_children=descendants(mouse_guard.pid);assert len(mouse_children)==1
+            os.kill(mouse_children[0],signal.SIGSTOP);os.kill(mouse_guard.pid,signal.SIGSTOP)
             assert oracle.buttons()
             oracle.close();oracle=None
             server.terminate();server.wait(timeout=3)
@@ -58,8 +63,9 @@ def main():
             assert select.select([key_guard.stdout],[],[],4)[0]
             key_proof=json.loads(key_guard.stdout.readline());key_guard.wait(timeout=3)
             assert key_proof['session_changed'] and key_proof['cleanup_skipped'] and not key_proof['cleanup_verified'],key_proof
-            os.close(mouse_writer);mouse_writer=None
-            assert mouse_guard.wait(timeout=3)==2
+            mouse_guard.stdin.close();os.kill(mouse_guard.pid,signal.SIGCONT)
+            mouse_proof=json.loads(mouse_guard.stdout.readline());mouse_guard.wait(timeout=3)
+            assert mouse_proof['session_changed'] and mouse_proof['cleanup_skipped'] and not mouse_proof['cleanup_verified'],mouse_proof
             assert oracle.pressed()==held and oracle.buttons()==button_state
             explicit=native({'operation':'release','button':'1','server_generation':old_generation})
             assert explicit['session_changed'] and explicit['cleanup_skipped'] and oracle.buttons()==button_state
