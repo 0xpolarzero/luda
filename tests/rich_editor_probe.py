@@ -90,3 +90,20 @@ class Readback:
     def dispose(self):
         self.node.dispose()
         self.document.dispose()
+
+# Separate candidate: the original synthetic baseline monitor above is retained.
+NATIVE_COMPOSITION_MONITOR = """(() => {
+  let active = false, trustedStarts = 0, trustedEnds = 0, ignored = 0;
+  document.addEventListener('compositionstart', event => {
+    if (!event.isTrusted) { ignored++; return; }
+    active = true; trustedStarts++;
+  }, true);
+  document.addEventListener('compositionend', event => {
+    if (!event.isTrusted) { ignored++; return; }
+    active = false; trustedEnds++;
+  }, true);
+  Object.defineProperty(window, '__ludaRichComposition', {
+    get: () => ({known: true, active, trustedStarts, trustedEnds, ignored}),
+    configurable: false
+  });
+})()"""

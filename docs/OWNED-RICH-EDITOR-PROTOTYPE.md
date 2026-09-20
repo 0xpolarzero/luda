@@ -115,3 +115,41 @@ Primary references: [ProseMirror model API](https://prosemirror.net/docs/ref/#mo
 [WHATWG innerText](https://html.spec.whatwg.org/multipage/dom.html#the-innertext-idl-attribute),
 [Input Events](https://w3c.github.io/input-events/), and
 [Playwright ElementHandle identity](https://playwright.dev/docs/api/class-elementhandle).
+
+## Native composition follow-up
+
+`rich-editor-ime` is a separate matrix entry using the same owned browser and
+pinned model, with `GTK_IM_MODULE=simple`. A distinct monitor candidate is
+installed before navigation and only accepts **trusted** composition start/end
+events. The original synthetic baseline monitor is retained unchanged for
+comparison. Untrusted end events cannot clear this candidate's active state.
+
+The first actual native run `run-1789883080257517480` took 6.006 seconds and
+retained exit 1 (4/6 combined assertions). Ctrl+Shift+U followed by `306b`
+produced a trusted compositionstart and actual model/DOM `BASEu306b` preedit.
+The input guard refused with COMPOSITION_PENDING without refocusing, selecting,
+pasting or sending conflicting paragraph keys. Model, DOM, revision and
+selection remained unchanged across that read-only refusal.
+
+Separate explicit native Return committed exactly `BASEに`; native Escape
+restored exactly `BASE`. The independently posted model agreed. However, in
+this pinned Chromium/GTK path the observed compositionend had `isTrusted=false`
+in both cases. The stricter monitor correctly ignored it and stayed active.
+There was no test-injected synthetic end in these native runs. The source of
+that event's trust classification has not been established. Subsequent reports
+separate successful actual model completion from **failed monitor recovery**;
+neither route changes its acceptance criterion to get a green result.
+
+This exposes a production blocker: accepting every end event would let a page
+clear the guard synthetically, while this conservative monitor cannot currently
+prove native completion in the measured provider. Current model text alone is
+not proof of committed text: the model itself temporarily contains preedit.
+Unknown caller-supplied monitor provenance is refused; this test is not proof
+that arbitrary late-attached pages can be reconstructed safely. No automatic
+Escape, guessed composition clearing, or production adapter is introduced.
+
+Final native run `run-1789883155727624433` took 6.048 seconds: **6/8 assertions
+passed**, both monitor-recovery assertions failed, exit 1, no survivors. Source
+fingerprint `b4584e9114cbdaeb3dd577db8baac95a14bd32bf1faff7d5fcc54baf5343d93e`
+was unchanged during the run; this evidence paragraph and generated inventory
+were updated afterward. Asset/matrix/inventory unit checks passed (20 total).

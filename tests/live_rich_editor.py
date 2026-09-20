@@ -31,7 +31,10 @@ SAMPLES = [
 ]
 
 
-def main(executable):
+def main(executable, native_composition_only=False):
+    global OUT
+    if native_composition_only:
+        OUT = ROOT / "artifacts/rich-editor-ime"
     if os.getuid() == 0 or os.environ.get('LUDA_ISOLATED_TEST_DISPLAY') != '1':
         raise RuntimeError('Requires ordinary UID and private matrix desktop.')
     OUT.mkdir(parents=True, exist_ok=True)
@@ -60,7 +63,7 @@ def main(executable):
         print(json.dumps({'case':case, 'passed':bool(passed)}), flush=True)
     try:
         with sync_playwright() as pw:
-            browser = pw.chromium.launch(executable_path=executable, headless=False, env=dict(os.environ, ACCESSIBILITY_ENABLED='1'),
+            browser = pw.chromium.launch(executable_path=executable, headless=False, env=dict(os.environ, ACCESSIBILITY_ENABLED='1', **({'GTK_IM_MODULE':'simple'} if native_composition_only else {})),
                 args=['--force-renderer-accessibility', '--disable-background-networking', '--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1', '--window-size=1100,900'])
             try:
                 protocol = browser.new_browser_cdp_session()
@@ -82,7 +85,11 @@ def main(executable):
                     debugging_port=bool(re.search(r'(?:^|\s)--remote-debugging-port(?:=|\s|$)', flattened)))
                 record('owned-browser-private-pipe', environment['debugging_pipe'] and not environment['debugging_port'] and local_transport)
                 context = browser.new_context(viewport={'width':1000,'height':760}, service_workers='block')
-                context.add_init_script(COMPOSITION_MONITOR)
+                if native_composition_only:
+                    from rich_editor_probe import NATIVE_COMPOSITION_MONITOR
+                    context.add_init_script(NATIVE_COMPOSITION_MONITOR)
+                else:
+                    context.add_init_script(COMPOSITION_MONITOR)
                 page = context.new_page()
                 origin = f'http://127.0.0.1:{server.server_port}/index.html'
                 def load(mode):
@@ -120,6 +127,10 @@ def main(executable):
                         if all(value.get(k)==actual[k] for k in ('documentId','generation','revision','html','model')):return value
                         if time.monotonic()>until:return value
                         page.wait_for_timeout(30)
+                if native_composition_only:
+                    from live_rich_ime import exercise
+                    exercise(page, desktop, browser_pid, wid, load, focus, persisted, record)
+                    return 0 if rows and all(row['passed'] for row in rows) else 1
                 for mode in ('prosemirror','generic-normal','generic-prewrap'):
                     for name,payload in SAMPLES:
                         load(mode);desktop.activate(wid);focus()
