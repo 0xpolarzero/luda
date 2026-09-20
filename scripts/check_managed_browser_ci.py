@@ -25,7 +25,7 @@ def main():
         parser.error('Use an ordinary CI account on a private desktop')
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=False)
-    before = source_fingerprint()
+    before = source_fingerprint(ROOT)
     executable = args.executable.resolve(strict=True)
     config = output / 'browser.json'
     config.write_text(json.dumps({'schema_version': 1, 'executable': str(executable),
@@ -54,7 +54,7 @@ def main():
     subprocess.run([sys.executable, str(ROOT / 'tests/evidence/managed-browser/run.py'),
         '--repo', str(ROOT), '--prefix', str(args.prefix.resolve()),
         '--output', str(output / 'live')], check=True, timeout=120)
-    after = source_fingerprint()
+    after = source_fingerprint(ROOT)
     assert before == after, 'Source changed during installed qualification'
     (output / 'source.json').write_text(json.dumps({'before': before, 'after': after,
         'unchanged': True, 'runtime_modules': len(hashes), 'release': release.name,
