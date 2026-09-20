@@ -1,0 +1,17 @@
+dbus-daemon[31011]: [session uid=1001 pid=31011] Activating service name='org.a11y.Bus' requested by ':1.0' (uid=1001 pid=31019 comm="xfwm4 --compositor=off")
+dbus-daemon[31011]: [session uid=1001 pid=31011] Successfully activated service 'org.a11y.Bus'
+dbus-daemon[31029]: Activating service name='org.a11y.atspi.Registry' requested by ':1.0' (uid=1001 pid=31019 comm="xfwm4 --compositor=off")
+dbus-daemon[31011]: [session uid=1001 pid=31011] Activating service name='org.xfce.Xfconf' requested by ':1.2' (uid=1001 pid=31019 comm="xfwm4 --compositor=off")
+dbus-daemon[31029]: Successfully activated service 'org.a11y.atspi.Registry'
+SpiRegistry daemon is running with well-known name - org.a11y.atspi.Registry
+dbus-daemon[31011]: [session uid=1001 pid=31011] Successfully activated service 'org.xfce.Xfconf'
+Traceback (most recent call last):
+  File "/workspace/luda-window-geometry/tests/live_window_geometry.py", line 73, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/workspace/luda-window-geometry/tests/live_window_geometry.py", line 57, in main
+    assert (actual['client_bounds']['width']-300)%40==0
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
+
+(xfconfd:31037): xfconfd-WARNING **: 09:08:24.975: Name org.xfce.Xfconf lost on the message dbus, exiting.

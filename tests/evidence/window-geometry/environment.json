@@ -1,0 +1,12 @@
+{
+  "platform": "Linux ARM64 Ubuntu24.04",
+  "uid": 1001,
+  "gtk": "3.24.41-4ubuntu1.3",
+  "xfwm4": "4.18.0-1build3",
+  "xvfb": "21.1.12-1ubuntu1.6",
+  "source_sha256": {
+    "src/luda/interaction.py": "3d7e61c11080bae61720cc4507f270ed5c640cc1f0cf07242ba4b41f7df93bf3",
+    "src/luda/server.py": "f0c387d1c90249074ae9ac6edd37002bed654122158bf52a24cfa121460176a4",
+    "tests/live_window_geometry.py": "d1cbbcfac7277b025c3f9abaa2b8301d1d170ad2e2ae4d71c20d0ca8d16fd585"
+  }
+}

@@ -6,7 +6,7 @@ from luda.x11 import X11
 
 class Driver(InteractionMixin):
     def __init__(self):
-        self.windows={'owner':{'window_id':'owner','xid':10,'pid':100,'workspace':0}}
+        self.windows={'owner':{'window_id':'owner','xid':10,'pid':100,'workspace':0,'bounds':{'x':0,'y':0,'width':100,'height':100},'frame_bounds':{'x':0,'y':0,'width':100,'height':100}}}
         self.native=Mock(root=1);self.native.root_surface.side_effect=lambda xid:xid*10
         self.native.children.return_value=[100,200]
     def target_window(self,*args):return self.windows['owner']

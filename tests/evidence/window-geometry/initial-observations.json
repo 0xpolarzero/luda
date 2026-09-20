@@ -1,0 +1,158 @@
+[
+  {
+    "action": "move",
+    "result": {
+      "effect": "verified",
+      "verification": "Window-manager state matches request.",
+      "window_id": "68448abe4ad447ed807b757412a600c7:600003:31057:3551260:ffba732af3af402f1a8ec6fafb25befc",
+      "action": "move",
+      "observed_geometry": {
+        "client_bounds": {
+          "x": 105,
+          "y": 149,
+          "width": 420,
+          "height": 260
+        },
+        "frame_bounds": {
+          "x": 100,
+          "y": 120,
+          "width": 430,
+          "height": 294
+        },
+        "wm_state": {
+          "maximized_vertical": false,
+          "maximized_horizontal": false,
+          "fullscreen": false,
+          "hidden": false
+        },
+        "scope": "Post-dispatch same-generation observations; separate X11 reads, not an atomic snapshot.",
+        "requested": {
+          "x": 100,
+          "y": 120
+        },
+        "requested_basis": "frame_bounds",
+        "request_match": "matched",
+        "constraint_reason": "not_determined"
+      }
+    },
+    "independent_oracle": {
+      "client_bounds": {
+        "x": 105,
+        "y": 149,
+        "width": 420,
+        "height": 260
+      },
+      "frame_bounds": {
+        "x": 100,
+        "y": 120,
+        "width": 430,
+        "height": 294
+      },
+      "properties": "_NET_FRAME_EXTENTS(CARDINAL) = 5, 5, 29, 5\n_NET_WM_STATE(ATOM) = _NET_WM_STATE_FOCUSED\nWM_NORMAL_HINTS(WM_SIZE_HINTS):\n\t\tprogram specified minimum size: 300 by 180\n\t\tprogram specified resize increment: 40 by 20\n\t\tprogram specified base size: 300 by 180\n\t\twindow gravity: NorthWest\n"
+    }
+  },
+  {
+    "action": "resize",
+    "result": {
+      "effect": "dispatched",
+      "verification": "Requested state was not observed; inspect before retrying.",
+      "window_id": "68448abe4ad447ed807b757412a600c7:600003:31057:3551260:ffba732af3af402f1a8ec6fafb25befc",
+      "action": "resize",
+      "observed_geometry": {
+        "client_bounds": {
+          "x": 105,
+          "y": 149,
+          "width": 300,
+          "height": 180
+        },
+        "frame_bounds": {
+          "x": 100,
+          "y": 120,
+          "width": 310,
+          "height": 214
+        },
+        "wm_state": {
+          "maximized_vertical": false,
+          "maximized_horizontal": false,
+          "fullscreen": false,
+          "hidden": false
+        },
+        "scope": "Post-dispatch same-generation observations; separate X11 reads, not an atomic snapshot.",
+        "requested": {
+          "width": 100,
+          "height": 100
+        },
+        "requested_basis": "client_bounds",
+        "request_match": "nonmatching",
+        "constraint_reason": "not_determined"
+      }
+    },
+    "independent_oracle": {
+      "client_bounds": {
+        "x": 105,
+        "y": 149,
+        "width": 300,
+        "height": 180
+      },
+      "frame_bounds": {
+        "x": 100,
+        "y": 120,
+        "width": 310,
+        "height": 214
+      },
+      "properties": "_NET_FRAME_EXTENTS(CARDINAL) = 5, 5, 29, 5\n_NET_WM_STATE(ATOM) = _NET_WM_STATE_FOCUSED\nWM_NORMAL_HINTS(WM_SIZE_HINTS):\n\t\tprogram specified minimum size: 300 by 180\n\t\tprogram specified resize increment: 40 by 20\n\t\tprogram specified base size: 300 by 180\n\t\twindow gravity: NorthWest\n"
+    }
+  },
+  {
+    "action": "resize",
+    "result": {
+      "effect": "verified",
+      "verification": "Window-manager state matches request.",
+      "window_id": "68448abe4ad447ed807b757412a600c7:600003:31057:3551260:ffba732af3af402f1a8ec6fafb25befc",
+      "action": "resize",
+      "observed_geometry": {
+        "client_bounds": {
+          "x": 105,
+          "y": 149,
+          "width": 333,
+          "height": 197
+        },
+        "frame_bounds": {
+          "x": 100,
+          "y": 120,
+          "width": 343,
+          "height": 231
+        },
+        "wm_state": {
+          "maximized_vertical": false,
+          "maximized_horizontal": false,
+          "fullscreen": false,
+          "hidden": false
+        },
+        "scope": "Post-dispatch same-generation observations; separate X11 reads, not an atomic snapshot.",
+        "requested": {
+          "width": 333,
+          "height": 197
+        },
+        "requested_basis": "client_bounds",
+        "request_match": "matched",
+        "constraint_reason": "not_determined"
+      }
+    },
+    "independent_oracle": {
+      "client_bounds": {
+        "x": 105,
+        "y": 149,
+        "width": 333,
+        "height": 197
+      },
+      "frame_bounds": {
+        "x": 100,
+        "y": 120,
+        "width": 343,
+        "height": 231
+      },
+      "properties": "_NET_FRAME_EXTENTS(CARDINAL) = 5, 5, 29, 5\n_NET_WM_STATE(ATOM) = _NET_WM_STATE_FOCUSED\nWM_NORMAL_HINTS(WM_SIZE_HINTS):\n\t\tprogram specified minimum size: 300 by 180\n\t\tprogram specified resize increment: 40 by 20\n\t\tprogram specified base size: 300 by 180\n\t\twindow gravity: NorthWest\n"
+    }
+  }
+]

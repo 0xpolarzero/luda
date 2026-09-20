@@ -258,7 +258,7 @@ Expand or collapse a supported control and verify state. Reinspect newly exposed
 desktop_window(window_id: str, action: Literal['move', 'resize', 'maximize', 'minimize', 'fullscreen', 'raise', 'restore', 'close', 'workspace'], x: int | None=None, y: int | None=None, width: int | None=None, height: int | None=None, workspace: int | None=None)
 ```
 
-Manage one window. move uses frame x/y; resize uses client width/height; workspace requires its index. fullscreen requests WM fullscreen; restore exits fullscreen/maximization/minimization; raise changes stacking without activation. Other actions take no extra parameters. Close reports an owned blocking dialog without confirming it.
+Manage one window. move uses frame x/y; resize uses client width/height; workspace requires its index. fullscreen requests WM fullscreen; restore exits fullscreen/maximization/minimization; raise changes stacking without activation. Other actions take no extra parameters. Close reports an owned blocking dialog without confirming it. Geometry actions return fresh same-generation client/frame bounds and WM state; move/resize distinguish matched from nonmatching requests without upgrading dispatched effects. Constraints and pre-maximize geometry preservation are not inferred.
 
 ## `desktop_workspaces`
 

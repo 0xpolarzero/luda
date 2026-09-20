@@ -109,6 +109,43 @@ class InteractionMixin:
             if dialogs:
                 result.update(effect='dispatched',outcome='blocked_by_dialog',dialog_window_ids=dialogs,verification='Owner remains open with an owned modal dialog. Inspect it; no dialog was confirmed.')
             else:result['outcome']='closed' if result['effect']=='verified' else 'still_open'
+        if action in {'move','resize','maximize','restore','fullscreen','minimize'}:
+            # State property reads and enumeration are separate X11 requests.
+            # Revalidate the complete native generation after the property read;
+            # never attach replacement-window measurements to this action.
+            try:
+                current=self.target_window(window_id,False)
+                state=properties(current['xid'])
+                current=self.target_window(window_id,False)
+            except DesktopError as exc:
+                raise DesktopError(exc.code, 'Window measurements became unavailable after dispatch; list windows again.', effect='uncertain') from exc
+            observed={'client_bounds':dict(current['bounds']),
+                      'frame_bounds':dict(current['frame_bounds']),
+                      'wm_state':{name:token in state for name,token in (
+                          ('maximized_vertical','_NET_WM_STATE_MAXIMIZED_VERT'),
+                          ('maximized_horizontal','_NET_WM_STATE_MAXIMIZED_HORZ'),
+                          ('fullscreen','_NET_WM_STATE_FULLSCREEN'),
+                          ('hidden','_NET_WM_STATE_HIDDEN'))},
+                      'scope':'Post-dispatch same-generation observations; separate X11 reads, not an atomic snapshot.'}
+            if action in {'move','resize'}:
+                requested={'x':x,'y':y} if action=='move' else {'width':width,'height':height}
+                basis='frame_bounds' if action=='move' else 'client_bounds'
+                matched=all(observed[basis][key]==value for key,value in requested.items())
+                observed.update(requested=requested,requested_basis=basis,
+                                request_match='matched' if matched else 'nonmatching',
+                                constraint_reason='not_determined')
+                # A later observation cannot upgrade a timed-out dispatch, but
+                # it can disprove a match seen by the earlier polling loop.
+                if not matched and result['effect']=='verified':
+                    result.update(effect='dispatched',verification='Requested geometry no longer matches the latest observation; inspect before retrying.')
+            else:
+                flags=observed['wm_state']
+                matched=({'maximize':flags['maximized_vertical'] and flags['maximized_horizontal'],
+                          'restore':not any(flags.values()),'fullscreen':flags['fullscreen'],
+                          'minimize':flags['hidden']})[action]
+                if not matched and result['effect']=='verified':
+                    result.update(effect='dispatched',verification='Requested WM state no longer matches the latest observation; inspect before retrying.')
+            result['observed_geometry']=observed
         return result
 
     def _raise_window(self, window, window_id):

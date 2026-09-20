@@ -1,0 +1,303 @@
+{
+  "checks": 6,
+  "results": [
+    {
+      "action": "move",
+      "result": {
+        "effect": "verified",
+        "verification": "Window-manager state matches request.",
+        "window_id": "295b0567fc894dafafad23699f4f859d:600003:32515:3558935:0adee5aa67d61c38fd429792c14114ca",
+        "action": "move",
+        "observed_geometry": {
+          "client_bounds": {
+            "x": 105,
+            "y": 149,
+            "width": 420,
+            "height": 260
+          },
+          "frame_bounds": {
+            "x": 100,
+            "y": 120,
+            "width": 430,
+            "height": 294
+          },
+          "wm_state": {
+            "maximized_vertical": false,
+            "maximized_horizontal": false,
+            "fullscreen": false,
+            "hidden": false
+          },
+          "scope": "Post-dispatch same-generation observations; separate X11 reads, not an atomic snapshot.",
+          "requested": {
+            "x": 100,
+            "y": 120
+          },
+          "requested_basis": "frame_bounds",
+          "request_match": "matched",
+          "constraint_reason": "not_determined"
+        }
+      },
+      "independent_oracle": {
+        "client_bounds": {
+          "x": 105,
+          "y": 149,
+          "width": 420,
+          "height": 260
+        },
+        "frame_bounds": {
+          "x": 100,
+          "y": 120,
+          "width": 430,
+          "height": 294
+        },
+        "properties": "_NET_FRAME_EXTENTS(CARDINAL) = 5, 5, 29, 5\n_NET_WM_STATE(ATOM) = _NET_WM_STATE_FOCUSED\nWM_NORMAL_HINTS(WM_SIZE_HINTS):\n\t\tprogram specified minimum size: 300 by 180\n\t\tprogram specified resize increment: 40 by 20\n\t\tprogram specified base size: 300 by 180\n\t\twindow gravity: NorthWest\n"
+      }
+    },
+    {
+      "action": "resize",
+      "result": {
+        "effect": "dispatched",
+        "verification": "Requested state was not observed; inspect before retrying.",
+        "window_id": "295b0567fc894dafafad23699f4f859d:600003:32515:3558935:0adee5aa67d61c38fd429792c14114ca",
+        "action": "resize",
+        "observed_geometry": {
+          "client_bounds": {
+            "x": 105,
+            "y": 149,
+            "width": 300,
+            "height": 180
+          },
+          "frame_bounds": {
+            "x": 100,
+            "y": 120,
+            "width": 310,
+            "height": 214
+          },
+          "wm_state": {
+            "maximized_vertical": false,
+            "maximized_horizontal": false,
+            "fullscreen": false,
+            "hidden": false
+          },
+          "scope": "Post-dispatch same-generation observations; separate X11 reads, not an atomic snapshot.",
+          "requested": {
+            "width": 100,
+            "height": 100
+          },
+          "requested_basis": "client_bounds",
+          "request_match": "nonmatching",
+          "constraint_reason": "not_determined"
+        }
+      },
+      "independent_oracle": {
+        "client_bounds": {
+          "x": 105,
+          "y": 149,
+          "width": 300,
+          "height": 180
+        },
+        "frame_bounds": {
+          "x": 100,
+          "y": 120,
+          "width": 310,
+          "height": 214
+        },
+        "properties": "_NET_FRAME_EXTENTS(CARDINAL) = 5, 5, 29, 5\n_NET_WM_STATE(ATOM) = _NET_WM_STATE_FOCUSED\nWM_NORMAL_HINTS(WM_SIZE_HINTS):\n\t\tprogram specified minimum size: 300 by 180\n\t\tprogram specified resize increment: 40 by 20\n\t\tprogram specified base size: 300 by 180\n\t\twindow gravity: NorthWest\n"
+      }
+    },
+    {
+      "action": "resize",
+      "result": {
+        "effect": "verified",
+        "verification": "Window-manager state matches request.",
+        "window_id": "295b0567fc894dafafad23699f4f859d:600003:32515:3558935:0adee5aa67d61c38fd429792c14114ca",
+        "action": "resize",
+        "observed_geometry": {
+          "client_bounds": {
+            "x": 105,
+            "y": 149,
+            "width": 333,
+            "height": 197
+          },
+          "frame_bounds": {
+            "x": 100,
+            "y": 120,
+            "width": 343,
+            "height": 231
+          },
+          "wm_state": {
+            "maximized_vertical": false,
+            "maximized_horizontal": false,
+            "fullscreen": false,
+            "hidden": false
+          },
+          "scope": "Post-dispatch same-generation observations; separate X11 reads, not an atomic snapshot.",
+          "requested": {
+            "width": 333,
+            "height": 197
+          },
+          "requested_basis": "client_bounds",
+          "request_match": "matched",
+          "constraint_reason": "not_determined"
+        }
+      },
+      "independent_oracle": {
+        "client_bounds": {
+          "x": 105,
+          "y": 149,
+          "width": 333,
+          "height": 197
+        },
+        "frame_bounds": {
+          "x": 100,
+          "y": 120,
+          "width": 343,
+          "height": 231
+        },
+        "properties": "_NET_FRAME_EXTENTS(CARDINAL) = 5, 5, 29, 5\n_NET_WM_STATE(ATOM) = _NET_WM_STATE_FOCUSED\nWM_NORMAL_HINTS(WM_SIZE_HINTS):\n\t\tprogram specified minimum size: 300 by 180\n\t\tprogram specified resize increment: 40 by 20\n\t\tprogram specified base size: 300 by 180\n\t\twindow gravity: NorthWest\n"
+      }
+    },
+    {
+      "action": "resize",
+      "result": {
+        "effect": "verified",
+        "verification": "Window-manager state matches request.",
+        "window_id": "295b0567fc894dafafad23699f4f859d:600003:32515:3558935:0adee5aa67d61c38fd429792c14114ca",
+        "action": "resize",
+        "observed_geometry": {
+          "client_bounds": {
+            "x": 105,
+            "y": 149,
+            "width": 420,
+            "height": 260
+          },
+          "frame_bounds": {
+            "x": 100,
+            "y": 120,
+            "width": 430,
+            "height": 294
+          },
+          "wm_state": {
+            "maximized_vertical": false,
+            "maximized_horizontal": false,
+            "fullscreen": false,
+            "hidden": false
+          },
+          "scope": "Post-dispatch same-generation observations; separate X11 reads, not an atomic snapshot.",
+          "requested": {
+            "width": 420,
+            "height": 260
+          },
+          "requested_basis": "client_bounds",
+          "request_match": "matched",
+          "constraint_reason": "not_determined"
+        }
+      },
+      "independent_oracle": {
+        "client_bounds": {
+          "x": 105,
+          "y": 149,
+          "width": 420,
+          "height": 260
+        },
+        "frame_bounds": {
+          "x": 100,
+          "y": 120,
+          "width": 430,
+          "height": 294
+        },
+        "properties": "_NET_FRAME_EXTENTS(CARDINAL) = 5, 5, 29, 5\n_NET_WM_STATE(ATOM) = _NET_WM_STATE_FOCUSED\nWM_NORMAL_HINTS(WM_SIZE_HINTS):\n\t\tprogram specified minimum size: 300 by 180\n\t\tprogram specified resize increment: 40 by 20\n\t\tprogram specified base size: 300 by 180\n\t\twindow gravity: NorthWest\n"
+      }
+    },
+    {
+      "action": "maximize",
+      "result": {
+        "effect": "verified",
+        "verification": "Window-manager state matches request.",
+        "window_id": "295b0567fc894dafafad23699f4f859d:600003:32515:3558935:0adee5aa67d61c38fd429792c14114ca",
+        "action": "maximize",
+        "observed_geometry": {
+          "client_bounds": {
+            "x": 0,
+            "y": 24,
+            "width": 1200,
+            "height": 876
+          },
+          "frame_bounds": {
+            "x": 0,
+            "y": 0,
+            "width": 1200,
+            "height": 900
+          },
+          "wm_state": {
+            "maximized_vertical": true,
+            "maximized_horizontal": true,
+            "fullscreen": false,
+            "hidden": false
+          },
+          "scope": "Post-dispatch same-generation observations; separate X11 reads, not an atomic snapshot."
+        }
+      },
+      "independent_oracle": {
+        "client_bounds": {
+          "x": 0,
+          "y": 24,
+          "width": 1200,
+          "height": 876
+        },
+        "frame_bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 1200,
+          "height": 900
+        },
+        "properties": "_NET_FRAME_EXTENTS(CARDINAL) = 0, 0, 24, 0\n_NET_WM_STATE(ATOM) = _NET_WM_STATE_MAXIMIZED_HORZ, _NET_WM_STATE_MAXIMIZED_VERT, _NET_WM_STATE_FOCUSED\nWM_NORMAL_HINTS(WM_SIZE_HINTS):\n\t\tprogram specified minimum size: 300 by 180\n\t\tprogram specified resize increment: 40 by 20\n\t\tprogram specified base size: 300 by 180\n\t\twindow gravity: NorthWest\n"
+      }
+    },
+    {
+      "action": "restore",
+      "result": {
+        "effect": "verified",
+        "verification": "Window-manager state matches request.",
+        "window_id": "295b0567fc894dafafad23699f4f859d:600003:32515:3558935:0adee5aa67d61c38fd429792c14114ca",
+        "action": "restore",
+        "observed_geometry": {
+          "client_bounds": {
+            "x": 105,
+            "y": 149,
+            "width": 420,
+            "height": 260
+          },
+          "frame_bounds": {
+            "x": 100,
+            "y": 120,
+            "width": 430,
+            "height": 294
+          },
+          "wm_state": {
+            "maximized_vertical": false,
+            "maximized_horizontal": false,
+            "fullscreen": false,
+            "hidden": false
+          },
+          "scope": "Post-dispatch same-generation observations; separate X11 reads, not an atomic snapshot."
+        }
+      },
+      "independent_oracle": {
+        "client_bounds": {
+          "x": 105,
+          "y": 149,
+          "width": 420,
+          "height": 260
+        },
+        "frame_bounds": {
+          "x": 100,
+          "y": 120,
+          "width": 430,
+          "height": 294
+        },
+        "properties": "_NET_FRAME_EXTENTS(CARDINAL) = 5, 5, 29, 5\n_NET_WM_STATE(ATOM) = _NET_WM_STATE_FOCUSED\nWM_NORMAL_HINTS(WM_SIZE_HINTS):\n\t\tprogram specified minimum size: 300 by 180\n\t\tprogram specified resize increment: 40 by 20\n\t\tprogram specified base size: 300 by 180\n\t\twindow gravity: NorthWest\n"
+      }
+    }
+  ]
+}
