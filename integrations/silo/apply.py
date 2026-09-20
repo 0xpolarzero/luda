@@ -10,7 +10,7 @@ BASE = '777e1090d5e998059758160912138228ba98378d'
 ASSETS = Path(__file__).resolve().parent
 PATCHES = ('0001-guest-onboarding.patch', '0002-desktop-onboarding.patch',
            '0003-host-codex-registration.patch', '0004-preserve-registered-transport.patch',
-           '0005-refresh-agent-skill.patch')
+           '0005-refresh-agent-skill.patch', '0006-host-registration-lifecycle.patch')
 
 
 def apply(checkout, mutate=False):

@@ -212,3 +212,36 @@ the first three remain byte-identical to their previously tested versions.
 ## Bundled skill alignment
 
 `0005-refresh-agent-skill.patch` updates the native registration bundle with the optional OCR guidance. Earlier patches remain immutable; the applied series must embed the exact current reviewed skill. The integration test applies every ordered patch to the skill path and compares final bytes. Native registration still refuses a guest with a different installed skill instead of pairing mismatched guidance silently.
+### Native discovery, Browse and explicit Disconnect (sixth patch)
+
+`0006-host-registration-lifecycle.patch` adds file/folder Browse dialogs and a
+read-only **Find installed Codex** action. Discovery checks owned executables in
+PATH and common installation directories, plus existing CODEX_HOME and ~/.codex
+profile directories. It executes no candidate program and fills only blank fields;
+the selected paths remain visible for review. Missing app-bundled CLIs can be
+selected with Browse. Canceling a picker preserves the existing entry. Neither
+selection nor discovery registers anything.
+
+**Disconnect from this profile** is an explicit action scoped to the displayed VM
+and profile. It requires a matching owned receipt, cached files and effective
+transport before invoking `codex plugin remove`. It verifies both the installed
+plugin entry and resolved server are absent before claiming profile removal.
+Unrelated plugins/settings and marketplace registration remain untouched. Persistent
+bundle and transport files remain available to running clients; the action does
+not terminate existing MCP processes or claim their shutdown. The Codex CLI itself
+removes its plugin cache. Failed/uncertain removal is recorded durably and never
+retried automatically. Repeating removal after confirmed absence is read-only
+apart from receipt refresh. Changed/disabled registrations require review. After confirmed removal, a new explicit Register action reconnects the same
+verified bundle only if its identity is unchanged and no server occupies its name.
+Unconfirmed removal and changed bundle identities still require review; changed
+version updates remain a subsequent increment.
+
+Seven native tests passed, including two opt-in actual Codex CLI tests: selected
+VM removal leaves the other VM and unrelated settings, repeated removal verifies
+absence, explicit same-bundle reconnect is verified, overridden transports are refused, and a synthetic failed remove leaves
+the installed server while preventing a second mutation. Twenty-three frontend
+tests and TypeScript checking passed, including picker cancellation, explicit
+Disconnect, and discovery preserving a typed profile without registration. The
+sixth patch applied cleanly after the first four (the fifth refreshes only skill
+bytes). This remains Linux qualification of native logic, not macOS dialog or
+packaging acceptance. Logs are in `artifacts/silo-native-registration/`.
