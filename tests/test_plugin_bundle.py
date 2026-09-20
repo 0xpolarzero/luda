@@ -41,6 +41,9 @@ class PluginBundleTests(unittest.TestCase):
             output = Path(directory) / 'luda'
             plugin.build(output, '/guest/luda')
             self.assertEqual((output / 'skills/luda/SKILL.md').read_bytes(), (ROOT / 'skills/luda/SKILL.md').read_bytes())
+            expected_skill = {p.relative_to(ROOT / 'skills/luda'): p.read_bytes() for p in (ROOT / 'skills/luda').rglob('*') if p.is_file()}
+            actual_skill = {p.relative_to(output / 'skills/luda'): p.read_bytes() for p in (output / 'skills/luda').rglob('*') if p.is_file()}
+            self.assertEqual(actual_skill, expected_skill)
             self.assertFalse(any(p.is_symlink() for p in output.rglob('*')))
             (output / 'user.txt').write_text('preserve')
             with self.assertRaises(FileExistsError):
