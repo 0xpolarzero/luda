@@ -6,7 +6,7 @@ Local Linux desktop control for agents. Luda attaches to the XFCE/X11 desktop al
 
 ## Use it
 
-For an existing running Silo desktop, the [guest bootstrap](docs/GUEST-BOOTSTRAP.md) composes installation, readiness checks and a remote Codex configuration/skill bundle in one command. For host Codex, the [VM-specific SSH plugin builder and explicit profile registration](docs/HOST-REGISTRATION.md) package the tools and skill together. Each VM has its own resolved MCP server name. Native Silo UI integration and Mac end-to-end acceptance remain in progress.
+For an existing running Silo desktop, the [guest bootstrap](docs/GUEST-BOOTSTRAP.md) composes installation, readiness checks and a remote Codex configuration/skill bundle in one command. For host Codex, the [VM-specific SSH plugin builder and explicit profile registration](docs/HOST-REGISTRATION.md) package the tools and skill together. Each VM has its own resolved MCP server name. The [native Silo integration patch](integrations/silo/README.md) adds discovery, path pickers, registration and explicit disconnect/reconnect; it has not been shipped in Silo or accepted on macOS.
 
 For manual installation on an existing Ubuntu 24.04 XFCE/X11 desktop:
 
@@ -28,7 +28,7 @@ The installer creates versioned releases and switches `current` atomically. The 
 3. When accessibility is unavailable, observe the screenshot and use its coordinates. The same click/hover tools handle owned context menus and submenus.
 4. Read back or wait for the intended state. After an uncertain result, inspect before repeating input.
 
-The [tool reference](docs/TOOLS.md) is generated from actual MCP declarations. The [skill](skills/luda/SKILL.md) explains targeting, text and recovery. Other capabilities include window/workspace management, cross-window drag, table-row selection, clipboard paste, shared pause/resume and explicit input cleanup recovery. Pointer and key dispatch still require application-specific verification.
+The [tool reference](docs/TOOLS.md) is generated from actual MCP declarations. The [skill](skills/luda/SKILL.md) explains targeting, text and recovery. Other capabilities include [optional local OCR](docs/OCR.md) over a selected screenshot, window/workspace management, cross-window drag, table-row selection, clipboard paste, shared pause/resume and explicit input cleanup recovery. Pointer and key dispatch still require application-specific verification.
 
 ## Develop and test
 
@@ -55,4 +55,4 @@ flock /tmp/luda-live-tests.lock /absolute/luda/.venv/bin/luda-session -- \
 
 Window identities include process lifetime and an X-resource generation token. Screenshot coordinates expire and are revalidated against display topology, geometry, focus, menus and the topmost surface. Semantic handles are scoped to an observed window and expire; private full-name fingerprints detect changes beyond displayed name prefixes. Provider reuse of an identical identity remains a limitation; see the [semantic contract](docs/SEMANTIC-CONTROLS.md). Input is serialized across cooperating clients, and `desktop_control` can pause their mutations. Owned injectors provide bounded cleanup after interruption; unproven cleanup remains blocked, and old cleanup does not touch a replacement X server.
 
-X11 does not provide exclusive ownership against human viewer input. Clipboard paste replaces CLIPBOARD, leaves PRIMARY alone and may trigger a terminal paste dialog. Direct typing verifies exact text where supported; browser and toolkit differences remain under qualification. Native Wayland and modern Xwayland are explicitly rejected before desktop requests; see the [backend boundary and live refusal evidence](docs/BACKEND-SUPPORT.md). Rich clipboard formats, OCR and browser DOM automation remain outside the production implementation. Read the [architecture and behavioral contracts](docs/DESIGN.md) before embedding Luda as a release component.
+X11 does not provide exclusive ownership against human viewer input. Clipboard paste replaces CLIPBOARD, leaves PRIMARY alone and may trigger a terminal paste dialog. Direct typing verifies exact text where supported; browser and toolkit differences remain under qualification. Native Wayland and modern Xwayland are explicitly rejected before desktop requests; see the [backend boundary and live refusal evidence](docs/BACKEND-SUPPORT.md). Rich clipboard formats and browser DOM automation remain outside the production implementation. Read the [architecture and behavioral contracts](docs/DESIGN.md) before embedding Luda as a release component.

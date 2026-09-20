@@ -10,11 +10,11 @@ source-bound findings.
 
 ## Evidence now available
 
-The [current unit record](UNIT-COVERAGE-CURRENT.md) now contains 661 passing root
-tests and the matching ordinary-account run (655 passed, six unavailable Codex
-CLI tests skipped). Its map names 135 requirements and 287 distinct unit methods.
-These subsequent results retain their own source revision and fingerprint. The [live inventory](LIVE-COVERAGE.md) registers 68 fixtures and
-158 distinct requirement associations. These overlap and are not a reliability
+The [current unit record](UNIT-COVERAGE-CURRENT.md) now contains 679 passing root
+tests and the matching ordinary-account run (671 passed, eight unavailable Codex
+CLI tests skipped). Its map names 136 requirements and 298 distinct unit methods.
+These subsequent results retain their own source revision and fingerprint. The [live inventory](LIVE-COVERAGE.md) registers 72 fixtures and
+160 distinct requirement associations. These overlap and are not a reliability
 percentage or evidence that all associated requirements passed.
 
 Both hosted workflows passed at `8dd8aef`, including independent AMD64 unit,
@@ -54,8 +54,8 @@ also retains the corrected generated-inventory failure instead of omitting it.
 
 | Area | Remaining boundary |
 |---|---|
-| Active composition, EDIT-10 | [Real GTK/Chromium probes](IME-COMPOSITION.md) expose lost or later-committed preedit. Generic AT-SPI does not supply authoritative current composition state. A cooperating application/provider adapter is still absent; engine activation or daemon presence is insufficient. |
-| Rich text, WEB-03/DATA-07 | Opaque embedded-object text cannot establish exact logical plaintext. Both native and clipboard paths now refuse unsupported representations before mutation and report uncertainty if they arise afterward. This fixes false verification; it does not implement a representation-aware rich editor. |
+| Active composition, EDIT-10 | [Real GTK/Chromium probes](IME-COMPOSITION.md) expose lost or later-committed preedit. Generic AT-SPI does not supply authoritative current composition state. A production cooperating adapter is still absent. [Owned-browser prototypes](OWNED-BROWSER-CANCEL-PROTOTYPE.md) now qualify narrow explicit cancellation correlation while retaining unknown and uncertain cases; engine activation or daemon presence is insufficient. |
+| Rich text, WEB-03/DATA-07 | Opaque embedded-object text cannot establish exact logical plaintext. Both native and clipboard paths now refuse unsupported representations before mutation and report uncertainty if they arise afterward. This fixes false verification. A [test-only ProseMirror adapter](OWNED-RICH-EDITOR-PROTOTYPE.md) preserves exact paragraph-separated text in its declared route, but broad paste, hard-break, formatting and IME recovery failures remain; no production adapter is inferred. |
 | Provider-specific semantic controls | GTK4 selection/caret and checkbox actions, some Qt combo actions, Electron non-BMP selection verification and protected Firefox editing retain explicit limitations. Tested GUI alternatives do not relabel semantic support. |
 | Content/session identity, AUTH-05 | A screenshot token validates age, native identity/layout and related checks, not unchanged control meaning. The retained old-login screenshot diagnostic did activate a replacement control. Fresh semantic inspection avoided it in the separate workflow. [Authentication evidence](AUTH-QUALIFICATION.md) and skill guidance preserve this distinction. |
 | Input and application races | X11 does not give exclusive human-input ownership, atomic clipboard delivery or application transactions. Successful dispatch is not task completion, and cleanup cannot undo an application effect. |
@@ -99,7 +99,7 @@ of leaks is inferred from it.
   bootstrap invocation and separate tools status/UI against pinned Silo source,
   with actual Linux Rust/frontend tests and real HTTPS/bootstrap composition.
   It remains unapplied to the product and disabled until a trusted release
-  artifact is configured. The [host SSH plugin utility](HOST-REGISTRATION.md) now provides explicit selected-profile registration with VM-specific resolved server keys. Native Silo registration UI and actual SSH/Mac acceptance remain in progress.
+  artifact is configured. The [host SSH plugin utility](HOST-REGISTRATION.md) now provides explicit selected-profile registration with VM-specific resolved server keys. The native Silo patch now adds discovery, Browse, registration and explicit disconnect/reconnect. Actual generated SSH transports have separate private-session evidence; fresh Mac/Silo acceptance remains external.
 - Actual Mac Codex SSH placement, tool/skill discovery, human viewer continuity
   and reconnect require host access. A specific macOS runner/workspace has been
   requested; this Linux guest cannot establish those outcomes.
@@ -112,3 +112,5 @@ of leaks is inferred from it.
 No priorities or acceptance criteria are downgraded here. A requirement that
 explicitly permits unsupported behavior still needs evidence for that refusal;
 its requested application effect must not be described as successful.
+
+[Optional local OCR](OCR.md) is now implemented, with bounded historical screenshot storage, uncertain word candidates and real GTK/MCP geometry evidence. Audio/video capture and other richer media capabilities remain separate work.

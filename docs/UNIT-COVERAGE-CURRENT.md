@@ -1,19 +1,18 @@
-# Unit mapping coverage: 661-test snapshot
+# Unit mapping coverage: 679-test snapshot
 
-This record binds source `44f53ea` to unchanged fingerprint `bc52bf85d23b2c8d794d75f9448e76346180806e01d5e49e2162fbec98889c65`. The [645-test snapshot](UNIT-COVERAGE-AE824B2.md) remains available with its original results and failures. Counts are evidence, not release qualification.
+Source `0217541` passed 679 root unit tests. The matching ordinary-account run passed 671 and explicitly skipped eight Codex CLI tests because the CLI was unavailable to that account. Both retained unchanged full source fingerprint `0684d83d005067881ba36143aa367179064a332c00a243b9cb75b22e5b77922c`.
 
-- Catalog: 346 cases (296 P0, 30 P1, 20 P2); all remain release-unqualified.
-- Mapping: 135 requirements and 287 distinct exact unit methods.
-- Root: 661 tests passed; every mapped test exists.
-- Same-source UID 1001: 655 passed, six Codex CLI tests skipped because that account cannot discover the CLI.
-- Requirement evidence: 135 local-tests-passed; 211 without mapped unit assertions.
+- Catalog: 346 cases; all remain release-unqualified.
+- Mapping: 136 requirements and 298 distinct exact unit methods.
+- Evidence: 136 local-tests-passed; 210 cases without mapped unit assertions.
+- Records: `artifacts/qualification/backend-host/root-ocr-final.json` and `ordinary-ocr-final.json`.
 
-Exact records are `artifacts/qualification/backend-host/root-session-fix.json` and `ordinary-session-fix.json`. Both report the same unchanged full source fingerprint. The ordinary account has no Git revision because of checkout ownership; the full hash binds it to the root snapshot. Earlier 658-test records in the same directory remain intact.
+The [661-test snapshot](UNIT-COVERAGE-44F53EA.md) preserves earlier results and the headless fixture-permission failures. An intermediate ordinary-account run (`ordinary-ocr-integrated.json`) encountered an unresolved generated-inventory merge conflict and failed that freshness check. It remains retained; regenerating the inventory and completing the merge preceded both passing final runs. No failure was converted into a pass.
 
-New assertions cover explicit unsupported Wayland/Xwayland refusal, a native X11 target with unrelated Wayland hints, host plugin remote-shell quoting, two distinct VM MCP namespaces, actual temporary-profile Codex registration and partial-result reconciliation, plus launcher working-directory selection after privilege drop. Host registration tests do not establish a real SSH connection or Mac Silo onboarding.
+New evidence includes the optional screenshot OCR parser, limits, actual child cancellation, cache bounds and read-only protocol; complete effective host transport validation; malformed bundle JSON refusal; source-dependency filtering; and ordered Silo patch/skill checks. The browser prototypes are separate live evidence, with their actual failures preserved, rather than production support inferred from asset tests.
 
-At `6c2e18d`, 12 of 16 ordinary-user headless suites passed. Four failed on reused root-owned fixture artifacts, including an unavailable independent state oracle; these failures are retained in `artifacts/headless/results.json`. Fresh artifact paths and explicit suite selection were added in `47b76e9`; all four affected suites then passed in `artifacts/headless/run-1789882459451378517/` with unchanged source fingerprint `8ffadfb209f66c36867c2b567f3a72f8b779006bff9026115af8eaa3329373c3`. This is a corrected four-suite run, not a second full run. Actual KasmVNC MCP also passed 23 checks at that source while holding the shared desktop lease.
+At source `9bf509b`, the integrated OCR matrix run `run-1789883951540941145` passed in 2.425 seconds with unchanged fingerprint `f9b3ef0cbd883698fd42aa918f08d4f9d176d2cb228ce40405a2dc9686af9932` and no surviving owned processes. Actual KasmVNC MCP passed 23 checks while holding the shared desktop lease. After giving each MCP fixture a fresh oracle directory, another 23-check run passed at `9e366e7`, retained under `artifacts/mcp/run-1789884289739842557/`.
 
-Hosted AMD64 [Desktop contracts](https://github.com/0xpolarzero/luda/actions/runs/35491955624) and [Native application workflows](https://github.com/0xpolarzero/luda/actions/runs/35491955619) both passed at `6c2e18d`. Those hosted results precede the artifact-isolation and launcher-cwd changes.
+Hosted [Codex registration](https://github.com/0xpolarzero/luda/actions/runs/35492837259), [desktop contracts](https://github.com/0xpolarzero/luda/actions/runs/35492837266) and [native application workflows](https://github.com/0xpolarzero/luda/actions/runs/35492837275) passed on AMD64 at `f7a8720`. The new Codex job installs the integrity-locked 0.155.1 CLI and fails on skipped tests. These hosted results precede OCR. The earlier native run at `2c7e362` failed waiting for Mousepad's automatic focus; its artifact is retained. Explicitly activating the sole owned window fixed the fixture assumption; the local affected workflow and subsequent hosted native run passed.
 
-Run `.venv/bin/python scripts/qualify.py --output /absolute/evidence.json` for a new exact-source record. Unit mapping, live fixture association, application qualification and fresh product integration remain separate claims.
+Run `.venv/bin/python scripts/qualify.py --output /absolute/evidence.json` for a new exact-source record. Unit assertions, live fixture association, application qualification and fresh product integration remain separate claims.

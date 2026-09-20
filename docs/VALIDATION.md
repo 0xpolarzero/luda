@@ -136,10 +136,18 @@ fresh Mac Codex discovery.
 4. **Broader qualification:** display topology, keyboard layouts/crash cleanup, long-running load, additional application families, complex data/authentication widgets and unseen agent tasks remain incomplete. Some have working generic primitives without sufficient qualification evidence.
 5. **Product integration and external acceptance:** The [optional Silo patch](../integrations/silo/README.md) implements guest installation hooks and separate tools status, but remains unapplied to the product and disabled pending a trusted release artifact. Host tools/skill registration is still absent. Fresh ARM64/AMD64 microsandbox provisioning, Silo installation/health/viewer lifecycle, and actual Mac Codex SSH discovery also require host acceptance; Linux fixtures or generated configuration cannot establish those outcomes.
 
-Wayland, OCR, audiovisual interaction and rich clipboard formats are separate catalog expansions. The current GUI backend remains XFCE/KasmVNC; Luda controls the desktop already visible to the user.
+Native Wayland remains explicitly unsupported; modern Xwayland refusal now has live evidence. Optional local OCR is implemented with its own bounded evidence. Audiovisual interaction and rich clipboard formats remain separate catalog expansions. The current GUI backend remains XFCE/KasmVNC; Luda controls the desktop already visible to the user.
 
 ## Subsequent diagnostics and Silo integration checks
 
 Source `ae824b2` passed 645 root unit tests, and 644 plus one expected unavailable-Codex-CLI skip as UID 1001, with matching unchanged source hashes. The initially stale generated inventory failure and corrected records are preserved in [the current unit record](UNIT-COVERAGE-CURRENT.md). Actual MCP passed 23 checks at this source. [Installed report verification](BUG-REPORT.md) retains the earlier wheel's exact identity and KasmVNC checks.
 
 The [optional pinned-Silo patch](../integrations/silo/README.md) passed 21 guest-wrapper tests, 18 frontend tests, TypeScript checking and six actual Linux ARM64 Rust desktop tests. A separate [real HTTPS/bootstrap composition](SILO-COMPOSITION-QUALIFICATION.md) passed with system provisioning explicitly skipped. The final source distribution was built with hash-locked build dependencies and contained all six integration assets (`artifacts/silo-integration/packaging-ae824b2/`). These are bounded integration results; fresh images, product deployment and Mac host discovery remain unqualified.
+
+## Subsequent host, backend and OCR integration
+
+The [679-test snapshot](UNIT-COVERAGE-CURRENT.md) records matching root/ordinary source hashes, retained harness failures and exact hosted workflow revisions. [Real private SSH](HOST-PLUGIN-SSH-QUALIFICATION.md) verifies both generated VM commands against distinct owned desktops and exposed the corrected launcher working-directory bug. [Wayland refusal](WAYLAND-BASELINE.md#rejection-fix-qualification) now rejects unsupported sessions before input.
+
+The [six-patch Silo integration](../integrations/silo/README.md) provides native registration, read-only discovery, path pickers, disconnect/reconnect and matching reviewed skill bytes. Its actual temporary-profile Codex CLI, Linux Rust and frontend tests do not establish Mac packaging, real Silo SSH routing or product deployment. The default guest release manifest remains disabled until a trusted source artifact is selected.
+
+[OCR](OCR.md) passed its integrated private MCP workflow, and the ordinary guest MCP suite passed 23 checks. [Rich text](OWNED-RICH-EDITOR-PROTOTYPE.md), [native composition provenance](OWNED-RICH-EDITOR-PROTOTYPE.md) and [explicit cancellation](OWNED-BROWSER-CANCEL-PROTOTYPE.md) remain scoped prototypes with retained failures and uncertain cases. They do not extend the production text support claim.
