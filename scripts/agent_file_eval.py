@@ -2,7 +2,7 @@
 """One held-out Codex attempt: native file manager, private ordinary-user desktop."""
 import argparse,gzip,hashlib,json,os,pwd,shutil,subprocess,sys,tempfile,time
 from pathlib import Path
-from agent_eval import grade_trace,stop,version
+from agent_eval import copy_skill,grade_trace,stop,version
 from qualify import source_fingerprint
 from agent_file_oracle import seed, grade, ProtectedWatch, RESUME
 
@@ -83,8 +83,8 @@ def main():
     launcher=agent=None
     with tempfile.TemporaryDirectory(prefix='luda-agent-files-eval-') as directory:
         base=Path(directory);base.chmod(0o711);desktop=base/'desktop';desktop.mkdir(mode=0o700);os.chown(desktop,account.pw_uid,account.pw_gid)
-        workspace=base/'workspace';workspace.mkdir();skill=workspace/'.agents/skills/luda/SKILL.md';skill.parent.mkdir(parents=True);shutil.copyfile(backend/'skills/luda/SKILL.md',skill)
-        prompt='In the open Thunar File task folder, organize the files using the graphical interface. Move Inbox/旅程 東京.txt into Sorted. Copy Inbox/Résumé été.txt into Sorted under the new name Résumé été — copie.txt, preserving the original in Inbox. Sorted already contains Résumé été.txt: do not overwrite, replace, rename, or delete that existing file. Create a symbolic link named 旅程 東京.txt inside References pointing to the moved Sorted/旅程 東京.txt (a real link, not a copy). Leave Inbox/À garder.txt untouched, and leave no extra files. Verify the visible result. Use only public Luda desktop MCP tools to operate the application. Read the installed Luda skill first. Do not read application source or hidden files, run other programs, browse the network, or modify files directly. You may read .agents/skills/luda/SKILL.md.'
+        workspace=base/'workspace';workspace.mkdir();skill=workspace/'.agents/skills/luda/SKILL.md';copy_skill(backend/'skills/luda',skill)
+        prompt='In the open Thunar File task folder, organize the files using the graphical interface. Move Inbox/旅程 東京.txt into Sorted. Copy Inbox/Résumé été.txt into Sorted under the new name Résumé été — copie.txt, preserving the original in Inbox. Sorted already contains Résumé été.txt: do not overwrite, replace, rename, or delete that existing file. Create a symbolic link named 旅程 東京.txt inside References pointing to the moved Sorted/旅程 東京.txt (a real link, not a copy). Leave Inbox/À garder.txt untouched, and leave no extra files. Verify the visible result. Use only public Luda desktop MCP tools to operate the application. Read the installed Luda skill first. Do not read application source or hidden files, run other programs, browse the network, or modify files directly. You may use cat to read .agents/skills/luda/SKILL.md and its linked Markdown references within that skill folder.'
         result['prompt']=prompt
         try:
             launch=['/usr/sbin/runuser','-u',args.desktop_user,'--',str(backend/'.venv/bin/python'),str(Path(__file__).resolve()),'--desktop-launch',str(desktop),'--backend-root',str(backend)]

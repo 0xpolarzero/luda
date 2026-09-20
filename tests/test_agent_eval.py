@@ -2,16 +2,59 @@
 import importlib.util
 from pathlib import Path
 import sys
+import tempfile
 import unittest
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'scripts'))
 spec=importlib.util.spec_from_file_location('agent_eval',ROOT/'scripts/agent_eval.py')
 m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
 class AgentTrace(unittest.TestCase):
-    skill=Path('/tmp/task/workspace/.agents/skills/luda/SKILL.md')
+    def setUp(self):
+        self.directory=tempfile.TemporaryDirectory(prefix='luda-trace-')
+        self.addCleanup(self.directory.cleanup)
+        self.workspace=Path(self.directory.name)/'workspace'
+        self.skill=self.workspace/'.agents/skills/luda/SKILL.md'
+        self.skill.parent.mkdir(parents=True)
+        self.skill.write_text('Read references/text.md')
+        self.reference=self.skill.parent/'references/text.md'
+        self.reference.parent.mkdir();self.reference.write_text('Text guidance')
+        self.oracle=Path(self.directory.name)/'oracle.md';self.oracle.write_text('private')
     def test_skill_reads_allowed(self):
-        self.assertTrue(m.allowed_command("/bin/bash -lc 'cat /tmp/task/workspace/.agents/skills/luda/SKILL.md'",self.skill))
+        self.assertTrue(m.allowed_command(f"/bin/bash -lc 'cat {self.skill}'",self.skill))
         self.assertTrue(m.allowed_command('cat .agents/skills/luda/SKILL.md',self.skill))
+    def test_reference_reads_absolute_relative_and_multiple(self):
+        for command in (f'cat {self.reference}',
+                        'cat .agents/skills/luda/references/text.md',
+                        'cat .agents/skills/luda/SKILL.md .agents/skills/luda/references/text.md',
+                        f"/bin/bash -lc 'cat {self.reference}'"):
+            with self.subTest(command=command):self.assertTrue(m.allowed_command(command,self.skill))
+    def test_traversal_symlinks_and_non_markdown_refused(self):
+        (self.reference.parent/'oracle.md').symlink_to(self.oracle)
+        (self.reference.parent/'inside.md').symlink_to(self.reference)
+        (self.skill.parent/'outside').symlink_to(self.oracle.parent,target_is_directory=True)
+        (self.reference.parent/'binary').write_bytes(b'not a guide')
+        for argument in (str(self.oracle),str(self.reference.parent/'oracle.md'),
+                         str(self.reference.parent/'inside.md'),str(self.skill.parent/'outside/oracle.md'),
+                         str(self.reference.parent/'binary'),str(self.reference.parent/'../SKILL.md'),
+                         str(self.reference.parent/'missing.md')):
+            with self.subTest(argument=argument):self.assertFalse(m.allowed_command('cat '+argument,self.skill))
+    def test_shell_expansions_and_redirects_refused(self):
+        for command in (f'cat {self.skill} > {self.oracle}',f'cat {self.skill} && cat {self.oracle}',
+                        f'cat {self.skill}$(cat {self.oracle})',f'cat {self.skill}`cat {self.oracle}`',
+                        'cat .agents/skills/luda/references/*.md',f'cat {self.skill}\ncat {self.oracle}'):
+            with self.subTest(command=command):self.assertFalse(m.allowed_command(command,self.skill))
+    def test_symlinked_skill_root_refused(self):
+        root=self.skill.parent;stored=root.with_name('stored');root.rename(stored)
+        root.symlink_to(stored,target_is_directory=True)
+        self.assertFalse(m.allowed_command('cat '+str(self.skill),self.skill))
+    def test_complete_skill_copy_and_source_symlink_refusal(self):
+        target=self.workspace/'second/skills/luda/SKILL.md'
+        m.copy_skill(self.skill.parent,target)
+        self.assertEqual((target.parent/'references/text.md').read_bytes(),self.reference.read_bytes())
+        (self.reference.parent/'oracle.md').symlink_to(self.oracle)
+        refused=self.workspace/'third/skills/luda/SKILL.md'
+        with self.assertRaises(ValueError):m.copy_skill(self.skill.parent,refused)
+        self.assertFalse(refused.parent.exists())
     def test_arbitrary_program_cannot_masquerade_as_shell_wrapper(self):
         self.assertFalse(m.allowed_command("/tmp/evil -c 'cat .agents/skills/luda/SKILL.md'",self.skill))
         self.assertFalse(m.allowed_command("bash unexpected -c 'cat .agents/skills/luda/SKILL.md'",self.skill))

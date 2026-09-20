@@ -2,7 +2,7 @@
 """One first-attempt delayed-save recovery task, existing CLI auth, ordinary private GUI."""
 import argparse,base64,json,os,pwd,shutil,subprocess,sys,tempfile,time
 from pathlib import Path
-from agent_eval import grade_trace,stop,version
+from agent_eval import copy_skill,grade_trace,stop,version
 from agent_file_eval import tool_failures
 from agent_trace_metrics import metrics
 from qualify import source_fingerprint
@@ -73,7 +73,7 @@ def main():
     launcher=agent=None
     with tempfile.TemporaryDirectory(prefix='luda-agent-rich-') as directory:
         base=Path(directory);base.chmod(0o711);desktop=base/'desktop';desktop.mkdir(mode=0o700);os.chown(desktop,account.pw_uid,account.pw_gid)
-        workspace=base/'workspace';workspace.mkdir();skill=workspace/'.agents/skills/luda/SKILL.md';skill.parent.mkdir(parents=True);shutil.copyfile(ROOT/'skills/luda/SKILL.md',skill)
+        workspace=base/'workspace';workspace.mkdir();skill=workspace/'.agents/skills/luda/SKILL.md';copy_skill(ROOT/'skills/luda',skill)
         try:
             with (out/'desktop.log').open('wb') as log:
                 launcher=subprocess.Popen(['/usr/sbin/runuser','-u',os.environ.get('LUDA_TEST_USER', 'desktop'),'--',str(ROOT/'.venv/bin/python'),__file__,'--launch',str(desktop)],stdout=log,stderr=log,start_new_session=True)
@@ -82,7 +82,7 @@ def main():
                     if launcher.poll() is not None or time.monotonic()>end:raise RuntimeError('Private desktop startup failed')
                     time.sleep(.05)
                 ready=json.loads((desktop/'ready.json').read_text())
-                prompt='In Field Notes, replace Report with exactly this JSON string: '+json.dumps(PAYLOAD,ensure_ascii=False)+'. Save the report once and verify its saved receipt. Do not submit a duplicate report. Use only public Luda desktop MCP tools for this task. Read the installed Luda skill first; you may read .agents/skills/luda/SKILL.md. Do not read application source, hidden files or oracle data, run other programs, modify files directly, or browse websites.'
+                prompt='In Field Notes, replace Report with exactly this JSON string: '+json.dumps(PAYLOAD,ensure_ascii=False)+'. Save the report once and verify its saved receipt. Do not submit a duplicate report. Use only public Luda desktop MCP tools for this task. Read the installed Luda skill first; you may use cat to read .agents/skills/luda/SKILL.md and its linked Markdown references within that skill folder. Do not read application source, hidden files or oracle data, run other programs, modify files directly, or browse websites.'
                 result['prompt']=prompt
                 server_args=['-u',os.environ.get('LUDA_TEST_USER', 'desktop'),'--','/usr/bin/env',*[k+'='+v for k,v in ready['environment'].items()],str(ROOT/'.venv/bin/luda')]
                 cmd=[codex,'exec','--ignore-user-config','--ephemeral','--skip-git-repo-check','--json','--sandbox','read-only','-C',str(workspace),'-c','approval_policy="never"','-c','mcp_servers.luda.command="/usr/sbin/runuser"','-c','mcp_servers.luda.args='+json.dumps(server_args),'-c','mcp_servers.luda.default_tools_approval_mode="approve"','-c','mcp_servers.luda.required=true','-c','mcp_servers.luda.startup_timeout_sec=20','-c','mcp_servers.luda.tool_timeout_sec=20',prompt]

@@ -2,7 +2,7 @@
 """One fresh Codex attempt: root CLI auth, ordinary-user private locale desktop."""
 import argparse,gzip,hashlib,json,os,pwd,shutil,subprocess,sys,tempfile,time
 from pathlib import Path
-from agent_eval import grade_trace,stop,version
+from agent_eval import copy_skill,grade_trace,stop,version
 from qualify import source_fingerprint
 
 
@@ -82,8 +82,8 @@ def main():
     launcher=agent=None
     with tempfile.TemporaryDirectory(prefix='luda-agent-locale-eval-') as directory:
         base=Path(directory);base.chmod(0o711);desktop=base/'desktop';desktop.mkdir(mode=0o700);os.chown(desktop,account.pw_uid,account.pw_gid)
-        workspace=base/'workspace';workspace.mkdir();skill=workspace/'.agents/skills/luda/SKILL.md';skill.parent.mkdir(parents=True);shutil.copyfile(backend/'skills/luda/SKILL.md',skill)
-        prompt='In the visible "Luda data entry oracle" form, set the local date and time to 18.11.2027 16:45 in Europe/Berlin, set the amount to 12,35, and explicitly select "Bergen, Norway" from the Destination autocomplete suggestions rather than merely entering it as literal text. Check the values, then submit exactly once and verify the visible result. Use only the public Luda desktop MCP tools to operate the application. Read the installed Luda skill first. Do not read application source or hidden files, run other programs, browse the network, or modify files directly. You may read .agents/skills/luda/SKILL.md.'
+        workspace=base/'workspace';workspace.mkdir();skill=workspace/'.agents/skills/luda/SKILL.md';copy_skill(backend/'skills/luda',skill)
+        prompt='In the visible "Luda data entry oracle" form, set the local date and time to 18.11.2027 16:45 in Europe/Berlin, set the amount to 12,35, and explicitly select "Bergen, Norway" from the Destination autocomplete suggestions rather than merely entering it as literal text. Check the values, then submit exactly once and verify the visible result. Use only the public Luda desktop MCP tools to operate the application. Read the installed Luda skill first. Do not read application source or hidden files, run other programs, browse the network, or modify files directly. You may use cat to read .agents/skills/luda/SKILL.md and its linked Markdown references within that skill folder.'
         result['prompt']=prompt
         try:
             launch=['/usr/sbin/runuser','-u',args.desktop_user,'--',str(backend/'.venv/bin/python'),str(Path(__file__).resolve()),'--desktop-launch',str(desktop),'--backend-root',str(backend),'--locale-source',str(args.locale_source)]
