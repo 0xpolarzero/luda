@@ -42,6 +42,11 @@ def reset(_):
  state['descending']=False;state['filtered']=False;filtered.refilter();sorted_model.set_sort_column_id(0,Gtk.SortType.ASCENDING);view.scroll_to_cell(Gtk.TreePath.new_from_indices([0]))
 for title,fn in [('Reverse sort',sort),('Filter first ten',filter_rows),('Reset data',reset)]:
  b=Gtk.Button(label=title);b.connect('clicked',fn);bar.pack_start(b,False,False,0)
+identity_button=Gtk.Button(label='Identity action');identity_button.get_accessible().set_name('x'*300+' first')
+identity_button.connect('clicked',lambda *_:state.update(identity_clicks=state.get('identity_clicks',0)+1));bar.pack_start(identity_button,False,False,0)
+rename=Gtk.Button(label='Rename long identity')
+def rename_identity(_):identity_button.get_accessible().set_name('x'*300+' second');state['identity_renamed']=True
+rename.connect('clicked',rename_identity);bar.pack_start(rename,False,False,0)
 tree_store=Gtk.TreeStore(str);root=tree_store.append(None,['Lazy group']);tree_store.append(root,['Loading placeholder'])
 tree=Gtk.TreeView(model=tree_store);tree.get_accessible().set_name('Lazy tree');tree.append_column(Gtk.TreeViewColumn('Tree',Gtk.CellRendererText(),text=0));tree.set_size_request(-1,180)
 def expanded(tree,it,path):

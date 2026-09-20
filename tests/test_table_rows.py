@@ -28,7 +28,7 @@ class Table:
 class Rows(unittest.TestCase):
  def setUp(self):
   self.cell=Cell();self.cell.bounds=rect();self.table=Table(self.cell);self.cell.table=self.table
-  self.current={'interfaces':['Component'],'name':'Record 1'}
+  self.current={'interfaces':['Component'],'name':'Record 1','name_fingerprint':w.bounded_name_identity(self.cell,False)[1]}
   self.patches=[patch.object(w.Atspi,'TableCell',Cell,create=True),patch.object(w.Atspi,'CoordType',types.SimpleNamespace(SCREEN=0),create=True),patch.object(w,'verify',lambda fn:fn())]
   for p in self.patches:p.start()
  def tearDown(self):

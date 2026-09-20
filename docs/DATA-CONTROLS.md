@@ -34,3 +34,11 @@ LUDA_ISOLATED_TEST_DISPLAY=1 xvfb-run -a -s '-screen 0 1440x1000x24 -nolisten tc
 ```
 
 The fixture owns XFWM. Six unit regressions additionally cover exclusive/extended row selection, offscreen refusal, ignored acceptance, recycled meaning after selection, and invalid cell position. The final full unit suite passed 446 tests.
+
+## Cropped names and stale identity
+
+A public accessible name is limited to 300 characters. Reusing that shortened value as the complete identity could allow a recycled path whose meaning changed only after character 300. Handles now privately retain a SHA256 fingerprint of the full unprotected accessible name; the public inspection output never contains the fingerprint. Names larger than one MiB of UTF-8 are refused before hashing, and the character budget is checked before encoding. AT-SPI itself returns a whole native name, so this is a post-retrieval identity-processing bound, not a claim to bound the provider's native reply allocation. Protected names are neither read nor hashed.
+
+Changed full-name identity refuses mutation with `STALE_TARGET`. An oversized identity fails with `TARGET_IDENTITY_UNAVAILABLE`; omitted unreadable nodes mark inspection incomplete. Provider paths reused with identical full names and roles still cannot be distinguished without a provider generation identifier; process identity, window scope and handle expiry remain necessary safeguards.
+
+The real fixture added a button whose accessible name changes only after character 300. Its old handle refused before the independent click counter changed; a fresh handle worked and exposed no digest. That run passed 15/16 checks, retained the grid-edit failure, and kept source hash `ba959a421c398e904125e54838e4096d854da29fbca1cd973aaf5a21ca8fec99` unchanged. Seven focused tests cover suffix identity, stale dispatch prevention, byte budget, protected-name privacy, fixed diagnostics, private handle storage, and incomplete inspection.

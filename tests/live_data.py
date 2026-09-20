@@ -49,6 +49,11 @@ with (OUT/'fixture.log').open('w') as log:
     response=fn();actual=oracle();record(case,response.get('effect') in ('verified','dispatched') and actual,response=response,oracle=actual)
    except DesktopError as exc:record(case,False,code=exc.code,effect=exc.effect)
   filtered=inspect(limit=10,name='Record 0030');record('filter-does-not-overclaim-traversal',all('Record 0030' in n['name'] for n in filtered['nodes']) and filtered['truncated'],truncation=filtered['truncation'])
+  long_node=node('x'*300);invoke('Rename long identity');before=state().get('identity_clicks',0)
+  try:r=d.element(long_node['element_id'],'invoke',action=long_node['actions'][0]);record('long-name-suffix-stale',False,response=r)
+  except DesktopError as exc:record('long-name-suffix-stale',exc.code=='STALE_TARGET' and state().get('identity_clicks',0)==before,code=exc.code)
+  fresh_long=node('x'*300);response=d.element(fresh_long['element_id'],'invoke',action=fresh_long['actions'][0])
+  record('long-name-fresh-handle-and-private-digest',state().get('identity_clicks',0)==before+1 and 'name_fingerprint' not in fresh_long,response=response)
   off=node('Record 0030');before=state()['selected_id']
   try:r=d.element(off['element_id'],'choose');record('offscreen-row-refused',False,response=r,oracle=state())
   except DesktopError as exc:record('offscreen-row-refused',exc.code=='NOT_INTERACTABLE' and state()['selected_id']==before,code=exc.code,states=off['states'])

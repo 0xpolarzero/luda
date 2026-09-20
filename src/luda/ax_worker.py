@@ -1,5 +1,6 @@
 """Bounded subprocess: an unresponsive AT-SPI application cannot wedge MCP."""
 import json
+import hashlib
 import sys
 import time
 import math
@@ -51,13 +52,32 @@ def decode_gecko_text(text, count):
     return decoded
 
 
+class IdentityLimit(ValueError):
+    """Native full-name identity exceeds the bounded fingerprint budget."""
+
+
+def bounded_name_identity(node, protected):
+    if protected:
+        return "[protected]", None
+    name = node.get_name() or ""
+    # AT-SPI returns the complete native name. Reject before encoding/hashing
+    # excessive values; neither the full value nor its digest is public output.
+    if len(name) > 1_048_576:
+        raise IdentityLimit("Accessible name exceeds the identity budget.")
+    encoded = name.encode("utf-8")
+    if len(encoded) > 1_048_576:
+        raise IdentityLimit("Accessible name exceeds the identity budget.")
+    return name[:300], hashlib.sha256(encoded).hexdigest()
+
+
 def describe(node, pid):
     interfaces = node.get_interfaces()
     state = node.get_state_set()
     states = [s.value_nick for s in state.get_states()]
     protected = "password" in node.get_role_name().lower()
+    name, fingerprint = bounded_name_identity(node, protected)
     r = {"pid": pid, "start": identity(pid), "path": node.path,
-         "name": "[protected]" if protected else (node.get_name() or "")[:300],
+         "name": name, "name_fingerprint": fingerprint,
          "role": node.get_role_name(), "states": states, "interfaces": interfaces,
          "protected": protected}
     if "Component" in interfaces:
@@ -323,7 +343,7 @@ class TextAccess:
         return Atspi.Text.remove_selection(self.raw, index)
 
 
-def choose_table_row(node, current, extend):
+def choose_table_row(node, current, extend, request=None):
     """Select a row through Table, preserving the exact observed cell identity."""
     cell = node.get_table_cell()
     table_node = Atspi.TableCell.get_table(cell)
@@ -346,7 +366,8 @@ def choose_table_row(node, current, extend):
         position_now = Atspi.TableCell.get_position(cell)
         actual = table.get_accessible_at(row, column)
         return (tuple(position_now[-2:]) == (row, column) and actual is not None
-                and actual.path == node.path and node.get_name() == current["name"])
+                and actual.path == node.path and bounded_name_identity(node, False) ==
+                (current["name"], current.get("name_fingerprint")))
     if row < 0 or column < 0 or not same_cell():
         return failure("STALE_TARGET", "Table cell position or meaning changed; inspect again.")
     selected = table.get_selected_rows()
@@ -358,6 +379,8 @@ def choose_table_row(node, current, extend):
     if set(selected) == expected:
         return {"effect": "verified", "accepted": True, "selected": True, "changed": False,
                 "selection_scope": "table_row"}
+    if request is not None:
+        request["_mutation_started"] = True
     accepted = bool(table.add_row_selection(row))
     if accepted and not extend:
         for old_row in selected:
@@ -462,7 +485,7 @@ def semantic(node, current, req):
                 return failure("INVALID_ARGUMENT", "Radio choices cannot extend a selection.")
             return semantic(node, current, {"op": "check", "checked": True})
         if current["role"] == "table cell" and "TableCell" in current["interfaces"]:
-            return choose_table_row(node, current, extend)
+            return choose_table_row(node, current, extend, request=req)
         parent = node.get_parent()
         if parent is None:
             return failure("UNSUPPORTED", "Option has no accessible parent.")
@@ -736,7 +759,7 @@ def main(req):
                 nodes.append(value)
             except Exception:
                 errors += 1
-        return {"nodes": nodes, "truncated": truncated or any(traversal.values()), "truncation": {"result_or_time_limit": truncated, **traversal}, "visited_nodes": visited, "max_depth": max_depth, "unreadable_nodes": errors, "unreadable_branches": traversal.get("unreadable_branches", 0),
+        return {"nodes": nodes, "truncated": truncated or bool(errors) or any(traversal.values()), "truncation": {"result_or_time_limit": truncated, **traversal}, "visited_nodes": visited, "max_depth": max_depth, "unreadable_nodes": errors, "unreadable_branches": traversal.get("unreadable_branches", 0),
                 "coverage": "selected accessible top-level window", "available": visited > 0,
                 "window_mapping": mapping, "bounds_coordinates": "unavailable" if mapping == "unique_title_and_size" else "screen"}
     target = req["target"]
@@ -744,7 +767,9 @@ def main(req):
         if node.path != target["path"]:
             continue
         current = describe(node, pid)
-        if any(current[k] != target[k] for k in ("role", "name", "start")) or "defunct" in current["states"]:
+        if (any(current[k] != target[k] for k in ("role", "name", "start"))
+                or current.get("name_fingerprint") != target.get("name_fingerprint")
+                or "defunct" in current["states"]):
             return {"error": "STALE_TARGET", "message": "Element identity changed; inspect again."}
         op = req["op"]
         if op != "read" and ("showing" not in current["states"] or not {"enabled", "sensitive"}.intersection(current["states"])):
@@ -821,6 +846,10 @@ def dispatch(request):
     request.pop("_mutation_started", None)
     try:
         return main(request)
+    except IdentityLimit:
+        return {"error": "TARGET_IDENTITY_UNAVAILABLE",
+                "message": "Accessible name exceeds the one-MiB identity budget; exact target identity cannot be established.",
+                "effect": "uncertain" if request.get("_mutation_started") else "none"}
     except TextChanged:
         return {"error": "TEXT_CHANGED",
                 "message": "Text changed during bounded readback; inspect again before input.",
