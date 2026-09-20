@@ -1,6 +1,6 @@
 """Same-process, same-XID recreation refuses keys with independent event oracle."""
 import ctypes as C
-import json,os,select,subprocess,sys
+import json,os,select,subprocess,sys,time
 from unittest.mock import patch
 from luda.x11 import X11
 
@@ -70,7 +70,29 @@ try:
         output=subprocess.check_output([sys.executable,'-m','luda._pointer_native','inject'],input=json.dumps(pointer_plan).encode()+b'\n',timeout=3)
         assert json.loads(output.splitlines()[-1])['done'] and events((4,5))==[4,5]
         assert 'X=30\nY=30' in subprocess.check_output(['xdotool','getmouselocation','--shell']).decode()
-        print(json.dumps({'same_process_same_xid':True,'observed_generation_planner_refused':True,'old_plan_injector_refused':True,'replacement_received_stale_keys':False,'fresh_generation_delivery_verified':True,'stale_pointer_plan_inject_move_refused':True,'replacement_pointer_events':0,'fresh_positioned_click_verified':True}))
+        repeated=helper('plan',{'chord':'Return','target':xid,'target_generation':new,'count':3})
+        output=subprocess.check_output([sys.executable,'-m','luda._keyboard_native','inject'],input=json.dumps(repeated).encode()+b'\n',timeout=3)
+        assert json.loads(output.splitlines()[-1])['dispatched_count']==3 and events()==[2,3]*3
+        maximum=helper('plan',{'chord':'ctrl+shift+alt+super+F12','target':xid,'target_generation':new,'count':20})
+        output=subprocess.check_output([sys.executable,'-m','luda._keyboard_native','inject'],input=json.dumps(maximum).encode()+b'\n',timeout=6)
+        assert json.loads(output.splitlines()[-1])['dispatched_count']==20 and events()==([2]*5+[3]*5)*20
+        repeated=helper('plan',{'chord':'Return','target':xid,'target_generation':new,'count':20})
+        injector=subprocess.Popen([sys.executable,'-m','luda._keyboard_native','inject'],stdin=subprocess.PIPE,stdout=subprocess.PIPE)
+        try:
+            injector.stdin.write(json.dumps(repeated).encode()+b'\n');injector.stdin.close()
+            assert json.loads(injector.stdout.readline())['armed']
+            observed=[];deadline=time.monotonic()+3
+            while observed!=[2,3] and time.monotonic()<deadline:observed+=events();time.sleep(.001)
+            assert observed==[2,3],observed
+            checked(x.xcb_destroy_window_checked(connection,xid));create()
+            replacement=driver.window_tokens([xid])[xid];assert replacement!=new
+            result=json.loads(injector.stdout.read());injector.wait(timeout=3)
+            assert result['code']=='STALE_TARGET' and 'dispatched_count' not in result,result
+            assert events()==[],'repeated keys reached recreated target'
+        finally:
+            if injector.poll() is None:injector.kill();injector.wait(timeout=3)
+            injector.stdout.close()
+        print(json.dumps({'same_process_same_xid':True,'observed_generation_planner_refused':True,'old_plan_injector_refused':True,'replacement_received_stale_keys':False,'fresh_generation_delivery_verified':True,'stale_pointer_plan_inject_move_refused':True,'replacement_pointer_events':0,'fresh_positioned_click_verified':True,'repeat_count_exact':3,'repeat_stopped_on_target_recreation':True}))
 finally:
     if connection:x.xcb_disconnect(connection)
     server.terminate();server.wait(timeout=3)

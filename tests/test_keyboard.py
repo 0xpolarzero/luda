@@ -6,7 +6,7 @@ from unittest.mock import Mock,patch
 from luda._keyboard_native import Keyboard,State
 from luda.common import DesktopError,operation_scope
 from luda.desktop import Desktop
-from luda.keyboard import send_chord,validate_chord,keyboard_capabilities
+from luda.keyboard import send_chord,validate_chord,keyboard_capabilities,validate_key_count
 
 
 class FakeKeyboard(Keyboard):
@@ -41,6 +41,16 @@ class KeyboardContract(unittest.TestCase):
             self.assertTrue(validate_chord(chord))
         for chord in (None,True,0,'','ctrl+ctrl+s','ctrl++s','Caps_Lock','Num_Lock','ctrl+hello','a b','a\n','F25','x'*65,'--clearmodifiers'):
             with self.subTest(chord=chord),self.assertRaises(DesktopError):validate_chord(chord)
+    def test_repeat_bounds_before_any_helper(self):
+        for count in (True,False,0,21,-1,1.0,'2',None):
+            with self.subTest(count=count),patch('luda.keyboard.run') as run,self.assertRaises(DesktopError):send_chord('Down',99,count=count)
+            run.assert_not_called()
+        for count in (1,20):self.assertEqual(validate_key_count(count),count)
+    def test_repeat_count_propagates_to_native_plan(self):
+        import json
+        with patch('luda.keyboard.run',return_value=b'{"code":"INPUT_HELD","message":"held"}') as run,self.assertRaises(DesktopError):send_chord('Down',99,count=4)
+        self.assertEqual(json.loads(run.call_args.kwargs['data'])['count'],4)
+        self.assertEqual(FakeKeyboard().plan('Return',99,count=20)['count'],20)
     def test_grammar_precedes_window_resolution(self):
         desktop=Desktop.__new__(Desktop);desktop.target_window=Mock()
         with self.assertRaises(DesktopError):desktop.key('unobserved','ctrl+ctrl+s')

@@ -95,9 +95,10 @@ class Keyboard:
             raise DesktopError('STALE_TARGET','Target window generation changed; no keys pressed.')
         return expected
 
-    def plan(self,chord,target,target_generation=None):
-        from .keyboard import validate_chord
+    def plan(self,chord,target,target_generation=None,count=1):
+        from .keyboard import validate_chord,validate_key_count
         parts=validate_chord(chord)
+        validate_key_count(count)
         target_token=self.target_token(target,target_generation)
         state=self.state()
         if self.pressed() or self.buttons() or state.base_mods:
@@ -128,7 +129,7 @@ class Keyboard:
         codes.append(code)
         if len(codes)!=len(set(codes)) or not 1<=len(codes)<=5:
             raise DesktopError('UNSUPPORTED_KEYMAP','Chord has overlapping keycodes.')
-        return {'chord':chord,'target':target,'keycodes':codes,'group':state.group,'locked_mods':state.locked_mods,'server_generation':generation(self.x),'target_generation':target_token}
+        return {'chord':chord,'target':target,'keycodes':codes,'group':state.group,'locked_mods':state.locked_mods,'server_generation':generation(self.x),'target_generation':target_token,'count':count}
     def press_target(self,code,target,target_generation):
         # The server cannot destroy/reuse a target between this identity check
         # and its key-down. Never keep the grab across sleeps or application
@@ -197,7 +198,7 @@ def main():
                   'latched_input':bool(state.latched_mods or state.latched_group),
                   'mapping':'Current group, named keys with ordinary Shift; unsupported symbols are refused.',
                   'cleanup':'Owned injector termination and planned-key release; concurrent same-key human input remains indistinguishable.'})
-        elif sys.argv[1]=='plan':emit(keyboard.plan(request['chord'],request['target'],request.get('target_generation')))
+        elif sys.argv[1]=='plan':emit(keyboard.plan(request['chord'],request['target'],request.get('target_generation'),request.get('count',1)))
         elif sys.argv[1]=='release':
             codes=request['keycodes']
             if not isinstance(codes,list) or not 1<=len(codes)<=5 or any(type(c) is not int or not 8<=c<=255 for c in codes):raise ValueError()
@@ -209,17 +210,23 @@ def main():
         elif sys.argv[1]=='inject':
             if generation(keyboard.x)!=request['server_generation']:
                 raise DesktopError('SESSION_CHANGED','X server changed before injection; no keys pressed.')
-            if keyboard.plan(request['chord'],request['target'],request.get('target_generation'))!=request:
+            if keyboard.plan(request['chord'],request['target'],request.get('target_generation'),request.get('count',1))!=request:
                 raise DesktopError('KEYMAP_CHANGED','Keyboard state changed before dispatch; no input sent.')
             emit({'armed':True,'client':keyboard.client_resource()})
-            pressed=[]
-            try:
-                for code in request['keycodes']:
-                    pressed.append(code);keyboard.press_target(code,request['target'],request['target_generation']);time.sleep(.012)
-            finally:
-                for code in reversed(pressed):keyboard.event(code,False)
-            state=keyboard.state()
-            emit({'done':True,'effect':'dispatched','group_unchanged':state.group==request['group'],'locks_unchanged':state.locked_mods==request['locked_mods']})
+            for repetition in range(request['count']):
+                if repetition and keyboard.plan(request['chord'],request['target'],request['target_generation'],request['count'])!=request:
+                    raise DesktopError('KEYMAP_CHANGED','Keyboard state changed between repetitions; remaining chords were not sent.',effect='uncertain')
+                pressed=[]
+                try:
+                    for code in request['keycodes']:
+                        pressed.append(code);keyboard.press_target(code,request['target'],request['target_generation']);time.sleep(.012)
+                finally:
+                    for code in reversed(pressed):keyboard.event(code,False)
+                state=keyboard.state()
+                if state.group!=request['group'] or state.locked_mods!=request['locked_mods']:
+                    raise DesktopError('KEYMAP_CHANGED','Keyboard group or locks changed; remaining chords were not sent.',effect='uncertain')
+                if repetition+1<request['count']:time.sleep(.035)
+            emit({'done':True,'effect':'dispatched','group_unchanged':True,'locks_unchanged':True,'dispatched_count':request['count']})
         else:raise ValueError()
     except DesktopError as exc:emit({'code':exc.code,'message':str(exc),'effect':exc.effect})
     except Exception:emit({'code':'KEYBOARD_UNAVAILABLE','message':'Native keyboard helper failed.','effect':'none'})

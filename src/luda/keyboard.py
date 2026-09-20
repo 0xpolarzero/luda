@@ -161,12 +161,19 @@ def keyboard_capabilities():
         return {'available':False,'reason':'invalid_response'}
 
 
-def send_chord(chord,target,target_generation=None):
+def validate_key_count(count):
+    if type(count) is not int or not 1<=count<=20:
+        raise DesktopError('INVALID_ARGUMENT','Key repeat count must be an integer from 1 to 20.')
+    return count
+
+
+def send_chord(chord,target,target_generation=None,count=1):
     validate_chord(chord)
+    validate_key_count(count)
     keyboard_recovery_checkpoint()
     if type(target) is not int or not 0<target<=0xffffffff:
         raise DesktopError('INVALID_ARGUMENT','Invalid native target window.')
-    request={'chord':chord,'target':target}
+    request={'chord':chord,'target':target,'count':count}
     if target_generation is not None:request['target_generation']=validate_generation(target_generation)
     plan=json.loads(run([sys.executable,'-m','luda._keyboard_native','plan'],data=json.dumps(request).encode()+b'\n',timeout=2,max_output_bytes=4096))
     if plan.get('code'):raise DesktopError(plan['code'],plan['message'])
@@ -220,7 +227,7 @@ def _dispatch_plan(plan):
         if not result:raise DesktopError('KEYBOARD_UNAVAILABLE','Input companion returned no result.',effect='uncertain')
         if result.get('code'):
             raise DesktopError(result['code'],result['message'],effect=result.get('effect','uncertain'),details={k:result[k] for k in ('cleanup_verified','session_changed','cleanup_skipped') if k in result})
-        return {'effect':'dispatched',**{key:result[key] for key in ('group_unchanged','locks_unchanged') if key in result},'verification':result.get('verification','Key delivery does not prove application outcome.')}
+        return {'effect':'dispatched',**{key:result[key] for key in ('group_unchanged','locks_unchanged','dispatched_count') if key in result},'verification':result.get('verification','Key delivery does not prove application outcome.')}
     except BaseException as exc:
         if not proven:
             mark_effect()
