@@ -59,6 +59,33 @@ def main():
    fresh=d.observe();assert fresh['snapshot_id']!=snap['snapshot_id']
    point=d.point(w['window_id'],fresh['snapshot_id'],x,y)
    record('fresh screenshot coordinates accepted',point=point,independent_clicks=int(counter.read_text()))
+  peer=Desktop()
+  try:
+   snap=fresh
+   with peer.transaction():
+    assert peer.switch_workspace(other)['effect']=='verified'
+   with d.transaction():
+    d.activate(w['window_id'])
+    assert current_workspace()==other
+    assert snap['snapshot_id'] in d.snapshots,'Peer must not directly clear observer cache'
+    assert d.signature(d.list_windows())==d.snapshots[snap['snapshot_id']]['signature'],'Same target/layout prerequisite'
+    refused_old('other client switch with matching sticky target layout')
+    historical=d.retained_snapshot(snap['snapshot_id'],current_layout=False)
+    assert historical['png']
+    try:d.retained_snapshot(snap['snapshot_id']);raise AssertionError('Current-layout read accepted')
+    except DesktopError as exc:assert exc.code=='STALE_OBSERVATION'
+    record('historical template retained while current-layout read refused',workspace=d.display().topology()['workspace'])
+    fresh=d.observe();d.point(w['window_id'],fresh['snapshot_id'],x,y)
+   # Independent external request on this private desktop only.
+   subprocess.run(['wmctrl','-s',str(original)],check=True)
+   deadline=time.monotonic()+2
+   while current_workspace()!=original:
+    assert time.monotonic()<deadline;time.sleep(.02)
+   with d.transaction():
+    d.activate(w['window_id']);snap=fresh
+    assert d.signature(d.list_windows())==d.snapshots[snap['snapshot_id']]['signature']
+    refused_old('external switch with matching sticky target layout')
+  finally:peer.close()
  finally:
   if d:d.close()
   if app.poll() is None:app.terminate()

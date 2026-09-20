@@ -49,7 +49,7 @@ class X11:
         return self._read('geometry',self._xid(window))
 
     def topology(self):
-        """Current root, server generation and bounded RandR layout metadata."""
+        """Current root, server generation, bounded RandR layout and logical workspace context."""
         return self._read('topology')
 
     def window_metadata(self, windows):

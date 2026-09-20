@@ -43,5 +43,5 @@ def topology_summary(topology, image_size=None):
         if image_size is not None:row['image_bounds']=image_bounds(bounds,(root['width'],root['height']),image_size)
         monitors.append(row)
     return {'layout_id':hashlib.sha256(json.dumps(topology,sort_keys=True,separators=(',',':')).encode()).hexdigest(),
-            'root':root,'monitor_source':'RandR logical monitors' if modern else 'active display controllers',
+            'root':root,'workspace':topology.get('workspace',{'status':'unsupported'}),'monitor_source':'RandR logical monitors' if modern else 'active display controllers',
             'monitors':monitors,'bounds_coordinate_space':'native_x11_root_pixels'}

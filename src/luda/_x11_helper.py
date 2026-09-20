@@ -83,7 +83,33 @@ class _NativeX11:
     def topology(self, unused=None):
         from ._randr import read_topology
         return {'server_generation': self.window_tokens([self.root])[self.root],
-                'root': self.geometry(self.root), 'randr': read_topology(self)}
+                'root': self.geometry(self.root), 'randr': read_topology(self),
+                'workspace':self.workspace_context()}
+
+    def workspace_context(self):
+        """Bounded logical desktop context, not a physical RandR transform."""
+        current=self._property(self.root,'_NET_CURRENT_DESKTOP',1)
+        if current is None:
+            supported=self._property(self.root,'_NET_SUPPORTED',4096)
+            if supported is not None:
+                actual,fmt,values,remaining=supported
+                if actual!=4 or fmt!=32 or remaining or len(values)>4096:
+                    raise DesktopError('INVALID_PROPERTY','Invalid bounded EWMH supported-property list.')
+                atom=self._property_atoms.get('_NET_CURRENT_DESKTOP',0)
+                if atom and atom in values:
+                    raise DesktopError('INVALID_PROPERTY','Advertised active workspace is unavailable; observe again when the WM is ready.')
+            return {'status':'unsupported'}
+        def cardinal(prop,name,low,high):
+            actual,fmt,values,remaining=prop
+            if actual!=6 or fmt!=32 or remaining or len(values)!=1 or not low<=values[0]<=high:
+                raise DesktopError('INVALID_PROPERTY',f'Invalid bounded {name} property.')
+            return values[0]
+        index=cardinal(current,'active workspace',0,4095)
+        count=self._property(self.root,'_NET_NUMBER_OF_DESKTOPS',1)
+        count=cardinal(count,'workspace count',1,4096) if count is not None else None
+        if count is not None and index>=count:
+            raise DesktopError('INVALID_PROPERTY','Active workspace is outside the declared workspace count.')
+        return {'status':'available','index':index,'count':count}
 
     def transient_for(self, window):
         """ICCCM owner hint, including managed dialogs; zero means no hint."""
