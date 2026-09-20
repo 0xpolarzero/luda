@@ -161,6 +161,10 @@ def extract(archive, destination, commit):
                  'src/luda/server.py', 'skills/luda/SKILL.md'):
         if not (root / name).is_file():
             raise OnboardingError('source_incomplete')
+    # mkdir modes are masked by umask, including implicit file-created parents.
+    # Keep the enclosing destination private, but copied release skills readable.
+    for directory in (root, *(p for p in root.rglob('*') if p.is_dir())):
+        directory.chmod(0o755)
     return root
 
 

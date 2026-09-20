@@ -140,7 +140,12 @@ class SiloIntegrationTests(unittest.TestCase):
     def test_extracted_skill_modes_survive_installer_copytree(self):
         import shutil
         path = self.state / 'source.tar.gz';archive(path)
-        source = tools.extract(path, self.state / 'extract', COMMIT)
+        import os
+        previous = os.umask(0o077)
+        try:
+            source = tools.extract(path, self.state / 'extract', COMMIT)
+        finally:
+            os.umask(previous)
         installed = self.state / 'release' / 'skills'
         shutil.copytree(source / 'skills', installed)
         self.assertEqual((installed / 'luda').stat().st_mode & 0o777, 0o755)
@@ -195,12 +200,33 @@ class SiloIntegrationTests(unittest.TestCase):
         response.geturl = lambda: RELEASE['source_url']
         opener = Mock();opener.open.return_value = response
         began = time.monotonic()
+        prior_handler = tools.signal.getsignal(tools.signal.SIGALRM)
         try:
             with patch.object(tools.urllib.request, 'build_opener', return_value=opener), self.assertRaisesRegex(tools.OnboardingError, 'download_timeout'):
                 tools.download(RELEASE, self.state / 'slow.tar.gz', timeout=.15)
             self.assertLess(time.monotonic()-began, 1)
+            self.assertEqual(tools.signal.getitimer(tools.signal.ITIMER_REAL), (0.0, 0.0))
+            self.assertEqual(tools.signal.getsignal(tools.signal.SIGALRM), prior_handler)
         finally:
             stopped.set();client.close();server.close();thread.join(timeout=1)
+
+    def test_download_deadline_covers_header_wait_and_rejects_active_timer(self):
+        import signal
+        import time
+        opener = Mock()
+        opener.open.side_effect = lambda *args, **kwargs: time.sleep(1)
+        with patch.object(tools.urllib.request, 'build_opener', return_value=opener), self.assertRaisesRegex(tools.OnboardingError, 'download_timeout'):
+            tools.download(RELEASE, self.state / 'headers.tar.gz', timeout=.05)
+        self.assertEqual(signal.getitimer(signal.ITIMER_REAL), (0.0, 0.0))
+        previous = signal.getsignal(signal.SIGALRM)
+        signal.setitimer(signal.ITIMER_REAL, 10)
+        try:
+            with self.assertRaisesRegex(tools.OnboardingError, 'download_timer_in_use'):
+                tools.download(RELEASE, self.state / 'timer.tar.gz')
+            self.assertGreater(signal.getitimer(signal.ITIMER_REAL)[0], 0)
+            self.assertEqual(signal.getsignal(signal.SIGALRM), previous)
+        finally:
+            signal.setitimer(signal.ITIMER_REAL, 0)
 
     def test_archive_rejects_traversal_links_duplicates_and_missing_locks(self):
         cases = []
