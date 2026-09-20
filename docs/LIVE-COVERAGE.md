@@ -93,6 +93,7 @@ These existing live scripts are not registered in the three inventoried runners.
 - [live_silo_composition.py](../tests/live_silo_composition.py)
 - [live_ssh_loss.py](../tests/live_ssh_loss.py)
 - [live_storage_filesystem.py](../tests/live_storage_filesystem.py)
+- [live_wayland_probe.py](../tests/live_wayland_probe.py)
 
 ## Separate evidence needing curated association
 
