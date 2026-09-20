@@ -266,7 +266,7 @@ async def desktop_press_keys(window_id: str, chord: str, count: int = 1) -> Call
 
 @mcp.tool()
 async def desktop_click(window_id: str, snapshot_id: str, x: float, y: float, button: Literal['left','middle','right']='left', count: Literal[1,2,3]=1) -> CallToolResult:
-    """Click screenshot-image coordinates in the active window or its observed menus. Rejects stale or covered targets."""
+    """Click screenshot-image coordinates in the active window or its observed menus. Rejects expired snapshots, changed window layout/identity and covered targets. Snapshot validity does not prove unchanged application content; observe again after content transitions before selecting a control."""
     return await execute_async('pointer',window_id,snapshot_id,x,y,button=button,count=count)
 
 

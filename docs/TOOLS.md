@@ -146,7 +146,7 @@ Send a deliberate chord, e.g. ctrl+s, ctrl+plus, ctrl+minus, Return, Tab, Escape
 desktop_click(window_id: str, snapshot_id: str, x: float, y: float, button: Literal['left', 'middle', 'right']='left', count: Literal[1, 2, 3]=1)
 ```
 
-Click screenshot-image coordinates in the active window or its observed menus. Rejects stale or covered targets.
+Click screenshot-image coordinates in the active window or its observed menus. Rejects expired snapshots, changed window layout/identity and covered targets. Snapshot validity does not prove unchanged application content; observe again after content transitions before selecting a control.
 
 ## `desktop_scroll`
 
