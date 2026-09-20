@@ -14,6 +14,12 @@ native calls run in the existing bounded helper process. Output names, EDID and
 connector properties are not collected. Missing RandR 1.3 or libxrandr2 is an
 explicit diagnostic failure, not silent resolution-only validation.
 
+Tool responses expose a compact layout ID and monitor rectangles, including
+screenshot-space `image_bounds` on observations. Disabled controllers and raw
+transform/panning arrays stay internal; the layout ID covers them too. Doctor
+uses native monitor bounds. On RandR older than 1.5, active controller rectangles
+are explicitly labeled as such and primary-monitor status is unknown.
+
 The API follows the [RandR protocol](https://www.x.org/releases/current/doc/randrproto/randrproto.txt)
 and libXrandr's public ABI. Screenshot and pointer coordinates still use X11 root
 pixels; physical monitor millimeters do not define their scale. This change

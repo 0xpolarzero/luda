@@ -84,7 +84,7 @@ try:
                         assert monitor in subprocess.check_output(['xrandr','--listmonitors']).decode()
                         current=d.display().topology()
                         assert current['root']==snap['display_topology']['root']
-                        assert current!=snap['display_topology']
+                        assert current!=d.snapshots[snap['snapshot_id']]['topology']
                         check_error(lambda:d.hover(window['window_id'],snap['snapshot_id'],x,y),'STALE_OBSERVATION')
                         snap,w,image=snapshot(window,321)
                         d.hover(window['window_id'],snap['snapshot_id'],x,y)

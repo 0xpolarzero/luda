@@ -20,6 +20,7 @@ class StorageFaults(unittest.TestCase):
         d.x = Mock()
         d.x.root = 1
         d.x.geometry.return_value = {'width': 100, 'height': 100}
+        d.x.topology.return_value={'root':d.x.geometry.return_value,'randr':{'version':[1,6],'monitors':[],'crtcs':[]}}
         d.list_windows = Mock(return_value=[])
         d.observe_popups = Mock(return_value=[])
         d.target_window = Mock(return_value={'wm_class': [], 'window_id': 'fixture'})

@@ -9,6 +9,7 @@ class ScreenshotLimitsTests(unittest.TestCase):
     def driver(self,width,height):
         d=Desktop();self.addCleanup(d.close)
         d.x=Mock();d.x.root=1;d.x.geometry.return_value={'width':width,'height':height}
+        d.x.topology.return_value={'root':d.x.geometry.return_value,'randr':{'version':[1,6],'monitors':[],'crtcs':[]}}
         d.list_windows=Mock(return_value=[]);d.observe_popups=Mock(return_value=[])
         return d
     def test_oversized_native_capture_refused_before_capture(self):

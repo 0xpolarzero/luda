@@ -29,7 +29,7 @@ from .input_guard import held_button
 from .pointer_input import click_button
 from .keyboard import validate_chord, send_chord, keyboard_capabilities, keyboard_recovery_checkpoint
 from .session_state import session_state
-from .coordinates import image_bounds
+from .coordinates import image_bounds, topology_summary
 from .ime import composition_capability
 from .diagnostics import capability_summary
 from .storage import storage_errors, staged_payload
@@ -111,7 +111,7 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         except DesktopError as exc:
             result.update(display_available=False,display_error=str(exc))
         try:
-            result['display_topology'] = self.display().topology()
+            result['display_topology'] = topology_summary(self.display().topology())
             result['topology_available'] = True
         except DesktopError as exc:
             result.update(topology_available=False, topology_error={'code':exc.code,'message':str(exc)})
@@ -281,7 +281,7 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
                 'image_bounds_semantics':'Half-open rectangles of integer screenshot pixel positions; clipped to image, not an occlusion check.',
                 'image_size':{'width':width,'height':height},
                 'desktop_size':{'width':native[0],'height':native[1]},
-                'display_topology':topology,
+                'display_topology':topology_summary(topology,(width,height)),
                 'windows':[{**w,'image_bounds':image_bounds(w['bounds'],native,(width,height))} for w in after],
                 'popups':[{**p,'image_bounds':image_bounds(p['bounds'],native,(width,height))} for p in after_popups],
                 'image_base64':base64.b64encode(buf.getvalue()).decode()}

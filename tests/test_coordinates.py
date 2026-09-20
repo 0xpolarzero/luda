@@ -3,7 +3,7 @@ import copy
 import unittest
 from unittest.mock import Mock,patch
 from PIL import Image
-from luda.coordinates import image_bounds
+from luda.coordinates import image_bounds, topology_summary
 from luda.desktop import Desktop
 
 
@@ -14,6 +14,26 @@ def oracle(rect,native,image):
 
 
 class Coordinates(unittest.TestCase):
+    def test_monitor_summary_is_compact_but_layout_id_covers_hidden_metadata(self):
+        topology={'root':{'x':0,'y':0,'width':1000,'height':800},'randr':{'version':[1,6],
+            'crtcs':[{'mode':0,'transform':[0]*9} for _ in range(64)],
+            'monitors':[{'x':500,'y':0,'width':500,'height':800,'primary':1}]}}
+        first=topology_summary(topology,(500,400))
+        self.assertEqual(first['monitors'],[{'bounds':{'x':500,'y':0,'width':500,'height':800},'primary':True,
+            'image_bounds':{'x':250,'y':0,'width':250,'height':400}}])
+        self.assertNotIn('crtcs',str(first));self.assertNotIn('transform',str(first))
+        topology['randr']['crtcs'][0]['transform'][0]=1
+        second=topology_summary(topology,(500,400))
+        self.assertNotEqual(first['layout_id'],second['layout_id'])
+        self.assertEqual(first['monitors'],second['monitors'])
+
+    def test_older_randr_summary_has_active_controllers_and_unknown_primary(self):
+        topology={'root':{},'randr':{'version':[1,3],'monitors':[],
+            'crtcs':[{'mode':0,'width':0,'height':0},{'mode':2,'x':-100,'y':0,'width':100,'height':80}]}}
+        summary=topology_summary(topology)
+        self.assertEqual(summary['monitor_source'],'active display controllers')
+        self.assertEqual(summary['monitors'],[{'bounds':{'x':-100,'y':0,'width':100,'height':80},'primary':None}])
+
     def test_small_rectangles_exhaustive_against_independent_mapping(self):
         for native,image in (((13,9),(7,5)),((10,11),(3,8)),((5,4),(5,4)),((4,3),(7,5))):
             for x in range(-3,native[0]+3):
@@ -34,6 +54,7 @@ class Coordinates(unittest.TestCase):
     def test_observe_enriches_copies_without_changing_native_cache(self):
         d=Desktop();self.addCleanup(d.close);d.x=Mock();d.x.root=1
         d.x.geometry.return_value={'width':90,'height':9000}
+        d.x.topology.return_value={'root':d.x.geometry.return_value,'randr':{'version':[1,6],'monitors':[],'crtcs':[]}}
         window={'window_id':'w','bounds':{'x':-10,'y':7000,'width':50,'height':1200},'active':True,'workspace':0}
         popup={'popup_id':'p','owner_window_id':'w','xid':4,'generation':'g','bounds':{'x':50,'y':8500,'width':20,'height':700}}
         original_window=copy.deepcopy(window);original_popup=copy.deepcopy(popup)
