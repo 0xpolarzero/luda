@@ -39,6 +39,7 @@ class GuestBootstrap(unittest.TestCase):
         self.addCleanup(self.account.stop)
 
     def call(self, **kwargs):
+        kwargs.setdefault('skip_system', True)
         return b.bootstrap(self.source, self.prefix, self.output, 'desktop', **kwargs)
 
     def status(self, state='running'):
@@ -125,7 +126,7 @@ class GuestBootstrap(unittest.TestCase):
                 self.assertEqual(result['stage'],'validation')
                 self.assertFalse(result['installation_completed'])
             with patch.object(b.os,'getuid',return_value=1001), patch.object(b,'validate',return_value=(self.source,self.prefix,self.output)):
-                result=self.call()
+                result=self.call(skip_system=False)
                 self.assertEqual(result['stage'],'validation')
                 self.assertIn('requires root',result['reason'])
             status.assert_not_called();run.assert_not_called()
