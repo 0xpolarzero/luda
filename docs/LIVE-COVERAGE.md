@@ -90,6 +90,7 @@ These existing live scripts are not registered in the three inventoried runners.
 - [live_gtk4_gui.py](../tests/live_gtk4_gui.py)
 - [live_mcp_soak.py](../tests/live_mcp_soak.py)
 - [live_randr_backends.py](../tests/live_randr_backends.py)
+- [live_silo_composition.py](../tests/live_silo_composition.py)
 - [live_ssh_loss.py](../tests/live_ssh_loss.py)
 - [live_storage_filesystem.py](../tests/live_storage_filesystem.py)
 
