@@ -73,6 +73,25 @@ def main():
                     else:
                         wait(lambda:state()['multiline']=='')
                         check('empty-replace-exact',response.get('exact_match') is True,response)
+                    # Separate explicit GUI workflow; the semantic replacement
+                    # failure above remains failing and is never retried silently.
+                    if state()['multiline']=='':
+                        d.type_text(target('Electron multiline'),before['text'])
+                        wait(lambda:state()['multiline']==before['text'])
+                    sentinel=state()['entry']
+                    focused=d.element(target('Electron multiline'),'focus')
+                    check('native-clear-field-focus',focused.get('effect')=='verified',focused)
+                    selected=d.key(w['window_id'],'ctrl+a')
+                    expected_end=len(before['text'].encode('utf-16-le'))//2
+                    wait(lambda:state()['selection']=={'start':0,'end':expected_end})
+                    check('native-clear-whole-field-selection',state()['multiline']==before['text'] and state()['entry']==sentinel,
+                          {'dispatch':selected,'selection':state()['selection'],'utf16_length':expected_end})
+                    cleared=d.key(w['window_id'],'BackSpace')
+                    wait(lambda:state()['multiline']=='')
+                    readback=d.element(target('Electron multiline'),'read')
+                    check('native-clear-nonbmp-exact',readback['text']=='' and state()['entry']==sentinel,
+                          {'dispatch':cleared,'readback':readback,'oracle':state(),
+                           'scope':'Explicit full-field GUI clear, not semantic replacement or arbitrary selection verification.'})
                     secret=target('Electron secret')
                     for case,action in [('protected-type-refused',lambda:d.type_text(secret,'synthetic')),('protected-read-refused',lambda:d.element(secret,'read'))]:
                         try: action()

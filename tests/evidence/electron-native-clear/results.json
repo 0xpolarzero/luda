@@ -1,0 +1,341 @@
+[
+  {
+    "case": "electron-accessibility-discovery",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "case": "entry-bmp-exact",
+    "passed": true,
+    "detail": {
+      "effect": "verified",
+      "exact_match": true,
+      "expected_characters": 6,
+      "actual_characters": 6,
+      "caret_verified": true,
+      "composition": {
+        "known": false,
+        "active": null
+      },
+      "verification": "Exact exposed text at readback; pending IME composition and application commit are not verified."
+    }
+  },
+  {
+    "case": "entry-bmp-empty-replace",
+    "passed": true,
+    "detail": {
+      "effect": "verified",
+      "exact_match": true,
+      "expected_characters": 0,
+      "actual_characters": 0,
+      "caret_verified": true,
+      "composition": {
+        "known": false,
+        "active": null
+      },
+      "verification": "Exact exposed text at readback; pending IME composition and application commit are not verified."
+    }
+  },
+  {
+    "case": "multiline-bmp-exact",
+    "passed": true,
+    "detail": {
+      "effect": "verified",
+      "exact_match": true,
+      "expected_characters": 6,
+      "actual_characters": 6,
+      "caret_verified": true,
+      "composition": {
+        "known": false,
+        "active": null
+      },
+      "verification": "Exact exposed text at readback; pending IME composition and application commit are not verified."
+    }
+  },
+  {
+    "case": "multiline-bmp-empty-replace",
+    "passed": true,
+    "detail": {
+      "effect": "verified",
+      "exact_match": true,
+      "expected_characters": 0,
+      "actual_characters": 0,
+      "caret_verified": true,
+      "composition": {
+        "known": false,
+        "active": null
+      },
+      "verification": "Exact exposed text at readback; pending IME composition and application commit are not verified."
+    }
+  },
+  {
+    "case": "entry-exact",
+    "passed": true,
+    "detail": {
+      "effect": "verified",
+      "exact_match": true,
+      "expected_characters": 11,
+      "actual_characters": 11,
+      "caret_verified": true,
+      "composition": {
+        "known": false,
+        "active": null
+      },
+      "verification": "Exact exposed text at readback; pending IME composition and application commit are not verified."
+    }
+  },
+  {
+    "case": "multiline-exact",
+    "passed": true,
+    "detail": {
+      "effect": "verified",
+      "exact_match": true,
+      "expected_characters": 20,
+      "actual_characters": 20,
+      "caret_verified": true,
+      "composition": {
+        "known": false,
+        "active": null
+      },
+      "verification": "Exact exposed text at readback; pending IME composition and application commit are not verified."
+    }
+  },
+  {
+    "case": "empty-replace-exact",
+    "passed": false,
+    "detail": {
+      "code": "SELECTION_UNVERIFIABLE",
+      "effect": "uncertain",
+      "before": {
+        "text": "first\n日本語\t👩🏽‍💻\nlast\n",
+        "characters": 20,
+        "truncated": false,
+        "caret_offset": 20,
+        "offset_units": "Unicode code points",
+        "provider_offset_units": "Unicode code points",
+        "provider_text_encoding": "plain",
+        "selections": [],
+        "selection_source": "Text",
+        "selections_truncated": false,
+        "text_representation": "plain",
+        "plain_text_verification_supported": true,
+        "embedded_objects": [],
+        "embedded_objects_truncated": false,
+        "composition": {
+          "known": false,
+          "active": null
+        }
+      },
+      "oracle": {
+        "entry": "日本語 é 👩🏽‍💻",
+        "multiline": "first\n日本語\t👩🏽‍💻\nlast\n",
+        "secretLength": 0,
+        "selection": {
+          "start": 0,
+          "end": 23
+        },
+        "checked": false,
+        "clicks": 0,
+        "versions": {
+          "node": "24.21.0",
+          "acorn": "8.18.0",
+          "ada": "4.0.0",
+          "amaro": "1.1.11",
+          "ares": "1.34.8",
+          "brotli": "1.2.0",
+          "cldr": "48.0",
+          "icu": "78.2",
+          "llhttp": "9.4.3",
+          "merve": "1.2.2",
+          "modules": "149",
+          "napi": "10",
+          "nbytes": "0.1.4",
+          "ncrypto": "0.0.1",
+          "nghttp2": "1.70.0",
+          "nghttp3": "",
+          "ngtcp2": "",
+          "openssl": "0.0.0",
+          "simdjson": "4.6.7",
+          "simdutf": "7.7.0",
+          "sqlite": "3.53.4",
+          "tz": "2025c",
+          "undici": "7.29.1",
+          "unicode": "17.0",
+          "uv": "1.52.1",
+          "uvwasi": "0.0.23",
+          "v8": "15.2.124.28-electron.0",
+          "zlib": "1.3.2.1-motley",
+          "zstd": "1.6.0",
+          "electron": "44.4.3",
+          "chrome": "152.0.7977.130"
+        },
+        "accessibility": true
+      }
+    }
+  },
+  {
+    "case": "failed-replacement-preserves-text",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "case": "native-clear-field-focus",
+    "passed": true,
+    "detail": {
+      "effect": "verified",
+      "accepted": true,
+      "focused": true
+    }
+  },
+  {
+    "case": "native-clear-whole-field-selection",
+    "passed": true,
+    "detail": {
+      "dispatch": {
+        "effect": "dispatched",
+        "progress": {
+          "unit": "key_chord",
+          "requested": 1,
+          "dispatched": 1,
+          "possibly_partial": 0,
+          "not_started": 0,
+          "application_outcome_verified": false
+        },
+        "group_unchanged": true,
+        "locks_unchanged": true,
+        "dispatched_count": 1,
+        "verification": "Key delivery does not prove application outcome."
+      },
+      "selection": {
+        "start": 0,
+        "end": 23
+      },
+      "utf16_length": 23
+    }
+  },
+  {
+    "case": "native-clear-nonbmp-exact",
+    "passed": true,
+    "detail": {
+      "dispatch": {
+        "effect": "dispatched",
+        "progress": {
+          "unit": "key_chord",
+          "requested": 1,
+          "dispatched": 1,
+          "possibly_partial": 0,
+          "not_started": 0,
+          "application_outcome_verified": false
+        },
+        "group_unchanged": true,
+        "locks_unchanged": true,
+        "dispatched_count": 1,
+        "verification": "Key delivery does not prove application outcome."
+      },
+      "readback": {
+        "text": "",
+        "characters": 0,
+        "truncated": false,
+        "caret_offset": 0,
+        "offset_units": "Unicode code points",
+        "provider_offset_units": "Unicode code points",
+        "provider_text_encoding": "plain",
+        "selections": [],
+        "selection_source": "Text",
+        "selections_truncated": false,
+        "text_representation": "plain",
+        "plain_text_verification_supported": true,
+        "embedded_objects": [],
+        "embedded_objects_truncated": false,
+        "composition": {
+          "known": false,
+          "active": null
+        }
+      },
+      "oracle": {
+        "entry": "日本語 é 👩🏽‍💻",
+        "multiline": "",
+        "secretLength": 0,
+        "selection": {
+          "start": 0,
+          "end": 0
+        },
+        "checked": false,
+        "clicks": 0,
+        "versions": {
+          "node": "24.21.0",
+          "acorn": "8.18.0",
+          "ada": "4.0.0",
+          "amaro": "1.1.11",
+          "ares": "1.34.8",
+          "brotli": "1.2.0",
+          "cldr": "48.0",
+          "icu": "78.2",
+          "llhttp": "9.4.3",
+          "merve": "1.2.2",
+          "modules": "149",
+          "napi": "10",
+          "nbytes": "0.1.4",
+          "ncrypto": "0.0.1",
+          "nghttp2": "1.70.0",
+          "nghttp3": "",
+          "ngtcp2": "",
+          "openssl": "0.0.0",
+          "simdjson": "4.6.7",
+          "simdutf": "7.7.0",
+          "sqlite": "3.53.4",
+          "tz": "2025c",
+          "undici": "7.29.1",
+          "unicode": "17.0",
+          "uv": "1.52.1",
+          "uvwasi": "0.0.23",
+          "v8": "15.2.124.28-electron.0",
+          "zlib": "1.3.2.1-motley",
+          "zstd": "1.6.0",
+          "electron": "44.4.3",
+          "chrome": "152.0.7977.130"
+        },
+        "accessibility": true
+      },
+      "scope": "Explicit full-field GUI clear, not semantic replacement or arbitrary selection verification."
+    }
+  },
+  {
+    "case": "protected-type-refused",
+    "passed": true,
+    "detail": "PROTECTED_FIELD"
+  },
+  {
+    "case": "protected-read-refused",
+    "passed": true,
+    "detail": "PROTECTED_FIELD"
+  },
+  {
+    "case": "secret-capability-explicit",
+    "passed": true,
+    "detail": {
+      "code": "UNSUPPORTED",
+      "qualified_secret_write": false
+    }
+  },
+  {
+    "case": "button-independent-counter",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "case": "checkbox-independent-state",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "case": "checkbox-uncheck-independent-state",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "case": "disabled-accessibility-explicit",
+    "passed": true,
+    "detail": "ACCESSIBILITY_UNAVAILABLE"
+  }
+]
