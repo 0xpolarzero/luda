@@ -6,3 +6,4 @@ recursive-include tests *.py *.html *.js
 
 include .mcp.json
 recursive-include .codex-plugin *.json
+recursive-include integrations *.py *.json *.md *.patch

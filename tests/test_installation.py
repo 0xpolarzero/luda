@@ -63,7 +63,7 @@ class Installation(unittest.TestCase):
 
     def test_packaged_source_changes_alter_release_identity(self):
         previous=installer.release_identity(self.source)
-        for name in ('.mcp.json','.codex-plugin/plugin.json','scripts/manage_install.py','docs/example.md','tests/fixtures/page.html'):
+        for name in ('.mcp.json','.codex-plugin/plugin.json','scripts/manage_install.py','docs/example.md','tests/fixtures/page.html','integrations/silo/0001-guest-onboarding.patch'):
             path=self.source/name;path.parent.mkdir(parents=True,exist_ok=True);path.write_text('package content')
             current=installer.release_identity(self.source)
             self.assertNotEqual(previous,current);previous=current
