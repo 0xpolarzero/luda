@@ -69,7 +69,7 @@ For Codex, direct MCP registration plus the separate skill above is a complete s
 codex mcp add luda-editor-bridge -- /usr/bin/env LUDA_CHROMIUM_EXECUTABLE=/absolute/path/to/chrome "$HOME/.local/share/luda-editor-bridge/venv/bin/luda-editor-bridge"
 ```
 
-For a Codex plugin bundle, this repository's `addons/editor-bridge` directory and the installed data directory above are self-contained plugin roots; the packaged `.mcp.json` requires the executable on PATH. Use the current client's plugin/marketplace registration flow with that separate root. Choose plugin registration or direct MCP plus skill, not both. MCP-only clients use the explicit configuration already shown and install the skill through their own skill mechanism. No setup step modifies another agent's configuration automatically.
+Alternatively, follow [the separate Codex plugin installation](docs/CODEX-PLUGIN.md). It packages this add-on's registration and skill together. Choose plugin registration or direct MCP plus skill, not both. MCP-only clients use the explicit configuration already shown and install the skill through their own skill mechanism. No setup step modifies another agent's configuration automatically.
 
 To remove the add-on, remove its MCP/plugin registration and `luda-editor-bridge` skill from your agent, then delete only its dedicated environment. Your independently installed core Luda environment and registration remain intact.
 
