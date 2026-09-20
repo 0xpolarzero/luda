@@ -56,3 +56,12 @@ Failure output includes thread state, error code/effect and synthetic text.
 The corrected full private-display keyboard suite passed locally on ARM64; the
 original CI failure remains retained (run `35485896308`). This is a test-oracle
 correction, not evidence of a production keyboard defect or its repair.
+
+An independent private-GUI probe then reproduced that interleaving by pausing only
+the fixture's snapshot publication: public text readback was empty while the
+published snapshot remained `AAA`; the old predicate produced CANCELLED/none.
+After publication resumed, the empty-baseline/new-prefix predicate produced
+CANCELLED/uncertain after real `111`, with no later changes or held keys. This
+confirms the race mechanism, not the exact cause of the underspecified CI failure.
+All sixteen headless suites subsequently passed on ARM64 at `e987d22` with an
+unchanged source fingerprint.

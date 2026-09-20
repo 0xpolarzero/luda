@@ -23,8 +23,8 @@ The [346-case catalog](REQUIREMENTS.md) defines acceptance targets. [Qualificati
 ## Reproducible evidence
 
 - `scripts/qualify.py`: named unit evidence linked to requirements. Unit success alone never grants release qualification.
-- `scripts/headless_tests.py`: sixteen isolated suites covering native/MCP input, cancellation, controls, menus, geometry, resources, waits, keyboard identity/repetition, input cleanup, server replacement and session-state hints. All sixteen passed locally at `8792f28`; subsequent changes require their own affected checks.
-- `scripts/native_app_tests.py`: five isolated ordinary-account suites for Mousepad, Thunar, window states, MCP launches and terminals. Both hosted AMD64 workflows completed successfully at `5ef173b`, including these suites and desktop contracts.
+- `scripts/headless_tests.py`: sixteen isolated suites covering native/MCP input, cancellation, controls, menus, geometry, resources, waits, keyboard identity/repetition, input cleanup, server replacement and session-state hints. All sixteen passed locally at `e987d22`; subsequent changes require their own affected checks.
+- `scripts/native_app_tests.py`: five isolated ordinary-account suites for Mousepad, Thunar, window states, MCP launches and terminals. Both hosted AMD64 workflows completed successfully at `ca2f2ac`, including these suites and desktop contracts.
 - Provider suites: `live_semantic.py`, `live_toolkits.py`, `live_controls.py`, `live_combo.py`, and browser suites retain independent widget/DOM oracles and failures. See [toolkits](TOOLKIT-QUALIFICATION.md), [browser](BROWSER-QUALIFICATION.md) and [browser text](BROWSER-TEXT-CONTRACT.md).
 - [Reconnect](RECONNECT.md), [clipboard](CLIPBOARD-QUALIFICATION.md), [terminals](TERMINAL-QUALIFICATION.md), [geometry](GEOMETRY-QUALIFICATION.md), [resources](RESOURCE-QUALIFICATION.md) and [storage](STORAGE-FAULT-QUALIFICATION.md) document exact local assertions and limits.
 - `scripts/agent_eval.py` requires an already authenticated CLI and explicit private-display opt-in. [Agent evaluation](AGENT-EVALUATION.md) records every retained attempt, independent oracles, trace grading, source hashes and usage.
@@ -76,11 +76,14 @@ fingerprint. The newer scoped records include [locale forms](DATA-ENTRY-QUALIFIC
 [detached menus](DETACHED-MENU-QUALIFICATION.md),
 [nested pane scrolling](NESTED-SCROLL-QUALIFICATION.md),
 [native full-disk save](DISK-FULL-SAVE-QUALIFICATION.md),
+[MCP disconnects](MCP-DISCONNECT-QUALIFICATION.md),
+[RTL navigation](RTL-QUALIFICATION.md),
+[ten-minute sustained use](MCP-SOAK-QUALIFICATION.md),
 and [authentication boundaries](AUTH-QUALIFICATION.md). These have distinct source
 snapshots and supported scopes; they are not a single universal acceptance pass.
 
-The integrated `5ef173b` unit run passed 565 tests with unchanged source
-(`artifacts/qualification/live-inventory-auth-unit.json`). Later live-only additions
+The integrated `6c8dcb6` unit run passed 565 tests with unchanged source
+(`artifacts/qualification/expanded-live-unit.json`). Later live-only additions
 have their own recorded runs. The [live inventory](LIVE-COVERAGE.md) distinguishes
 registered fixtures from standalone experiments; its associations are not passes.
 

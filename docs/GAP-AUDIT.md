@@ -54,6 +54,20 @@ Existing adjacent tests should be reused, without treating them as substitutes f
 
 These are evidence tasks, not assertions that the driver needs three new APIs. A demonstrated defect should produce a narrow regression and fix; an application/provider limitation should remain explicit.
 
+## Subsequent scoped evidence
+
+The source snapshot above is retained; later local work addressed several listed
+workflow gaps without changing catalog priorities or qualifications:
+
+- [Full-disk Mousepad save](DISK-FULL-SAVE-QUALIFICATION.md) established the no-false-success criterion and explicit retry recovery, while retaining a real failed diagnostic: the application truncated the original file to zero bytes.
+- [MCP stdin EOF](MCP-DISCONNECT-QUALIFICATION.md) exercised two independently observed mutation phases. Owned input cleaned up; partial key delivery and a late application callback remained honestly reported. It does not simulate simultaneous output loss or SSH failure.
+- [Detached GTK menus](DETACHED-MENU-QUALIFICATION.md), [nested scrolling panes](NESTED-SCROLL-QUALIFICATION.md), and [RTL navigation](RTL-QUALIFICATION.md) have focused ordinary-account GUI evidence. System tray and other providers remain separate.
+- [Authentication](AUTH-QUALIFICATION.md) now includes an actual clipboard-blocking password field with an explicit unsupported protected-input result. A corrected visible browser-menu route passed two fresh repetitions after preserving the original dynamic-menu failure.
+- [Persistent MCP soak](MCP-SOAK-QUALIFICATION.md) passed 600.270 seconds and 2,120 requests with independent application effects, bounded observed resources and clean shutdown. Ten minutes is not the hours-long qualification criterion.
+
+Each linked report retains exact source and environment. These additions narrow
+the earlier local evidence gaps; they are not a blanket pass for an entire group.
+
 ## External product and environment evidence
 
 The following require the actual product/host environment, rather than another Linux guest unit test:
