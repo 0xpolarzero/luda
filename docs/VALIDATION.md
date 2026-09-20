@@ -25,3 +25,11 @@ The [existing acceptance inventory](REQUIREMENTS.md) is retained with sandbox-sp
 Source `830a3c4` passed [the retained standalone checks](../tests/evidence/standalone-830a3c4/README.md): 920 unit cases (919 root passes, 917 ordinary-account passes, remaining cases explicitly skipped), all 17 private native GUI suites, semantic/workspace regressions, an actual locked installation matching all 50 modules and the skill, and native/MCP workflows through that installed executable. Three build regressions separately passed with locked build tools. Plugin schema validation and actual temporary-profile plugin registration also passed.
 
 This completes local supported-core acceptance. Optional backend CI results are tracked separately. The limitations above remain support boundaries, not open integration projects.
+
+## Final scoped verification
+
+The [final local record](../tests/evidence/standalone-completion/README.md) runs924 cases at `3f9da53`:923root passes plus one skip, and921ordinary-account passes plus three skips. Separate locked-build verification covers the build-tool skip. The revised server-generation fixture passes through the normal headless runner.
+
+Hosted desktop, native applications, media and plugin registration passed at `830a3c4`; hosted browser and installed-browser qualification passed at `301a535`. The earlier browser job's [private portal cleanup failure](../tests/evidence/standalone-portal-race/README.md) and the later desktop job's [fixture timeout](../tests/evidence/standalone-input-generation/README.md) remain recorded. Both harness corrections have focused local evidence. A new hosted rerun is in progress; these records do not claim a single all-green final CI run.
+
+See the [completed scope checklist](COMPLETION.md). No remaining core product blocker was demonstrated by these checks. Unsupported environments and provider limitations remain explicit support boundaries.
