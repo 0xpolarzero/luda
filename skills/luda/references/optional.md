@@ -16,12 +16,11 @@ The operator must provision the optional browser dependencies and a compatible C
 Inspection returns provider-bound `text_fields` for ordinary HTML text/search/url/tel inputs and textareas. Native accessibility `nodes` remain separate for buttons and other UI. Use the fields' IDs with `desktop_read_text`, `desktop_focus_element`, `desktop_select`, and `desktop_type`. They retain DOM node/document identity and expire after 60 seconds; navigation/replaced nodes invalidate them. Same-node application repurposing still requires contextual judgment.
 
 ```python
-desktop_focus_element(element_id="<text_field_id>")
 desktop_select(element_id="<text_field_id>", start_offset=0, end_offset=4)
 desktop_type(element_id="<text_field_id>", text="New")
 ```
 
-Ordinary fields use native browser text input and do not replace the clipboard. Read metadata such as `multiline` and `line_break_semantics`; textarea LF/tabs do not require paragraph options. Single-line fields refuse LF/tabs. Exact field readback does not prove autocomplete choice, keyboard-event behavior, application commit, or saving.
+Ordinary fields use native browser text input and do not replace the clipboard. Selection and typing focus the field automatically after validation and may bring the browser forward. Read metadata such as `multiline` and `line_break_semantics`; textarea LF/tabs do not require paragraph options. Single-line fields refuse LF/tabs. Exact field readback does not prove autocomplete choice, keyboard-event behavior, application commit, or saving.
 
 Public offsets are Unicode code points. Native operations refuse positions inside joined emoji/combining graphemes with `UNSUPPORTED_TEXT_BOUNDARY`; missing segmentation can produce `TEXT_BOUNDARY_UNAVAILABLE`. Do not silently widen ranges or retry an uncertain input. Whole-field boundaries remain distinct from interior boundaries.
 

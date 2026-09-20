@@ -146,7 +146,7 @@ Read accessible text and representation metadata, preserving whitespace. limit c
 desktop_type(element_id: str, text: str, mode: Literal['insert', 'replace']='insert')
 ```
 
-Type into an editable element and verify exact readback. Insert replaces the selection; replace changes the entire field. Preserves Unicode, LF and tabs without submitting. Owned HTML fields require complete grapheme boundaries. Exact readback does not confirm saving or application commit; inspect before an explicit commit or suggestion selection.
+Type into an editable element and verify exact readback. Native supported edits address the control without activating its window; foreground input activates automatically when needed. Insert replaces the selection; replace changes the entire field. Preserves Unicode, LF and tabs without submitting. Owned HTML fields require complete grapheme boundaries. Exact readback does not confirm saving or application commit; inspect before an explicit commit or suggestion selection.
 
 ## `desktop_type_secret`
 
@@ -170,7 +170,7 @@ Choose an observed list/radio/combo option or a visible table cell and verify se
 desktop_paste(window_id: str, text: str, shortcut: Literal['ctrl_v', 'ctrl_shift_v', 'shift_insert'] | None=None)
 ```
 
-Paste through CLIPBOARD when semantic typing is unavailable. Chooses common app shortcut from window class, with optional override. Destination is unverified; inspect dialogs/read back. Terminals can execute pasted newlines.
+Paste through CLIPBOARD when semantic typing is unavailable, automatically activating the target window. Chooses common app shortcut from window class, with optional override. Destination is unverified; inspect dialogs/read back. Terminals can execute pasted newlines.
 
 ## `desktop_press_keys`
 
@@ -178,7 +178,7 @@ Paste through CLIPBOARD when semantic typing is unavailable. Chooses common app 
 desktop_press_keys(window_id: str, chord: str, count: int=1)
 ```
 
-Send a deliberate chord, e.g. ctrl+s, ctrl+plus, ctrl+minus, Return, Tab, Escape or Down. Punctuation uses X11 names (plus, equal, bracketleft, slash); implicit Shift follows the current layout. count is 1–20 complete press/release repetitions, default 1. Revalidates target identity, focus and input state between repetitions; stops on the first failure and never retries. Requires target focus, refuses held keys/buttons, and preserves the current keyboard mapping. Unavailable symbols return UNSUPPORTED_KEYMAP; text belongs in desktop_type. When a final companion receipt is available, progress reports fully dispatched, possibly partial and not-started repetitions. Dispatched count is not application completion.
+Send a deliberate chord, e.g. ctrl+s, ctrl+plus, ctrl+minus, Return, Tab, Escape or Down. Punctuation uses X11 names (plus, equal, bracketleft, slash); implicit Shift follows the current layout. count is 1–20 complete press/release repetitions, default 1. Revalidates target identity, focus and input state between repetitions; stops on the first failure and never retries. Automatically activates the target before dispatch, refuses held keys/buttons, and preserves the current keyboard mapping. Unavailable symbols return UNSUPPORTED_KEYMAP; text belongs in desktop_type. When a final companion receipt is available, progress reports fully dispatched, possibly partial and not-started repetitions. Dispatched count is not application completion.
 
 ## `desktop_click`
 
@@ -186,7 +186,7 @@ Send a deliberate chord, e.g. ctrl+s, ctrl+plus, ctrl+minus, Return, Tab, Escape
 desktop_click(window_id: str, snapshot_id: str, x: float, y: float, button: Literal['left', 'middle', 'right']='left', count: Literal[1, 2, 3]=1)
 ```
 
-Click screenshot-image coordinates in the active window or its observed menus. Rejects expired snapshots, changed window layout/identity and covered targets. Snapshot validity does not prove unchanged application content; observe again after content transitions before selecting a control.
+Click screenshot-image coordinates in the target window or its observed menus, automatically activating the target after validation. Rejects expired snapshots, changed window layout/identity and covered targets. Snapshot validity does not prove unchanged application content; observe again after content transitions before selecting a control.
 
 ## `desktop_scroll`
 
@@ -194,7 +194,7 @@ Click screenshot-image coordinates in the active window or its observed menus. R
 desktop_scroll(window_id: str, snapshot_id: str, x: float, y: float, direction: Literal['up', 'down', 'left', 'right'], ticks: int=3)
 ```
 
-Scroll 1–20 wheel ticks at a point in the observed active target. Read resulting state to confirm.
+Scroll 1–20 wheel ticks at a point in the observed target, automatically activating it after validation. Read resulting state to confirm.
 
 ## `desktop_drag`
 
@@ -202,7 +202,7 @@ Scroll 1–20 wheel ticks at a point in the observed active target. Read resulti
 desktop_drag(window_id: str, snapshot_id: str, x: float, y: float, end_x: float, end_y: float, button: Literal['left', 'middle', 'right']='left')
 ```
 
-Drag between two observed points inside the same active window; always attempts button release. Use desktop_drag_to for another destination window.
+Drag between two observed points inside the same window, automatically activating it after validation; always attempts button release. Use desktop_drag_to for another destination window.
 
 ## `desktop_focus_element`
 
@@ -210,7 +210,7 @@ Drag between two observed points inside the same active window; always attempts 
 desktop_focus_element(element_id: str)
 ```
 
-Request element focus in the active window; owned browser fields refuse active/unknown composition before focus. Inspect to confirm focused state.
+Request element focus, automatically activating its window; owned browser fields refuse active/unknown composition before focus. Inspect to confirm focused state.
 
 ## `desktop_invoke`
 
@@ -218,7 +218,7 @@ Request element focus in the active window; owned browser fields refuse active/u
 desktop_invoke(element_id: str, action: str | None=None)
 ```
 
-Invoke the sole action returned by inspect, or supply its exact action name. Multiple actions require an explicit choice; no click/press naming guess is needed for a single-action button. Completion means dispatch, not verified application outcome.
+Invoke the sole action returned by inspect, or supply its exact action name. Native actions address the control without activating its window; application callbacks may bring windows forward. Multiple actions require an explicit choice; no click/press naming guess is needed for a single-action button. Completion means dispatch, not verified application outcome.
 
 ## `desktop_select`
 
@@ -226,7 +226,7 @@ Invoke the sole action returned by inspect, or supply its exact action name. Mul
 desktop_select(element_id: str, start_offset: int, end_offset: int)
 ```
 
-Select a text range using Unicode code-point offsets, or place the caret when equal; verify the result. For owned-browser HTML fields, call desktop_focus_element first. Native edits inside graphemes can be refused.
+Select a text range using Unicode code-point offsets, or place the caret when equal; verify the result. Owned-browser HTML fields focus automatically after range validation. Native edits inside graphemes can be refused.
 
 ## `desktop_set_value`
 
@@ -274,7 +274,7 @@ List workspaces, or switch to an existing index and verify the active workspace.
 desktop_hover(window_id: str, snapshot_id: str, x: float, y: float)
 ```
 
-Move the pointer to a recent observed point without clicking; observe tooltips/submenus afterward.
+Move the pointer to a recent observed point without clicking, automatically activating the target after validation; observe tooltips/submenus afterward.
 
 ## `desktop_drag_to`
 
@@ -282,7 +282,7 @@ Move the pointer to a recent observed point without clicking; observe tooltips/s
 desktop_drag_to(source_window_id: str, target_window_id: str, snapshot_id: str, x: float, y: float, end_x: float, end_y: float, button: Literal['left', 'middle', 'right']='left')
 ```
 
-Drag from the active source into a second observed window. Coordinates refer to one screenshot. Verify transfer in the applications; dispatch does not prove a drop was accepted.
+Drag from a source into a second observed window, automatically activating the source after validating both endpoints. Coordinates refer to one screenshot. Verify transfer in the applications; dispatch does not prove a drop was accepted.
 
 ## `desktop_wait`
 

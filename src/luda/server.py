@@ -321,7 +321,7 @@ async def desktop_read_text(element_id: str, limit: int = 16000) -> CallToolResu
 
 @mcp.tool()
 async def desktop_type(element_id: str, text: str, mode: Literal["insert", "replace"] = "insert") -> CallToolResult:
-    """Type into an editable element and verify exact readback. Insert replaces the selection; replace changes the entire field. Preserves Unicode, LF and tabs without submitting. Owned HTML fields require complete grapheme boundaries. Exact readback does not confirm saving or application commit; inspect before an explicit commit or suggestion selection."""
+    """Type into an editable element and verify exact readback. Native supported edits address the control without activating its window; foreground input activates automatically when needed. Insert replaces the selection; replace changes the entire field. Preserves Unicode, LF and tabs without submitting. Owned HTML fields require complete grapheme boundaries. Exact readback does not confirm saving or application commit; inspect before an explicit commit or suggestion selection."""
     return await execute_async('type_text',element_id,text,mode)
 
 
@@ -339,49 +339,49 @@ async def desktop_choose(element_id: str, extend: bool = False, range_end_id: st
 
 @mcp.tool()
 async def desktop_paste(window_id: str, text: str, shortcut: Literal['ctrl_v','ctrl_shift_v','shift_insert'] | None = None) -> CallToolResult:
-    """Paste through CLIPBOARD when semantic typing is unavailable. Chooses common app shortcut from window class, with optional override. Destination is unverified; inspect dialogs/read back. Terminals can execute pasted newlines."""
+    """Paste through CLIPBOARD when semantic typing is unavailable, automatically activating the target window. Chooses common app shortcut from window class, with optional override. Destination is unverified; inspect dialogs/read back. Terminals can execute pasted newlines."""
     return await execute_async('paste',window_id,text,shortcut)
 
 
 @mcp.tool()
 async def desktop_press_keys(window_id: str, chord: str, count: int = 1) -> CallToolResult:
-    """Send a deliberate chord, e.g. ctrl+s, ctrl+plus, ctrl+minus, Return, Tab, Escape or Down. Punctuation uses X11 names (plus, equal, bracketleft, slash); implicit Shift follows the current layout. count is 1–20 complete press/release repetitions, default 1. Revalidates target identity, focus and input state between repetitions; stops on the first failure and never retries. Requires target focus, refuses held keys/buttons, and preserves the current keyboard mapping. Unavailable symbols return UNSUPPORTED_KEYMAP; text belongs in desktop_type. When a final companion receipt is available, progress reports fully dispatched, possibly partial and not-started repetitions. Dispatched count is not application completion."""
+    """Send a deliberate chord, e.g. ctrl+s, ctrl+plus, ctrl+minus, Return, Tab, Escape or Down. Punctuation uses X11 names (plus, equal, bracketleft, slash); implicit Shift follows the current layout. count is 1–20 complete press/release repetitions, default 1. Revalidates target identity, focus and input state between repetitions; stops on the first failure and never retries. Automatically activates the target before dispatch, refuses held keys/buttons, and preserves the current keyboard mapping. Unavailable symbols return UNSUPPORTED_KEYMAP; text belongs in desktop_type. When a final companion receipt is available, progress reports fully dispatched, possibly partial and not-started repetitions. Dispatched count is not application completion."""
     return await execute_async('key',window_id,chord,count)
 
 
 @mcp.tool()
 async def desktop_click(window_id: str, snapshot_id: str, x: float, y: float, button: Literal['left','middle','right']='left', count: Literal[1,2,3]=1) -> CallToolResult:
-    """Click screenshot-image coordinates in the active window or its observed menus. Rejects expired snapshots, changed window layout/identity and covered targets. Snapshot validity does not prove unchanged application content; observe again after content transitions before selecting a control."""
+    """Click screenshot-image coordinates in the target window or its observed menus, automatically activating the target after validation. Rejects expired snapshots, changed window layout/identity and covered targets. Snapshot validity does not prove unchanged application content; observe again after content transitions before selecting a control."""
     return await execute_async('pointer',window_id,snapshot_id,x,y,button=button,count=count)
 
 
 @mcp.tool()
 async def desktop_scroll(window_id: str, snapshot_id: str, x: float, y: float, direction: Literal['up','down','left','right'], ticks: int=3) -> CallToolResult:
-    """Scroll 1–20 wheel ticks at a point in the observed active target. Read resulting state to confirm."""
+    """Scroll 1–20 wheel ticks at a point in the observed target, automatically activating it after validation. Read resulting state to confirm."""
     return await execute_async('pointer',window_id,snapshot_id,x,y,kind='scroll',direction=direction,count=ticks)
 
 
 @mcp.tool()
 async def desktop_drag(window_id: str, snapshot_id: str, x: float, y: float, end_x: float, end_y: float, button: Literal['left','middle','right']='left') -> CallToolResult:
-    """Drag between two observed points inside the same active window; always attempts button release. Use desktop_drag_to for another destination window."""
+    """Drag between two observed points inside the same window, automatically activating it after validation; always attempts button release. Use desktop_drag_to for another destination window."""
     return await execute_async('pointer',window_id,snapshot_id,x,y,kind='drag',button=button,end_x=end_x,end_y=end_y)
 
 
 @mcp.tool()
 async def desktop_focus_element(element_id: str) -> CallToolResult:
-    """Request element focus in the active window; owned browser fields refuse active/unknown composition before focus. Inspect to confirm focused state."""
+    """Request element focus, automatically activating its window; owned browser fields refuse active/unknown composition before focus. Inspect to confirm focused state."""
     return await execute_async('element',element_id,'focus')
 
 
 @mcp.tool()
 async def desktop_invoke(element_id: str, action: str | None = None) -> CallToolResult:
-    """Invoke the sole action returned by inspect, or supply its exact action name. Multiple actions require an explicit choice; no click/press naming guess is needed for a single-action button. Completion means dispatch, not verified application outcome."""
+    """Invoke the sole action returned by inspect, or supply its exact action name. Native actions address the control without activating its window; application callbacks may bring windows forward. Multiple actions require an explicit choice; no click/press naming guess is needed for a single-action button. Completion means dispatch, not verified application outcome."""
     return await execute_async('element',element_id,'invoke',action=action)
 
 
 @mcp.tool()
 async def desktop_select(element_id: str, start_offset: int, end_offset: int) -> CallToolResult:
-    """Select a text range using Unicode code-point offsets, or place the caret when equal; verify the result. For owned-browser HTML fields, call desktop_focus_element first. Native edits inside graphemes can be refused."""
+    """Select a text range using Unicode code-point offsets, or place the caret when equal; verify the result. Owned-browser HTML fields focus automatically after range validation. Native edits inside graphemes can be refused."""
     return await execute_async('element',element_id,'select',start_offset=start_offset,end_offset=end_offset)
 
 
@@ -417,13 +417,13 @@ async def desktop_workspaces(workspace: int | None = None) -> CallToolResult:
 
 @mcp.tool()
 async def desktop_hover(window_id: str, snapshot_id: str, x: float, y: float) -> CallToolResult:
-    """Move the pointer to a recent observed point without clicking; observe tooltips/submenus afterward."""
+    """Move the pointer to a recent observed point without clicking, automatically activating the target after validation; observe tooltips/submenus afterward."""
     return await execute_async('hover',window_id,snapshot_id,x,y)
 
 
 @mcp.tool()
 async def desktop_drag_to(source_window_id: str, target_window_id: str, snapshot_id: str, x: float, y: float, end_x: float, end_y: float, button: Literal['left','middle','right'] = 'left') -> CallToolResult:
-    """Drag from the active source into a second observed window. Coordinates refer to one screenshot. Verify transfer in the applications; dispatch does not prove a drop was accepted."""
+    """Drag from a source into a second observed window, automatically activating the source after validating both endpoints. Coordinates refer to one screenshot. Verify transfer in the applications; dispatch does not prove a drop was accepted."""
     return await execute_async('drag_between',source_window_id,target_window_id,snapshot_id,x,y,end_x,end_y,button)
 
 

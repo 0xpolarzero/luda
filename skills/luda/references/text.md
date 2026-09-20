@@ -31,7 +31,7 @@ desktop_select(element_id="<entry_id>", start_offset=1, end_offset=2)
 desktop_type(element_id="<entry_id>", text="X")
 ```
 
-Use offsets from the actual current text, not this example. Equal start/end places a caret. Owned-browser fields require explicit focus before selection. Re-read changed text before computing later offsets.
+Use offsets from the actual current text, not this example. Equal start/end places a caret. Owned-browser fields focus automatically after range validation. Re-read changed text before computing later offsets.
 
 `desktop_read_text` preserves whitespace. Its `limit` counts code points (maximum 1,000,000); check truncation rather than assuming returned text is complete. The provider reads a bounded full field internally, so lowering the output limit does not enable streaming arbitrary large documents. Inspect `plain_text_verification_supported`: opaque embedded objects can prevent exact plain-text verification. `TEXT_REPRESENTATION_UNSUPPORTED` is not permission to repeat a possibly delivered edit through another transport.
 
@@ -65,7 +65,7 @@ desktop_press_keys(window_id="<window_id>", chord="ctrl+s")
 desktop_press_keys(window_id="<window_id>", chord="Down", count=5)
 ```
 
-The target must be focused. Common names include `Return`, `Tab`, `Escape`, `Down`, `ctrl+plus`, `ctrl+minus`, `ctrl+equal`, `ctrl+bracketleft`, and `ctrl+slash`. Punctuation uses X11 key names; required Shift is derived from the current layout. `UNSUPPORTED_KEYMAP` refuses unavailable symbols without changing the user's mapping; use semantic tools for text.
+Luda activates the target window automatically; ensure the intended field/caret is selected before sending keys. Common names include `Return`, `Tab`, `Escape`, `Down`, `ctrl+plus`, `ctrl+minus`, `ctrl+equal`, `ctrl+bracketleft`, and `ctrl+slash`. Punctuation uses X11 key names; required Shift is derived from the current layout. `UNSUPPORTED_KEYMAP` refuses unavailable symbols without changing the user's mapping; use semantic tools for text.
 
 `count` is 1–20 complete press/release chords, not a held key or automatic retry. Each iteration revalidates identity, focus, and input state. A partial/uncertain receipt may distinguish fully dispatched, possibly partial, and not-started repetitions. Inspect the caret/selection/application outcome before deciding what remains; do not replay the original count blindly.
 

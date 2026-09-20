@@ -1,6 +1,6 @@
 # Semantic controls
 
-Inspect first and use IDs for observed controls. Native semantic actions depend on the application's AT-SPI provider; visual similarity does not imply the same supported action. Most actions require the target window to be active. `desktop_focus_element(element_id=...)` requests focus within that window; inspect the result when focus matters.
+Inspect first and use IDs for observed controls. Native semantic actions depend on the application's AT-SPI provider; visual similarity does not imply the same supported action. Supported native semantic mutations address their controls without first activating the window. Application callbacks may still open or raise windows. `desktop_focus_element(element_id=...)` automatically activates the window and requests control focus; inspect the result when focus matters.
 
 ## Buttons and menus
 

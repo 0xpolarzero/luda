@@ -1,133 +1,88 @@
-# Background computer use: research and implementation target
+# Visible agent actions and automatic input routing
 
-Status: feasibility research, September 20, 2026. **Not a shipped capability.**
-The prototype does not modify production input, tool schemas, or skill behavior.
+Luda uses its existing tools to perform actions with as little desktop interference
+as the available mechanism permits. The agent does not select a background mode
+or use a separate set of tools. When foreground input is needed, Luda activates
+the target automatically. Application callbacks may also bring windows forward.
+This is not a guarantee of uninterrupted simultaneous use or macOS feature parity.
 
-## User experience to match
+The agent indicator is rendered directly into the existing Linux X11 desktop.
+An ordinary desktop viewer can display those pixels; no separate preview, Silo
+integration, model credentials, or public network listener is required.
 
-The agent works in the user's **existing applications**, while the user keeps
-using other apps. In the user's Silo setup, the existing Linux GUI viewer is
-where they watch and interact with the VM desktop. Luda's distinct agent pointer
-must be visible **inside that existing desktop view**, alongside the user's own
-pointer. No separate picture-in-picture preview is required. Luda must not take
-over the user's pointer, keyboard focus, or foreground window. A new desktop
-containing different application instances is not an equivalent implementation.
+## Implementation scope
 
-This is a standalone Linux desktop feature. Silo explains the intended viewing
-experience; it does not authorize sandbox-manager integrations. A rendered cursor
-indicator must survive ordinary desktop capture, rather than relying on a remote
-viewer to transmit a second hardware-cursor channel.
+| Action | Route |
+| --- | --- |
+| Supported native accessibility mutations | Address the observed control directly without activating its window or moving the shared pointer |
+| Focus requests, shortcuts, clipboard paste, and foreground text input | Activate the identified target when needed, then validate before input |
+| Screenshot clicks, hover, scrolling, and drags | Validate observed points, activate when needed, then revalidate before shared-pointer input |
+| Visible action feedback | Best-effort click-through cursor overlay; no change to the human pointer merely to display it |
 
-[OpenAI's computer-use guide](https://learn.chatgpt.com/use-cases/use-your-computer-with-codex)
-documents background operation on macOS and a picture-in-picture preview. It does
-not document enough implementation detail to infer which native APIs it uses or
-promise identical behavior on Linux. It also advises against concurrent agent
-tasks in the same app.
+Automatic activation does not bypass stale identity, geometry, display, popup,
+or coverage checks. Covered targets still require revealing the intended window
+and observing again before using screenshot coordinates. Luda does not invent a
+coordinate click when an accessibility operation is unsupported, or replay an
+action whose effects are uncertain. Existing cancellation, pause, held-input,
+and effect-reporting contracts still apply.
 
-## Current Luda gaps
+The cursor renderer runs in an isolated child process using X11 SHAPE input
+regions. It takes no keyboard focus, intercepts no pointer input, and unmaps stale
+feedback after 1.5 seconds. Luda hides it before pointer validation so the marker
+does not obscure target checks. EOF ends the helper; cleanup and acknowledgement
+waits are bounded. The marker indicates an action target, not application success.
+A missing renderer must not prevent an otherwise valid action.
 
-| Component | Current behavior | Required work |
-| --- | --- | --- |
-| `desktop.py:element` | Requires an active target for native mutations | Explicit target-local background routes, with no foreground fallback |
-| `_pointer_native.py` | XTEST moves the shared pointer and checks active window | Separate input routing; removing checks is insufficient |
-| `desktop.py:observe` | Captures the visible desktop with scrot | Capture the target's pixels when covered, without raising it |
-| `browser.py`, `_browser_worker.py` | Foreground checks; explicit `bring_to_front` on focus | Separate background behavior; current owned-browser provider is not attachment to existing signed-in browsers |
-| User feedback | No distinct agent cursor rendered into desktop pixels | Click-through agent cursor/target visible in the existing GUI view, pause control, clear stale/disconnected state |
+Screenshots still capture the visible desktop. This implementation does not add
+covered-window capture or independent X11 keyboard/pointer devices. Foreground
+input uses the shared mouse and keyboard, and users can act between checks.
+Native Wayland and Xwayland remain unsupported.
 
-The existing pause, cancellation, identity, stale-observation, and effect-reporting
-contracts must survive these changes.
+## Validation and evidence
 
-## What the experiment established
+Integration qualification is pending. The focused renderer checks below passed
+on an owned private Xvfb; they are not broad application or concurrent-user
+qualification.
 
-[The executable research probe](../tests/prototypes/background_semantics.py)
-starts two owned GTK3 fixtures in a new private Xvfb/XFWM/D-Bus session. It invokes
-Luda's existing AT-SPI worker directly, intentionally bypassing only the public
-foreground requirement. Independent application files establish actual effects.
+- [`tests/test_cursor.py`](../tests/test_cursor.py): invalid coordinates, failed
+  helper startup, bounded terminate/kill cleanup, and failed hide acknowledgement.
+- [`tests/live_cursor.py`](../tests/live_cursor.py): actual root-capture pixels,
+  unchanged focus and core pointer position, a real XTest click delivered through
+  the marker to the underlying window, synchronous hide, stale auto-hide, EOF
+  cleanup, and restart. This creates its own display and never uses shared `:1`.
 
-Four assertions passed:
-
-1. Public Luda refuses background text mutation with `FOCUS_CHANGED`, without
-   changing the fixture text or the observed desktop state.
-2. Direct AT-SPI text replacement updates the background fixture, with exact
-   readback and unchanged before/after desktop state.
-3. Direct AT-SPI button invocation increments the background fixture's independent
-   counter, with unchanged before/after desktop state. The worker correctly
-   reports dispatch, not verified button effects.
-4. A different background button opens and activates an attention window through
-   its application callback. **Target-local dispatch alone cannot guarantee no
-   foreground interference.**
-
-Desktop comparisons cover core pointer position, keyboard focus, active window,
-and client stacking. They do not exclude transient changes between observations.
-This is not qualification of concurrent human input, arbitrary toolkits, minimized
-apps, hidden workspaces, screenshots, pixel input, or preview rendering. No catalog
-case is marked supported by this probe.
-
-Retained [results](../tests/evidence/background-semantics/results.json) describe
-the scope. The private test ran as explicitly selected account root; this is a
-test environment detail, not a product account default.
-
-Reproduce from an installed development checkout with a private test server:
+Run from an installed development checkout:
 
 ```sh
-env LUDA_ISOLATED_TEST_DISPLAY=1 xvfb-run -a \
-  -s '-screen 0 1440x900x24 -nolisten tcp' \
-  dbus-run-session -- .venv/bin/python tests/prototypes/background_semantics.py
+.venv/bin/python -m unittest discover -s tests -p test_cursor.py
+.venv/bin/python tests/live_cursor.py
 ```
 
-The script refuses the shared `:1` desktop. Every poll and subprocess wait is
-bounded; failures raise and preserve completed assertions in the output. These
-bounds are not a tested background-runtime timeout/recovery implementation.
+Final integration evidence must cover the existing public MCP tools, independent
+application effects, background focus/pointer preservation, automatic foreground
+activation, stale/covered target refusals, focus races, timeouts, and cancellation.
+No catalog case is qualified solely by the cursor checks.
 
-## Linux mechanisms and limits
+## Earlier feasibility research
 
-- **AT-SPI:** [text replacement](https://gnome.pages.gitlab.gnome.org/at-spi2-core/libatspi/method.EditableText.set_text_contents.html)
-  directly addresses an editable control. This provides a useful initial route
-  for supported existing apps. Application callbacks still control side effects.
-  Explicit focus requests, clipboard paste, and keyboard fallback must be excluded
-  from a background route unless separately proven noninterfering.
-- **Multiple X11 pointers:** [X.Org MPX](https://www.x.org/Development/Documentation/MPX/)
-  supports separate master pointers and keyboard focus, but documents legacy
-  grabs and popup conflicts. A second cursor does not by itself guarantee
-  window-manager focus preservation or correct input into covered windows.
-- **Window capture:** [XComposite](https://xorg.freedesktop.org/archive/X11R7.5/doc/man/man3/Xcomposite.3.html)
-  exposes redirected window storage. Capturing this instead of root pixels is a
-  candidate for observing covered windows without raising them. Remapping/resizing changes storage, and
-  a retained pixmap can outlive the window: identity and freshness must be checked.
-  Minimized/unmapped windows cannot be assumed to keep rendering. This capture
-  route has not been implemented or tested here.
+The [original research probe](../tests/prototypes/background_semantics.py) ran
+before automatic routing was implemented. Four assertions established the old
+public foreground refusal, background native text replacement, background button
+invocation, and an application callback that opened and activated an attention
+window. Independent fixture files established text and button effects; desktop
+samples compared pointer position, keyboard focus, active window, and stacking.
+Those samples cannot exclude brief interference between observations.
 
-## Implementation sequence
+Retained [results](../tests/evidence/background-semantics/results.json) describe
+that historical scope. They do not qualify arbitrary apps, minimized windows,
+hidden workspaces, or concurrent human interaction. The explicitly selected root
+account was a private test environment choice, not a product default.
 
-1. Define an explicit background interaction contract using existing window and
-   element identities. Unsupported actions must return before input; do not
-   silently activate a window or fall back to shared-pointer/keyboard input.
-   Avoid a proliferation of agent-facing tools: expose mode/capability through
-   existing observation and operation contracts where possible.
-2. Render a separate, click-through agent cursor/target indicator directly into
-   desktop pixels, visible through the existing GUI viewer, without warping the
-   user's pointer or focusing the overlay. Associate the marker with the real
-   target window; do not suggest that a covered foreground control is being
-   clicked when the action addresses a background app. Show pending, dispatched,
-   verified, failed, and stale states honestly; a semantic target marker is not
-   proof of physical mouse input. Implement bounded per-window capture for agent
-   observation of covered windows. Keep frames in memory by default; no public
-   listener, API credentials, separate viewer, or sandbox integration.
-3. Qualify direct background semantic operations first. Treat arbitrary invokes
-   that may raise dialogs as an unresolved compatibility issue, not automatically
-   safe actions. Checking focus afterward detects some failures; restoring focus
-   afterward cannot establish that interference never happened.
-4. Investigate device-specific input for missing pointer/key workflows separately.
-   Test toolkit and window-manager behavior before exposing support. If universal
-   routing is unattainable, disclose the actual supported app/action scope rather
-   than substituting a separate desktop or claiming macOS parity.
-5. Integrate runtime, MCP schemas, skill, diagnostics, installation dependencies,
-   and documentation only after live evidence exists for the advertised scope.
-
-Acceptance requires independently observed application changes alongside human
-input in another app, without agent-generated movement of the human pointer or
-changes to its focus and foreground. Cover occlusion, menus, modal dialogs, drags,
-scrolling, typing, app exit/restart, stale identities, minimized windows, capture
-loss, cancellation, timeout, and helper crashes. The visible cursor overlay must
-neither steal focus nor intercept user clicks. Verify its presence in captured
-desktop pixels, cleanup after exit, and held-device release. This remains an implementation project, not completed parity.
+[OpenAI's computer-use guide](https://learn.chatgpt.com/use-cases/use-your-computer-with-codex)
+describes macOS background operation and a preview, but does not establish which
+native APIs it uses or what equivalent Linux guarantees are possible.
+[AT-SPI editable text](https://gnome.pages.gitlab.gnome.org/at-spi2-core/libatspi/method.EditableText.set_text_contents.html)
+provides directly addressed mutations, while application callbacks control their
+side effects. [X.Org MPX](https://www.x.org/Development/Documentation/MPX/) and
+[XComposite window capture](https://xorg.freedesktop.org/archive/X11R7.5/doc/man/man3/Xcomposite.3.html)
+remain possible future mechanisms, not features included in this change.

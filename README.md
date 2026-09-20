@@ -45,6 +45,8 @@ For other Linux distributions, existing dependencies, updates, and removal, see 
 - **Use the screen:** screenshots, clicks, drags, scrolling, and keyboard shortcuts. Optional OCR, image matching, and recording provide additional ways to observe.
 - **Handle interruptions:** wait for changes, cancel work, pause agent input, and recover owned input after a disconnect.
 
+Luda shows a distinct agent cursor in desktop pixels when its X11 overlay is available, so ordinary desktop viewers can display it. Supported native control actions work without moving your pointer or activating the app. Pointer input, shortcuts, paste, and focus requests automatically use foreground control when needed. Apps can also bring themselves forward; uninterrupted simultaneous use is not guaranteed. The agent uses the same tools, without choosing a mode.
+
 The optional browser provider opens a temporary Chromium session for ordinary web fields. Existing browser profiles are not attached automatically.
 
 ### Optional editor add-on

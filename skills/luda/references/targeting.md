@@ -4,11 +4,10 @@
 
 ```python
 desktop_windows(query="Notes", limit=50, offset=0)
-desktop_activate(window_id="<returned window_id>")
 desktop_inspect(window_id="<window_id>", role="entry")
 ```
 
-Window queries filter title/class. Each paginated call is a new enumeration, so do not assume a frozen list. Use actual identity and context when multiple windows match. Activation verifies focus; observe again afterward.
+Window queries filter title/class. Each paginated call is a new enumeration, so do not assume a frozen list. Use actual identity and context when multiple windows match. Routine activation is unnecessary: native semantics can operate in the background and foreground input activates automatically. Explicit activation is useful to reveal a covered target; observe again afterward.
 
 `desktop_inspect` returns native accessibility `nodes`, parent IDs, roles, names, states, and supported actions. Optional browser `text_fields` use separate provider-bound IDs. Filter known controls with `name`, `role` (substring matches), or required `states`; increase `limit` or `max_depth` when justified by truncation. Defaults are 150 nodes and depth 30. Read returned availability and coverage before interpreting an empty result. It can mean no matches, incomplete traversal, or unsupported accessibility.
 
@@ -39,7 +38,7 @@ Windows can cover each other; covered targets are refused. Activate the intended
 | Drag within one window | `desktop_drag(window_id, snapshot_id, x, y, end_x, end_y)` |
 | Drag to another window | `desktop_drag_to(source_window_id, target_window_id, snapshot_id, x, y, end_x, end_y)` |
 
-For dragging, ground both endpoints in the same screenshot and activate the source first. Luda attempts button release even on interruption; the receipt does not prove the destination accepted a drop. Check the destination application and, for moves, the source. Reobserve after scrolling before selecting newly visible content.
+For dragging, ground both endpoints in the same screenshot. Drags activate their source automatically after validating both endpoints; raising the source must not cover the destination. Luda attempts button release even on interruption; the receipt does not prove the destination accepted a drop. Check the destination application and, for moves, the source. Reobserve after scrolling before selecting newly visible content.
 
 ## Window layout and workspaces
 
