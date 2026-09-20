@@ -619,9 +619,13 @@
     "ERR-05": {
       "implementation": "partial",
       "tests": [
-        "test_mcp_cancellation.MCPCancellation.test_later_failure_preserves_prior_effect"
+        "test_mcp_cancellation.MCPCancellation.test_later_failure_preserves_prior_effect",
+        "test_keyboard_progress.KeyProgress.test_completed_partial_and_not_started_partition",
+        "test_keyboard_progress.KeyProgress.test_public_error_and_status_retain_counts_not_application_success",
+        "test_keyboard_progress.KeyProgress.test_native_second_preflight_failure_records_only_first_dispatch",
+        "test_keyboard_progress.KeyProgress.test_actual_companion_error_receipt_reaches_public_dispatch_details"
       ],
-      "limits": "Unit accumulated-effect classification; completed substeps are not comprehensively enumerated."
+      "limits": "Unit accumulated-effect classification plus bounded repeated-key dispatch progress, public error/history projection and actual companion receipt handling. Counts do not verify application outcomes; rich-editor segments and other compound actions are not comprehensively enumerated."
     },
     "ERR-06": {
       "implementation": "partial",

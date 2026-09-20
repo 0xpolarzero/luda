@@ -69,3 +69,5 @@ in parallel with these tests; fresh Mac acceptance cannot be replaced by them.
   requested text entry.
 - No longer-duration soak, universal rich schema, or new hardware support is
   invented here. Priorities, catalog acceptance and qualification status are unchanged.
+
+Follow-up: repeated native key chords now report bounded dispatch progress when a final companion receipt is available. Exact counters distinguish acknowledged dispatches, one possibly partial chord and not-started chords; application effects remain unverified. Tests are mapped narrowly to ERR-05; rich-editor segment progress and other compound actions remain outside that increment. See [keyboard contract](KEYBOARD.md).
