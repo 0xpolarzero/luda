@@ -121,6 +121,6 @@ These existing live scripts are not registered in the three inventoried runners.
 
 ## Separate evidence needing curated association
 
-- [Agent evaluation runner](../scripts/agent_eval.py), [agent evaluation records](AGENT-EVALUATION.md) and [fresh-agent regression](AGENT-USABILITY-REGRESSION.md) are review candidates for INTEL-01/02/03/05/08/09/10 and EVAL-01/05/09/10; this is not a new formal mapping. These runs are not part of the three runner registries. They do not by themselves establish MCP-01 fresh Mac-to-Codex SSH onboarding.
+- [Agent evaluation runner](../scripts/agent_eval.py), [agent evaluation records](AGENT-EVALUATION.md) and [fresh-agent regression](AGENT-USABILITY-REGRESSION.md) are review candidates for INTEL-01/02/03/05/08/09/10 and EVAL-01/05/09/10; this is not a new formal mapping. These runs are not part of the three runner registries. They do not by themselves establish client registration or graphical-session readiness in another Linux environment.
 - Standalone font diagnostics are review candidates for OBS-11; native RandR probes for GEO-06/08/10; private storage-filesystem probes for LIFE-09/FAULT-09; native editor workflows in live_apps.py for FILE-01/02/03. These need their own scoped associations and exact recorded environments. Their omission from these runner registrations is not a claim that the features are absent.
 - Requirements without an association here remain for further review. Do not add a label solely to make every catalog case appear covered.
