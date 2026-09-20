@@ -11,8 +11,12 @@ async def main(executable):
     if os.getuid()==0 or os.environ.get('LUDA_ISOLATED_TEST_DISPLAY')!='1':raise RuntimeError('Private ordinary-account desktop required')
     OUT.mkdir(parents=True,exist_ok=True);wire.OUT=OUT;state={};rows=[];lock=threading.Lock()
     barrier_entered=threading.Event();barrier_release=threading.Event();barrier_state={}
+    started=time.monotonic();request_count=0
+    def timing(**value):
+        with (OUT/'timings.jsonl').open('a') as stream:stream.write(json.dumps({'elapsed':round(time.monotonic()-started,3),**value})+'\n')
+    (OUT/'timings.jsonl').write_text('')
     def record(case,passed,**details):
-        rows.append(dict(case=case,passed=bool(passed),**details));(OUT/'results.json').write_text(json.dumps(rows,ensure_ascii=False,indent=2))
+        timing(event='case',case=case,passed=bool(passed));rows.append(dict(case=case,passed=bool(passed),**details));(OUT/'results.json').write_text(json.dumps(rows,ensure_ascii=False,indent=2))
         if not passed:raise AssertionError(case)
     class Handler(http.server.BaseHTTPRequestHandler):
         def log_message(self,*args):pass
@@ -39,6 +43,21 @@ async def main(executable):
     # GTK's canonical built-in ID; 'simple' can fall back to an installed IBus module.
     with patch.dict(os.environ,LUDA_CHROMIUM_EXECUTABLE=executable,GTK_IM_MODULE='gtk-im-context-simple'):
         client=await wire.Client('mcp').start()
+        request=client.request
+        async def traced_request(method,params):
+            nonlocal request_count
+            request_count+=1;identifier=request_count;begin=time.monotonic()
+            timing(event='request_start',index=identifier,tool=params.get('name'),method=method)
+            try:
+                response=await asyncio.wait_for(request(method,params),16)  # Includes request write/drain as well as its15s reply bound.
+                content=response.get('result',{}).get('content',[])
+                value=json.loads(content[0]['text']) if content and content[0].get('type')=='text' else {}
+                timing(event='request_end',index=identifier,seconds=round(time.monotonic()-begin,3),code=value.get('code'),backend_ms=value.get('elapsed_ms'))
+                return response
+            except BaseException as exc:
+                timing(event='request_exception',index=identifier,seconds=round(time.monotonic()-begin,3),exception=type(exc).__name__)
+                raise
+        client.request=traced_request
         async def call(tool,**arguments):
             response=(await client.request('tools/call',{'name':tool,'arguments':arguments}))['result']
             value=json.loads(response['content'][0]['text'])

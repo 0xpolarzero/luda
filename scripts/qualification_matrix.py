@@ -20,10 +20,10 @@ ROOT = Path(__file__).resolve().parents[1]
 TOKEN_KEY = 'LUDA_MATRIX_PROCESS_TOKEN'
 
 
-def suite(script, ids, *, wm=True, browser=None, electron=None, firefox=None, modules=('Gtk', 'Atspi'), artifacts=(), gaps=()):
+def suite(script, ids, *, wm=True, browser=None, electron=None, firefox=None, modules=('Gtk', 'Atspi'), artifacts=(), gaps=(), timeout=180):
     return {'script': script, 'related_requirements': ids.split(), 'runner_window_manager': wm,
             'browser_argument': browser, 'electron_argument': electron, 'firefox_argument': firefox, 'modules': modules, 'artifact_directories': artifacts,
-            'known_gaps': gaps}
+            'known_gaps': gaps, 'timeout_seconds': timeout}
 
 
 SUITES = {
@@ -69,7 +69,7 @@ SUITES = {
     'browser': suite('live_browser.py', 'WEB-01 WEB-02 WEB-03 WEB-05 WEB-06', browser='--browser', artifacts=('browser',), gaps=('Rich contenteditable exact verification is unsupported',)),
     'browser-offsets': suite('live_browser_offsets.py', 'EDIT-09 WEB-02 WEB-03', browser='--executable', artifacts=('browser-offset',)),
     'pm-selection-prototype': suite('live_pm_selection.py', 'WEB-03 DATA-07', browser='--executable', artifacts=('pm-selection',), gaps=('Test-only public EditorView DOM range mapping, not production arbitrary selection support',)),
-    'owned-rich-clipboard': suite('live_owned_rich_clipboard.py', 'WEB-03 DATA-07', browser='--executable', artifacts=('owned-rich-clipboard',), gaps=('Explicit clipboard transport; cooperating basic ProseMirror only',)),
+    'owned-rich-clipboard': suite('live_owned_rich_clipboard.py', 'WEB-03 DATA-07', browser='--executable', artifacts=('owned-rich-clipboard',), gaps=('Explicit clipboard transport; cooperating basic ProseMirror only',), timeout=300),
     'owned-rich': suite('live_owned_rich.py', 'WEB-03 DATA-07', browser='--executable', artifacts=('owned-rich',), gaps=('Cooperating basic ProseMirror paragraphs only; not arbitrary rich editors',)),
     'owned-browser': suite('live_owned_browser.py', 'WEB-01 WEB-02 MCP-08', browser='--executable', artifacts=('owned-browser',), gaps=('Owned Chromium HTML fields; generic rich editors/frames unsupported',)),
     'rich-editor-protocol': suite('live_rich_protocol.py', 'WEB-03 DATA-07', browser='--executable', artifacts=('rich-editor-protocol',), gaps=('Test-only owned browser-native text input; explicit paragraph semantics; no generic rich editor adapter',)),
@@ -144,6 +144,14 @@ def cleanup_owned(token):
         while time.monotonic() < deadline and owned_processes(token):
             time.sleep(.02)
     return {'tagged_processes_found': len(found), 'survivors': sorted(owned_processes(token))}
+
+
+def suite_timeout(spec, override=None):
+    if override is not None:
+        if type(override) is not int or not 1 <= override <= 300:
+            raise ValueError('Explicit timeout must be1..300 seconds')
+        return override
+    return max(1, min(300, spec.get('timeout_seconds', 180)))
 
 
 def run_bounded(command, env, log, timeout, token):
@@ -255,14 +263,14 @@ def main():
     parser.add_argument('--executable', default=os.environ.get('LUDA_CHROMIUM_EXECUTABLE'), help='Chromium executable; also LUDA_CHROMIUM_EXECUTABLE.')
     parser.add_argument('--firefox-executable', default=os.environ.get('LUDA_FIREFOX_EXECUTABLE'), help='Separately provisioned test-only Firefox executable; also LUDA_FIREFOX_EXECUTABLE.')
     parser.add_argument('--electron-executable', default=os.environ.get('LUDA_ELECTRON_EXECUTABLE'), help='Separately installed test-only Electron executable.')
-    parser.add_argument('--timeout', type=int, default=180, help='Per-suite watchdog seconds, 1..300.')
+    parser.add_argument('--timeout', type=int, default=None, help='Override each suite watchdog, 1..300 seconds; defaults180, clipboard300.')
     parser.add_argument('--inside', choices=SUITES, help=argparse.SUPPRESS)
     args = parser.parse_args()
     if args.list:
         print(json.dumps(SUITES, indent=2)); return 0
     if os.geteuid() == 0:
         parser.error('Run as an ordinary desktop user, never root.')
-    if not 1 <= args.timeout <= 300:
+    if args.timeout is not None and not 1 <= args.timeout <= 300:
         parser.error('--timeout must be 1..300 seconds')
     if args.inside:
         if os.environ.get('LUDA_ISOLATED_TEST_DISPLAY') != '1' or not os.environ.get(TOKEN_KEY):
@@ -305,7 +313,8 @@ def main():
                             command.extend(['--electron-executable', args.electron_executable])
                         row['command'] = command
                         with (destination / 'suite.log').open('wb') as log:
-                            row.update(run_bounded(command, env, log, args.timeout, token))
+                            row['timeout_seconds'] = suite_timeout(spec, args.timeout)
+                            row.update(run_bounded(command, env, log, row['timeout_seconds'], token))
                         startup_path = destination / 'startup.json'
                         row['startup'] = json.loads(startup_path.read_text()) if startup_path.exists() else {'stage': 'launcher', 'reported': False}
                 for folder in spec['artifact_directories']:
