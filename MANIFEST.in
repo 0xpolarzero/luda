@@ -2,7 +2,7 @@ include requirements.lock uv.lock build-requirements.in build-requirements.lock
 recursive-include docs *.md *.json
 recursive-include scripts *.py *.sh
 recursive-include skills *.md
-recursive-include tests *.py *.html
+recursive-include tests *.py *.html *.js
 
 include .mcp.json
 recursive-include .codex-plugin *.json

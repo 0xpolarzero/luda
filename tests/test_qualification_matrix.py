@@ -55,4 +55,10 @@ class Matrix(unittest.TestCase):
     def test_missing_browser_is_explicit(self):
         with patch.object(m.shutil,'which',return_value='/bin/true'),patch.object(m.subprocess,'run',return_value=type('R',(),{'returncode':0})()):
             self.assertFalse(m.dependencies(m.SUITES['browser'],None)['browser_executable'])
+    def test_electron_dependency_is_separate_from_browser(self):
+        with patch.object(m.shutil,'which',return_value='/bin/true'),patch.object(m.subprocess,'run',return_value=type('R',(),{'returncode':0})()):
+            checks=m.dependencies(m.SUITES['electron'],'/bin/true',None)
+            self.assertFalse(checks['electron_executable'])
+            self.assertNotIn('browser_executable',checks)
+            self.assertTrue(m.dependencies(m.SUITES['electron'],None,'/bin/true')['electron_executable'])
 if __name__=='__main__':unittest.main()

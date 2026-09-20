@@ -20,13 +20,14 @@ ROOT = Path(__file__).resolve().parents[1]
 TOKEN_KEY = 'LUDA_MATRIX_PROCESS_TOKEN'
 
 
-def suite(script, ids, *, wm=True, browser=None, modules=('Gtk', 'Atspi'), artifacts=(), gaps=()):
+def suite(script, ids, *, wm=True, browser=None, electron=None, modules=('Gtk', 'Atspi'), artifacts=(), gaps=()):
     return {'script': script, 'related_requirements': ids.split(), 'runner_window_manager': wm,
-            'browser_argument': browser, 'modules': modules, 'artifact_directories': artifacts,
+            'browser_argument': browser, 'electron_argument': electron, 'modules': modules, 'artifact_directories': artifacts,
             'known_gaps': gaps}
 
 
 SUITES = {
+    'electron': suite('live_electron.py', 'AX-04 APPS-04 EDIT-01 EDIT-02 AX-09 SEM-04', electron='--executable', artifacts=('electron',), gaps=('Electron 44.4.3 embedded Chromium152 cannot verify non-BMP selections; required replacement remains failing', 'Protected secret input lacks EditableText')),
     'semantic': suite('live_semantic.py', 'AX-01 EDIT-01 EDIT-02 EDIT-03 EDIT-09 SEM-04 SEM-06 SEM-07 SEM-08', artifacts=('semantic',)),
     'toolkits': suite('live_toolkits.py', 'AX-02 AX-03 APPS-03 EDIT-09 WIN-06', modules=('Gtk', 'Gtk4', 'Atspi', 'PyQt5'), artifacts=('toolkits',), gaps=('GTK4 provider selection/check limitations',)),
     'protected-options': suite('live_controls.py', 'AX-09 SEM-04 SEM-05', modules=('Gtk', 'Atspi', 'PyQt5'), artifacts=('controls',)),
@@ -120,7 +121,7 @@ def run_bounded(command, env, log, timeout, token):
     return result
 
 
-def dependencies(spec, executable):
+def dependencies(spec, executable, electron=None):
     commands = ['xvfb-run', 'Xvfb', 'dbus-run-session', 'xfwm4', 'wmctrl', 'xdotool', 'scrot', 'xclip', 'xprop', 'gdbus']
     if spec['script'] in ('live_accessibility_lifecycle.py', 'live_mcp_reconnect.py'):
         commands.append('xfce4-session')
@@ -134,10 +135,12 @@ def dependencies(spec, executable):
         checks['system_python:' + module] = check.returncode == 0
     if spec['browser_argument']:
         checks['browser_executable'] = bool(executable and Path(executable).is_file() and os.access(executable, os.X_OK))
+    if spec.get('electron_argument'):
+        checks['electron_executable'] = bool(electron and Path(electron).is_file() and os.access(electron, os.X_OK))
     return checks
 
 
-def inside(name, executable):
+def inside(name, executable, electron=None):
     spec = SUITES[name]
     wm = None
     try:
@@ -151,6 +154,8 @@ def inside(name, executable):
         command = [sys.executable, str(ROOT / 'tests' / spec['script'])]
         if spec['browser_argument']:
             command.extend([spec['browser_argument'], executable])
+        if spec.get('electron_argument'):
+            command.extend([spec['electron_argument'], electron])
         return subprocess.call(command, cwd=ROOT)
     finally:
         if wm is not None:
@@ -168,6 +173,7 @@ def main():
     group.add_argument('--all', action='store_true', help='Run every listed suite, including known failures.')
     group.add_argument('--suites', nargs='+', choices=SUITES)
     parser.add_argument('--executable', default=os.environ.get('LUDA_CHROMIUM_EXECUTABLE'), help='Chromium executable; also LUDA_CHROMIUM_EXECUTABLE.')
+    parser.add_argument('--electron-executable', default=os.environ.get('LUDA_ELECTRON_EXECUTABLE'), help='Separately installed test-only Electron executable.')
     parser.add_argument('--timeout', type=int, default=180, help='Per-suite watchdog seconds, 1..300.')
     parser.add_argument('--inside', choices=SUITES, help=argparse.SUPPRESS)
     args = parser.parse_args()
@@ -180,7 +186,7 @@ def main():
     if args.inside:
         if os.environ.get('LUDA_ISOLATED_TEST_DISPLAY') != '1' or not os.environ.get(TOKEN_KEY):
             parser.error('--inside is reserved for the isolated runner')
-        return inside(args.inside, args.executable)
+        return inside(args.inside, args.executable, args.electron_executable)
     selected = list(SUITES) if args.all else args.suites
     if not selected:
         parser.error('Explicitly choose --all or --suites; --list shows coverage.')
@@ -200,7 +206,7 @@ def main():
             began = time.monotonic(); since = time.time_ns()
             row = {'suite': name, 'related_requirements': spec['related_requirements'], 'known_gaps': spec['known_gaps'], 'source_before': source_fingerprint(ROOT)}
             try:
-                row['dependencies'] = dependencies(spec, args.executable)
+                row['dependencies'] = dependencies(spec, args.executable, args.electron_executable)
                 if not all(row['dependencies'].values()):
                     row.update(status='dependency_missing', returncode=None)
                 else:
@@ -211,6 +217,8 @@ def main():
                                    'dbus-run-session', '--', sys.executable, str(Path(__file__).resolve()), '--inside', name]
                         if args.executable:
                             command.extend(['--executable', args.executable])
+                        if args.electron_executable:
+                            command.extend(['--electron-executable', args.electron_executable])
                         row['command'] = command
                         with (destination / 'suite.log').open('wb') as log:
                             row.update(run_bounded(command, env, log, args.timeout, token))
