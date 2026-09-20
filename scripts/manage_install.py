@@ -99,8 +99,16 @@ def invoke(argv, timeout=300):
 
 
 def release_identity(source):
-    metadata = tomllib.loads((source / 'pyproject.toml').read_text())
-    version = metadata['project']['version']
+    try:
+        metadata = tomllib.loads((source / 'pyproject.toml').read_text(encoding='utf-8'))
+    except (tomllib.TOMLDecodeError, UnicodeDecodeError):
+        raise InstallError('Source pyproject.toml must contain valid UTF-8 TOML.') from None
+    project = metadata.get('project')
+    if not isinstance(project, dict):
+        raise InstallError('Source pyproject.toml must contain a [project] table.')
+    version = project.get('version')
+    if not isinstance(version, str):
+        raise InstallError('Source project.version must be a string.')
     if not re.fullmatch(r'[A-Za-z0-9_.+-]+', version):
         raise InstallError('Package version is not a safe release name.')
     files = [source / p for p in ('pyproject.toml', 'MANIFEST.in', 'requirements.lock', 'build-requirements.lock')]

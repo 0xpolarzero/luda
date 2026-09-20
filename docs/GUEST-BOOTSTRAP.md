@@ -19,7 +19,7 @@ change Silo itself. Source must be supplied locally and trusted: installation
 executes its build and installer code. Use the same source revision for the
 bootstrap and installed release.
 
-All path/account/output validation and Silo status preflight precede installation. Source, prefix and output must not overlap in either direction. Non-root system provisioning is rejected before child execution; use `--skip-system` only for already provisioned dependencies.
+All path/account/output validation and Silo status preflight precede installation. Source metadata must be valid UTF-8 TOML with a `[project]` table and a string `version` safe for a release name; malformed shapes fail at validation before invoking the desktop helper or installer, without echoing metadata values. Source, prefix and output must not overlap in either direction. Non-root system provisioning is rejected before child execution; use `--skip-system` only for already provisioned dependencies.
 The current helper must report installed desktop version `1`, the exact selected
 non-root account and `running`. Unknown/missing/incompatible status fails before
 installation. Start a stopped desktop explicitly in Silo, then retry. For a
