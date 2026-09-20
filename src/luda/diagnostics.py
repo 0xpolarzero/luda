@@ -4,6 +4,10 @@
 def capability_summary(report):
     dependencies=report['dependencies']
     display=report['display_available']
+    # Public observations/actions resolve native windows through wmctrl. Input
+    # additionally needs xdotool's active-window proof, even with native XTest.
+    windows=display and dependencies.get('wmctrl',False)
+    focused=windows and dependencies.get('xdotool',False)
     blocked=(report['session_state']['input_ready'] is False or
              report['control'].get('paused') is True or
              report['control'].get('available') is False)
@@ -12,11 +16,11 @@ def capability_summary(report):
         if blocked:return 'blocked'
         return 'application_dependent' if semantic else 'backend_available'
     return {
-        'screen_observation':'backend_available' if display and report.get('topology_available', False) and dependencies.get('scrot') else 'unavailable',
-        'pointer_input':input_state(display and report.get('topology_available', False) and dependencies.get('xdotool')),
-        'keyboard_input':input_state(display and report['keyboard']['available']),
-        'clipboard_paste':input_state(display and report['keyboard']['available'] and dependencies.get('xclip')),
-        'accessibility_read':'backend_available' if display and report['accessibility_available'] else 'unavailable',
-        'verified_text_editing':input_state(display and report['accessibility_available'],semantic=True),
+        'screen_observation':'backend_available' if windows and report.get('topology_available', False) and dependencies.get('scrot') else 'unavailable',
+        'pointer_input':input_state(focused and report.get('topology_available', False)),
+        'keyboard_input':input_state(focused and report['keyboard']['available']),
+        'clipboard_paste':input_state(focused and report['keyboard']['available'] and dependencies.get('xclip')),
+        'accessibility_read':'backend_available' if windows and report['accessibility_available'] else 'unavailable',
+        'verified_text_editing':input_state(focused and report['accessibility_available'],semantic=True),
         'ime_composition':'unsupported',
     }

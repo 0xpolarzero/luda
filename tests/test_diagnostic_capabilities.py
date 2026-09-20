@@ -6,7 +6,7 @@ from luda.keyboard import keyboard_capabilities
 
 class DiagnosticCapabilities(unittest.TestCase):
     def report(self):
-        return dict(dependencies=dict(scrot=True,xdotool=True,xclip=True),display_available=True,topology_available=True,
+        return dict(dependencies=dict(scrot=True,xdotool=True,xclip=True,wmctrl=True),display_available=True,topology_available=True,
                     session_state={'input_ready':None},control={'available':True,'paused':False},
                     keyboard={'available':True},accessibility_available=True)
     def test_unavailable_accessibility_keeps_screenshot_fallback_available(self):
@@ -40,3 +40,21 @@ class DiagnosticCapabilities(unittest.TestCase):
         for value in (b'1',b'[]',b'null'):
             with patch('luda.keyboard.run',return_value=value):
                 self.assertEqual(keyboard_capabilities(),{'available':False,'reason':'invalid_response'})
+
+    def test_missing_window_enumerator_disables_targeted_capabilities(self):
+        for missing in (False,None):
+            report=self.report()
+            if missing is None:report['dependencies'].pop('wmctrl')
+            else:report['dependencies']['wmctrl']=missing
+            state=capability_summary(report)
+            for key in ('screen_observation','pointer_input','keyboard_input','clipboard_paste','accessibility_read','verified_text_editing'):
+                with self.subTest(missing=missing,capability=key):
+                    self.assertEqual(state[key],'unavailable')
+
+    def test_missing_focus_proof_preserves_only_readonly_fallback(self):
+        report=self.report();report['dependencies']['xdotool']=False
+        state=capability_summary(report)
+        for key in ('screen_observation','accessibility_read'):
+            self.assertEqual(state[key],'backend_available')
+        for key in ('pointer_input','keyboard_input','clipboard_paste','verified_text_editing'):
+            self.assertEqual(state[key],'unavailable')

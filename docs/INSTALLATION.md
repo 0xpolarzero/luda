@@ -22,6 +22,8 @@ Release identities cover runtime, skill, plugin metadata, installer and packaged
 
 The examples use a root-owned `/opt/luda`; run all `manage_install.py` actions as that prefix owner, including read-only `doctor` and configuration generation. For an ordinary-account-owned prefix, omit `sudo`. Generated files belong to the generating account but can be copied into the intended agent workspace. Do not run `codex plugin add` with `sudo` unless root is deliberately the Codex profile owner.
 
+Per-capability diagnostics account for the public tool prerequisites. Missing `wmctrl` prevents window enumeration, screenshot observation and target-based actions. Missing `xdotool` prevents focus verification and input, while screenshots and accessibility reads can remain available. A healthy X11 connection or native keyboard probe alone does not imply those tools are usable.
+
 Run the guest/session diagnostic:
 
 ```sh
