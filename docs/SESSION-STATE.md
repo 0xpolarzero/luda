@@ -15,3 +15,11 @@ The live test starts its own D-Bus session and a synthetic screensaver provider.
 ## Partial readiness
 
 `desktop_doctor.capabilities` distinguishes screenshot, pointer, native keyboard, clipboard and accessibility backends. `backend_available` means the primitive is present, not that a particular application or focused target is safe to mutate. Verified text remains `application_dependent`. A paused, locked or unavailable control state blocks mutation capabilities while read-only observation can remain available. Missing accessibility can therefore leave a useful screenshot/pointer fallback. `ready` is the combined backend health check, not permission to resume a pause or evidence of supported IME composition.
+
+## Mutation preflight
+
+Every MCP mutation samples these same registered hints in the selected backend environment before invoking its handler. A reported lock or active screensaver returns `SESSION_BLOCKED`, effect `none`; it does not wake, dismiss, inhibit or unlock the service. A probe timeout also prevents dispatch. Observation, text readback, status, reconnect and owned-input cleanup remain available. After the human resumes the intended desktop, a new explicit action can proceed; blocked actions are never queued or replayed.
+
+This is a sampled precondition, not an input grab detector or an atomic lock transition guard. Unknown/inactive hints still do not establish that every possible locker is absent. Direct low-level Desktop calls outside the MCP dispatcher do not acquire this preflight automatically.
+
+`tests/live_session_input.py` uses actual MCP and an independent GTK state file on a private ordinary-user desktop. Its three grouped checks passed: five mutation routes are blocked without application effects; observation/readback/status/recovery remain available; switching the synthetic hint inactive permits only explicit new actions. The provider records only `GetActive`, never an unlock call. `tests/live_session_state.py` shares that synthetic provider and retains its missing/active/inactive hint checks.

@@ -18,6 +18,7 @@ from .session_reconnect import prepare_reconnect
 from .keyboard import set_recovery_hooks, recover_keyboard_input
 from .desktop import Desktop
 from .apps import list_applications, launch_application
+from .session_state import require_session_input
 
 mcp = DesktopMCP('luda', product_version=version('luda'), instructions='Local desktop: observe, select a window, inspect its controls, then act. Screenshot coordinates use the returned image, with its snapshot ID. Text replacement and insertion are distinct. Verify dispatched actions before repeating them; cancellation or timeout can leave effects. Use desktop_status to inspect recent operation outcomes.')
 backend = None
@@ -93,6 +94,8 @@ def execute(method, *args, _cancelled=None, **kwargs):
                     atexit.unregister(d.close)
                 else:
                     with d.transaction():
+                        if not observation:
+                            require_session_input()
                         application_methods = {'list_applications':list_applications, 'launch_application':launch_application}
                         handler = application_methods[method] if method in application_methods else getattr(d,method)
                         result = handler(*args,**kwargs)

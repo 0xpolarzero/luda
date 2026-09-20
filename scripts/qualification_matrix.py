@@ -27,6 +27,7 @@ def suite(script, ids, *, wm=True, browser=None, electron=None, firefox=None, mo
 
 
 SUITES = {
+    'session-input': suite('live_session_input.py', 'AUTH-09', artifacts=('session-input',)),
     'resource-limits': suite('live_resource_limits.py', 'PERF-10 ERR-06', artifacts=('resource-limits',)),
     'bus-generation': suite('live_bus_generation.py', 'ENV-08 LIFE-06 AX-06', artifacts=('bus-generation',)),
     'data-entry': suite('live_data_entry.py', 'DATA-05 DATA-06 DATA-08 DATA-09', wm=False, artifacts=('data-entry',)),

@@ -25,3 +25,12 @@ def session_state():
         return summarize([{'provider':'query','available':False,'reason':exc.code}])
     except (ValueError,TypeError):
         return summarize([{'provider':'query','available':False,'reason':'invalid_response'}])
+
+
+def require_session_input():
+    """Sample registered lock hints before a mutation, never wake or unlock."""
+    state = session_state()
+    if state['input_ready'] is False:
+        raise DesktopError('SESSION_BLOCKED',
+            'The desktop reports a lock or active screensaver. Resume the intended desktop through the human viewer, then observe again. No input sent.',
+            details={'session_state':state['state']})
