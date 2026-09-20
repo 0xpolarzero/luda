@@ -339,3 +339,50 @@ markers. Overflow is refused promptly, and no marker appears after cleanup.
 Actual native key generation, SSH parsing and literal proxy arguments still pass.
 The temporary binary symlinks were again removed afterward. Evidence is
 `artifacts/silo-native-registration/keygen-pipe.json` and its captured test log.
+
+### Inspect and reconcile interrupted updates (eleventh patch)
+
+`0011-inspect-update-recovery.patch` adds **Inspect interrupted update**, then a
+separate token-bound **Finish verified update** or **Keep previous version**.
+Inspection distinguishes installed-cache/effective-configuration proof from live
+SSH connectivity. It never installs/removes a plugin, publishes files, or changes
+the registration receipt. Confirmation reconstructs the owned source bundle to
+match the version that Codex has already installed, then verifies normal CLI state
+before reconciling the receipt. There is no installation replay or automatic
+rollback, and existing processes are not restarted.
+
+This closes four durable dead ends: old source still intact before publication;
+old source archived but replacement publication failed; new source published with
+the previous cache still installed; and the updated cache installed but the caller
+or verification reply lost. Actual Codex 0.155.1 refuses ordinary plugin/marketplace
+listing when a configured source root is missing. Recovery verifies the selected
+profile's owned local source using bounded TOML parsing, then uses Codex's documented
+per-invocation `-c marketplaces.NAME.source=VERIFIED_ARCHIVE` override for read-only
+listing. The configured source is never edited. This reports the installed cache
+version even when the retained source manifest describes the previous version.
+The parser reuses already locked TOML 0.9.12; Cargo.lock changes only Silo's direct
+dependency reference.
+
+Inspection validates receipt identities, owned archive paths, source/cache hashes,
+manifest/catalog fields, the effective server and current native SSH pins/config.
+A digest binds these observations and the selected executable/profile/VM. A stale
+confirmation refuses. Disabled/removed registrations, another installed version,
+changed marketplace source, cache corruption and independent MCP overrides produce
+sanitized, actionable conflicts without overwriting another choice. Source/candidate
+archives are retained through publication and receipt failures. Interrupted recovery
+can itself be inspected and completed. The bounded archive list permits up to 16
+retained recovery-source references before requiring review; no archive is silently
+deleted to make room.
+
+Validation: nine native registration tests passed, including four actual CLI tests;
+the final recovery case was rerun after adding a concurrent-writer case and a
+first-rename-success/second-publication-failure assertion. It covers all four update
+states, a SIGKILLed owned wrapper after real CLI installation, receipt persistence,
+stale confirmation, missing source, independent source/transport/disable conflicts,
+publication and receipt-write failures, and later successful recovery. Recovery's
+CLI test seam rejects every plugin-add/remove request. Another VM, selected profile
+configuration, old sources and SSH pins remain preserved. Twenty-six frontend tests
+and TypeScript checking pass, including inspection before either explicit action
+and the distinction from SSH readiness. Initial implementation's TOML parsing failure
+and corrected runs are retained in `artifacts/silo-native-registration/`; no new
+macOS, live microsandbox or GUI authentication acceptance is claimed.
