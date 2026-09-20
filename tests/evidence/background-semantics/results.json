@@ -1,0 +1,41 @@
+{
+  "scope": "research only; two GTK3 fixtures on private Xvfb/XFWM",
+  "uid": 0,
+  "cases": [
+    {
+      "case": "public-background-mutation-refused",
+      "passed": true
+    },
+    {
+      "case": "direct-background-text-with-independent-app-readback",
+      "passed": true,
+      "before_after_desktop_unchanged": true
+    },
+    {
+      "case": "direct-background-button-with-independent-app-counter",
+      "passed": true,
+      "before_after_desktop_unchanged": true
+    },
+    {
+      "case": "application-action-can-steal-focus",
+      "passed": true,
+      "background_noninterference": false
+    }
+  ],
+  "cleanup_errors": [],
+  "limits": [
+    "Before/after observations do not exclude transient interference.",
+    "No simultaneous human input, preview, pixel input, or toolkit-wide qualification.",
+    "Public Luda background mutation remains unsupported."
+  ],
+  "source_base": "9a2f4dc068e0373b739b32f94b67f61bb6b9fdbb",
+  "probe_sha256": "2ae95f5015251282531dfa09d753f9ba114d8b43722f075868c064800c50e59d",
+  "environment": {
+    "architecture": "aarch64",
+    "python": "3.12.3",
+    "distribution": "Ubuntu 24.04.4 LTS",
+    "display": "private Xvfb",
+    "window_manager": "XFWM4, compositor off",
+    "fixtures": "GTK3"
+  }
+}
