@@ -116,6 +116,8 @@ def render_config(client: Client, original: bytes | None, command: str,
             data = json.loads(clean, object_pairs_hook=_unique)
         if not isinstance(data, dict):
             raise ValueError('Configuration must be an object.')
+        if client.name == 'copilot-cli' and client.server_key not in data and any(isinstance(v, dict) and ('command' in v or 'url' in v) for v in data.values()):
+            raise ValueError('Existing Copilot bare server map requires manual setup; do not mix configuration formats.')
         servers = data.get(client.server_key, {})
         if not isinstance(servers, dict):
             raise ValueError('MCP server configuration must be an object.')
@@ -127,7 +129,7 @@ def render_config(client: Client, original: bytes | None, command: str,
             block = '\n[mcp_servers.luda]\n' + '\n'.join(f'{k} = {json.dumps(v, ensure_ascii=False)}' for k, v in entry.items() if k != 'env') + '\n'
             if env:
                 block += '\n[mcp_servers.luda.env]\n' + '\n'.join(f'{json.dumps(k, ensure_ascii=False)} = {json.dumps(v, ensure_ascii=False)}' for k, v in env.items()) + '\n'
-            result = text.rstrip('\n') + '\n' + block
+            result = text + ('\n' if text and not text.endswith('\n') else '') + block
             # Detect sealed inline parent tables and any unsupported TOML layout.
             parsed = tomllib.loads(result)
         else:

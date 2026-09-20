@@ -92,6 +92,14 @@ class SetupClientTests(unittest.TestCase):
         result = self.render('claude-code')
         self.assertEqual(result, self.render('copilot-cli', result))
 
+    def test_copilot_bare_map_requires_manual_setup(self):
+        with self.assertRaisesRegex(ValueError, 'bare server map'):
+            self.render('copilot-cli', b'{"other": {"command": "keep"}}')
+
+    def test_toml_trailing_blank_lines_preserved(self):
+        original = b'# preserve exactly\n\n\n'
+        self.assertTrue(self.render('codex', original).startswith(original))
+
     def test_nul_and_bad_command_values_refused(self):
         for command, args in (('', []), ('x\0', []), ('x', ['\0']), ('x', [1])):
             with self.assertRaises(ValueError):
