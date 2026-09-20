@@ -111,3 +111,22 @@ authenticated agent service capacity:
 A future invocation is another recorded attempt, not permission to replace this
 first-attempt evidence with a better result. GUI/theme/provider differences and
 unknown default model resolution limit reproducibility and generalization.
+
+## Lossless response compaction
+
+An offline replay of the eight `desktop_inspect` JSON text responses in this
+saved trace, including its stale-target error, reduced UTF-8 bytes from **88,327
+to 80,930** by using compact JSON separators: **7,397 bytes (8.37%)**. Every
+parsed payload remained equal. The initial 123-node response alone changed from
+57,450 to 52,619 bytes. These counts exclude screenshots, transport envelopes,
+tool arguments and other tool responses; they do not measure token or latency
+savings. The original trace and first-attempt result remain unchanged.
+
+The server now applies this whitespace-only formatting to its existing success,
+error, control and status JSON text serialization. Unicode escaping choices,
+strings, fields, tree structure, targeting IDs and defaults remain unchanged.
+Unnamed containers remain available: in the initial tree, 33 unnamed nodes
+exposed actions and 44 parented other returned nodes. Removing such nodes would
+change accessibility coverage rather than simply reduce redundant whitespace.
+The public-tool regression covers nested Unicode payloads, typed errors,
+unexpected-error redaction and operation history without another agent run.

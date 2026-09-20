@@ -57,7 +57,7 @@ def get_backend():
 
 def result_error(code, message, effect='none', **details):
     return CallToolResult(isError=True, content=[TextContent(type='text', text=json.dumps(
-        {'ok':False, 'code':code, 'message':message, 'effect':effect, **details}, ensure_ascii=False))])
+        {'ok':False, 'code':code, 'message':message, 'effect':effect, **details}, ensure_ascii=False,separators=(',',':')))])
 
 
 def execute(method, *args, _cancelled=None, **kwargs):
@@ -109,7 +109,7 @@ def execute(method, *args, _cancelled=None, **kwargs):
         image = result.pop('image_base64',None)
         result={'ok':True,'operation_id':operation_id,'elapsed_ms':round((time.monotonic()-started)*1000),**result}
         event.update(ok=True, effect=result.get('effect','none'))
-        content=[TextContent(type='text',text=json.dumps(result,ensure_ascii=False))]
+        content=[TextContent(type='text',text=json.dumps(result,ensure_ascii=False,separators=(',',':')))]
         if image:
             content.append(ImageContent(type='image',data=image,mimeType='image/png'))
         return CallToolResult(content=content,isError=False)
@@ -159,7 +159,7 @@ async def desktop_control(action: Literal['status','pause','resume']='status') -
         with _backend_lock:
             control = get_backend().control
             state = control.status() if action=='status' else control.set_paused(action=='pause')
-        return CallToolResult(content=[TextContent(type='text',text=json.dumps({'ok':True,**state}))])
+        return CallToolResult(content=[TextContent(type='text',text=json.dumps({'ok':True,**state},separators=(',',':')))])
     except DesktopError as exc:
         return result_error(exc.code,str(exc),exc.effect)
 
@@ -169,7 +169,7 @@ async def desktop_status() -> CallToolResult:
     """Return recent operation outcomes after timeout/cancellation. No input text or screenshots are retained."""
     with _history_lock:
         history = list(_history)
-    return CallToolResult(content=[TextContent(type='text',text=json.dumps({'ok':True,'recovering':_quarantined.is_set(),'operations':history}))])
+    return CallToolResult(content=[TextContent(type='text',text=json.dumps({'ok':True,'recovering':_quarantined.is_set(),'operations':history},separators=(',',':')))])
 
 
 @mcp.tool()
