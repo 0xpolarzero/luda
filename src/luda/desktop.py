@@ -450,6 +450,11 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
             try:
                 target = self.target_window(window_id, False)
                 if activate:
+                    from .interaction import properties
+                    if '_NET_WM_STATE_HIDDEN' in properties(target['xid']):
+                        self.display().map_without_focus(target['xid'], window_id.rsplit(':', 1)[-1])
+                        changed = True
+                        target = self.target_window(window_id, False)
                     self.focus_input(target)
                     changed = True
                 yield self.target_window(window_id)

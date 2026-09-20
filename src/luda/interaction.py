@@ -184,7 +184,8 @@ class InteractionMixin:
         run(command, effect='uncertain')
         if action == 'restore':
             run(['wmctrl','-ir',xid,'-b','remove,fullscreen'],effect='uncertain')
-            run(['xdotool','windowmap',xid], effect='uncertain')
+            if '_NET_WM_STATE_HIDDEN' in before_state:
+                self.display().map_without_focus(w['xid'], window_id.rsplit(':', 1)[-1])
         dialogs=[]
         def matches():
             current = next((v for v in self.list_windows() if v['window_id'] == window_id), None)

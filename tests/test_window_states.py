@@ -27,7 +27,14 @@ class WindowStateTests(unittest.TestCase):
     def test_restore_removes_fullscreen_and_maximization(self,properties,run):
         result=Driver().manage_window('owner','restore')
         self.assertEqual(result['effect'],'verified')
-        self.assertEqual([call.args[0] for call in run.call_args_list],[['wmctrl','-ir','10','-b','remove,maximized_vert,maximized_horz'],['wmctrl','-ir','10','-b','remove,fullscreen'],['xdotool','windowmap','10']])
+        self.assertEqual([call.args[0] for call in run.call_args_list],[['wmctrl','-ir','10','-b','remove,maximized_vert,maximized_horz'],['wmctrl','-ir','10','-b','remove,fullscreen']])
+    @patch('luda.interaction.run')
+    @patch('luda.interaction.properties', side_effect=['_NET_WM_STATE_HIDDEN', '', ''])
+    def test_minimized_restore_uses_no_initial_focus_request(self, properties, run):
+        driver = Driver()
+        driver.manage_window('owner', 'restore')
+        driver.native.map_without_focus.assert_called_once_with(10, 'owner')
+        self.assertFalse(any('windowmap' in call.args[0] for call in run.call_args_list))
     @patch('luda.interaction.run')
     def test_no_extra_arguments_for_new_actions(self,run):
         for action in ('raise','fullscreen'):

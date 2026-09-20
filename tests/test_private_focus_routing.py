@@ -14,6 +14,7 @@ class PrivateFocusRouting(unittest.TestCase):
         d.check_input_focus = Mock()
         d.list_windows = Mock(return_value=[{'window_id': 'w:token', 'xid': 42, 'active': False}])
         d._raise_window = Mock(return_value={'effect': 'verified'})
+        d.display = Mock()
         self.enterContext(patch('luda.interaction.properties', return_value=''))
         return d
 
@@ -30,6 +31,23 @@ class PrivateFocusRouting(unittest.TestCase):
         send.assert_called_once_with('Return', 42, target_generation='token', count=1)
         d._raise_window.assert_not_called()
         run.assert_not_called()
+
+    def test_key_restores_minimized_target_without_global_activation(self):
+        d = self.driver()
+        with patch('luda.interaction.properties', return_value='_NET_WM_STATE_HIDDEN'), patch('luda.desktop.send_chord'):
+            d.key('w:token', 'Return')
+        d.display().map_without_focus.assert_called_once_with(42, 'token')
+        d._raise_window.assert_not_called()
+        d.focus_input.assert_called_once()
+
+    def test_restore_failure_does_not_send_key(self):
+        d = self.driver()
+        d.display().map_without_focus.side_effect = DesktopError('TIMEOUT', 'restore failed', effect='uncertain')
+        with patch('luda.interaction.properties', return_value='_NET_WM_STATE_HIDDEN'), patch('luda.desktop.send_chord') as send:
+            with self.assertRaises(DesktopError):
+                d.key('w:token', 'Return')
+        send.assert_not_called()
+        d.focus_input.assert_not_called()
 
     def test_composed_key_does_not_reacquire_lost_private_focus(self):
         d = self.driver()

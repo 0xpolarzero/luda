@@ -9,6 +9,7 @@ from luda.desktop import Desktop
 class BackgroundRouting(unittest.TestCase):
     def driver(self):
         d = Desktop.__new__(Desktop)
+        self.enterContext(patch('luda.interaction.properties', return_value=''))
         d.elements = {'field': {'time': elapsed_time(), 'window_id': 'window',
             'node': {'start': 'start', 'interfaces': ['Text', 'EditableText', 'Component'],
                      'states': ['editable'], 'actions': ['click']}}}
