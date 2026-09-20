@@ -12,10 +12,21 @@ def emit(value):
     except BrokenPipeError:pass
 
 
+def native_module(request):
+    return 'luda._pointer_native' if request.get('kind')=='pointer' else 'luda._keyboard_native'
+
+
+def cleanup_request(request,client):
+    value={'client':client,'server_generation':request['server_generation']}
+    if request.get('kind')=='pointer':value.update(kind='pointer',button=request['button'])
+    else:value['keycodes']=request['keycodes']
+    return value
+
+
 def release_owned(request,client):
     try:
-        cleanup=subprocess.run([sys.executable,'-m','luda._keyboard_native','release'],
-                               input=json.dumps({'keycodes':request['keycodes'],'client':client,'server_generation':request['server_generation']}).encode()+b'\n',
+        cleanup=subprocess.run([sys.executable,'-m',native_module(request),'release'],
+                               input=json.dumps(cleanup_request(request,client)).encode()+b'\n',
                                stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,timeout=2)
         value=json.loads(cleanup.stdout) if cleanup.returncode==0 else {}
         return {'cleanup_verified':value.get('released') is True,'session_changed':value.get('session_changed') is True,'cleanup_skipped':value.get('cleanup_skipped') is True}
@@ -51,7 +62,7 @@ def main():
                 if len(initial)>4096:raise ValueError()
             request=json.loads(initial)
             # No controller pipe is inherited by this owned worker.
-            worker=subprocess.Popen([sys.executable,'-m','luda._keyboard_native','inject'],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,start_new_session=True)
+            worker=subprocess.Popen([sys.executable,'-m',native_module(request),'inject'],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,start_new_session=True)
             worker.stdin.write(json.dumps(request).encode()+b'\n');worker.stdin.close()
             os.set_blocking(worker.stdout.fileno(),False)
             watch.register(worker.stdout,selectors.EVENT_READ,'worker')
@@ -79,11 +90,11 @@ def main():
         consume(b'',final=True)
         if armed and (reason or not done or not done.get('done')):
             cleaned=release_owned(request,client)
-            result={'code':reason or 'KEYBOARD_INTERRUPTED','message':'Keyboard operation interrupted; owned key release was attempted. Inspect the application before retrying.','effect':'uncertain',**cleaned,'cleanup_request':{'keycodes':request['keycodes'],'client':client,'server_generation':request['server_generation']}}
+            result={'code':reason or 'KEYBOARD_INTERRUPTED','message':'Input operation interrupted; owned input release was attempted. Inspect the application before retrying.','effect':'uncertain',**cleaned,'cleanup_request':cleanup_request(request,client)}
         elif reason:
-            result={'code':reason,'message':'Keyboard operation cancelled before key dispatch.','effect':'none'}
+            result={'code':reason,'message':'Input operation cancelled before dispatch.','effect':'none'}
         else:
-            result=done or {'code':'KEYBOARD_UNAVAILABLE','message':'Keyboard worker ended without a result.','effect':'none'}
+            result=done or {'code':'KEYBOARD_UNAVAILABLE','message':'Input worker ended without a result.','effect':'none'}
         result['armed']=armed
         emit(result)
     except Exception:
@@ -101,9 +112,9 @@ def main():
         # record precedes every possible native event; conservatively clean the
         # validated plan if worker output was lost or malformed.
         cleaned=release_owned(request,client) if request and worker and armed else {'cleanup_verified':False}
-        emit({'code':'KEYBOARD_UNAVAILABLE','message':'Keyboard companion failed; inspect state before retrying.',
+        emit({'code':'KEYBOARD_UNAVAILABLE','message':'Input companion failed; inspect state before retrying.',
               'effect':'uncertain' if worker else 'none','armed':bool(worker),**cleaned,
-              'cleanup_request':{'keycodes':request['keycodes'],'client':client,'server_generation':request['server_generation']} if request and armed else None})
+              'cleanup_request':cleanup_request(request,client) if request and armed else None})
     finally:
         if worker and worker.stdout:worker.stdout.close()
 

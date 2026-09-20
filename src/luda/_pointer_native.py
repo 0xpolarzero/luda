@@ -1,0 +1,72 @@
+"""Private owned click/wheel injector; every event stays on one X connection."""
+import ctypes as C
+import json
+import sys
+import time
+from ._keyboard_native import Keyboard,emit
+from ._input_native import generation
+from .common import DesktopError
+
+
+def plan_pointer(native,request):
+    if request.get('button') not in ('1','2','3','4','5','6','7') or type(request.get('count')) is not int or not 1<=request['count']<=20:
+        raise DesktopError('INVALID_ARGUMENT','Pointer button/count is unsupported.')
+    target=request.get('target')
+    if target is not None and (type(target) is not int or not 0<target<=0xffffffff):
+        raise DesktopError('INVALID_ARGUMENT','Invalid pointer target.')
+    state=native.state()
+    if native.pressed() or native.buttons() or state.base_mods:
+        raise DesktopError('INPUT_HELD','Keys or pointer buttons are already held; no click or scroll sent.')
+    if state.latched_mods or state.latched_group:
+        raise DesktopError('UNSUPPORTED_INPUT_STATE','Latched keyboard state is active; no click or scroll sent.')
+    if target is not None:
+        active=native.x._property(native.x.root,'_NET_ACTIVE_WINDOW',1)
+        if not active or active[2]!=[target]:raise DesktopError('FOCUS_CHANGED','Target lost focus before pointer input.')
+    return {'kind':'pointer','button':request['button'],'count':request['count'],'target':target,'server_generation':generation(native.x)}
+
+
+def event(native,button,pressed):
+    native.test.XTestFakeButtonEvent.argtypes=[C.c_void_p,C.c_uint,C.c_int,C.c_ulong]
+    if not native.test.XTestFakeButtonEvent(native.x.display,int(button),pressed,0):
+        raise DesktopError('INPUT_UNAVAILABLE','Pointer dispatch failed.',effect='uncertain')
+    native.x.lib.XSync(native.x.display,False)
+
+
+def main():
+    native=None
+    try:
+        request=json.loads(sys.stdin.buffer.readline(4097));native=Keyboard()
+        if sys.argv[1]=='plan':emit(plan_pointer(native,request))
+        elif sys.argv[1]=='release':
+            if request.get('button') not in ('1','2','3','4','5','6','7'):raise ValueError()
+            if generation(native.x)!=request['server_generation']:
+                emit({'released':False,'session_changed':True,'cleanup_skipped':True});return
+            native.disconnect_injector(request['client'])
+            event(native,request['button'],False)
+            emit({'released':int(request['button']) not in native.buttons()})
+        elif sys.argv[1]=='inject':
+            if generation(native.x)!=request['server_generation']:
+                raise DesktopError('SESSION_CHANGED','X server changed before pointer input.')
+            if plan_pointer(native,request)!=request:
+                raise DesktopError('INPUT_STATE_CHANGED','Pointer plan changed; no click or scroll sent.')
+            emit({'armed':True,'client':native.client_resource()})
+            pressed=False
+            try:
+                for index in range(request['count']):
+                    pressed=True;event(native,request['button'],True)
+                    time.sleep(.012)
+                    event(native,request['button'],False);pressed=False
+                    if index+1<request['count']:time.sleep(.035)
+            finally:
+                if pressed:event(native,request['button'],False)
+            if int(request['button']) in native.buttons():
+                raise DesktopError('INPUT_RELEASE_UNVERIFIED','Pointer button release was not verified.',effect='uncertain')
+            emit({'done':True,'effect':'dispatched','verification':'Pointer delivery does not prove application outcome.'})
+        else:raise ValueError()
+    except DesktopError as exc:emit({'code':exc.code,'message':str(exc),'effect':exc.effect})
+    except Exception:emit({'code':'INPUT_UNAVAILABLE','message':'Native pointer helper failed.','effect':'none'})
+    finally:
+        if native:native.close()
+
+
+if __name__=='__main__':main()

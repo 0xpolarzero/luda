@@ -1,0 +1,47 @@
+import json
+import unittest
+from unittest.mock import patch
+from test_keyboard import FakeKeyboard
+from luda._pointer_native import plan_pointer
+from luda._keyboard_guard import cleanup_request, native_module
+from luda.common import DesktopError
+from luda.pointer_input import click_button
+
+
+class PointerContract(unittest.TestCase):
+    def test_invalid_arguments_never_start_helper(self):
+        cases=[(True,1,None),(1,1,None),('8',1,None),('1',True,None),('1',0,None),('1',21,None),('1',1,True),('1',1,0)]
+        for button,count,target in cases:
+            with self.subTest(case=(button,count,target)),patch('luda.pointer_input.run') as run,self.assertRaises(DesktopError):
+                click_button(button,count,target)
+            run.assert_not_called()
+    def test_held_keys_and_buttons_refuse(self):
+        for attribute in ('keys','pointer'):
+            native=FakeKeyboard();setattr(native,attribute,[8])
+            with self.assertRaises(DesktopError) as error:plan_pointer(native,{'button':'4','count':2,'target':99})
+            self.assertEqual(error.exception.code,'INPUT_HELD')
+    def test_focus_change_refuses(self):
+        with self.assertRaises(DesktopError) as error:plan_pointer(FakeKeyboard(),{'button':'1','count':1,'target':100})
+        self.assertEqual(error.exception.code,'FOCUS_CHANGED')
+    def test_latched_state_refuses_but_locks_preserved(self):
+        native=FakeKeyboard();native.current.locked_mods=18
+        plan=plan_pointer(native,{'button':'7','count':20,'target':99})
+        self.assertEqual(plan['server_generation'],'a'*32)
+        self.assertEqual(native.current.locked_mods,18)
+        native.current.latched_mods=1
+        with self.assertRaises(DesktopError) as error:plan_pointer(native,plan)
+        self.assertEqual(error.exception.code,'UNSUPPORTED_INPUT_STATE')
+    def test_refusal_never_dispatches(self):
+        with patch('luda.pointer_input.run',return_value=b'{"code":"INPUT_HELD","message":"held"}'),patch('luda.pointer_input._dispatch_plan') as dispatch,self.assertRaises(DesktopError):click_button('1',1,99)
+        dispatch.assert_not_called()
+    def test_guardian_and_recovery_keep_button_ownership(self):
+        plan={'kind':'pointer','button':'5','count':3,'target':99,'server_generation':'a'*32}
+        client={'xid':123,'generation':'b'*32}
+        self.assertEqual(native_module(plan),'luda._pointer_native')
+        self.assertEqual(cleanup_request(plan,client),{'kind':'pointer','button':'5','client':client,'server_generation':'a'*32})
+        with patch('luda.pointer_input.run',return_value=json.dumps(plan).encode()),patch('luda.pointer_input._dispatch_plan',return_value={'effect':'dispatched'}) as dispatch:
+            self.assertEqual(click_button('5',3,99),{'effect':'dispatched'})
+        dispatch.assert_called_once_with(plan)
+
+
+if __name__=='__main__':unittest.main()

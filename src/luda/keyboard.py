@@ -28,7 +28,7 @@ def keyboard_recovery_checkpoint():
     with _recovery_lock:
         pending=bool(_pending_recoveries)
     if pending:
-        raise DesktopError('BUSY','A previous keyboard operation has unresolved cleanup; no new input sent.',details={'keyboard_recovery_pending':True})
+        raise DesktopError('BUSY','A previous input operation has unresolved cleanup; no new input sent.',details={'keyboard_recovery_pending':True})
 
 
 def _completion_proven(result):
@@ -116,7 +116,7 @@ def recover_keyboard_input():
                     _start_watcher(token,record);row['reason']='guardian_still_recovering'
                 elif record.get('cleanup_request') and record['cleanup_request'].get('server_generation')==plan['server_generation']:
                     effect='uncertain'
-                    proof=json.loads(run([sys.executable,'-m','luda._keyboard_native','release'],
+                    proof=json.loads(run([sys.executable,'-m','luda._pointer_native' if record['cleanup_request'].get('kind')=='pointer' else 'luda._keyboard_native','release'],
                         data=json.dumps(record['cleanup_request']).encode()+b'\n',timeout=2,max_output_bytes=4096,effect='uncertain'))
                     if proof.get('released') or (proof.get('session_changed') and proof.get('cleanup_skipped')):
                         resolved+=int(_resolve_recovery(token));row.update(resolved=True,proof='original_server_replaced' if proof.get('session_changed') else 'owned_keys_released',cleanup_skipped=bool(proof.get('cleanup_skipped')))
@@ -168,6 +168,11 @@ def send_chord(chord,target):
     request={'chord':chord,'target':target}
     plan=json.loads(run([sys.executable,'-m','luda._keyboard_native','plan'],data=json.dumps(request).encode()+b'\n',timeout=2,max_output_bytes=4096))
     if plan.get('code'):raise DesktopError(plan['code'],plan['message'])
+    return _dispatch_plan(plan)
+
+
+def _dispatch_plan(plan):
+    keyboard_recovery_checkpoint()
     checkpoint()
     guard=subprocess.Popen([sys.executable,'-m','luda._keyboard_guard'],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,start_new_session=True,env=subprocess_environment())
     failure=None;output=b'';result=None;retained=False;proven=False
@@ -181,12 +186,12 @@ def send_chord(chord,target):
                 except DesktopError as exc:
                     failure=exc;break
                 if elapsed_time()>=deadline:
-                    failure=DesktopError('TIMEOUT','Keyboard companion deadline exceeded.');break
+                    failure=DesktopError('TIMEOUT','Input companion deadline exceeded.');break
                 if not ready.select(.025):continue
                 chunk=os.read(guard.stdout.fileno(),4096)
                 if not chunk:break
                 output+=chunk
-                if len(output)>8192:raise DesktopError('KEYBOARD_UNAVAILABLE','Keyboard companion response exceeded its bound.',effect='uncertain')
+                if len(output)>8192:raise DesktopError('KEYBOARD_UNAVAILABLE','Input companion response exceeded its bound.',effect='uncertain')
         guard.stdin.close()
         # Closing the controller pipe asks the companion to stop its child
         # before cleanup. Never kill the companion during this cleanup period.
@@ -196,12 +201,12 @@ def send_chord(chord,target):
             while True:
                 remaining=cleanup_deadline-elapsed_time()
                 if remaining<=0:
-                    raise DesktopError('KEYBOARD_CLEANUP_PENDING','Keyboard companion is still cleaning up; inspect state before more input.',effect='uncertain')
+                    raise DesktopError('KEYBOARD_CLEANUP_PENDING','Input companion is still cleaning up; inspect state before more input.',effect='uncertain')
                 if not cleanup.select(min(.05,remaining)):continue
                 chunk=os.read(guard.stdout.fileno(),4096)
                 if not chunk:break
                 output+=chunk
-                if len(output)>8192:raise DesktopError('KEYBOARD_UNAVAILABLE','Keyboard companion response exceeded its bound.',effect='uncertain')
+                if len(output)>8192:raise DesktopError('KEYBOARD_UNAVAILABLE','Input companion response exceeded its bound.',effect='uncertain')
         guard.wait(timeout=max(.01,cleanup_deadline-elapsed_time()))
         if output:result=json.loads(output)
         proven=_completion_proven(result)
@@ -210,10 +215,10 @@ def send_chord(chord,target):
             if result and result.get('armed'):failure.effect='uncertain'
             if result:failure.details.update({k:result[k] for k in ('cleanup_verified','session_changed','cleanup_skipped') if k in result})
             raise failure
-        if not result:raise DesktopError('KEYBOARD_UNAVAILABLE','Keyboard companion returned no result.',effect='uncertain')
+        if not result:raise DesktopError('KEYBOARD_UNAVAILABLE','Input companion returned no result.',effect='uncertain')
         if result.get('code'):
             raise DesktopError(result['code'],result['message'],effect=result.get('effect','uncertain'),details={k:result[k] for k in ('cleanup_verified','session_changed','cleanup_skipped') if k in result})
-        return {'effect':'dispatched','group_unchanged':result['group_unchanged'],'locks_unchanged':result['locks_unchanged'],'verification':'Key delivery does not prove application outcome.'}
+        return {'effect':'dispatched',**{key:result[key] for key in ('group_unchanged','locks_unchanged') if key in result},'verification':result.get('verification','Key delivery does not prove application outcome.')}
     except BaseException as exc:
         if not proven:
             mark_effect()
