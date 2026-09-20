@@ -1,0 +1,83 @@
+diff --git a/app/SiloUI/src-tauri/guest/agent-tools.py b/app/SiloUI/src-tauri/guest/agent-tools.py
+--- a/app/SiloUI/src-tauri/guest/agent-tools.py
++++ b/app/SiloUI/src-tauri/guest/agent-tools.py
+@@ -4,6 +4,7 @@
+ import contextlib
+ import fcntl
+ import hashlib
++import gzip
+ import importlib.util
+ import json
+ import os
+@@ -19,6 +20,7 @@
+ import urllib.request
+ import urllib.parse
+ import uuid
++import zlib
+ 
+ STATE = Path('/var/lib/silo-agent-tools')
+ MANIFEST = Path('/usr/local/lib/silo-agent-tools/release.json')
+@@ -26,6 +28,7 @@
+ USER = 'silo-desktop'
+ MAX_ARCHIVE = 32 * 1024 * 1024
+ MAX_EXPANDED = 128 * 1024 * 1024
++MAX_TAR_STREAM = 128 * 1024 * 1024
+ STATES = {'unconfigured', 'pending', 'ready', 'attention', 'unconfirmed', 'update_available'}
+ REASONS = {'desktop_status_unavailable', 'source_preparation_failed', 'bootstrap_failed',
+            'bootstrap_unconfirmed', 'metadata_unavailable', 'operation_busy', 'browser_candidate_unavailable',
+@@ -172,13 +175,53 @@
+         raise OnboardingError('source_checksum_mismatch')
+ 
+ 
++class BoundedTarFile:
++    """Clamp parser reads to validated bytes, regardless of declared member size."""
++    def __init__(self, file, size):
++        self.file, self.size = file, size
++
++    def tell(self):
++        return self.file.tell()
++
++    def read(self, size=-1):
++        remaining = self.size - self.tell()
++        return self.file.read(remaining if size < 0 else min(size, remaining))
++
++    def seek(self, offset, whence=0):
++        position = offset + (self.tell() if whence == 1 else self.size if whence == 2 else 0)
++        if whence not in (0, 1, 2) or not 0 <= position <= self.size:
++            raise OnboardingError('archive_invalid')
++        return self.file.seek(position)
++
++
++@contextlib.contextmanager
++def bounded_tar_stream(archive, temporary_directory):
++    """Validate the entire expanded stream before tarfile can parse metadata."""
++    try:
++        with tempfile.TemporaryFile(dir=temporary_directory) as expanded:
++            with gzip.open(archive, 'rb') as compressed:
++                total = 0
++                while True:
++                    chunk = compressed.read(min(65536, MAX_TAR_STREAM - total + 1))
++                    if not chunk:
++                        break
++                    total += len(chunk)
++                    if total > MAX_TAR_STREAM:
++                        raise OnboardingError('tar_stream_limit')
++                    expanded.write(chunk)
++            expanded.seek(0)
++            yield BoundedTarFile(expanded, total)
++    except (OSError, EOFError, OverflowError, ValueError, RecursionError, zlib.error, tarfile.TarError):
++        raise OnboardingError('archive_invalid') from None
++
++
+ def extract(archive, destination, commit):
+     """Accept only ordinary files/directories inside the declared archive root."""
+     root_name = 'luda-' + commit
+     seen = set()
+     size = 0
+-    destination.mkdir(mode=0o700)
+-    with tarfile.open(archive, 'r:gz') as source:
++    with bounded_tar_stream(archive, destination.parent) as expanded, tarfile.open(fileobj=expanded, mode='r:') as source:
++        destination.mkdir(mode=0o700)
+         for member in source:
+             path = PurePosixPath(member.name)
+             if (len(seen) >= 10000 or member.name in seen or path.is_absolute()

@@ -42,7 +42,7 @@ preserves existing output directories. It does not publish the asset or enable
 this integration's manifest.
 
 URLs cannot contain credentials, query strings or fragments. Redirects must
-remain HTTPS and satisfy the same rule. Download limits are 32 MiB and 120 wall-clock seconds enforced by a Linux process alarm covering headers and body; ordinary-file payloads are limited to 128 MiB across 10,000 yielded file/directory entries. Tar PAX/GNU metadata is parsed by Python before those counters and is not bounded by that payload limit.
+remain HTTPS and satisfy the same rule. Download limits are 32 MiB and 120 wall-clock seconds enforced by a Linux process alarm covering headers and body; the entire decompressed tar stream (including PAX/GNU metadata, headers, padding and concatenated gzip members) is limited to 128 MiB before tar parsing. Expansion uses bounded reads into an anonymous disk spool in the owned staging parent; it is closed on success or failure. Parser reads/seeks are constrained to that validated stream, including malformed oversized declared metadata lengths. The separate 128 MiB ordinary-file payload and 10,000 yielded file/directory entry limits remain; header overhead means the effective payload allowance is smaller than 128 MiB. Invalid gzip CRC/footer, malformed tar and spool disk failures produce a fixed source-preparation error. These are byte/entry bounds, not a guarantee of atomic metadata-parser CPU time.
 Only ordinary files/directories under `luda-COMMIT/` are accepted, with no links,
 traversal or duplicate paths. These are safety bounds, not a source trust sandbox.
 
@@ -542,3 +542,5 @@ Patch 0023 aligns the bundled skill with inclusive observed list/table ranges, e
 Patch 0024 aligns the bundled skill with explicitly declared rich hard breaks, structural boundary readback, and the distinction between paragraph and Shift+Enter policies.
 
 Patch 0025 aligns the skill with direct desktop-tool startup and application-specific formatting guidance derived from the retained first-attempt hard-break evaluation. It adds no formatting operation.
+
+Patch 0026 bounds total decompressed archive bytes before parsing metadata and retains the prior path, payload and entry checks. Nine focused real-archive tests cover PAX/GNU compatibility, expanded metadata, huge declared sizes, concatenated gzip, padding, exact limits, malformed/CRC/truncated streams and recursive metadata chains, and safe disk failure.
