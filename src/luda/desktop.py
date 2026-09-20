@@ -102,15 +102,17 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
             self.local_lock.release()
 
     @contextmanager
-    def input_scope(self, window=None):
+    def input_scope(self, window=None, *, force_shared=False):
         """Choose compatibility before dispatch; nested actions keep that route."""
         target = window.get('window_id') if window else None
         if target is not None and getattr(self, '_input_window', None) == target:
+            if force_shared and self._input_route != 'shared':
+                raise DesktopError('INPUT_STATE_CHANGED','A composed action cannot switch input devices.')
             yield self._input_route
             return
         from .input_routing import prefers_private_input
         cached = getattr(self, '_private_windows', set())
-        private = window is None or target in cached or prefers_private_input(window)
+        private = not force_shared and (window is None or target in cached or prefers_private_input(window))
         environment = dict(self.environment)
         environment.pop('LUDA_PRIVATE_INPUT', None)
         environment['LUDA_INPUT_ROUTE'] = 'shared'
@@ -151,8 +153,12 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
             raise DesktopError(state.get('reason','KEYBOARD_UNAVAILABLE'), 'Foreground input is unavailable.')
         if state.get('input_held') is True:
             raise DesktopError('INPUT_HELD', 'Release held keys or mouse buttons before foreground input.')
-        if window.get('active'):
+        try:
+            self.check_input_focus(window)
             return {'effect':'none', 'window_id':window_id}
+        except DesktopError as exc:
+            if exc.code != 'FOCUS_CHANGED':
+                raise
         run(['xdotool','windowactivate',str(window['xid'])],effect='uncertain')
         deadline = elapsed_time()+1.5
         while elapsed_time()<deadline:
@@ -161,9 +167,14 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
             except DesktopError as exc:
                 exc.effect = 'uncertain'
                 raise
-            if current['active']:
+            try:
+                self.check_input_focus(current)
                 return {'effect':'verified','window_id':window_id,
-                        'verification':'Foreground target identity and active window match.'}
+                        'verification':'Foreground target identity and keyboard focus match.'}
+            except DesktopError as exc:
+                if exc.code != 'FOCUS_CHANGED':
+                    exc.effect = 'uncertain'
+                    raise
             time.sleep(.04)
         raise DesktopError('ACTIVATION_FAILED','Window did not become active.',effect='uncertain')
 

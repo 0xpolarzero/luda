@@ -71,7 +71,12 @@ class InteractionMixin:
             else:
                 self._interaction_point(target, snapshot_id, x, y, False)
         snap = self.snapshots[snapshot_id]
-        with self.input_scope(window) as route:
+        # A cross-application drag needs a route supported by BOTH endpoints.
+        from .input_routing import prefers_private_input
+        others = {target for target, _, _ in points if target != window_id}
+        shared = any(not prefers_private_input(self.target_window(target, False)) for target in others)
+        scope = self.input_scope(window, force_shared=True) if shared else self.input_scope(window)
+        with scope as route:
             ready = check_pointer_ready()
             if ready['server_generation'] != snap.get('topology', {}).get('server_generation'):
                 raise DesktopError('STALE_OBSERVATION', 'X server changed after observation; observe again.')
@@ -79,7 +84,7 @@ class InteractionMixin:
             focused = False
             try:
                 if route == 'shared':
-                    self._activate_shared(window_id)
+                    focused = self._activate_shared(window_id)['effect'] != 'none'
                 self.focus_input(window)
                 focused = True
                 current = self.list_windows()

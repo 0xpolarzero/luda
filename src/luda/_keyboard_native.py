@@ -151,11 +151,6 @@ class Keyboard:
 
     def require_focus(self,target):
         self.private.validate()
-        if getattr(self.private,'route','private')=='shared':
-            active=self.x._property(self.x.root,'_NET_ACTIVE_WINDOW',1)
-            if not active or active[0]!=33 or active[1]!=32 or active[2]!=[target] or active[3]:
-                raise DesktopError('FOCUS_CHANGED','Target lost foreground focus; no input sent.')
-            return
         window=self.private.focus_window()
         # Toolkits may focus a child input window. Keep that focus rather than
         # forcing the top-level between each key of an IME or popup interaction.
@@ -169,7 +164,7 @@ class Keyboard:
             if children:x.XFree(children)
             if not okay or parent.value==window:break
             window=parent.value
-        raise DesktopError('FOCUS_CHANGED','The agent keyboard no longer targets this window; no input sent.')
+        raise DesktopError('FOCUS_CHANGED','The input keyboard no longer targets this window; no input sent.')
 
     @contextmanager
     def guard(self):

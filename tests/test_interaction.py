@@ -7,7 +7,7 @@ from luda.common import DesktopError
 class Dummy(InteractionMixin):
     def __init__(self):
         self.snapshots={'s':{'topology':{'server_generation':'generation'},'signature':[],'popups':[]}}
-    def input_scope(self):return nullcontext()
+    def input_scope(self, *args, **kwargs):return nullcontext()
     def focus_input(self,window):pass
     def signature(self,windows):return []
     def observe_popups(self,windows):return []

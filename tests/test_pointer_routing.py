@@ -1,3 +1,4 @@
+from contextlib import nullcontext
 import unittest
 from unittest.mock import Mock, patch, call
 from luda.desktop import Desktop
@@ -8,6 +9,7 @@ from luda.common import DesktopError
 class PointerRouting(unittest.TestCase):
     def prepare(self, desktop, generation='generation'):
         desktop.private_input=Mock(environment=Mock(return_value={}))
+        desktop.input_scope=Mock(side_effect=lambda *args,**kwargs:nullcontext('private'))
         desktop.focus_input=Mock()
         desktop._interaction_point=Mock(return_value=(12,34))
         desktop.list_windows=Mock(return_value=[])

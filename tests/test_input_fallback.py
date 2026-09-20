@@ -59,6 +59,14 @@ class InputFallback(unittest.TestCase):
             select.assert_called_once()
         self.assertIsNone(desktop._input_route)
 
+    def test_mixed_target_action_can_choose_shared_before_start(self):
+        desktop = self.driver()
+        with patch('luda.input_routing.prefers_private_input', return_value=True) as select:
+            with desktop.input_scope({'window_id':'window'}, force_shared=True) as route:
+                self.assertEqual(route, 'shared')
+            select.assert_not_called()
+        desktop.private_input.environment.assert_not_called()
+
     def test_dispatched_or_uncertain_failure_is_never_replayed(self):
         desktop = self.driver()
         with patch('luda.input_routing.prefers_private_input', return_value=True), \
@@ -81,6 +89,7 @@ class InputFallback(unittest.TestCase):
     def test_shared_activation_revalidates_window_identity(self):
         desktop = self.driver()
         desktop.target_window = Mock(side_effect=[{'xid':42,'active':False},DesktopError('STALE_TARGET','replaced')])
+        desktop.check_input_focus = Mock(side_effect=DesktopError('FOCUS_CHANGED','other window'))
         with patch('luda.desktop.keyboard_capabilities', return_value={'available':True}), \
              patch('luda.desktop.run'), self.assertRaises(DesktopError) as error:
             desktop._activate_shared('window')
