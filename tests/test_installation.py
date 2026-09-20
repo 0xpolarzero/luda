@@ -137,6 +137,10 @@ class Installation(unittest.TestCase):
         with self.assertRaises(installer.InstallError):
             installer.config(self.prefix, output, 'silo-desktop')
         self.assertEqual((output / '.agents/skills/luda/SKILL.md').read_text(), 'fixture skill')
+        instructions=(output/'README.txt').read_text()
+        self.assertIn('LOCAL PLACEMENT',instructions)
+        self.assertIn('Codex running inside the Linux guest',instructions)
+        self.assertNotIn('REMOTE PLACEMENT:',instructions)
 
     def test_remote_unattended_config_is_explicit_and_parseable(self):
         installer.install(self.prefix,self.source,self.runner)
@@ -146,6 +150,11 @@ class Installation(unittest.TestCase):
         self.assertEqual(server['default_tools_approval_mode'],'approve')
         self.assertEqual(server['experimental_environment'],'remote')
         self.assertTrue(server['required']);self.assertEqual(result['placement'],'remote')
+        instructions=(output/'README.txt').read_text()
+        self.assertIn('REMOTE PLACEMENT',instructions)
+        self.assertIn('host Codex profile/project configuration',instructions)
+        self.assertIn('does not create an SSH connection',instructions)
+        self.assertNotIn('LOCAL PLACEMENT:',instructions)
         with self.assertRaises(installer.InstallError):installer.config(self.prefix,self.root/'bad','silo-desktop',tool_approval='unknown')
         self.assertFalse((self.root/'bad').exists())
 

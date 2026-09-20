@@ -8,9 +8,9 @@ Linux guest release at `/opt/luda/current`, joining the existing
 another VM, replace Kasm/XFCE, open a public listener or require an API key.
 The Luda runtime and its desktop dependencies must already be installed.
 
-## Build and install on the guest
+## Build a bundle and register it in the intended Codex profile
 
-Build a fresh, self-contained local marketplace from this checkout:
+For Codex CLI running **inside the guest**, build and register a fresh, self-contained local marketplace from this checkout:
 
 ```sh
 python3 scripts/build_plugin.py \
@@ -20,6 +20,8 @@ python3 scripts/build_plugin.py \
 codex plugin marketplace add /tmp/luda-marketplace
 codex plugin add luda@luda-local
 ```
+
+Run the two `codex plugin` commands as the account whose Codex profile should own the plugin, without inheriting `sudo` from system provisioning. Guest-side plugin registration does not install into a Mac Codex profile.
 
 Use a persistent marketplace path for normal installation; `/tmp` above is
 for a disposable evaluation. The builder refuses an existing output and
@@ -32,7 +34,7 @@ installation. Start a new conversation after installing or reinstalling.
 Custom installation paths are literal executable arguments, including paths
 with spaces. The launcher always invokes the guest's installed
 `current/.venv/bin/luda-session --user <account> -- current/.venv/bin/luda`.
-The plugin cache contains instructions and configuration; runtime updates
+The builder copies the skill from this checkout, so use the same source revision as the installed runtime. Rebuilding/upgrading the runtime does not automatically refresh an already cached plugin skill. The plugin cache contains instructions and configuration; runtime updates
 remain managed by Luda's versioned installer. Regenerate the bundle if the
 prefix or desktop account changes, then remove/reinstall the plugin so its
 cached configuration is refreshed.
@@ -58,6 +60,8 @@ Official Codex MCP configuration documents
 executed through an available remote environment. It also distinguishes
 local versus remote environment-variable sources. See the
 [official MCP documentation](https://developers.openai.com/codex/mcp).
+
+For the host workflow, build with `--remote`, make the resulting marketplace available at a persistent path on the host, and register it in the intended host Codex profile. Do not assume the guest `/tmp` path or its plugin registry is visible on the Mac. This describes configuration placement, not a tested Mac installation flow.
 
 The builder's `--remote` flag writes `experimental_environment: "remote"`
 into the plugin's server launch configuration. This is an experimental

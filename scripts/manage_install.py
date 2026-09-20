@@ -307,7 +307,15 @@ def config(prefix, output, user, tool_approval="auto", placement="local"):
         tomllib.loads(toml)
         (output / 'config.toml.fragment').write_text(toml)
         shutil.copytree(prefix / 'current/skills/luda', output / '.agents/skills/luda')
-        (output / 'README.txt').write_text('Review config.toml.fragment and merge its [mcp_servers.luda] table into the Codex configuration used by the guest connection. Copy .agents/skills/luda into the guest workspace .agents/skills or the agent account ~/.agents/skills. Restart/reconnect Codex and verify desktop_doctor, desktop_observe and the Luda skill. Do not place guest executable paths into a host-local MCP process configuration. No existing configuration has been modified.\n')
+        placement_note = (
+            'REMOTE PLACEMENT: Merge the fragment into the host Codex profile/project configuration that owns the selected remote executor. The guest paths must execute in that guest; this bundle does not create an SSH connection. Guest-only registration does not configure a Mac profile. Verify remote skill discovery separately; a copied guest skill alone does not prove host discovery.\n'
+            if placement == 'remote' else
+            'LOCAL PLACEMENT: Merge the fragment into the configuration of Codex running inside the Linux guest. Do not use this local launcher in a Mac profile; generate --placement remote for an available remote executor instead.\n'
+        )
+        (output / 'README.txt').write_text(
+            placement_note +
+            'Review config.toml.fragment before merging its [mcp_servers.luda] table; preserve other entries. Copy .agents/skills/luda into the guest workspace .agents/skills or the guest agent account ~/.agents/skills. Restart/reconnect Codex and verify desktop_doctor, desktop_observe and the Luda skill in a fresh task. No existing configuration has been modified.\n'
+        )
     except BaseException:
         shutil.rmtree(output)
         raise

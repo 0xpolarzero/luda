@@ -10,10 +10,12 @@ With an existing Ubuntu 24.04 XFCE/X11 desktop:
 
 ```sh
 sudo bash scripts/install.sh /opt/luda
-python3 scripts/manage_install.py doctor --prefix /opt/luda --user silo-desktop
-python3 scripts/manage_install.py config --prefix /opt/luda \
-  --user silo-desktop --output /absolute/new/luda-config
+sudo python3 scripts/manage_install.py doctor --prefix /opt/luda --user silo-desktop
+sudo python3 scripts/manage_install.py config --prefix /opt/luda \
+  --user silo-desktop --placement remote --output /absolute/new/luda-config
 ```
+
+Run these commands inside the guest checkout. `sudo` is needed for management of this root-owned prefix; the graphical launcher drops to `silo-desktop`. The example generates an experimental remote-executor fragment for a host Codex SSH profile. If Codex itself runs inside the guest, use `--placement local` instead. Generation alone does not register the server or skill; follow the placement instructions in the bundle.
 
 The installer creates versioned releases and switches `current` atomically. The configuration command generates a guest-side MCP fragment and discoverable skill without overwriting existing agent settings. See [installation, registration, rollback and uninstall](docs/INSTALLATION.md). An [installable Codex plugin](docs/CODEX-PLUGIN.md) packages the MCP registration and skill together. Fresh Mac Codex SSH onboarding still needs end-to-end qualification; guest installation alone does not prove host-side discovery.
 
