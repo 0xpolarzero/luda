@@ -2,7 +2,7 @@
 
 This audit reviews the current source and test inventory, not just test totals. The catalog has 345 cases: 295 P0, 30 P1 and 20 P2. Every case remains release-unqualified until its acceptance criterion has sufficient evidence. A unit mapping is not production qualification.
 
-`test-map.json` now maps 105 requirements to 133 distinct existing unit methods. Some requirements share tests because one narrow assertion informs several criteria. The map explicitly states those limits. Live suites additionally exercise application effects, but their results must be associated with the exact source/environment that ran them; historical artifact files must not be imported as current passes.
+`test-map.json` now maps 112 requirements to 158 distinct existing unit methods. Some requirements share tests because one narrow assertion informs several criteria. The map explicitly states those limits. Live suites additionally exercise application effects, but their results must be associated with the exact source/environment that ran them; historical artifact files must not be imported as current passes.
 
 ## Confirmed runtime gaps at the audited snapshot
 
@@ -31,6 +31,17 @@ The rows above describe the audited snapshot. Subsequent implementation added bo
 Authoritative Chromium document selections fix the astral-offset discrepancy (`34b5a59`); the rich-text representation gap remains explicit (`4780dce`). Subsequent work also added filtered/paginated batched window discovery, validated live session reconnect, cooperative FIFO admission, installable Codex plugin packaging, strict pre-coercion MCP validation, pinned build dependencies, install integrity checks, and real storage-fault handling. Native file-manager/editor/terminal suites now run in hosted AMD64 CI. Independent fresh-agent form, save, screenshot, recovery and adversarial-document tasks have passed; see their detailed records.
 
 The historical gaps below must be read alongside [current validation](VALIDATION.md). Clipboard interference, native file decisions and session replacement now have targeted real evidence, while broader matrices remain incomplete. IME probes confirmed a generic-backend limitation rather than closing it. Neither these implementations nor their narrow regression tests automatically qualify the associated catalog cases.
+
+Further work added native XKB planning and owned keyboard/click/drag injectors,
+explicit MCP cleanup recovery, atomic injector identity/disconnect, and RandR
+topology invalidation. Real controller death, stopped workers, same-address server
+replacement and logical-monitor changes have independent live oracles. Firefox
+now has provider-specific Unicode normalization and exact selection insertion;
+Electron's older Chromium selection limitation remains refused. Changed-length
+provider reads can no longer verify an old bounded prefix as the complete value.
+See [keyboard](KEYBOARD.md), [pointer](POINTER-INPUT.md),
+[recovery](MCP-INPUT-RECOVERY-QUALIFICATION.md), [topology](DISPLAY-TOPOLOGY.md),
+[Firefox](FIREFOX-QUALIFICATION.md) and [provider review](PROVIDER-TEXT-REVIEW.md).
 
 ## Provider discrepancies found by live tests
 

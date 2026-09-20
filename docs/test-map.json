@@ -144,9 +144,11 @@
       "implementation": "partial",
       "tests": [
         "test_process_cleanup.ProcessCleanup.test_timeout_kills_descendant_before_delayed_effect",
-        "test_process_cleanup.ProcessCleanup.test_repeated_timeouts_do_not_leak_pipe_descriptors"
+        "test_process_cleanup.ProcessCleanup.test_repeated_timeouts_do_not_leak_pipe_descriptors",
+        "test_injector_disconnect.InjectorDisconnect.test_verified_disconnect_holds_grab_until_kill_processed",
+        "test_injector_disconnect.InjectorDisconnect.test_reused_resource_never_killed_and_grab_released"
       ],
-      "limits": "Real helper process timeout cleanup; abrupt death of the top-level server is a separate gap."
+      "limits": "Atomic verified injector disconnect, bounded helper cleanup, and recovery ownership. Actual XID reuse/server-grab probes are separate; not every OS/resource failure is qualified."
     },
     "LIFE-10": {
       "implementation": "partial",
@@ -165,9 +167,12 @@
     "MCP-09": {
       "implementation": "partial",
       "tests": [
-        "test_mcp_cancellation.MCPCancellation.test_cancelled_worker_stops_and_server_recovers"
+        "test_mcp_cancellation.MCPCancellation.test_cancelled_worker_stops_and_server_recovers",
+        "test_input_recovery_tool.RecoveryTool.test_recovery_works_paused_without_clearing_unrelated_quarantine",
+        "test_input_recovery_tool.RecoveryTool.test_recovery_does_not_race_running_operation",
+        "test_lifecycle_races.QuarantineOwnership.test_cancelled_rejected_request_cannot_clear_another_recovery"
       ],
-      "limits": "Async worker cancellation unit test; real protocol cancellation additionally lives in live_cancellation.py and is not imported as a unit pass."
+      "limits": "Async cancellation and independent quarantine owners; recovery does not replay/resume. Actual MCP fault/replacement suite has separate 15-check evidence; client timeout need not send cancellation."
     },
     "WAIT-09": {
       "implementation": "partial",
@@ -193,9 +198,10 @@
     "OBS-04": {
       "implementation": "partial",
       "tests": [
-        "test_interaction.PointTests.test_expired_missing_and_changed_layout_rejected"
+        "test_interaction.PointTests.test_expired_missing_and_changed_layout_rejected",
+        "test_topology.TopologyTests.test_layout_change_during_capture_returns_no_snapshot"
       ],
-      "limits": "No-input unit paths for changed/missing observations; visual effects have separate live evidence."
+      "limits": "Window and topology changes invalidate capture. Fake mid-capture topology fault; separate private live geometry oracle. Not an atomic screenshot of every application pixel."
     },
     "OBS-07": {
       "implementation": "partial",
@@ -214,9 +220,11 @@
     "GEO-10": {
       "implementation": "partial",
       "tests": [
-        "test_interaction.PointTests.test_changed_resolution_rejected"
+        "test_interaction.PointTests.test_changed_resolution_rejected",
+        "test_topology.TopologyTests.test_same_size_layout_change_refuses_client_pointer",
+        "test_topology.TopologyTests.test_same_size_layout_change_refuses_popup_pointer"
       ],
-      "limits": "Changed root dimensions simulated before input; real hotplug and mid-delivery changes unqualified."
+      "limits": "Same-size topology changes reject client/popup targeting. Real logical-monitor addition/removal passes separately; hardware hotplug, mixed-DPI and mid-delivery races remain unqualified."
     },
     "FAULT-07": {
       "implementation": "partial",
@@ -469,9 +477,11 @@
       "implementation": "partial",
       "tests": [
         "test_semantic.Semantics.test_false_successful_insert_not_verified",
-        "test_semantic.Semantics.test_false_successful_delete_never_inserts"
+        "test_semantic.Semantics.test_false_successful_delete_never_inserts",
+        "test_provider_snapshots.Snapshots.test_set_cannot_verify_a_truncated_prefix_after_concurrent_growth",
+        "test_provider_snapshots.Snapshots.test_growth_error_reports_whether_mutation_started_without_provider_text"
       ],
-      "limits": "False provider acknowledgments never verify; browser transformed/rejected-paste behavior tested separately live."
+      "limits": "Rejected false provider acknowledgments, transformations and changed-length readback. Same-length concurrent changes and provider consistency cannot be universally guaranteed."
     },
     "EDIT-09": {
       "implementation": "partial",
@@ -479,9 +489,13 @@
         "test_semantic.Utf16Semantics.test_insert_astral_into_ascii_normalizes_new_caret",
         "test_semantic.Utf16Semantics.test_select_after_astral_and_replace",
         "test_semantic.Utf16Semantics.test_read_normalizes_count_and_caret",
-        "test_semantic.Utf16Semantics.test_split_surrogate_provider_offset_refused"
+        "test_semantic.Utf16Semantics.test_split_surrogate_provider_offset_refused",
+        "test_gecko_text.GeckoText.test_padding_and_genuine_feff_roundtrip",
+        "test_gecko_text.GeckoText.test_offsets_preserve_genuine_feff",
+        "test_gecko_text.GeckoText.test_selection_synchronizes_editor_caret_before_range",
+        "test_provider_snapshots.Snapshots.test_qt_count_must_match_native_utf16_units"
       ],
-      "limits": "Unit Qt UTF-16 normalization; does not erase the Chromium selection/hypertext discrepancies found live."
+      "limits": "Provider-specific code-point conversion for Qt/Gecko plus Chromium authoritative selection. Exact live Firefox cases pass except protected input; older Electron non-BMP selections and GTK4 provider limitations remain explicit."
     },
     "PTR-07": {
       "implementation": "partial",
@@ -819,6 +833,61 @@
         "test_agent_eval.AgentTrace.test_launching_additional_apps_and_web_search_refused"
       ],
       "limits": "These tests validate the evaluator, not the agent. One actual fresh-agent adversarial-application task passed separately; not broad prompt-injection resistance."
+    },
+    "KEY-03": {
+      "implementation": "partial",
+      "tests": [
+        "test_keyboard.KeyboardContract.test_case_planning_preserves_caps_lock",
+        "test_keyboard.KeyboardContract.test_current_group_must_contain_symbol"
+      ],
+      "limits": "Current-group named-symbol planning; native US/French/Russian probes documented separately. Arbitrary custom XKB actions and dead keys remain outside qualified behavior."
+    },
+    "KEY-04": {
+      "implementation": "partial",
+      "tests": [
+        "test_keyboard.KeyboardContract.test_current_group_must_contain_symbol"
+      ],
+      "limits": "Unavailable symbols refuse without changing layout. Actual French and Russian-group behavior has separate live evidence; not every keyboard layout."
+    },
+    "KEY-05": {
+      "implementation": "partial",
+      "tests": [
+        "test_keyboard.KeyboardContract.test_case_planning_preserves_caps_lock"
+      ],
+      "limits": "Unit Caps-Lock case/shortcut planning; real Caps/Num state preservation checked separately by live keyboard oracle."
+    },
+    "KEY-06": {
+      "implementation": "partial",
+      "tests": [
+        "test_keyboard.KeyboardContract.test_held_keys_and_extended_buttons_refused_before_plan",
+        "test_keyboard.KeyboardContract.test_latched_state_refused"
+      ],
+      "limits": "Preheld keys/buttons and latched state refuse. Human input can race after preflight; X11 cannot distinguish a human concurrently holding the same planned input."
+    },
+    "KEY-08": {
+      "implementation": "partial",
+      "tests": [
+        "test_keyboard.PendingKeyboardRecovery.test_unverified_cleanup_cannot_reopen_input_gate",
+        "test_input_generation.InputRecovery.test_failed_cleanup_remains_blocked",
+        "test_input_generation.InputRecovery.test_replacement_proof_never_releases_new_server_keys"
+      ],
+      "limits": "Unit ownership/recovery invariants. Actual stopped injector, controller death, guardian failure and same-display replacement have separate private live evidence; dead/unreachable server cleanup remains uncertain."
+    },
+    "FAULT-10": {
+      "implementation": "partial",
+      "tests": [
+        "test_input_guard.InputGuardTests.test_unverified_release_retains_guardian_before_return",
+        "test_input_guard.InputGuardTests.test_original_error_preserved_after_verified_cleanup",
+        "test_input_generation.InputRecovery.test_pointer_recovery_reports_button_proof"
+      ],
+      "limits": "Owned drag injector cleanup and pending ownership contracts. Actual killed-controller/stopped-injector and replacement-session tests are separate; abrupt whole-VM loss cannot return a final tool result."
+    },
+    "PTR-03": {
+      "implementation": "partial",
+      "tests": [
+        "test_pointer_routing.PointerRouting.test_held_input_refused_before_any_initial_movement"
+      ],
+      "limits": "Hover/initial movement refuses preheld input before movement. Human races after preflight remain possible; tooltip content/timing is application-specific."
     }
   }
 }
