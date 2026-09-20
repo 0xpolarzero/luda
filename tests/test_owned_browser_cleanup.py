@@ -38,19 +38,22 @@ class BrowserCleanupTests(unittest.TestCase):
     def test_stopped_guardian_resumes_and_proves_owned_cleanup(self):
         with tempfile.TemporaryDirectory() as root:
             root=Path(root);package=root/'luda';package.mkdir();(package/'__init__.py').touch()
-            (package/'_browser_worker.py').write_text("import os,time\nfrom pathlib import Path\nPath(os.environ['PROBE_PID']).write_text(str(os.getpid()))\ntime.sleep(60)\n")
+            (package/'_browser_worker.py').write_text("import os,time,tempfile\nfrom pathlib import Path\nt=Path(tempfile.mkdtemp()) / 'download'; t.write_text('synthetic')\nPath(os.environ['PROBE_TMP']).write_text(str(t))\nPath(os.environ['PROBE_PID']).write_text(str(os.getpid()))\ntime.sleep(60)\n")
             proof,write=os.pipe2(os.O_CLOEXEC|os.O_NONBLOCK)
             guard=Path(__file__).resolve().parents[1]/'src/luda/_browser_guard.py'
-            process=subprocess.Popen([sys.executable,str(guard),str(root),str(write)],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,pass_fds=(write,),env=dict(os.environ,PYTHONPATH=str(root),PROBE_PID=str(root/'pid')))
+            process=subprocess.Popen([sys.executable,str(guard),str(root),str(write)],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,pass_fds=(write,),env=dict(os.environ,PYTHONPATH=str(root),PROBE_PID=str(root/'pid'),PROBE_TMP=str(root/'temporary')))
             os.close(write);owner=OwnedBrowser(None);owner.process=process;owner.cleanup_proof=proof
             try:
                 end=time.monotonic()+3
                 while not (root/'pid').exists() and time.monotonic()<end:time.sleep(.01)
+                download=Path((root/'temporary').read_text());self.assertEqual(download.read_text(),'synthetic')
+                self.assertTrue(download.is_relative_to(next(root.glob('owned-browser-*'))))
                 worker=int((root/'pid').read_text());os.kill(process.pid,signal.SIGSTOP)
                 owner.close()
                 self.assertIsNone(owner.process)
                 self.assertFalse(Path('/proc',str(worker)).exists())
                 self.assertEqual(list(root.glob('owned-browser-*')),[])
+                self.assertFalse(download.exists())
             finally:
                 if process.poll() is None:os.kill(process.pid,signal.SIGCONT);process.terminate();process.wait(timeout=4)
                 for stream in (process.stdin,process.stdout):stream.close()

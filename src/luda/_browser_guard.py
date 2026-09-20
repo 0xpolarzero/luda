@@ -105,9 +105,15 @@ def main():
     signal.signal(signal.SIGTERM, stop)
     signal.signal(signal.SIGINT, stop)
     try:
+        # Playwright creates download/artifact directories outside user_data_dir.
+        # Put its whole temporary namespace inside the descriptor-owned root so
+        # abrupt worker death cannot leave those files behind in shared /tmp.
+        temporary = directory / '.luda-temporary'
+        temporary.mkdir(mode=0o700)
+        child_environment = dict(os.environ, TMPDIR=str(temporary), TMP=str(temporary), TEMP=str(temporary))
         child = subprocess.Popen([sys.executable, '-m', 'luda._browser_worker', str(directory)],
                                  stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                 stderr=subprocess.DEVNULL, start_new_session=True)
+                                 stderr=subprocess.DEVNULL, start_new_session=True, env=child_environment)
         selector = selectors.DefaultSelector()
         for fd in (sys.stdin.fileno(), sys.stdout.fileno(), child.stdin.fileno(), child.stdout.fileno()):
             os.set_blocking(fd, False)

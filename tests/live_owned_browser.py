@@ -20,6 +20,7 @@ HTML='''<!doctype html><meta charset="utf-8"><title>Luda owned browser contract<
 <label>Exact field<textarea id="text" aria-label="Exact field" style="width:650px;height:220px"></textarea></label>
 <label>Single field<input id="single" aria-label="Single field"></label>
 <input type="password" id="protected" aria-label="Protected field" value="synthetic-protected">
+<a href="/download" download>Download fixture</a>
 <button id="replace" onclick="let n=document.querySelector('#text');n.replaceWith(n.cloneNode(true));wire();save()">Replace field</button>
 <button onclick="location.reload()">Reload document</button>
 <button onclick="let f=document.createElement('iframe');f.srcdoc='frame fixture';document.body.append(f);save()">Add frame</button>
@@ -39,7 +40,10 @@ async def main(executable):
     class Handler(http.server.BaseHTTPRequestHandler):
         def log_message(self,*args):pass
         def do_GET(self):
-            self.send_response(200);self.send_header('Content-Type','text/html; charset=utf-8');self.end_headers();self.wfile.write(HTML.encode())
+            self.send_response(200)
+            if self.path=='/download':
+                self.send_header('Content-Disposition','attachment; filename=synthetic.txt');self.end_headers();self.wfile.write(b'luda-owned-download-sentinel');return
+            self.send_header('Content-Type','text/html; charset=utf-8');self.end_headers();self.wfile.write(HTML.encode())
         def do_POST(self):
             value=json.loads(self.rfile.read(int(self.headers['Content-Length'])))
             with lock:state.clear();state.update(value)
@@ -104,6 +108,15 @@ async def main(executable):
                     tree=await call('desktop_inspect',window_id=wid,name=name)
                     node=next(n for n in tree['nodes'] if n['name']==name and n['role']=='push button')
                     await call('desktop_invoke',element_id=node['element_id'],action='press')
+                links=await call('desktop_inspect',window_id=wid,name='Download fixture')
+                link=next(n for n in links['nodes'] if n['name']=='Download fixture' and n['role']=='link')
+                await call('desktop_invoke',element_id=link['element_id'],action=link['actions'][0])
+                deadline=time.monotonic()+2;downloads=[]
+                while time.monotonic()<deadline:
+                    downloads=[p for p in (profile/'.luda-temporary').rglob('*') if p.is_file() and p.stat().st_size==28 and p.read_bytes()==b'luda-owned-download-sentinel']
+                    if downloads:break
+                    await asyncio.sleep(.02)
+                record('download-owned-by-profile',len(downloads)==1,[str(p.relative_to(profile)) for p in downloads])
                 await button('Replace field');await asyncio.sleep(.1)
                 await error('desktop_type','STALE_TARGET',element_id=eid,text='must not appear')
                 eid=await field('Exact field');await call('desktop_focus_element',element_id=eid)
