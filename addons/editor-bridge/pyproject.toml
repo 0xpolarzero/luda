@@ -4,14 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "luda-editor-bridge"
-version = "0.1.0"
+version = "0.2.0"
 description = "Optional ProseMirror editing tools and skill for applications you control"
 readme = "README.md"
 requires-python = ">=3.12"
 license = "MIT"
 authors = [{name = "polarzero"}]
 keywords = ["mcp", "linux", "prosemirror", "agent-skills"]
-dependencies = ["luda[browser]==0.1.0"]
+dependencies = ["luda[browser]==0.2.0"]
 
 [project.urls]
 Homepage = "https://github.com/0xpolarzero/luda/tree/main/addons/editor-bridge"
