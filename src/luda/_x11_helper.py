@@ -106,6 +106,13 @@ class _NativeX11:
         finally:
             if data:x.XFree(data)
 
+    def selection_owner(self, selection):
+        x=self.lib
+        x.XInternAtom.argtypes=[C.c_void_p,C.c_char_p,C.c_int];x.XInternAtom.restype=C.c_ulong
+        x.XGetSelectionOwner.argtypes=[C.c_void_p,C.c_ulong];x.XGetSelectionOwner.restype=C.c_ulong
+        atom=x.XInternAtom(self.display,selection.encode('ascii'),True)
+        return (x.XGetSelectionOwner(self.display,atom) or None) if atom else None
+
     def window_tokens(self, windows):
         """Initialize per-resource generation metadata atomically across clients."""
         x=self.lib
@@ -203,9 +210,12 @@ def main():
         request = json.loads(sys.stdin.buffer.read(65536))
         method = request['method']
         argument = request.get('argument')
-        if method not in {'root','geometry','geometries','window_tokens','surface_at','root_surface','transient_for','children','popup_surfaces'}:
+        if method not in {'root','selection_owner','geometry','geometries','window_tokens','surface_at','root_surface','transient_for','children','popup_surfaces'}:
             raise DesktopError('INVALID_ARGUMENT','Unknown X11 metadata operation.')
-        if method in {'geometries','window_tokens'}:
+        if method=='selection_owner':
+            if argument not in {'CLIPBOARD','PRIMARY'}:
+                raise DesktopError('INVALID_ARGUMENT','Selection must be CLIPBOARD or PRIMARY.')
+        elif method in {'geometries','window_tokens'}:
             if not isinstance(argument,list) or len(argument)>512 or any(isinstance(v,bool) or not isinstance(v,int) or not 1 <= v <= 0xffffffff for v in argument):
                 raise DesktopError('INVALID_ARGUMENT','Invalid X11 metadata batch.')
         elif method == 'surface_at':

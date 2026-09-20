@@ -53,6 +53,11 @@ class X11:
         result=self._read('geometries',[self._xid(window) for window in windows])
         return {int(xid):bounds for xid,bounds in result.items()}
 
+    def selection_owner(self, selection='CLIPBOARD'):
+        if selection not in ('CLIPBOARD','PRIMARY'):
+            raise DesktopError('INVALID_ARGUMENT','Selection must be CLIPBOARD or PRIMARY.')
+        return self._read('selection_owner',selection)
+
     def window_tokens(self, windows):
         """Stable across clients/remaps; changes after real X resource destruction.
 
