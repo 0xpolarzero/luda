@@ -75,3 +75,5 @@ not qualify display-server failure during disconnect, indefinitely blocked nativ
 cleanup, concurrent human input, persistent recovery across arbitrary transport
 loss, or all applications' late callbacks. Existing protocol-cancellation and
 owned-input recovery suites remain separate evidence.
+
+The separate [actual local SSH-loss experiment](SSH-LOSS-QUALIFICATION.md) kills an owned loopback SSH client during observed mutation, losing both transport directions. It supplies distinct evidence without broadening this stdin-only test's scope.
