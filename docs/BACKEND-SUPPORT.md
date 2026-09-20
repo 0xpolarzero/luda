@@ -29,3 +29,5 @@ protocol detection with no environment hints, unrelated hints on an explicit
 X11 target, no-dispatch preflight, and diagnostic availability. Existing
 cancellation/privacy test doubles explicitly supply the new backend preflight
 contract; their original assertions remain unchanged.
+
+[The real Weston/Xwayland qualification](WAYLAND-BASELINE.md#rejection-fix-qualification) covers three unsupported scenes and 12 actual MCP refusals, with an unchanged independent GTK oracle. A separate native Xvfb session remains ready despite stale Wayland environment hints.

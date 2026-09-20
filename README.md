@@ -6,7 +6,7 @@ Local Linux desktop control for agents. Luda attaches to the XFCE/X11 desktop al
 
 ## Use it
 
-For an existing running Silo desktop, the [guest bootstrap](docs/GUEST-BOOTSTRAP.md) composes installation, readiness checks and a remote Codex configuration/skill bundle in one command. Host registration remains explicit.
+For an existing running Silo desktop, the [guest bootstrap](docs/GUEST-BOOTSTRAP.md) composes installation, readiness checks and a remote Codex configuration/skill bundle in one command. For host Codex, the [VM-specific SSH plugin builder and explicit profile registration](docs/HOST-REGISTRATION.md) package the tools and skill together. Each VM has its own resolved MCP server name. Native Silo UI integration and Mac end-to-end acceptance remain in progress.
 
 For manual installation on an existing Ubuntu 24.04 XFCE/X11 desktop:
 
@@ -55,4 +55,4 @@ flock /tmp/luda-live-tests.lock /absolute/luda/.venv/bin/luda-session -- \
 
 Window identities include process lifetime and an X-resource generation token. Screenshot coordinates expire and are revalidated against display topology, geometry, focus, menus and the topmost surface. Semantic handles are scoped to an observed window and expire; private full-name fingerprints detect changes beyond displayed name prefixes. Provider reuse of an identical identity remains a limitation; see the [semantic contract](docs/SEMANTIC-CONTROLS.md). Input is serialized across cooperating clients, and `desktop_control` can pause their mutations. Owned injectors provide bounded cleanup after interruption; unproven cleanup remains blocked, and old cleanup does not touch a replacement X server.
 
-X11 does not provide exclusive ownership against human viewer input. Clipboard paste replaces CLIPBOARD, leaves PRIMARY alone and may trigger a terminal paste dialog. Direct typing verifies exact text where supported; browser and toolkit differences remain under qualification. Wayland, rich clipboard formats, OCR and browser DOM automation are outside this implementation. Read the [architecture and behavioral contracts](docs/DESIGN.md) before embedding Luda as a release component.
+X11 does not provide exclusive ownership against human viewer input. Clipboard paste replaces CLIPBOARD, leaves PRIMARY alone and may trigger a terminal paste dialog. Direct typing verifies exact text where supported; browser and toolkit differences remain under qualification. Native Wayland and modern Xwayland are explicitly rejected before desktop requests; see the [backend boundary and live refusal evidence](docs/BACKEND-SUPPORT.md). Rich clipboard formats, OCR and browser DOM automation remain outside the production implementation. Read the [architecture and behavioral contracts](docs/DESIGN.md) before embedding Luda as a release component.

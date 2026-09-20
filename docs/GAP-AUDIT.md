@@ -10,10 +10,10 @@ source-bound findings.
 
 ## Evidence now available
 
-The [current unit record](UNIT-COVERAGE-CURRENT.md) contains 645 passing root
-tests and the matching ordinary-account run (644 passed, one unavailable Codex
-CLI registration test skipped). Its map names 133 requirements and 281 distinct
-unit methods. The [live inventory](LIVE-COVERAGE.md) registers 68 fixtures and
+The [current unit record](UNIT-COVERAGE-CURRENT.md) now contains 661 passing root
+tests and the matching ordinary-account run (655 passed, six unavailable Codex
+CLI tests skipped). Its map names 135 requirements and 287 distinct unit methods.
+These subsequent results retain their own source revision and fingerprint. The [live inventory](LIVE-COVERAGE.md) registers 68 fixtures and
 158 distinct requirement associations. These overlap and are not a reliability
 percentage or evidence that all associated requirements passed.
 
@@ -99,7 +99,7 @@ of leaks is inferred from it.
   bootstrap invocation and separate tools status/UI against pinned Silo source,
   with actual Linux Rust/frontend tests and real HTTPS/bootstrap composition.
   It remains unapplied to the product and disabled until a trusted release
-  artifact is configured. Host registration is still a missing deliverable.
+  artifact is configured. The [host SSH plugin utility](HOST-REGISTRATION.md) now provides explicit selected-profile registration with VM-specific resolved server keys. Native Silo registration UI and actual SSH/Mac acceptance remain in progress.
 - Actual Mac Codex SSH placement, tool/skill discovery, human viewer continuity
   and reconnect require host access. A specific macOS runner/workspace has been
   requested; this Linux guest cannot establish those outcomes.
