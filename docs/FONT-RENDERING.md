@@ -34,3 +34,11 @@ Reproduce without opening a desktop or changing font settings:
 ```
 
 The test needs the optional distro Python GI/PangoCairo/Cairo bindings. It refuses an existing evidence directory, writes `results.json` and `rendered.png`, and exits nonzero if any required sample has missing glyphs. Font package versions and additional unsupported-codepoint probes are included. Before, after and expanded evidence remain in `artifacts/fonts/before`, `artifacts/fonts/after` and `artifacts/fonts/after-expanded` in the qualification worktree. The failed baseline is retained rather than replaced with the successful result.
+
+## Doctor diagnostic
+
+`desktop_doctor` and `luda doctor` include `font_coverage`: `covered`, `partial`, or `unavailable`. The diagnostic checks the same eight fixed samples above using the selected desktop account's default Sans fallback. A partial result names missing samples and includes their unknown-glyph counts; it does not imply text corruption. Covered means those samples have glyphs, not universal Unicode support or correct application-specific rendering.
+
+The helper runs in isolated system Python with a three-second deadline and an 8 KiB output limit. It uses Pango's font map and glyph-coverage count without creating a rendering surface, screenshot, artifact or log, and accepts no user text. Provider failure, missing dependencies, resource exhaustion or malformed output produce an explicit unavailable result. Cancellation propagates. `gir1.2-pango-1.0` is an explicit system dependency.
+
+Font coverage never participates in desktop readiness or input admission. An unavailable font provider or a missing sample leaves other supported controls available; it does not bypass session lock, pause, focus or application-capability checks. Unit tests verify readiness and capability classification remain unchanged for partial/unavailable results. The real `tests/live_font_diagnostic.py` probe verifies covered Noto defaults and partial coverage under a temporary DejaVu-only font configuration, without altering the caller's environment or user font settings.

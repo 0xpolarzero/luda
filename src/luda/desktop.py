@@ -18,6 +18,7 @@ import uuid
 from PIL import Image, UnidentifiedImageError
 from .common import DesktopError, display_identity, checkpoint, mark_effect, process_identity, run, stop_process, validate_text
 from .x11 import X11
+from .fonts import font_coverage
 from .interaction import InteractionMixin
 from .control import Control
 from .admission import Admission
@@ -127,6 +128,7 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         except ValueError:
             result['accessibility_available'] = False
             result['accessibility_error'] = 'Accessibility provider returned an invalid application count.'
+        result['font_coverage'] = font_coverage(self.environment)
         result['session_state'] = session_state()
         result['keyboard'] = keyboard_capabilities()
         try:
