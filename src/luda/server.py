@@ -332,9 +332,9 @@ async def desktop_type_secret(element_id: str, text: str) -> CallToolResult:
 
 
 @mcp.tool()
-async def desktop_choose(element_id: str, extend: bool = False) -> CallToolResult:
-    """Choose an observed list/radio/combo option or a visible table cell and verify selection. A table cell selects its whole row. Default makes the choice exclusive; extend preserves other list or table-row selections. Scroll offscreen rows into view and inspect again; reacquire after sorting/filtering. Open collapsed options and inspect first."""
-    return await execute_async('element',element_id,'choose',extend=extend)
+async def desktop_choose(element_id: str, extend: bool = False, range_end_id: str | None = None) -> CallToolResult:
+    """Choose an observed list/radio/combo option or a visible table cell and verify selection. A table cell selects its whole row. Default makes the choice exclusive; extend preserves other list or table-row selections. Scroll offscreen rows into view and inspect again; reacquire after sorting/filtering. Open collapsed options and inspect first. range_end_id selects an inclusive range of at most 50 visible list items or table rows, using two endpoints from the same inspection; reversed endpoints are allowed. Every intermediate item must be inspected in unchanged order, and table endpoints use the same column. extend adds the range; otherwise it replaces the selection. Duplicate range labels, unsupported providers and unloaded gaps are refused. List replacement verifies one clear then each addition; an already exact set is unchanged. Limits: 50 range items and 500 selected items. Selection step receipts are historical verification, never instructions to retry a remainder."""
+    return await execute_async('element',element_id,'choose',extend=extend,range_end_id=range_end_id)
 
 
 @mcp.tool()

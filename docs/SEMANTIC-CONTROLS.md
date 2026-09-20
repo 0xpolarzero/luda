@@ -180,3 +180,30 @@ passing one fixture does not qualify every control from that toolkit.
   fail to re-register after bus loss; restarting user apps is not automatic.
 
 `desktop_invoke(element_id)` selects the sole action from that observed handle. If there are multiple actions, `ACTION_REQUIRED` asks for an exact observed name; zero actions or an unobserved name are refused before the worker. The worker still revalidates the selected name against the live provider. This avoids guessing whether a toolkit calls its button action `click`, `press`, or `activate`; it does not choose between distinct operations or verify application completion.
+
+### Observed list and table ranges
+
+`desktop_choose(element_id, range_end_id=other_id, extend=False)` selects an
+inclusive range in either endpoint order. Endpoints must come from one inspection,
+one list/table and, for tables, one column. Every intervening item must have been
+observed in contiguous provider order and remain enabled and visible. The limits
+are 50 range items and 500 selected items. Radios, combo popups, unloaded rows,
+missing intermediate observations and duplicate range labels are refused.
+
+The worker checks captured provider/path/name identities, order, window activity,
+viewport and the exact selected set before and after each component action.
+`extend=False` removes other selections; `True` preserves them. List replacement
+uses one verified clear followed by additions; the clear counts as one component
+action. Already exact selections dispatch nothing. GTK may omit its
+multiple-selection hint even in MULTIPLE mode, so its absence is reported rather
+than fabricated. A single-selection provider can accept an initial component and
+then fail the requested set: the tool stops with an uncertain error and does not
+replay or undo prior changes.
+
+A final `selection_step` receipt counts verified component actions, one possibly
+changed component and actions not started. Counts describe historical readbacks,
+not current application state or saved data. Lost worker receipts cannot provide
+these counts. Inspect after partial failure before deciding the next action.
+Provider path/name reuse with identical exposed meaning has no stable application
+record-generation proof; rechecks are not atomic against application changes.
+See [real GTK range evidence](RANGE-SELECTION.md) for the exercised scope.

@@ -484,6 +484,195 @@ def choose_table_row(node, current, extend, request=None):
             "selected": matched, "changed": matched, "selection_scope": "table_row", "extend": extend}
 
 
+class RangeSelectionFailure(Exception):
+    def __init__(self, code, message):
+        self.code, self.message = code, message
+
+
+def choose_range(node, current, req):
+    """Inclusive inspected order; no synthesis of missing or virtual rows."""
+    started = False
+    receipt = req.setdefault('_range_receipt', {})
+    def refuse(code, message):
+        raise RangeSelectionFailure(code, message)
+    try:
+        target, end = req['target'], req.get('range_end')
+        observations = req.get('range_nodes')
+        if not isinstance(end, dict) or not isinstance(observations, list) or not 1 <= len(observations) <= 500:
+            refuse('INVALID_ARGUMENT', 'A range requires two endpoints from one bounded inspection.')
+        if any(end.get(k) != target.get(k) for k in ('start', 'root_path', 'root_provider', 'root_bus_guid')):
+            refuse('STALE_TARGET', 'Range endpoints must belong to the same observed window and provider.')
+        if target.get('bounds_coordinates') == 'unavailable':
+            refuse('UNSUPPORTED', 'Range visibility requires reliable accessible coordinates.')
+        table_mode = current['role'] == 'table cell' and 'TableCell' in current['interfaces']
+        if not table_mode and current['role'] != 'list item':
+            refuse('UNSUPPORTED', 'Ranges support visible table rows or Selection list items only.')
+        if table_mode:
+            container = Atspi.TableCell.get_table(node.get_table_cell())
+            if container is None or 'Table' not in container.get_interfaces():
+                refuse('UNSUPPORTED', 'Range has no accessible table.')
+            provider = container.get_table_iface()
+            _, column = Atspi.TableCell.get_position(node.get_table_cell())[-2:]
+            def position(option):
+                row, col = Atspi.TableCell.get_position(option.get_table_cell())[-2:]
+                owner = Atspi.TableCell.get_table(option.get_table_cell())
+                if (provider_identity(owner), owner.path) != container_key or col != column:return None
+                return row
+            def at(index):return provider.get_accessible_at(index, column)
+            def selected():
+                rows = provider.get_selected_rows()
+                if len(rows)>500 or any(type(i) is not int or i<0 for i in rows) or len(set(rows))!=len(rows):
+                    refuse('SELECTION_TOO_LARGE', 'Selected rows exceed the 500-item verification budget or are invalid.')
+                return set(rows)
+            def prepare(index, enabled):
+                return lambda: provider.add_row_selection(index) if enabled else provider.remove_row_selection(index)
+        else:
+            container = node.get_parent()
+            if container is None or 'Selection' not in container.get_interfaces():
+                refuse('UNSUPPORTED', 'Range list must expose the Selection interface.')
+            provider = container.get_selection_iface()
+            def position(option):
+                owner = option.get_parent()
+                if owner is None or (provider_identity(owner),owner.path)!=container_key:return None
+                return option.get_index_in_parent()
+            def at(index):return container.get_child_at_index(index)
+            def selected():
+                count = Atspi.Selection.get_n_selected_children(provider)
+                if not 0<=count<=500:refuse('SELECTION_TOO_LARGE','Selected items exceed the 500-item verification budget.')
+                indices=[]
+                for i in range(count):
+                    option=Atspi.Selection.get_selected_child(provider,i);index=position(option)
+                    if index is None or index<0 or choice_identity(at(index))!=choice_identity(option):
+                        refuse('STALE_TARGET','Selected list item changed container or identity.')
+                    indices.append(index)
+                if len(set(indices))!=len(indices):refuse('SELECTION_UNVERIFIABLE','Selected list contains duplicate provider positions.')
+                return set(indices)
+            def prepare(index, enabled):
+                if enabled:return lambda: Atspi.Selection.select_child(provider,index)
+                # Replacement is one explicit clear followed by verified additions.
+                # GTK ListBox individual deselection APIs do not reliably work.
+                return lambda: Atspi.Selection.clear_selection(provider)
+        container_key = (provider_identity(container), container.path)
+        container_identity = choice_identity(container)
+        # GTK may omit this hint even for MULTIPLE tables/lists. Each explicit
+        # component action must verify the complete set; a single-select provider
+        # stops at its first incompatible change, with an uncertain receipt.
+        multiple_hint = 'multiselectable' in states_of(container)
+        observed = [v for v in observations if v.get('role') == current['role'] and v.get('parent_path') == target.get('parent_path')]
+        wanted={v['path'] for v in observed}
+        if end.get('path') not in wanted or target['path'] not in wanted:
+            refuse('UNSUPPORTED', 'Endpoints do not share one observed collection.')
+        found={}
+        for option,_ in candidates(req['pid'],root_path=target['root_path'],root_provider=target['root_provider']):
+            if option.path in wanted:found[option.path]=option
+            if len(found)==len(wanted):break
+        anchors={};ordered=[];descriptions={}
+        for old in observed:
+            option=found.get(old['path'])
+            if option is None:refuse('STALE_TARGET','An inspected range item is no longer available.')
+            index=position(option)
+            if index is None:
+                if old['path'] in (target['path'],end['path']):refuse('UNSUPPORTED','Table range endpoints must use the same column.')
+                continue
+            identity=choice_identity(option,old)
+            if index<0 or choice_identity(option)!=identity:
+                refuse('STALE_TARGET','An inspected range item changed identity.')
+            if index in anchors:refuse('STALE_TARGET','Range contains duplicate provider positions.')
+            anchors[index]=identity;ordered.append(index);descriptions[index]={'name':old['name'],'role':old['role'],'position':index}
+        first=position(found[target['path']]);last=position(found[end['path']])
+        if first is None or last is None:refuse('UNSUPPORTED','Range endpoints have different containers.')
+        if abs(first-last)+1>50:refuse('SELECTION_TOO_LARGE','A range supports at most 50 observed items.')
+        expected_order=list(range(min(first,last),max(first,last)+1))
+        if ordered!=expected_order:
+            refuse('STALE_TARGET','Range order changed or intervening items were not inspected; inspect the complete range again.')
+        labels=[(v['role'],v['name'],v.get('name_fingerprint')) for v in observed if v['path'] in found and position(found[v['path']]) in anchors]
+        if len(set(labels))!=len(labels):
+            refuse('UNSUPPORTED','Duplicate range labels cannot establish distinct visible item meaning.')
+        ancestors=[];ancestor=container
+        for _ in range(60):
+            if ancestor is None:break
+            ancestors.append(ancestor)
+            if (provider_identity(ancestor),ancestor.path)==(target['root_provider'],target['root_path']):break
+            ancestor=ancestor.get_parent()
+        if not ancestors or (provider_identity(ancestors[-1]),ancestors[-1].path)!=(target['root_provider'],target['root_path']):
+            refuse('STALE_TARGET','Selection container left the observed window.')
+        root=ancestors[-1]
+        previous=selected()
+        retained={i:choice_identity(at(i)) for i in previous}
+        expected=previous|set(anchors) if req.get('extend',False) else set(anchors)
+        if len(expected)>500:refuse('SELECTION_TOO_LARGE','Resulting selection exceeds 500 items.')
+        def guard():
+            if choice_identity(container)!=container_identity or target['root_bus_guid']!=bus_generation():
+                refuse('STALE_TARGET','Selection provider or container changed.')
+            container_states=states_of(container)
+            if 'showing' not in container_states or not {'enabled','sensitive'}.intersection(container_states):refuse('NOT_INTERACTABLE','Selection container is no longer enabled and showing.')
+            for child,parent in zip(ancestors,ancestors[1:]):
+                actual=child.get_parent()
+                if actual is None or (provider_identity(actual),actual.path)!=(provider_identity(parent),parent.path):refuse('STALE_TARGET','Selection container changed window ancestry.')
+            if 'active' not in states_of(root):refuse('FOCUS_CHANGED','Observed selection window is no longer active.')
+            clip=None
+            for parent in ancestors:
+                if 'Component' not in parent.get_interfaces():continue
+                rect=parent.get_component_iface().get_extents(Atspi.CoordType.SCREEN)
+                bounds=(rect.x,rect.y,rect.x+rect.width,rect.y+rect.height)
+                clip=bounds if clip is None else (max(clip[0],bounds[0]),max(clip[1],bounds[1]),min(clip[2],bounds[2]),min(clip[3],bounds[3]))
+            if clip is None:refuse('UNSUPPORTED','Range viewport cannot be observed.')
+            for index,identity in anchors.items():
+                option=at(index)
+                if option is None or position(option)!=index or choice_identity(option)!=identity:
+                    refuse('STALE_TARGET','Range item order or identity changed.')
+                states=states_of(option)
+                if 'showing' not in states or not {'enabled','sensitive'}.intersection(states) or 'defunct' in states:
+                    refuse('NOT_INTERACTABLE','Every range item must remain enabled and showing.')
+                if 'Component' not in option.get_interfaces():refuse('UNSUPPORTED','Range item has no visible bounds.')
+                rect=option.get_component_iface().get_extents(Atspi.CoordType.SCREEN)
+                if min(rect.x,rect.y)<=-2147483648 or min(rect.width,rect.height)<=0 or max(rect.x,clip[0])>=min(rect.x+rect.width,clip[2]) or max(rect.y,clip[1])>=min(rect.y+rect.height,clip[3]):
+                    refuse('NOT_INTERACTABLE','Every range item must be in the visible viewport; scroll and inspect again.')
+            for index,identity in retained.items():
+                if choice_identity(at(index))!=identity:refuse('STALE_TARGET','Previously selected item changed meaning or order.')
+        guard()
+        clear_list=not table_mode and bool(previous-expected)
+        plan=([(None,False)]+[(i,True) for i in sorted(expected)] if clear_list else
+              [(i,False) for i in sorted(previous-expected)]+[(i,True) for i in sorted(expected-previous)])
+        progress={'unit':'selection_step','requested':len(plan),'verified_completed':0,'current_uncertain':0,'not_started':len(plan),'application_commit_verified':False}
+        receipt['progress']=progress
+        expected_now=set(previous);deadline=time.monotonic()+2.5
+        for index,enabled in plan:
+            guard()
+            if selected()!=expected_now:refuse('SELECTION_UNVERIFIABLE','Selection changed before the next range action.')
+            guard()  # Selected-set readback may itself yield to app reorder/focus events.
+            action=prepare(index,enabled)
+            if time.monotonic()>=deadline:refuse('TIMEOUT','Range selection verification deadline reached; inspect before continuing.')
+            req['_mutation_started']=True;started=True
+            progress['current_uncertain']=1;progress['not_started']-=1
+            accepted=bool(action())
+            after=expected_now|{index} if enabled else (set() if index is None else expected_now-{index})
+            def matched():
+                guard()
+                matches=selected()==after
+                guard()
+                return matches
+            if not accepted or not verify(matched):refuse('SELECTION_UNVERIFIABLE','Range action did not verify the exact selected set; inspect before continuing.')
+            expected_now=after;progress['verified_completed']+=1;progress['current_uncertain']=0
+        guard()
+        if selected()!=expected:refuse('SELECTION_UNVERIFIABLE','Final selection changed during readback.')
+        items=[]
+        for index in sorted(expected):
+            option=at(index);role=option.get_role_name();name,_=bounded_name_identity(option,'password' in role.lower())
+            items.append({'name':name,'role':role,'position':index})
+        guard()
+        if selected()!=expected:refuse('SELECTION_UNVERIFIABLE','Selection changed while describing selected items.')
+        guard()
+        return {'effect':'verified','accepted':True,'selected':True,'changed':bool(plan),'extend':req.get('extend',False),
+                'selection_scope':'table_row_range' if table_mode else 'list_item_range','selected_items':items,
+                'multiple_selection_advertised':multiple_hint,
+                'verification':'Exact observed provider item identities and selected set; not atomic against later application changes.'}
+    except RangeSelectionFailure as exc:
+        return {'error':exc.code,'message':exc.message,'effect':'uncertain' if started else 'none'}
+    except Exception:
+        return {'error':'ACCESSIBILITY_ERROR','message':'Range provider failed; inspect before continuing.','effect':'uncertain' if started else 'none'}
+
+
 def choose_combo_option(node, combo, current, request=None):
     """Commit a popup option, not merely highlight a menu row."""
     combo_states = states_of(combo)
@@ -605,6 +794,8 @@ def semantic(node, current, req):
         extend = req.get("extend", False)
         if type(extend) is not bool:
             return failure("INVALID_ARGUMENT", "extend must be a boolean.")
+        if req.get("range_end") is not None:
+            return choose_range(node, current, req)
         if current["role"] == "radio button":
             if extend:
                 return failure("INVALID_ARGUMENT", "Radio choices cannot extend a selection.")
@@ -1016,7 +1207,7 @@ def main(req):
     return {"error": "STALE_TARGET", "message": "Element not found within traversal budget; inspect again."}
 
 
-def dispatch(request):
+def _dispatch(request):
     # Provider exception strings can contain application contents or input.
     # Expose fixed diagnostics, never the native exception's message.
     request = dict(request)
@@ -1045,6 +1236,14 @@ def dispatch(request):
         return {"error": "ACCESSIBILITY_ERROR",
                 "message": "The accessibility provider failed. Inspect again before retrying an action.",
                 "effect": "none" if request.get("op") in ("read", "inspect") else "uncertain"}
+
+
+def dispatch(request):
+    request=dict(request)
+    request['_range_receipt']=receipt={}
+    result=_dispatch(request)
+    if 'progress' in receipt:result['progress']=receipt['progress']
+    return result
 
 
 if __name__ == "__main__":

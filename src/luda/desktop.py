@@ -422,10 +422,13 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
                 raise DesktopError(exc.code,'Protected input failed; inspect state before retrying.',effect=exc.effect) from exc
             raise
         result = json.loads(raw)
+        from .progress import selection_progress
+        progress=selection_progress(result.pop('progress',None)) if request.get('op')=='choose' and request.get('range_end') is not None else None
+        if progress is not None:result['progress']=progress
         if 'error' in result:
             effect = result.get('effect', 'uncertain' if mutating and result['error']=='ACCESSIBILITY_ERROR' else 'none')
             mark_effect(effect)
-            raise DesktopError(result['error'],result.get('message','Accessibility failed.'),effect=effect)
+            raise DesktopError(result['error'],result.get('message','Accessibility failed.'),effect=effect,details={'progress':progress} if progress is not None else None)
         if mutating:
             mark_effect(result.get('effect', 'dispatched'))
         return result
@@ -453,9 +456,10 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         now=elapsed_time()
         self.elements={k:v for k,v in self.elements.items() if now-v['time']<60}
         tokens = {node['path']:uuid.uuid4().hex for node in result['nodes']}
-        for node in result['nodes']:
+        inspection_id=uuid.uuid4().hex
+        for order,node in enumerate(result['nodes']):
             token=tokens[node['path']]
-            self.elements[token]={'time':now,'window_id':window_id,'node':dict(node)}
+            self.elements[token]={'time':now,'window_id':window_id,'node':dict(node),'inspection_id':inspection_id,'inspection_order':order}
             node['element_id']=token
             node['parent_element_id']=tokens.get(node.pop('parent_path',None))
             node.pop('path',None);node.pop('start',None);node.pop('root_path',None);node.pop('root_provider',None);node.pop('root_bus_guid',None);node.pop('name_fingerprint',None)
@@ -469,6 +473,18 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         target=self.elements.get(element_id)
         if not target or elapsed_time()-target['time']>=60:
             raise DesktopError('STALE_TARGET','Element expired or belongs to another server; inspect again.')
+        endpoint_id=kwargs.pop('range_end_id',None) if op=='choose' else None
+        if endpoint_id is not None:
+            end=self.elements.get(endpoint_id) if isinstance(endpoint_id,str) else None
+            if not end or elapsed_time()-end['time']>=60:
+                raise DesktopError('STALE_TARGET','Range endpoint expired; inspect the complete range again.')
+            if target.get('provider')=='owned_browser' or end.get('provider')=='owned_browser':
+                raise DesktopError('UNSUPPORTED_ACTION','Range selection supports native list/table collections only.')
+            if not target.get('inspection_id') or end.get('inspection_id')!=target['inspection_id'] or end['window_id']!=target['window_id']:
+                raise DesktopError('STALE_TARGET','Range endpoints must come from the same inspection and window.')
+            lo,hi=sorted((target['inspection_order'],end['inspection_order']))
+            observed=sorted((v for v in self.elements.values() if v.get('inspection_id')==target['inspection_id'] and lo<=v['inspection_order']<=hi),key=lambda v:v['inspection_order'])
+            kwargs['range_end']=end['node'];kwargs['range_nodes']=[v['node'] for v in observed]
         if target.get('provider') == 'owned_browser':
             if op=='secret':validate_text(kwargs['text'])
             return self.browser.element(target,op,**kwargs)

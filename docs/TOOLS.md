@@ -159,10 +159,10 @@ Replace an observed protected field. Never reads back or echoes the value, uses 
 ## `desktop_choose`
 
 ```python
-desktop_choose(element_id: str, extend: bool=False)
+desktop_choose(element_id: str, extend: bool=False, range_end_id: str | None=None)
 ```
 
-Choose an observed list/radio/combo option or a visible table cell and verify selection. A table cell selects its whole row. Default makes the choice exclusive; extend preserves other list or table-row selections. Scroll offscreen rows into view and inspect again; reacquire after sorting/filtering. Open collapsed options and inspect first.
+Choose an observed list/radio/combo option or a visible table cell and verify selection. A table cell selects its whole row. Default makes the choice exclusive; extend preserves other list or table-row selections. Scroll offscreen rows into view and inspect again; reacquire after sorting/filtering. Open collapsed options and inspect first. range_end_id selects an inclusive range of at most 50 visible list items or table rows, using two endpoints from the same inspection; reversed endpoints are allowed. Every intermediate item must be inspected in unchanged order, and table endpoints use the same column. extend adds the range; otherwise it replaces the selection. Duplicate range labels, unsupported providers and unloaded gaps are refused. List replacement verifies one clear then each addition; an already exact set is unchanged. Limits: 50 range items and 500 selected items. Selection step receipts are historical verification, never instructions to retry a remainder.
 
 ## `desktop_paste`
 

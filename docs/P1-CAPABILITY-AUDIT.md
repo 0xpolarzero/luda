@@ -81,3 +81,13 @@ native/synthetic evidence require their own limits to be retained; this audit
 found no comparably clear new API justified ahead of the ranked work. In
 particular human-presence presentation does not require challenge solving, and
 modal close refusal must never imply document save.
+
+## DATA-03 follow-up
+
+The original ranked finding above described the audited baseline. The additive
+`range_end_id` contract now covers bounded, visible, same-inspection list/table
+ranges with per-action identity/order and selected-set verification. Actual GTK
+MULTIPLE and SINGLE-mode results, sort/filter/recycle cases and retained discovery
+failures are in [RANGE-SELECTION.md](RANGE-SELECTION.md). This does not establish
+unloaded/virtualized range inference, stable record generations for reused
+identities, atomic application interaction, or catalog qualification.

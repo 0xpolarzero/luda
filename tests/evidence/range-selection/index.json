@@ -1,0 +1,91 @@
+{
+  "final": "run-1789898578487119289",
+  "attempts": [
+    {
+      "run": "run-1789897552994292467",
+      "status": "failed",
+      "seconds": 1.341,
+      "source_unchanged": true,
+      "source_sha256": "1a71b62ecd99fee666f16fe283694f7ed0c802a4f15580362a76445b32c499c4"
+    },
+    {
+      "run": "run-1789897586616797900",
+      "status": "failed",
+      "seconds": 2.067,
+      "source_unchanged": true,
+      "source_sha256": "e7afef36f122f765e881edfcfef7940546508c282a6bce6feaf379714fbbcf07"
+    },
+    {
+      "run": "run-1789897876132243996",
+      "status": "failed",
+      "seconds": 4.085,
+      "source_unchanged": true,
+      "source_sha256": "cad5652a54df5dd549ecd814cd4a7a9d72a50646cb3874685d9dbb3fa39b98bd"
+    },
+    {
+      "run": "run-1789897901835847425",
+      "status": "failed",
+      "seconds": 3.369,
+      "source_unchanged": true,
+      "source_sha256": "0f89c2fa9d2f0cba2e6c0550ed961eadbe2666cda5561333218b510bd31f8139"
+    },
+    {
+      "run": "run-1789897925827545895",
+      "status": "passed",
+      "seconds": 8.655,
+      "source_unchanged": true,
+      "source_sha256": "a2e51b3ab2b3e53e748a3503783c47e4495454431b16598b26e8cad96c8e9a9b"
+    },
+    {
+      "run": "run-1789897981390907713",
+      "status": "passed",
+      "seconds": 12.453,
+      "source_unchanged": true,
+      "source_sha256": "b383801669970d5b6efdda973ff03d1b64b9b7b4fbc508746e101c3760820000"
+    },
+    {
+      "run": "run-1789898122164975655",
+      "status": "passed",
+      "seconds": 12.809,
+      "source_unchanged": true,
+      "source_sha256": "1cbd9989b540430cb5441f942437e95c0a899c41f226b41b904c773a7946048e"
+    },
+    {
+      "run": "run-1789898258436761637",
+      "status": "passed",
+      "seconds": 12.572,
+      "source_unchanged": true,
+      "source_sha256": "4ea8fa92c94c4c72d91e0ab7eb64cdf94170a5856bfed4a991d0a7d668489e91"
+    },
+    {
+      "run": "run-1789898339870516675",
+      "status": "failed",
+      "seconds": 3.767,
+      "source_unchanged": true,
+      "source_sha256": "06ee9dfe9c71efbb023d8f272beac1b96925fce719f73de7d3fdf1d66c7d466f"
+    },
+    {
+      "run": "run-1789898470487760988",
+      "status": "failed",
+      "seconds": 3.807,
+      "source_unchanged": true,
+      "source_sha256": "111810630cd33cd93c6f40e28804d1668dab0f344a1bf7f980516f57b58968b8"
+    },
+    {
+      "run": "run-1789898578487119289",
+      "status": "passed",
+      "seconds": 13.01,
+      "source_unchanged": true,
+      "source_sha256": "603ecc1ad37cb409242801b419a4a8f8b2ec242b8d78e13dd299d8e71a349c59"
+    }
+  ],
+  "tested_runtime_and_fixture_unchanged": [
+    "src/luda/ax_worker.py",
+    "src/luda/desktop.py",
+    "src/luda/progress.py",
+    "tests/data_fixture.py",
+    "tests/live_range_selection.py",
+    "tests/test_range_selection.py"
+  ],
+  "post_run_changes": "Documentation, server docstring/generated tool reference, and evidence capture only."
+}

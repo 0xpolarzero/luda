@@ -27,6 +27,7 @@ def suite(script, ids, *, wm=True, browser=None, electron=None, firefox=None, mo
 
 
 SUITES = {
+    'range-selection': suite('live_range_selection.py', 'DATA-03', artifacts=('range-selection',), gaps=('Observed visible same-inspection GTK ranges; no virtualized or implicit range inference',)),
     'window-geometry': suite('live_window_geometry.py', 'WM-02 WM-03', wm=False, artifacts=('window-geometry',), gaps=('Observed GTK/XFWM client/frame geometry; no automatic pre-maximize history tracking',)),
     'rich-progress': suite('live_rich_progress.py', 'ERR-05', browser='--executable', artifacts=('rich-progress',), gaps=('Final error receipt after one verified rich segment and a rejected paragraph action; not lost-receipt cancellation progress',)),
     'browser-permission': suite('live_browser_permission.py', 'WEB-07', browser='--executable', artifacts=('browser-permission',), gaps=('Real geolocation denial in a fresh owned Chromium; not every browser permission type',)),
