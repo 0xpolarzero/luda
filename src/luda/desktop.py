@@ -19,6 +19,7 @@ from PIL import Image, UnidentifiedImageError
 from .common import DesktopError, display_identity, checkpoint, mark_effect, process_identity, run, stop_process, validate_text
 from .x11 import X11
 from .fonts import font_coverage
+from .ocr import recognize, retain_snapshot
 from .interaction import InteractionMixin
 from .control import Control
 from .admission import Admission
@@ -137,6 +138,8 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
             result['accessibility_available'] = False
             result['accessibility_error'] = 'Accessibility provider returned an invalid application count.'
         result['font_coverage'] = font_coverage(self.environment)
+        result['ocr'] = {'available': shutil.which('tesseract', path=self.environment.get('PATH', os.defpath)) is not None,
+                         'engine': 'tesseract', 'scope': 'Optional executable availability only; requested language and recognition checked by desktop_ocr.'}
         result['session_state'] = session_state()
         result['keyboard'] = keyboard_capabilities()
         try:
@@ -294,9 +297,8 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         token = uuid.uuid4().hex
         now = elapsed_time()
         self.snapshots = {k:v for k,v in self.snapshots.items() if now-v['time']<15}
-        snapshot = {'time':now,'signature':self.signature(after),'native':native,'image':(width,height),'popups':after_popups,'topology':topology}
-        self.snapshots[token] = snapshot
-        while len(self.snapshots)>16:self.snapshots.pop(next(iter(self.snapshots)))
+        snapshot = {'time':now,'signature':self.signature(after),'native':native,'image':(width,height),'popups':after_popups,'topology':topology,'png':buf.getvalue()}
+        retain_snapshot(self.snapshots, token, snapshot)
         return {'snapshot_id':token,'expires_after_seconds':15,
                 'coordinate_space':'returned image pixels; pass snapshot_id with pointer actions',
                 'coordinate_spaces':{'bounds':'native_x11_root_pixels','frame_bounds':'native_x11_root_pixels',
@@ -308,6 +310,31 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
                 'windows':[{**w,'image_bounds':image_bounds(w['bounds'],native,(width,height))} for w in after],
                 'popups':[{**p,'image_bounds':image_bounds(p['bounds'],native,(width,height))} for p in after_popups],
                 'image_base64':base64.b64encode(buf.getvalue()).decode()}
+
+    def ocr(self, snapshot_id, language='eng', limit=200):
+        def valid():
+            now = elapsed_time()
+            for key in list(self.snapshots):
+                if now-self.snapshots[key]['time'] >= 15:
+                    self.snapshots.pop(key)
+            snapshot = self.snapshots.get(snapshot_id)
+            if not snapshot or elapsed_time()-snapshot['time'] >= 15 or 'png' not in snapshot:
+                raise DesktopError('STALE_OBSERVATION', 'Screenshot expired or was evicted; explicitly observe again.')
+            windows = self.list_windows()
+            if (self.signature(windows) != snapshot['signature']
+                    or self.display().topology() != snapshot['topology']
+                    or self.popup_signature(self.observe_popups(windows)) != self.popup_signature(snapshot['popups'])):
+                raise DesktopError('STALE_OBSERVATION', 'Screenshot layout or server identity changed; explicitly observe again.')
+            return snapshot
+        snapshot = valid()
+        result = recognize(snapshot['png'], snapshot['image'], language, limit, self.environment)
+        valid()
+        return {'snapshot_id': snapshot_id, 'effect': 'none', 'engine': 'tesseract', 'language': language,
+                'source': 'retained screenshot; historical pixels, not a new capture or current text verification',
+                'coordinate_space': 'returned screenshot image pixels',
+                'image_size': dict(zip(('width', 'height'), snapshot['image'])),
+                'confidence_semantics': 'Engine score 0–100; uncalibrated, not a probability or proof of exact text.',
+                **result}
 
     def point(self, window_id, snapshot_id, x, y):
         return self._interaction_point(window_id,snapshot_id,x,y)

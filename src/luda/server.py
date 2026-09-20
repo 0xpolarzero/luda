@@ -78,7 +78,7 @@ def execute(method, *args, _cancelled=None, **kwargs):
         if not acquired:
             raise DesktopError('BUSY', 'Another operation is in progress; reconnect does not cancel it.')
         d = get_backend()
-        observation = method in ('reconnect','list_applications','doctor','list_windows','window_overview','observe','inspect','workspaces','wait_for','wait_condition') or (method=='element' and len(args)>1 and args[1]=='read')
+        observation = method in ('reconnect','list_applications','doctor','list_windows','window_overview','observe','ocr','inspect','workspaces','wait_for','wait_condition') or (method=='element' and len(args)>1 and args[1]=='read')
         guard = None if observation or method == 'recover_input' else d.control.require_active
         with operation_scope(timeout=12, cancelled=_cancelled, guard=guard) as operation:
             try:
@@ -169,6 +169,12 @@ async def desktop_control(action: Literal['status','pause','resume']='status') -
         return CallToolResult(content=[TextContent(type='text',text=json.dumps({'ok':True,**state},separators=(',',':')))])
     except DesktopError as exc:
         return result_error(exc.code,str(exc),exc.effect)
+
+
+@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
+async def desktop_ocr(snapshot_id: str, language: str = 'eng', limit: int = 200) -> CallToolResult:
+    """Read uncertain local OCR word candidates from this exact retained screenshot, never a new capture. Returns image-pixel boxes and uncalibrated engine scores, not exact text or action permission. Snapshot expires after 15 seconds or cache eviction; changed layout is refused. Optional Tesseract and the selected language must be installed. No input is sent."""
+    return await execute_async('ocr', snapshot_id, language, limit)
 
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))

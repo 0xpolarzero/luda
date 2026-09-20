@@ -30,6 +30,7 @@ SUITES = {
     'password-manager': suite('live_password_manager.py', 'AUTH-03', wm=False, artifacts=('password-manager',), gaps=('Actual native KeePassXC entry menu through Desktop methods; no GUI unlock or browser extension qualification',)),
     'dead-compose': suite('live_dead_compose.py', 'KEY-10', wm=False, artifacts=('dead-compose',), gaps=('Explicit no-input refusal of named dead-key and Compose requests; not composition support',)),
     'cpu-pressure': suite('live_cpu_pressure.py', 'PERF-10', wm=False, artifacts=('cpu-pressure',), gaps=('One CPU, nice15 desktop and two bounded nice0 load workers; no system-wide CPU/OOM qualification',)),
+    'ocr': suite('live_ocr.py', 'MEDIA-07', wm=False, artifacts=('ocr',), gaps=('Optional Tesseract with English model; high-contrast owned GTK words only, no general recognition accuracy claim',)),
     'mcp': suite('live_mcp.py', 'MCP-02 MCP-03 MCP-04 MCP-05 MCP-06 MCP-07 DIAG-10 SHIP-08', artifacts=('mcp',)),
     'tui': suite('live_tui.py', 'TERM-09', wm=False, artifacts=('tui',)),
     'ax-deadline': suite('live_ax_deadline.py', 'AX-07', wm=False, artifacts=('ax-deadline',), gaps=('Stopped-provider call completes under earlier libatspi timeout; does not exercise the five-second worker kill path',)),
@@ -154,7 +155,7 @@ def dependencies(spec, executable, electron=None, firefox=None):
     commands = ['xvfb-run', 'Xvfb', 'dbus-run-session', 'xfwm4', 'wmctrl', 'xdotool', 'scrot', 'xclip', 'xprop', 'gdbus']
     if spec['script'] in ('live_accessibility_lifecycle.py', 'live_mcp_reconnect.py'):
         commands.append('xfce4-session')
-    commands.extend({'live_password_manager.py': ['keepassxc', 'keepassxc-cli'], 'live_tray.py': ['xfce4-panel'], 'live_tui.py': ['xterm'], 'live_dead_compose.py': ['setxkbmap', 'xkbcomp']}.get(spec['script'], ()))
+    commands.extend({'live_ocr.py': ['tesseract'], 'live_password_manager.py': ['keepassxc', 'keepassxc-cli'], 'live_tray.py': ['xfce4-panel'], 'live_tui.py': ['xterm'], 'live_dead_compose.py': ['setxkbmap', 'xkbcomp']}.get(spec['script'], ()))
     checks = {command: shutil.which(command) is not None for command in commands}
     imports = {'Gtk': "import gi;gi.require_version('Gtk','3.0');from gi.repository import Gtk",
                'Gtk4': "import gi;gi.require_version('Gtk','4.0');from gi.repository import Gtk",

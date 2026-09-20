@@ -12,6 +12,14 @@ desktop_control(action: Literal['status', 'pause', 'resume']='status')
 
 Pause/resume cooperating agent input across servers on this display. Pause interrupts at the next checkpoint; already-delivered input is not undone. Observation remains available. This does not stop arbitrary external input programs.
 
+## `desktop_ocr`
+
+```python
+desktop_ocr(snapshot_id: str, language: str='eng', limit: int=200)
+```
+
+Read uncertain local OCR word candidates from this exact retained screenshot, never a new capture. Returns image-pixel boxes and uncalibrated engine scores, not exact text or action permission. Snapshot expires after 15 seconds or cache eviction; changed layout is refused. Optional Tesseract and the selected language must be installed. No input is sent.
+
 ## `desktop_status`
 
 ```python

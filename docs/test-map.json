@@ -1230,6 +1230,23 @@
         "test_backend_support.BackendSupport.test_server_refuses_before_handler_or_session_input"
       ],
       "limits": "XWAYLAND protocol-extension rejection prevents treating Xwayland access as native Wayland support; native X11 remains available despite stale hints. Actual Weston/Xwayland and native Xvfb evidence is recorded in WAYLAND-BASELINE.md. Older servers without the extension and other compositors are not qualified."
+    },
+    "MEDIA-07": {
+      "implementation": "implemented",
+      "tests": [
+        "test_ocr.OCRTests.test_parser_coordinates_score_and_truncation",
+        "test_ocr.OCRTests.test_malformed_numeric_utf8_bounds_and_rows_are_not_echoed",
+        "test_ocr.OCRTests.test_missing_engine_language_and_invalid_input_are_explicit",
+        "test_ocr.OCRTests.test_engine_uses_stdin_stdout_fixed_flags_and_bounds",
+        "test_ocr.OCRTests.test_engine_failure_sanitized_but_cancellation_and_limits_preserved",
+        "test_ocr.OCRTests.test_actual_engine_child_cancellation_stops_late_effect",
+        "test_ocr.OCRTests.test_snapshot_byte_budget_and_oversize_preserve_pointer_metadata",
+        "test_ocr.OCRTests.test_exact_snapshot_no_capture_and_stale_layout_preflight",
+        "test_ocr.OCRTests.test_layout_changed_during_ocr_and_expired_snapshot_refused",
+        "test_ocr.OCRTests.test_optional_engine_absence_does_not_change_backend_readiness",
+        "test_ocr.OCRTests.test_public_schema_is_read_only"
+      ],
+      "limits": "Optional local Tesseract candidates from retained screenshot pixels, uncalibrated scores, image-space boxes and bounded parser/cache/process lifecycle. Actual English GTK/Pango geometry and historical-image oracle are separately documented in OCR.md. No exact/current text guarantee, automatic input, universal scripts or accuracy qualification."
     }
   }
 }
