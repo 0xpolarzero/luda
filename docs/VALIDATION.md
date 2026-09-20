@@ -1,69 +1,50 @@
 # Implementation and validation status
 
-Date: 2026-09-19. Environment: actual Silo ARM64 Ubuntu 24.04 guest, XFCE/X11 on `:1`, KasmVNC 1.5.0, 1440×900. Tests run as `silo-desktop`, not root. This is local evidence for a prototype, not certification of the whole requirements catalog.
+The project is under active development. Local evidence comes from an ARM64 Ubuntu 24.04 Silo guest with XFCE/X11, KasmVNC 1.5.0 and a 1440×900 display, plus isolated Xvfb/XFWM4 sessions. Shared-desktop tests attach as the ordinary desktop account. GitHub CI independently runs unit and fresh X11 workflows on Ubuntu AMD64.
 
-## Implemented versus qualified
+The [345-case catalog](REQUIREMENTS.md) is an acceptance target, not a claim that every feature exists or passes. [Qualification records](QUALIFICATION.md) bind evidence to source and environment; passing a local fixture does not automatically change release qualification.
 
-| Capability | Implementation | Evidence and limits |
+## Implemented capabilities and evidence
+
+| Capability | Independent evidence | Remaining limits |
 |---|---|---|
-| Guest session attachment | Explicit account/session launcher, privilege drop | Worked from SSH/root into current desktop and from desktop account. Fresh VM/Mac onboarding untested. |
-| MCP | Official pinned SDK, 14 typed tools, images and errors | Real stdio initialize/list/call tests pass. Disconnect/cancellation/version matrix incomplete. |
-| Desktop observation | Screenshots, scaling metadata, client/frame geometry, window identities | Native screenshot dimension and scaled-click checks pass. Multimonitor/fractional/Wayland unqualified. |
-| Semantic inspection | Window-scoped AT-SPI subprocess with deadline | GTK fixture, Mousepad dialog and XFCE Terminal dialog exercised. Qt/Electron/GTK4 unqualified. |
-| Text replacement | EditableText plus exact readback | Unicode, combining marks, emoji, LF, tabs, empty string, whitespace and 8,005-character payload tested. Application transformation and undo need more coverage. |
-| Text insertion | Managed CLIPBOARD + explicit app shortcut | Exact independent readback in GTK, Chromium and passive terminal fixture. Tool response intentionally says dispatched; universal destination verification not implemented. |
-| Pointer/key actions | Click, wheel, same-window drag, bounded key chords | Scaled button click and save shortcuts tested. Drag/scroll timing and cross-app behavior unqualified. |
-| Semantic actions/focus | Advertised action, role/name/path revalidation, enabled/showing check | Button, text focus, native Save As and terminal paste dialog exercised. Complex widgets/menu coverage incomplete. |
-| Stale target prevention | Expiring IDs, process identity, geometry/focus checks | Expired screenshot/element, moved/closed window and invalid coordinates rejected. Same-process XID reuse and unmanaged overlay interception remain limitations. |
-| Bounded failures | Deadlines and cross-server lock | Frozen app refused in about one second; inspection recovered after resume. Hard timeout unit test confirms uncertain-effect classification. |
-| Packaging | Wheel, source distribution, runtime hash lock, skill | Isolated wheel install and desktop doctor smoke check. System provisioning script syntax checked; full clean-VM apt installation untested. |
+| Session attachment | Root-to-desktop privilege drop, existing SSH session attachment, installed doctor | Fresh Mac SSH onboarding and fresh microsandbox provisioning untested |
+| MCP lifecycle | Actual stdio initialize/list/call/image/error, explicit cancellation, responsive status, peer pause | Client timeout may not cancel; cancellation acknowledgment may precede cleanup |
+| Target identity | Window generation token survives remap; actual same-process same-XID destruction/reuse changes it | Identical semantic widget path/name/role reuse remains possible |
+| Screenshots and pointer | Scaled coordinates, moved/expired/resized targets; real nested menus; covering popup refusal | Content can change between checks and input; multimonitor configurations unqualified |
+| Text editing | GTK3 independent widget readback, Qt UTF-16 boundary conversion, protected synthetic-value hash oracle | Browser hypertext/selection compatibility still being corrected; GTK4 provider defects recorded |
+| Clipboard | Exact multiline Unicode/tab input in GTK, Chromium and passive terminal; confirmation dialog observed | CLIPBOARD ownership check is sampled; raw paste does not verify destination |
+| Semantic controls | GTK3/Qt lists and radios, desired checkbox/value/expansion, GTK committed combo choice | Qt combo without semantic commit action refused; custom widgets unqualified |
+| Interaction | Window/workspace state, cross-window GTK drag with independent UTF-8 transfer, nested menu callback | Broader drag/scroll/key-layout/IME application matrix incomplete |
+| Application launching | Gio desktop entries, exact Unicode argv, detached GTK launches, input validation | D-Bus/singleton and terminal routing qualification ongoing |
+| Isolation and recovery | Frozen provider timeout/recovery, X-server helper death/restart, process-group timeout cleanup | Escaped process sessions cannot be treated as killed; full session-bus rediscovery incomplete |
+| Installation | Real immutable release install, doctor, repeat install, rollback/uninstall logic and adversarial tests | System provisioning and Mac/Silo registration require external integration runs |
 
-## Test suites
+## Reproducible suites
 
-| Suite | Assertions | Result | Evidence |
-|---|---:|---|---|
-| Pure contracts | 8 tests | Passed | `tests/test_contracts.py`; local unittest output |
-| Native desktop integration | 31 checks | Passed | `artifacts/native/results.json` |
-| Actual MCP protocol | 8 checks | Passed | `artifacts/mcp/results.json`, tool schemas and screenshot |
-| Real applications | 7 checks | Passed | `artifacts/apps/results.json`, saved files and dialog trees |
+- `tests/test_*.py`: argument, identity, selection, cancellation, process cleanup, installer and evidence contracts. Use unittest discovery for the current test count.
+- `scripts/headless_tests.py`: native desktop, actual MCP, cancellation and shared pause on a fresh X11 desktop. The latest local run passed all four suites after menu/occlusion integration.
+- `tests/live_semantic.py`, `live_toolkits.py`, `live_controls.py`, `live_combo.py`: provider behavior with independent GTK3/GTK4/Qt widget oracles. See [toolkit details](TOOLKIT-QUALIFICATION.md) and [protected/option controls](PROTECTED-AND-OPTION-CONTROLS.md).
+- `tests/live_browser.py`: offline Chromium forms, Unicode selection, dialogs, native file upload, focus theft, rejected/transformed/delayed paste. Failures remain explicit. See [browser evidence](BROWSER-QUALIFICATION.md).
+- `tests/live_apps.py`: Mousepad save/Save As with exact file readback, Chromium clipboard forms, XFCE Terminal multiline-paste confirmation and passive-reader bytes.
+- `tests/live_menu.py`, `live_drag.py`, `live_interaction.py`, `live_window_tokens.py`, `live_x11_isolation.py`: actual menus, transfer, window states, XID reuse and X-server recovery.
+- `tests/live_application_launch.py`: private desktop-entry registry and owned launched applications; no modification of the real user registry.
 
-54 tests/checks across these suites, including 46 live checks. Several checks cover variants of the same capability; this is not 54 independently qualified product features or a general reliability percentage. The packaged doctor smoke check is additional. The broader catalog's `qualification=unqualified` means release-level evidence is still incomplete, even where local probes pass.
+Tests save synthetic evidence under ignored `artifacts/`. A changed source revision requires new evidence for affected behavior. Avoid comparing raw assertion counts as a reliability percentage.
 
-### Exact real-application outcomes
+## Bugs the tests have exposed
 
-- Mousepad saved the requested Unicode multiline text to an existing file, with independent file readback.
-- Mousepad's native Save As dialog created a second filename containing spaces and Japanese characters; file contents matched exactly.
-- Headed Chromium accepted ASCII multiline, literal Tab, Unicode/emoji/combining marks and trailing newlines through this driver's clipboard input. Playwright created the offline page and independently read its textarea; it did not supply the candidate's paste.
-- XFCE Terminal displayed its multiline-paste confirmation. The driver observed its accessible Paste button and invoked that action. A passive Python reader, not a shell, then recorded the exact payload including tabs and newlines. This is proof for that terminal configuration, not proof for xterm or every terminal mode.
+- GTK decorated-frame geometry differed from X11 client geometry; matching now uses actual frame extents.
+- Qt text uses UTF-16 offsets and insertion length; passing UTF-8 byte lengths inserted NUL padding. Independent widget readback caught it; conversions now happen at the provider boundary.
+- GTK4 reports unavailable screen coordinates and has selection/caret provider failures; ambiguous windows and unverifiable changes are refused.
+- Chromium exposes editable Text without EditableText. The driver now has an accessibility-guided clipboard fallback, but Unicode selection/hypertext readback still requires correction.
+- A chooser disappearing after Return was cancellation, not successful upload. The browser test now verifies the selected filename and file contents independently.
+- A highlighted combo option was not a committed combo value. The GTK path now activates and verifies the enclosing combo selection.
+- A timeout in Python subprocess communication could lose pending large stdin. Worker input now uses a private file, with regression coverage.
+- Cancellation acknowledgment can arrive before cleanup. Tests wait for operation status and independently check that no late input arrives.
 
-### Negative and recovery checks
+## Release work still required
 
-- NUL, CRLF, invalid surrogate text, oversized input and malformed key chords were refused.
-- Hidden editable controls and disabled buttons were refused before mutation.
-- Protected text reads were refused.
-- Out-of-image coordinates, expired screenshot IDs, window movement and expired element IDs were refused.
-- A competing server instance received BUSY for the same display lock.
-- A stopped fixture application produced a bounded refusal; after SIGCONT, inspection worked again.
-- Closed window identity was rejected.
-- Runtime symlinks/insecure permissions were rejected; shell metacharacters remained data in subprocess arguments.
+Complete provider compatibility and supported application workflows; broaden keyboard-layout/IME, clipboard interference and display configuration tests; qualify accessibility-bus/session replacement; address stale semantic object reuse and duplicate requests where feasible; exercise independent held-out tasks and repeated runs; and test clean ARM64/AMD64 Silo provisioning plus actual Mac Codex SSH discovery.
 
-## Failures found while developing
-
-1. GTK reported decorated accessibility-frame bounds while Xlib reported client bounds. Initial exact matching failed. Fixed by consulting actual `_NET_FRAME_EXTENTS` and matching either legitimate rectangle, with ambiguity rejected.
-2. GI's Accessible/Text naming collision made a generic `get_text(start,end)` call invalid. Fixed by calling the actual `Atspi.Text` interface explicitly.
-3. An early Save As test selected a hidden editable control in the dialog. The first attempt failed. Fixed the harness to select the visible control and tightened the driver to reject hidden/disabled mutation. The corrected Save As workflow passed. GTK/ATK diagnostic warnings still appeared during dialog traversal; the source of those warnings is not resolved and the successful file oracle does not make them disappear.
-4. The independent fixture originally rewrote JSON in place. A read caught the transient empty file. Changed the fixture to atomic replace; this was an oracle race, not evidence of lost application text.
-5. The frozen-app test initially assumed every attempted mutation must be uncertain. In this case lookup failed before mutation, so effect=none was appropriate. The test now checks bounded refusal and recovery; hard subprocess-timeout semantics have a separate test.
-
-These are recorded because the custom implementation needs the same scrutiny applied to upstream tools. Passing after a correction does not establish broad application compatibility.
-
-## Release blockers
-
-1. **Input reliability:** application-aware verified insertion, IME/keyboard-layout behavior, clipboard interference, explicit credential input and appropriate app-specific paths. Current clipboard insertion is a documented primitive.
-2. **Identity and coordination:** same-process XID/node reuse, popups/overlays, human takeover and the race between validation and event delivery.
-3. **Lifecycle:** cancellation, client disconnect, X-server/accessibility-bus restart, stale queued actions, request deduplication and cleanup under process death.
-4. **Missing interaction surface:** condition-based waits, window management, cross-window drag, complex selection widgets and native transient-menu targeting.
-5. **Qualification breadth:** clean ARM64/AMD64 guests, Qt/Electron/GTK4/Firefox/xterm, file manager/canvas apps, multiple display configurations, repeat and held-out workflows.
-6. **Product integration:** clean installation/upgrade/rollback, Silo packaging, actual fresh Mac Codex SSH discovery of both tools and skill. No global Codex registration or Silo source change has been made.
-
-Optional Wayland, OCR, video/audio and rich clipboard features are cataloged separately. The existing KasmVNC desktop remains appropriate for this prototype; replacing it is not a prerequisite for these improvements.
+Wayland, OCR, audiovisual interaction and rich clipboard formats remain separate catalog expansions. The existing XFCE/KasmVNC GUI is the current backend; these tool improvements do not require replacing it.

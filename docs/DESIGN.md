@@ -16,7 +16,7 @@ This does not make us independent of Linux toolkit bugs. An application can expo
 
 ```text
 Codex MCP client (inside guest remote execution context)
-  └─ luda-session --user silo-desktop -- silo-desktop
+  └─ luda-session --user silo-desktop -- luda
        ├─ discovers one explicit user's XFCE session
        ├─ drops to that ordinary user
        └─ stdio MCP server
@@ -37,37 +37,39 @@ Every normal response includes `ok` and elapsed time. Mutations also report an e
 - `verified`: a specifically named condition was observed, such as exact editable-text readback or active window identity.
 - `uncertain`: input might have taken effect; inspect before retrying.
 
-MCP errors use `isError=true`. Validation performed by the SDK can use the SDK's own error format. Unknown errors must not claim no effect. No automatic retry of mutations occurs. Request-id deduplication, comprehensive cancellation and transactional compound actions remain backlog items.
+MCP errors use `isError=true`. Validation performed by the SDK can use the SDK's own error format. Unknown errors must not claim no effect. No automatic retry of mutations occurs. MCP cancellation requests stop bounded worker processes and trigger input cleanup. Status remains responsive while cleanup finishes; incomplete cleanup quarantines new operations. Client-side timeout alone does not necessarily cancel a request. Request-id deduplication and atomic compound application transactions are not provided.
 
 ## Identity and observations
 
-Windows are identified by XID + process ID + Linux process start time. This catches process reuse, not every possible XID reuse within one live process; generation tracking remains a release blocker.
+Windows are identified by XID, process ID, Linux process start time and a shared random X-resource property. The property survives remapping and changes on destruction/recreation, including reuse of the same XID by the same live process. This is a stale-resource check, not a trust boundary against malicious X11 clients.
 
-Screenshot IDs belong to one server, expire after 15 seconds and hold native/image dimensions and window-layout/focus metadata. Pointer coordinates use returned image pixels. The driver rejects layout/focus/resolution changes and points outside the active client's bounds. It does not detect all content changes or unmanaged overlay interception. Layout validation is not proof that a control under the pixel is unchanged.
+Screenshot IDs belong to one server, expire after 15 seconds and hold native/image dimensions and window-layout/focus metadata. Pointer coordinates use returned image pixels. The driver rejects layout/focus/resolution changes and points outside the active client or an explicitly owned observed popup. A root-surface hit test rejects covered targets. These checks do not atomically exclude subsequent human input or detect every content change. Layout validation is not proof that a control under the pixel is unchanged.
 
-Client geometry is queried through Xlib root-coordinate translation. Frame extents come from the window manager; no hard-coded title-bar adjustment. Accessibility top-levels must uniquely match either client or frame geometry. Ambiguous mapping is a capability failure, not permission to target every window in a process.
+Client geometry is queried through Xlib root-coordinate translation. Frame extents come from the window manager; no hard-coded title-bar adjustment. Accessibility top-levels must uniquely match either client or frame geometry. GTK4 providers with unavailable screen coordinates can use exact window title and dimensions only when that identifies one top-level within the process; unreliable element bounds are omitted. Ambiguous mapping is a capability failure, not permission to target every window in a process.
 
 Element IDs are opaque, server-local and expire after 60 seconds. The worker resolves the original top-level and object path, revalidates process identity/name/role, and requires enabled/showing state for mutation. Widget reuse with identical identity properties remains a limitation. Trees are bounded and partial coverage is declared. Caches are bounded to 16 screenshots and 4,000 handles.
 
 ## Text contract
 
-`set_text` means complete replacement of one accessible editable text element. It requires readable text and compares exact readback. `enter_text` means clipboard insertion at the current caret using an explicit application shortcut. It verifies CLIPBOARD bytes but not destination text. Neither operation intentionally adds a submit key.
+`desktop_type` inserts at the code-point caret/replaces a selection by default; `mode="replace"` replaces the entire field. Native EditableText is preferred. Where only editable Text is exposed, the driver verifies focus and selection, pastes, and compares exact destination readback. An uncertain native mutation never triggers clipboard fallback. Browser hypertext and toolkit differences require provider-specific qualification; unsupported or mismatched readback is not success.
+
+`desktop_paste` is the deliberate lower-level clipboard operation. It selects a common application shortcut from WM_CLASS, permits an explicit override, and samples exact clipboard bytes/ownership before dispatch. It does not verify destination text. Neither operation adds a submit key.
 
 LF, Tab, blank lines, leading/trailing whitespace, Unicode and trailing newlines are not normalized or trimmed. Other C0 controls, DEL, NUL and CR are rejected before clipboard/app mutation. The limit is 1 MB UTF-8. CRLF support would need an explicit option, not silent conversion. Unpaired Unicode surrogates are invalid text and must be rejected by validation.
 
-Application transformation is possible: single-line fields, formatting, clipboard managers, terminal line discipline and IMEs can change the effect. `verified` is only appropriate for actual exact readback. Current paste is a primitive, not a universal verified insertion implementation.
+Application transformation is possible: single-line fields, formatting, clipboard managers, terminal line discipline and IMEs can change the effect. `verified` is only appropriate for actual exact readback. Raw paste remains a primitive; verified typing must report an error when it cannot establish exact destination text.
 
 CLIPBOARD is overwritten. PRIMARY is unchanged. The owned clipboard process lives until replaced or server exit; automatic restoration is deliberately not implemented because early restoration can corrupt asynchronous paste or overwrite a newer human copy. Shift+Insert can read PRIMARY. Terminal pasted newlines can execute commands; the tool does not automatically accept paste confirmation dialogs.
 
-Protected fields are unsupported for semantic read/write in this prototype. Screenshots reflect the application's own masking. A full credential-input feature needs a separate carefully specified contract; it cannot be inferred from ordinary text tests.
+`desktop_type_secret` explicitly replaces an observed protected EditableText field. It never reads the value, uses no clipboard, redacts provider exceptions and reports dispatched only. Ordinary reads/typing/selection refuse protected fields. The MCP client still supplies the tool argument; Luda cannot control client-side transcript retention. Screenshots reflect application masking. Submission remains separate.
 
 ## Timing, concurrency and recovery
 
-AT-SPI runs in disposable subprocesses so a hung provider cannot indefinitely block the server. Input commands have bounded subprocess deadlines. A timed-out mutation is uncertain. Drag attempts mouse-button release in `finally`, but process death, disconnect and cancellation need further qualification.
+AT-SPI runs in disposable subprocesses so a hung provider cannot indefinitely block the server. Input commands have bounded subprocess deadlines. A timed-out mutation is uncertain. Drag attempts mouse-button release in `finally`, including cooperative cancellation; cleanup commands have their own bounded deadline. An abruptly killed server cannot guarantee release. Xlib operations run in disposable helpers, so X-server death does not terminate the MCP server.
 
-Locks serialize cooperating server instances for the same Unix user/display. They do not lock out human viewer input, other programs or privileged processes. Focus can change between a check and an X11 event. Human takeover and stronger input ownership remain release requirements.
+Locks serialize cooperating server instances for the same Unix user/display. They do not lock out human viewer input, other programs or privileged processes. Focus can change between a check and an X11 event. A shared `desktop_control` pause file blocks cooperating clients before and during mutations; observations and status remain available. This is cooperative takeover, not exclusive hardware ownership.
 
-There is no generalized condition-wait API yet. Callers observe/read back after dispatch. Full-desktop reconnect after X-server death, lock-screen handling and live backend hot-reload are not implemented.
+`desktop_wait` polls bounded text/window conditions without retrying input. Metadata helpers reconnect after X-server restart; old window generations no longer resolve. Full session/environment rediscovery after desktop or accessibility-bus replacement, lock-screen handling and live backend hot-reload still need qualification.
 
 ## Source references
 
