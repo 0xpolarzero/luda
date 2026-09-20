@@ -190,6 +190,14 @@ async def main(executable):
                 await button('Replace field');await asyncio.sleep(.1)
                 await error('desktop_type','STALE_TARGET',element_id=eid,text='must not appear')
                 eid=await field('Exact field');await call('desktop_focus_element',element_id=eid)
+                await human_foreground()
+                await call('desktop_press_keys',window_id=wid,chord='a')
+                native_actual=await oracle('a')
+                native_windows=(await call('desktop_windows'))['windows']
+                record('native-keys-automatic-foreground-fallback',native_actual.get('text')=='a' and
+                       next(w for w in native_windows if w['window_id']==wid)['active'] and
+                       any(e['type']=='keydown' and e['key']=='a' and e['trusted'] for e in native_actual['events']),native_actual)
+                await call('desktop_type',element_id=eid,text='',mode='replace')
                 await call('desktop_press_keys',window_id=wid,chord='ctrl+shift+u')
                 for key in ('3','0','6','b'):await call('desktop_press_keys',window_id=wid,chord=key)
                 await asyncio.sleep(.1)
