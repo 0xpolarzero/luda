@@ -34,7 +34,7 @@ from .pointer_input import click_button
 from .keyboard import validate_chord, validate_key_count, send_chord, keyboard_capabilities, keyboard_recovery_checkpoint
 from .session_state import session_state
 from .coordinates import image_bounds, topology_summary
-from .ime import composition_capability
+from .ime import composition_capability, native_text_readback
 from .diagnostics import capability_summary
 from .storage import storage_errors, staged_payload
 
@@ -489,7 +489,8 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
             kwargs['action'] = action
         if op in ('set','insert','secret'):
             validate_text(kwargs['text'])
-        return self.ax({'op':op,'pid':w['pid'],'start':w['start'],'target':node,**kwargs},op!='read')
+        result=self.ax({'op':op,'pid':w['pid'],'start':w['start'],'target':node,**kwargs},op!='read')
+        return native_text_readback(result) if op in ('read','set','insert') else result
 
     def type_text(self, element_id, text, mode='insert', line_breaks=None, transport='native'):
         validate_text(text)
@@ -556,9 +557,8 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
             if not observed.get('plain_text_verification_supported',True):
                 raise DesktopError('TEXT_REPRESENTATION_UNSUPPORTED','Input was dispatched, but the resulting embedded-object representation cannot verify exact plain text. Inspect before retrying.',effect='uncertain',details={'text_representation':observed.get('text_representation'),'embedded_object_count':len(observed.get('embedded_objects',[]))})
             if not observed['truncated'] and observed['text']==expected:
-                return {'effect':'verified','exact_match':True,'expected_characters':len(expected),
-                        'actual_characters':len(observed['text']),'caret_verified':observed.get('caret_offset')==start+len(text),
-                        'verification':'Exact destination text readback after clipboard insertion.'}
+                return native_text_readback({'effect':'verified','exact_match':True,'expected_characters':len(expected),
+                        'actual_characters':len(observed['text']),'caret_verified':observed.get('caret_offset')==start+len(text)})
             if elapsed_time()>=deadline:
                 raise DesktopError('TEXT_MISMATCH','Destination did not match requested text; inspect paste dialogs and contents before retrying.',effect='uncertain',details={'expected_characters':len(expected),'actual_characters':observed.get('characters')})
             time.sleep(.05)

@@ -16,3 +16,13 @@ def composition_capability():
         'text_verification_scope': 'Exposed text at readback; pending IME composition is not verified.',
         'guidance': 'If composition is active or suspected, preserve it and have it explicitly completed or cancelled before focus, selection, typing or paste. Do not send Escape or Return as automatic cleanup.',
     }
+
+
+def native_text_readback(result):
+    """Describe the generic backend's missing preedit evidence, not current activity."""
+    result = dict(result)
+    result['composition'] = {'known': False, 'active': None}
+    if result.get('exact_match') is True:
+        result['verification'] = ('Exact exposed text at readback; pending IME composition '
+                                  'and application commit are not verified.')
+    return result

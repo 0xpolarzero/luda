@@ -2,13 +2,31 @@
 
 `desktop_doctor.ime_composition` reports `state: unknown`, with detection, explicit commit/cancel, and conflicting-input guards unsupported. Normal text tools still operate, but an exact match verifies the exposed text at that moment; it does not establish that no pending composition exists. No input-method state is reset, no daemon is started, and no Escape or Return is sent to infer state.
 
+Generic native `desktop_read_text` replies now explicitly include
+`composition: {"known": false, "active": null}`. The same metadata accompanies
+native exact-text insertion/replacement results, including the verified
+clipboard fallback. This is missing evidence, not a negative activity check:
+`active: null` must not be interpreted as `false`. Existing exposed text,
+`exact_match`, and effect values retain their meanings. Exact verification now
+states that pending composition and application commit were not verified.
+There is no extra probe, focus change, reset, commit/cancel action or blanket
+refusal of ordinary native typing. Protected read refusal remains unchanged.
+
+Owned-browser/cooperating-provider results use their existing known/unknown
+composition observations and are returned without this generic override. The
+six focused `test_native_composition_metadata.py` cases verify read-only metadata,
+exact native insert/replace, clipboard fallback, protected refusal, preservation
+of provider-known state, and actual public JSON projection of `active: null`.
+These tests establish the metadata contract, not safe handling of active native
+composition.
+
 Acceptance case **EDIT-10 remains unqualified and blocked** for the generic X11/AT-SPI backend. This is separate from the browser rich-text representation blocker; neither issue is solved by ordinary Unicode paste passing.
 
 ## Real application probes
 
 `tests/live_ime.py` uses real GTK3 Entry and TextView controls. Their own `preedit-changed` signals and persisted buffers provide the independent oracle. `tests/live_ime_browser.py` uses actual Chromium and records DOM composition/input events independently. Both start composition by sending real X11 Ctrl+Shift+U and the digits `306b` through public Luda input methods, leaving `u306b` uncommitted. Neither test synthesizes a composition event or uses CDP to insert composition.
 
-The probes start their own XFWM4 on a private Xvfb/session bus and set `GTK_IM_MODULE=simple` only in their private environment. No IBus or Fcitx daemon is needed for this real composition. Absence of those processes therefore cannot prove that composition is inactive.
+The probes start their own XFWM4 on a private Xvfb/session bus. Current fixtures select canonical `GTK_IM_MODULE=gtk-im-context-simple` only in their private environment; the original `simple` spelling could fall back to IBus, as preserved in the [fixture regression evidence](../tests/evidence/browser-simple-ime/README.md). No IBus or Fcitx daemon is needed for this real composition. Absence of those processes therefore cannot prove that composition is inactive.
 
 The 2026-09-20 local evidence covers 18 scenarios, each with a fresh field and an independent active-composition oracle:
 

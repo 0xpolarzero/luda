@@ -313,7 +313,7 @@ async def desktop_inspect(window_id: str, limit: int = 150, name: str | None = N
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
 async def desktop_read_text(element_id: str, limit: int = 16000) -> CallToolResult:
-    """Read accessible text and representation metadata, preserving whitespace. limit counts Unicode code points (default 16000, maximum 1000000), not bytes. Opaque embedded objects are not exact logical plain text: check plain_text_verification_supported. Normalization reads the bounded full field; a smaller limit does not enable streaming. Protected fields are refused."""
+    """Read accessible text and representation metadata, preserving whitespace. limit counts Unicode code points (default 16000, maximum 1000000), not bytes. Opaque embedded objects are not exact logical plain text: check plain_text_verification_supported. Normalization reads the bounded full field; a smaller limit does not enable streaming. Protected fields are refused. Generic native readback reports composition known=false, active=null; pending preedit is not checked."""
     if not 1<=limit<=1_000_000:
         return result_error('INVALID_ARGUMENT', 'limit must be 1–1000000')
     return await execute_async('element',element_id,'read',limit=limit)
