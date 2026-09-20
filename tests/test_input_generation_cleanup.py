@@ -1,8 +1,10 @@
 """Final disposable-Xvfb teardown must reap or fail, without retrying input."""
 import subprocess
+import os
+import time
 import unittest
 from unittest.mock import Mock
-from live_input_generation import stop_owned_server
+from live_input_generation import stop_owned_server, read_proof
 
 
 class OwnedServerCleanupTests(unittest.TestCase):
@@ -50,3 +52,24 @@ class OwnedServerCleanupTests(unittest.TestCase):
         with self.assertRaises(PermissionError):
             stop_owned_server(process)
         process.kill.assert_not_called()
+
+
+class GuardianProofTests(unittest.TestCase):
+    def pipe(self):
+        reader, writer=os.pipe()
+        self.addCleanup(os.close, reader);self.addCleanup(os.close, writer)
+        return reader,writer
+    def test_complete_receipt(self):
+        reader,writer=self.pipe();os.write(writer,b'{"held":true}\n')
+        with os.fdopen(os.dup(reader),'rb',buffering=0) as stream:
+            self.assertEqual(read_proof(stream),{'held':True})
+    def test_partial_receipt_has_bounded_deadline(self):
+        reader,writer=self.pipe();os.write(writer,b'{"held":')
+        began=time.monotonic()
+        with os.fdopen(os.dup(reader),'rb',buffering=0) as stream, self.assertRaises(TimeoutError):
+            read_proof(stream,timeout=.02)
+        self.assertLess(time.monotonic()-began,.5)
+    def test_eof_is_not_a_receipt(self):
+        reader,writer=os.pipe();os.close(writer)
+        with os.fdopen(reader,'rb',buffering=0) as stream, self.assertRaises(AssertionError):
+            read_proof(stream)

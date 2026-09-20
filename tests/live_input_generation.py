@@ -32,6 +32,19 @@ def stop_owned_server(server, timeout=3):
     return {'term_to_kill_escalated': escalated, 'returncode': server.returncode}
 
 
+def read_proof(stream, timeout=4):
+    deadline=time.monotonic()+timeout;data=b''
+    while b'\n' not in data:
+        remaining=deadline-time.monotonic()
+        if remaining<=0 or not select.select([stream],[],[],remaining)[0]:
+            raise TimeoutError('Owned guardian did not supply a bounded proof.')
+        chunk=os.read(stream.fileno(),4096)
+        if not chunk:raise AssertionError('Owned guardian closed without a proof.')
+        data+=chunk
+        if len(data)>8192:raise AssertionError('Owned guardian proof exceeded its limit.')
+    return json.loads(data.split(b'\n',1)[0])
+
+
 def main(stall_cleanup=False):
     server=None;oracle=None;key_guard=None;mouse_guard=None;mouse_writer=None
     with tempfile.TemporaryDirectory(prefix='luda-input-generation-') as directory:
@@ -45,7 +58,7 @@ def main(stall_cleanup=False):
         original_env=dict(os.environ)
         def native(request):
             return json.loads(subprocess.check_output([sys.executable,'-m','luda._input_native'],input=json.dumps(request).encode()+b'\n',env=env,timeout=3))
-        def command(*args):subprocess.run(args,env=env,check=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+        def command(*args):subprocess.run(args,env=env,check=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=3)
         try:
             os.environ.update(DISPLAY=env['DISPLAY'],XAUTHORITY=env['XAUTHORITY'])
             oracle=Oracle();x=oracle.x
@@ -55,25 +68,36 @@ def main(stall_cleanup=False):
             plan=json.loads(subprocess.check_output([sys.executable,'-m','luda._keyboard_native','plan'],input=json.dumps({'chord':'ctrl+shift+alt+F12','target':window}).encode()+b'\n',env=env,timeout=3))
             assert 'server_generation' in plan,plan
             old_generation=plan['server_generation']
-            key_guard=subprocess.Popen([sys.executable,'-m','luda._keyboard_guard'],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,env=env)
+            # Stop the owned worker deterministically after its first key-down
+            # has released XGrabServer. Asynchronous SIGSTOP could freeze that
+            # grab and deadlock this fixture's subsequent X queries.
+            (base/'generation_worker.py').write_text(
+                'import os,signal\nfrom luda import _keyboard_native as native\n'
+                'original=native.Keyboard.press_target\n'
+                'def press(self,*args):\n original(self,*args)\n os.kill(os.getpid(),signal.SIGSTOP)\n'
+                'native.Keyboard.press_target=press\nnative.main()\n')
+            guard_env=dict(env,PYTHONPATH=str(base)+os.pathsep+env.get('PYTHONPATH',''))
+            guard_code="from luda import _keyboard_guard as guard; guard.native_module=lambda request:'generation_worker'; guard.main()"
+            key_guard=subprocess.Popen([sys.executable,'-c',guard_code],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,env=guard_env)
             key_guard.stdin.write(json.dumps(plan).encode()+b'\n');key_guard.stdin.flush()
             wait(lambda:oracle.code('Control_L') in oracle.pressed())
             children=descendants(key_guard.pid);assert len(children)==1
-            os.kill(children[0],signal.SIGSTOP);os.kill(key_guard.pid,signal.SIGSTOP)
+            wait(lambda:Path(f'/proc/{children[0]}/status').read_text().split('State:',1)[1].lstrip().startswith('T'))
+            os.kill(key_guard.pid,signal.SIGSTOP)
             # Clear only this stopped test injector's own keys so the held
             # pointer planner can independently enforce its preheld-input rule.
             command('xdotool','keyup','Control_L','Shift_L','Alt_L','F12')
             mouse_plan=json.loads(subprocess.check_output([sys.executable,'-m','luda._pointer_native','plan'],input=json.dumps({'button':'1','count':1,'target':None,'hold':True}).encode()+b'\n',env=env,timeout=3))
             mouse_guard=subprocess.Popen([sys.executable,'-m','luda._keyboard_guard'],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,env=env)
             mouse_guard.stdin.write(json.dumps(mouse_plan).encode()+b'\n');mouse_guard.stdin.flush()
-            assert json.loads(mouse_guard.stdout.readline())['held']
+            assert read_proof(mouse_guard.stdout)['held']
             mouse_children=descendants(mouse_guard.pid);assert len(mouse_children)==1
             os.kill(mouse_children[0],signal.SIGSTOP);os.kill(mouse_guard.pid,signal.SIGSTOP)
             assert oracle.buttons()
             oracle.close();oracle=None
             server.terminate();server.wait(timeout=3)
             server=subprocess.Popen(['Xvfb',env['DISPLAY'],'-screen','0','800x600x24','-nolisten','tcp','-ac','-auth',str(authority)],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
-            wait(lambda:subprocess.run(['xdpyinfo'],env=env,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL).returncode==0)
+            wait(lambda:subprocess.run(['xdpyinfo'],env=env,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=1).returncode==0)
             oracle=Oracle();new_generation=native({'operation':'generation'})['server_generation'];assert new_generation!=old_generation
             oracle.x.XCreateSimpleWindow.argtypes=[C.c_void_p,C.c_ulong,C.c_int,C.c_int,C.c_uint,C.c_uint,C.c_uint,C.c_ulong,C.c_ulong];oracle.x.XCreateSimpleWindow.restype=C.c_ulong
             new_window=oracle.x.XCreateSimpleWindow(oracle.d,oracle.x.XDefaultRootWindow(oracle.d),0,0,200,100,0,0,0)
@@ -97,10 +121,10 @@ def main(stall_cleanup=False):
             held=oracle.pressed();button_state=oracle.buttons();assert held and button_state
             key_guard.stdin.close();os.kill(key_guard.pid,signal.SIGCONT)
             assert select.select([key_guard.stdout],[],[],4)[0]
-            key_proof=json.loads(key_guard.stdout.readline());key_guard.wait(timeout=3)
+            key_proof=read_proof(key_guard.stdout);key_guard.wait(timeout=3)
             assert key_proof['session_changed'] and key_proof['cleanup_skipped'] and not key_proof['cleanup_verified'],key_proof
             mouse_guard.stdin.close();os.kill(mouse_guard.pid,signal.SIGCONT)
-            mouse_proof=json.loads(mouse_guard.stdout.readline());mouse_guard.wait(timeout=3)
+            mouse_proof=read_proof(mouse_guard.stdout);mouse_guard.wait(timeout=3)
             assert mouse_proof['session_changed'] and mouse_proof['cleanup_skipped'] and not mouse_proof['cleanup_verified'],mouse_proof
             assert oracle.pressed()==held and oracle.buttons()==button_state and pointer_position()==replacement_position
             explicit=native({'operation':'release','button':'1','server_generation':old_generation})
