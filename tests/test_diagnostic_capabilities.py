@@ -25,7 +25,7 @@ class DiagnosticCapabilities(unittest.TestCase):
     def test_display_loss_and_missing_keyboard_have_distinct_capabilities(self):
         report=self.report();report['keyboard']['available']=False
         self.assertEqual(capability_summary(report)['keyboard_input'],'unavailable')
-        self.assertEqual(capability_summary(report)['pointer_input'],'backend_available')
+        self.assertEqual(capability_summary(report)['pointer_input'],'unavailable')
         report['display_available']=False
         self.assertEqual(capability_summary(report)['screen_observation'],'unavailable')
     def test_provider_success_does_not_claim_every_editor_supported(self):

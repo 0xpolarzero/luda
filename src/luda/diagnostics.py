@@ -5,7 +5,8 @@ def capability_summary(report):
     dependencies=report['dependencies']
     display=report['display_available']
     # Public observations/actions resolve native windows through wmctrl. Input
-    # additionally needs xdotool's active-window proof, even with native XTest.
+    # still uses xdotool for window-manager bookkeeping; input itself requires
+    # the independently probed private device backend.
     windows=display and dependencies.get('wmctrl',False)
     focused=windows and dependencies.get('xdotool',False)
     blocked=(report['session_state']['input_ready'] is False or
@@ -17,7 +18,7 @@ def capability_summary(report):
         return 'application_dependent' if semantic else 'backend_available'
     return {
         'screen_observation':'backend_available' if windows and report.get('topology_available', False) and dependencies.get('scrot') else 'unavailable',
-        'pointer_input':input_state(focused and report.get('topology_available', False)),
+        'pointer_input':input_state(focused and report.get('topology_available', False) and report['keyboard']['available']),
         'keyboard_input':input_state(focused and report['keyboard']['available']),
         'clipboard_paste':input_state(focused and report['keyboard']['available'] and dependencies.get('xclip')),
         'accessibility_read':'backend_available' if windows and report['accessibility_available'] else 'unavailable',
