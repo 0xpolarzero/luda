@@ -79,6 +79,24 @@ class HostRegistration(unittest.TestCase):
         conflict=self.bundle(1,'different-location')
         with self.assertRaisesRegex(registration.RegistrationError,'registration_conflict'):registration.register(conflict,self.codex,self.home)
         self.assertEqual((self.home/'config.toml').read_bytes(),before)
+    def test_malformed_bundle_metadata_cli_returns_json_without_traceback(self):
+        import subprocess,sys
+        bundle=self.bundle(22)
+        metadata=bundle/'host-registration.json';original=metadata.read_bytes()
+        meta=json.loads(original);plugin=bundle/'plugins'/meta['plugin']
+        candidates=[(metadata,dict(meta,vm_id=42)),(metadata,[]),(plugin/'.codex-plugin/plugin.json',[]),(plugin/'.mcp.json',[])]
+        profile_before=(self.home/'config.toml').read_bytes()
+        for path,value in candidates:
+            with self.subTest(file=path.name,value=value):
+                saved=path.read_bytes();path.write_text(json.dumps(value))
+                try:
+                    result=subprocess.run([sys.executable,str(ROOT/'scripts/register_host_plugin.py'),'--marketplace-root',str(bundle),'--codex-executable',self.codex,'--codex-home',str(self.home)],capture_output=True,text=True,timeout=10)
+                    self.assertEqual(result.returncode,1)
+                    self.assertEqual(json.loads(result.stdout)['status'],'refused')
+                    self.assertEqual(result.stderr,'')
+                    self.assertEqual((self.home/'config.toml').read_bytes(),profile_before)
+                finally:path.write_bytes(saved)
+
     def test_same_argv_with_effective_transport_overrides_is_refused(self):
         bundle=self.bundle(21);registration.register(bundle,self.codex,self.home)
         meta=json.loads((bundle/'host-registration.json').read_text())

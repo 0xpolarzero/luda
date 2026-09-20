@@ -21,7 +21,9 @@ def read_json(path):
     with path.open('rb') as stream:
         data=stream.read(1048577)
     if len(data)>1048576:raise RegistrationError('metadata_limit')
-    return json.loads(data)
+    value=json.loads(data)
+    if not isinstance(value,dict):raise RegistrationError('metadata_shape_invalid')
+    return value
 
 
 def atomic(path,value):
@@ -51,6 +53,7 @@ def cli(executable,home,*arguments):
 
 def validate_bundle(market):
     meta=read_json(market/'host-registration.json')
+    if not isinstance(meta.get('vm_id'),str):raise RegistrationError('bundle_identity_invalid')
     identity=uuid.UUID(meta['vm_id']).hex
     if meta.get('format')!=1 or meta.get('plugin')!='luda-'+identity or meta.get('marketplace')!='silo-'+identity:
         raise RegistrationError('bundle_identity_invalid')
