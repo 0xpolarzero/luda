@@ -1,0 +1,2 @@
+# Unified-diff context markers are intentional trailing spaces.
+integrations/silo/*.patch -whitespace
