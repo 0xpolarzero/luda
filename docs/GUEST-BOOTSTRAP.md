@@ -83,6 +83,30 @@ Twelve focused tests cover rejection before child execution, stopped/missing
 status ordering, literal shell-looking paths as argv, installer output routing,
 install/readiness/config failure boundaries, selected-release preservation,
 status/error redaction and machine-readable CLI failure, all path overlaps, non-root provisioning, release switching, and lock coverage. A real detached-child timeout regression verifies the tagged child cannot produce a delayed file effect. Existing installer tests
-remain separate. Actual installed-guest composition is intentionally deferred to
-the integrated source run under `/tmp/luda-live-tests.lock`; these unit tests do
-not claim it passed.
+remain separate. The separate installed-guest record below exercises the composed workflow;
+unit tests alone do not establish that result.
+
+## Installed guest composition, 2026-09-20
+
+Immutable source `7294d86` passed **601 unit tests** and then bootstrapped the
+existing Silo guest as root, using `--skip-system`, a separate prefix
+`/workspace/luda-bootstrap-install` and fresh output `/workspace/luda-bootstrap-bundle`.
+The shared desktop lease covered bootstrap and both GUI smoke tests. Status
+reported the existing version-1 running desktop; no lifecycle action was invoked.
+Doctor reported ready, the generated fragment requested remote placement, and
+the copied skill matched the installed skill byte for byte.
+
+Release `0.1.0-260a29c733df079c` has wheel SHA-256
+`009fd94236a6076617e61caeabd9de393af6ad319a1969f536e8b50f06e61c14`.
+Its installed launcher dropped to UID 1001 and attached to KasmVNC `:1`.
+Using that wheel's interpreter and package, isolated copies of the test fixtures
+passed **31 native GUI and 18 actual MCP assertions**. The probe checked that
+imports came from the installed release, not this source checkout. It used only
+its own windows. Source fingerprint remained
+`b1217aa88d9e40596bb501fdf18ed858e7300af6d59c504f6281a4f06f99725e`.
+Raw local records are under `artifacts/guest-bootstrap/root-install-7294d86/`.
+
+This tests root bootstrap with existing dependencies and a running desktop. It
+does not test fresh provisioning, apt installation, ordinary-user unreadable
+process cleanup, Mac discovery or Silo's automatic invocation. Later wrapper
+changes retain their own source-bound tests; this is not a pass for later source.
