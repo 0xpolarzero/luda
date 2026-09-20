@@ -231,7 +231,7 @@ async def desktop_read_text(element_id: str, limit: int = 16000) -> CallToolResu
 
 @mcp.tool()
 async def desktop_type(element_id: str, text: str, mode: Literal["insert", "replace"] = "insert") -> CallToolResult:
-    """Type into an editable element and verify exact readback. Default insert preserves surrounding text and replaces the selection; replace changes the entire field. Preserves Unicode/LF/tabs, never adds a submit key."""
+    """Type into an editable element and verify exact readback. Default insert preserves surrounding text and replaces the selection; replace changes the entire field. Preserves Unicode/LF/tabs, never adds a submit key. Exact readback does not prove application commit or guarantee autocomplete events; inspect the result before an explicit commit or suggestion selection."""
     return await execute_async('type_text',element_id,text,mode)
 
 
@@ -297,7 +297,7 @@ async def desktop_select(element_id: str, start_offset: int, end_offset: int) ->
 
 @mcp.tool()
 async def desktop_set_value(element_id: str, value: float) -> CallToolResult:
-    """Set a numeric control to a value within its inspected range and verify the actual value."""
+    """Set a numeric control within its inspected range and verify its accessibility numeric value. Displayed formatting and application commit may differ; inspect/read both, then explicitly commit only when intended."""
     return await execute_async('element',element_id,'value',value=value)
 
 
