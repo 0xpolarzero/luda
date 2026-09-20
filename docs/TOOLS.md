@@ -74,7 +74,7 @@ Activate a window from desktop_windows and verify focus. Observe again afterward
 desktop_observe(max_width: int=1280)
 ```
 
-Return screenshot plus window layout and a 15-second snapshot ID. Coordinates are image pixels.
+Return screenshot plus window layout and a 15-second snapshot ID. Pointer coordinates and window/popup image_bounds use returned-image pixels; bounds/frame_bounds remain native X11 root pixels. image_bounds is null when no integer screenshot pixel maps into the client. Use integer image points.
 
 ## `desktop_inspect`
 

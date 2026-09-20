@@ -198,7 +198,7 @@ async def desktop_activate(window_id: str) -> CallToolResult:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
 async def desktop_observe(max_width: int = 1280) -> CallToolResult:
-    """Return screenshot plus window layout and a 15-second snapshot ID. Coordinates are image pixels."""
+    """Return screenshot plus window layout and a 15-second snapshot ID. Pointer coordinates and window/popup image_bounds use returned-image pixels; bounds/frame_bounds remain native X11 root pixels. image_bounds is null when no integer screenshot pixel maps into the client. Use integer image points."""
     return await execute_async('observe',max_width)
 
 
