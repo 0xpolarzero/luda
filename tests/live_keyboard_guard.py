@@ -234,7 +234,12 @@ def main():
     if '--child' in sys.argv:return run_child()
     # The external command creates both display and bus and bounds the entire
     # suite. No shared display input or application is touched.
-    result=subprocess.run(['xvfb-run','-a','-s','-screen 0 1000x750x24 -nolisten tcp','dbus-run-session','--',sys.executable,str(Path(__file__).resolve()),'--child'],timeout=45)
+    with tempfile.TemporaryDirectory(prefix='luda-private-keyboard-session-') as directory:
+        env=dict(os.environ)
+        for key,name in (('XDG_CONFIG_HOME','config'),('XDG_DATA_HOME','data'),('XDG_CACHE_HOME','cache'),('XDG_RUNTIME_DIR','runtime')):
+            path=Path(directory)/name;path.mkdir(mode=0o700);env[key]=str(path)
+        env['XDG_CONFIG_DIRS']=env['XDG_CONFIG_HOME']
+        result=subprocess.run(['xvfb-run','-a','-s','-screen 0 1000x750x24 -nolisten tcp','dbus-run-session','--',sys.executable,str(Path(__file__).resolve()),'--child'],env=env,timeout=45)
     raise SystemExit(result.returncode)
 
 if __name__=='__main__':main()
