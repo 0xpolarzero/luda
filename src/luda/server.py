@@ -25,6 +25,21 @@ _operation_gate = threading.Lock()
 _history_lock = threading.Lock()
 _history = deque(maxlen=32)
 _quarantined = threading.Event()
+_quarantine_lock = threading.Lock()
+_quarantine_owners = set()
+
+
+def _retain_quarantine(task):
+    with _quarantine_lock:
+        _quarantine_owners.add(task)
+        _quarantined.set()
+
+
+def _release_quarantine(task):
+    with _quarantine_lock:
+        _quarantine_owners.discard(task)
+        if not _quarantine_owners:
+            _quarantined.clear()
 
 
 def get_backend():
@@ -108,14 +123,16 @@ async def execute_async(method, *args, **kwargs):
         cancelled.set()
         # Let the worker stop its child and release input/lock before accepting
         # more mutations. If it cannot, quarantine instead of racing it.
-        _quarantined.set()
+        _retain_quarantine(task)
+        task.add_done_callback(_release_quarantine)
         with anyio.CancelScope(shield=True):
             try:
                 await asyncio.wait_for(asyncio.shield(task), timeout=2)
             except (asyncio.TimeoutError, asyncio.CancelledError):
-                task.add_done_callback(lambda _: _quarantined.clear())
-            else:
-                _quarantined.clear()
+                pass  # This task's completion callback owns its recovery lease.
+            finally:
+                if task.done():
+                    _release_quarantine(task)  # Idempotent if callback already ran.
         raise
 
 
