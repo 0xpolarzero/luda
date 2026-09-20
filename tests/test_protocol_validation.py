@@ -29,6 +29,16 @@ class ProtocolValidation(unittest.IsolatedAsyncioTestCase):
                     self.assertNotIn('SYNTHETIC_SECRET',result.content[0].text)
             dispatch.assert_not_called()
 
+    async def test_repair_hints_contain_schema_names_but_no_submitted_values(self):
+        result=await mcp.call_tool('desktop_click',dict(window_id='w',snapshot_id='s',x='secret-value',y=2))
+        text=result.content[0].text;issue=json.loads(text)['issues'][0]
+        self.assertEqual(issue,{'rule':'type','parameter':'x','expected':'number'})
+        self.assertNotIn('secret-value',text)
+        result=await mcp.call_tool('desktop_type_secret',dict(text='secret-value',secret_field='private'))
+        text=result.content[0].text
+        self.assertNotIn('secret-value',text);self.assertNotIn('secret_field',text);self.assertNotIn('private',text)
+        self.assertIn('element_id',text)
+
     async def test_schemas_refuse_unknown_properties(self):
         for tool in await mcp.list_tools():
             self.assertIs(tool.inputSchema.get('additionalProperties'),False,tool.name)
