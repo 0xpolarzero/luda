@@ -24,10 +24,11 @@ def main():
     suite = unittest.TestSuite()
     for pattern in ('test_plugin_bundle.py',):
         suite.addTests(unittest.defaultTestLoader.discover(str(ROOT/'tests'), pattern=pattern))
+    suite.addTests(unittest.defaultTestLoader.discover(str(TOOL), pattern='test_setup_discovery.py', top_level_dir=str(TOOL)))
     result = unittest.TextTestRunner(verbosity=2).run(suite)
     evidence = {'cli_version': version, 'package_lock_sha256': hashlib.sha256((TOOL/'package-lock.json').read_bytes()).hexdigest(),
                 'tests_run':result.testsRun, 'skipped':len(result.skipped), 'passed':result.wasSuccessful() and not result.skipped,
-                'scope':'Actual CLI registration/cache/resolved configuration in temporary profiles; no model calls or authentication-file access, graphical access tested separately.'}
+                'scope':'Actual CLI registration/cache/resolved configuration and generated setup skill discovery via app-server in temporary profiles; no model calls or authentication-file access, graphical access tested separately.'}
     output = ROOT/'artifacts/codex-cli-registration';output.mkdir(parents=True, exist_ok=True)
     (output/'result.json').write_text(json.dumps(evidence,indent=2)+'\n')
     print(json.dumps(evidence))
