@@ -33,6 +33,20 @@ In the graphical session:
 
 The second command serves MCP over stdio. Follow [Connect your agent](AGENT-INTEGRATIONS.md) to register this executable and install the skill for Codex, Claude Code, Cursor, Gemini CLI or OpenCode. The repository plugin invokes `luda` on PATH; the bundle builder writes the selected absolute installation path.
 
+## Install a downloaded wheel
+
+For an environment that already provides the system prerequisites, download the core `luda-0.1.0-py3-none-any.whl` from [GitHub releases](https://github.com/0xpolarzero/luda/releases). Install it in its own environment:
+
+```sh
+python3 -m venv ~/.local/share/luda/venv
+~/.local/share/luda/venv/bin/pip install /absolute/download/path/luda-0.1.0-py3-none-any.whl
+~/.local/share/luda/venv/bin/luda doctor
+```
+
+This installs the core runtime and Python dependencies, without the optional browser or Editor Bridge. It does not install system packages or create the managed `current` layout. In the agent registration examples, use `~/.local/share/luda/venv/bin/luda` expanded to an absolute path. The complete skill is under `~/.local/share/luda/venv/share/luda/skills/luda`; copy that folder to your client's [skill directory](AGENT-INTEGRATIONS.md#choose-your-agent). The session launcher is beside `luda` in `bin`.
+
+Use the matching `SHA256SUMS` release asset to check downloads. A plugin ZIP contains configuration and skill files only; it does not install this runtime. For repeatable image builds and managed rollback, use the source installer above with its locked dependencies.
+
 ## SSH and explicit session attachment
 
 When the agent does not inherit the graphical environment, run as the desktop account or root:
