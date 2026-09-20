@@ -116,9 +116,11 @@ def execute(method, *args, _cancelled=None, **kwargs):
     except DesktopError as exc:
         event.update(ok=False, code=exc.code, effect=exc.effect)
         return result_error(exc.code,str(exc),exc.effect,details=exc.details,operation_id=operation_id)
-    except Exception as exc:
+    except Exception:
+        # Exception text/repr can contain protected input or provider contents.
+        # Correlate with metadata-only history rather than returning that text.
         event.update(ok=False, code='INTERNAL_ERROR', effect='uncertain')
-        return result_error('INTERNAL_ERROR', str(exc)[:400], 'uncertain', operation_id=operation_id)
+        return result_error('INTERNAL_ERROR', 'Unexpected backend failure. Inspect desktop_status and current application state before retrying; input may already have occurred.', 'uncertain', operation_id=operation_id)
     finally:
         if acquired:
             _operation_gate.release()
