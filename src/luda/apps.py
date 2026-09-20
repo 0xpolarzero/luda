@@ -16,7 +16,7 @@ def _text(value, name, maximum):
 def _call(method, arguments):
     try:
         raw=run(['/usr/bin/python3',str(Path(__file__).with_name('_app_helper.py'))],
-                data=json.dumps({'method':method,**arguments}).encode(),timeout=5,
+                data=json.dumps({'method':method,**arguments},ensure_ascii=False).encode(),timeout=5,
                 effect='uncertain' if method=='launch' else 'none')
     except DesktopError as exc:
         if exc.code=='BACKEND_ERROR':

@@ -32,13 +32,20 @@ def uri_for(value):
     return value,False
 
 
+def read_request(stream):
+    raw=stream.read(262145)
+    if len(raw)>262144:
+        raise AppError('INVALID_ARGUMENT','Application request exceeds the helper byte budget.')
+    return json.loads(raw)
+
+
 def main():
     effect='none'
     try:
         import gi
         gi.require_version('Gio','2.0')
         from gi.repository import Gio,GLib
-        request=json.loads(sys.stdin.buffer.read(100000))
+        request=read_request(sys.stdin.buffer)
         if request['method']=='list':
             needle=request['query'].casefold();found=[]
             for app in Gio.AppInfo.get_all():

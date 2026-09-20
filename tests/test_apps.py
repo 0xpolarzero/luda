@@ -36,6 +36,22 @@ class AppTests(unittest.TestCase):
         for value in ('https://example.invalid/a?x=1','mailto:user@example.invalid','custom-app:日本語'):
             self.assertEqual(uri_for(value),(value,False))
 
+class ApplicationRequestBudgetTests(unittest.TestCase):
+    def test_maximum_valid_escaped_payload_survives_real_serialization(self):
+        import io,json
+        from luda._app_helper import read_request
+        values=['custom:'+('\\'*8185)]*8
+        with patch('luda.apps.run',return_value=b'{"result":{}}') as run:
+            launch_application('valid.desktop',values)
+        request=read_request(io.BytesIO(run.call_args.kwargs['data']))
+        self.assertEqual(request['files_or_uris'],values)
+        self.assertGreater(len(run.call_args.kwargs['data']),100000)
+    def test_oversized_helper_request_is_rejected_without_echo(self):
+        import io
+        from luda._app_helper import read_request
+        with self.assertRaises(AppError) as caught:read_request(io.BytesIO(b'private'*50000))
+        self.assertNotIn('private',str(caught.exception))
+
 class HelperFailureTests(unittest.TestCase):
     @patch('luda.apps.run',side_effect=DesktopError('TIMEOUT','test'))
     def test_timeout_preserved(self,run):
