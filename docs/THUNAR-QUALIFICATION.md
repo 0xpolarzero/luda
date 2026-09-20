@@ -18,13 +18,13 @@ from its verification oracle.
 
 ## Current evidence
 
-All nine filesystem assertions passed in two diagnostic runs that retried
-a read-only `wmctrl -lp` `BadWindow` race. The committed test deliberately
-does not contain that workaround. With unmodified runtime, a subsequent
-run reproduced the enumeration error during dialog dismissal and exited
-nonzero. This is a runtime reliability blocker, not a successful end-to-end
-qualification; rerun after the enumeration fix before marking the suite
-qualified. No mutating action was retried in any run.
+All nine filesystem assertions passed on the final isolated desktop run
+with runtime enumeration fix `216d6b3` and no test workaround. Earlier runs
+exposed `wmctrl -lp` failing with `BadWindow`/`X_GetProperty` as a dialog
+vanished. The runtime now retries that specific read-only race with a
+strict bound; mutation failures and other backend errors are not retried.
+The suite retains direct enumeration calls so regressions remain visible.
+No mutating action was retried in any run.
 
 ## Isolation and invocation
 
