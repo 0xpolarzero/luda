@@ -2,6 +2,7 @@
 import os
 from pathlib import Path
 import sys
+import subprocess
 import tempfile
 import threading
 import time
@@ -48,6 +49,27 @@ class OutputBounds(unittest.TestCase):
                 with self.subTest(limit=limit),self.assertRaises(DesktopError):
                     run(['must-not-launch'],max_output_bytes=limit)
             popen.assert_not_called()
+
+    def test_invalid_timeout_never_starts_child(self):
+        with patch('luda.common.subprocess.Popen') as popen:
+            for value in ('bad',None,True,-1,float('nan'),float('inf')):
+                with self.subTest(value=value),self.assertRaises(DesktopError):
+                    run(['must-not-launch'],timeout=value)
+            popen.assert_not_called()
+
+    def test_selector_allocation_failure_cleans_started_child(self):
+        children=[]
+        real_popen=subprocess.Popen
+        def start(*args,**kwargs):
+            child=real_popen(*args,**kwargs)
+            children.append(child)
+            return child
+        with patch('luda.common.subprocess.Popen',side_effect=start),patch('luda.common.selectors.DefaultSelector',side_effect=OSError('selector unavailable')):
+            with self.assertRaisesRegex(OSError,'selector unavailable'):
+                run([sys.executable,'-c','import time;time.sleep(30)'])
+        self.assertIsNotNone(children[0].poll())
+        self.assertTrue(children[0].stdout.closed)
+        self.assertTrue(children[0].stderr.closed)
 
     def test_interleaved_large_output_does_not_deadlock(self):
         value=run([sys.executable,'-c','import os\nfor i in range(128):\n os.write(1,b"o"*8192)\n os.write(2,b"e"*8192)'],max_output_bytes=2*1024*1024)

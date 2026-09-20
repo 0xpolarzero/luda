@@ -2,6 +2,7 @@ import contextvars
 from contextlib import contextmanager
 from dataclasses import dataclass
 import os
+import math
 import re
 import selectors
 import signal
@@ -82,6 +83,8 @@ def run(args, *, data=None, timeout=3, effect="none", cleanup=False,
     chunks; exceeding the bound kills the owned process group without returning
     captured data. Input-release cleanup may run after cancellation.
     """
+    if isinstance(timeout,bool) or not isinstance(timeout,(int,float)) or not math.isfinite(timeout) or timeout < 0:
+        raise DesktopError("INVALID_ARGUMENT", "Command timeout must be a finite nonnegative number.")
     if type(max_output_bytes) is not int or max_output_bytes < 0:
         raise DesktopError("INVALID_ARGUMENT", "Output byte limit must be a nonnegative integer.")
     if not cleanup:
@@ -101,10 +104,11 @@ def run(args, *, data=None, timeout=3, effect="none", cleanup=False,
             source.close()
     mark_effect(effect)
     deadline = elapsed_time() + timeout
-    streams = selectors.DefaultSelector()
+    streams = None
     output, error = bytearray(), bytearray()
     total = 0
     try:
+        streams = selectors.DefaultSelector()
         for pipe, buffer in ((process.stdout, output), (process.stderr, error)):
             os.set_blocking(pipe.fileno(), False)
             streams.register(pipe, selectors.EVENT_READ, buffer)
@@ -145,7 +149,8 @@ def run(args, *, data=None, timeout=3, effect="none", cleanup=False,
             pass
         raise
     finally:
-        streams.close()
+        if streams is not None:
+            streams.close()
         process.stdout.close()
         process.stderr.close()
 
