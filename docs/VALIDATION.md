@@ -46,6 +46,14 @@ their own synthetic fixture. This establishes a working installed guest build
 at that revision; it does not establish fresh Mac provisioning, SSH plugin
 discovery or compatibility of later changes.
 
+A second installed regression used immutable source `e64f845`, release
+`0.1.0-0f871fc13ac72fc4`, wheel SHA-256
+`f1aa443d5a0aef8b4eb33eed91eb78ad5fe19d114745b99d8d6e7be2cff1ffe1`.
+The same ordinary-account actual KasmVNC desktop passed all 31 native and
+13 MCP assertions again. This wheel includes native pointer movement, compact
+monitor metadata, Firefox normalization and table-row selection. Later target
+identity and accessible-name changes were not part of that installed revision.
+
 ## Confirmed unresolved issues
 
 1. **Active IME composition:** real GTK and Chromium probes show inaccessible or ambiguously exposed preedit, lost pending input, and later commits changing an otherwise verified value. Diagnostics explicitly report unknown composition state. A reliable guard requires a cooperating application-aware adapter; daemon absence is insufficient. [Evidence and API research](IME-COMPOSITION.md).
