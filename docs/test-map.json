@@ -1182,6 +1182,21 @@
         "test_window_enumeration.WindowEnumerationTests.test_repeated_race_stops_after_three_attempts"
       ],
       "limits": "Mocked recycled activation target rejects original generation; failed post-dispatch lookup stays uncertain; disappearing enumeration race has bounded retries. No atomic guarantee against asynchronous window-manager target closure."
+    },
+    "DIAG-10": {
+      "implementation": "implemented",
+      "tests": [
+        "test_report.ReportPrivacy.test_health_strict_boolean_whitelist_and_nested_injected_content",
+        "test_report.ReportPrivacy.test_history_bounds_ids_enums_numbers_no_arbitrary_details",
+        "test_report.ReportPrivacy.test_environment_projection_fixed_packages_and_malformed_versions",
+        "test_report.ReportPrivacy.test_doctor_error_content_never_reaches_report",
+        "test_report.ReportPrivacy.test_unexpected_environment_and_doctor_exceptions_are_content_free",
+        "test_report.ReportPrivacy.test_malformed_doctor_payload_cannot_escape_projection",
+        "test_report.ReportPrivacy.test_mcp_uses_snapshot_of_prior_metadata_not_doctor_payload",
+        "test_report.ReportPrivacy.test_schema_readonly_no_free_text_parameters",
+        "test_report.ReportPrivacy.test_cli_fresh_history_and_stdout_json_without_desktop_environment"
+      ],
+      "limits": "Read-only MCP and actual fresh-process CLI sanitized JSON export: strict health/version/history whitelist, injected and malformed diagnostic privacy, exception suppression, bounded prior-operation snapshot and no report-file creation. Free-text reproduction steps are supplied separately, never retained; no replay, upload, earlier-process CLI history, fresh Mac/SSH or all-provider qualification. Actual guest MCP application invariance is separate live evidence."
     }
   }
 }
