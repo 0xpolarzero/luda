@@ -5,7 +5,7 @@ import uuid
 from .common import DesktopError, process_identity, run
 from .timing import elapsed_time
 from .input_guard import held_button
-from .pointer_input import click_button
+from .pointer_input import click_button, check_pointer_ready
 
 
 def integer(value, name, low, high):
@@ -188,6 +188,7 @@ class InteractionMixin:
 
     def hover(self, window_id, snapshot_id, x, y):
         px,py = self._interaction_point(window_id,snapshot_id,x,y)
+        check_pointer_ready(self.target_window(window_id)['xid'])
         run(['xdotool','mousemove',str(px),str(py)], effect='uncertain')
         return {'effect':'dispatched','verification':'Pointer motion sent; observe tooltips or hover state.'}
 
@@ -196,6 +197,7 @@ class InteractionMixin:
         if button not in buttons: raise DesktopError('INVALID_ARGUMENT','Unknown mouse button.')
         start = self._interaction_point(source_window_id,snapshot_id,x,y)
         end = self._interaction_point(target_window_id,snapshot_id,end_x,end_y,False)
+        check_pointer_ready(self.target_window(source_window_id)['xid'])
         run(['xdotool','mousemove',str(start[0]),str(start[1])],effect='uncertain')
         with held_button(buttons[button]):
             for step in range(1,16):
@@ -277,6 +279,7 @@ class InteractionMixin:
             raise DesktopError('INVALID_ARGUMENT','Unknown pointer button or scroll direction.')
         px,py=self._popup_point(owner_window_id,popup_id,snapshot_id,x,y)
         target=self.target_window(owner_window_id)['xid']
+        check_pointer_ready(target)
         run(['xdotool','mousemove',str(px),str(py)],effect='uncertain')
         if kind!='hover':
             click_button(buttons[button] if kind=='click' else directions[direction],count,target=target)

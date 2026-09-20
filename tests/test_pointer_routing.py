@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import Mock, patch
 from luda.desktop import Desktop
 from luda.interaction import InteractionMixin
+from luda.common import DesktopError
 
 
 class PointerRouting(unittest.TestCase):
@@ -10,19 +11,40 @@ class PointerRouting(unittest.TestCase):
         desktop.point=Mock(return_value=(12,34))
         desktop.target_window=Mock(return_value={'xid':42})
         for kind,kwargs,button in [('click',{},'1'),('click',{'button':'right'},'3'),('scroll',{'direction':'left'},'6')]:
-            with patch('luda.desktop.run') as run,patch('luda.desktop.click_button') as click:
+            with patch('luda.desktop.run') as run,patch('luda.desktop.click_button') as click,patch('luda.desktop.check_pointer_ready') as ready:
                 result=desktop.pointer('w','s',1,2,kind=kind,count=2,**kwargs)
                 self.assertEqual(result['effect'],'dispatched')
                 run.assert_called_once_with(['xdotool','mousemove','12','34'],effect='uncertain')
                 click.assert_called_once_with(button,2,target=42)
+                ready.assert_called_once_with(42)
 
     def test_popup_click_and_wheel_use_owner_focus(self):
         driver=Mock()
         driver._popup_point.return_value=(12,34)
         driver.target_window.return_value={'xid':42}
         for kind,button in [('click','1'),('scroll','5')]:
-            with patch('luda.interaction.run') as run,patch('luda.interaction.click_button') as click:
+            with patch('luda.interaction.run') as run,patch('luda.interaction.click_button') as click,patch('luda.interaction.check_pointer_ready') as ready:
                 result=InteractionMixin.pointer_popup(driver,'w','p','s',1,2,kind=kind,count=2)
                 self.assertEqual(result['effect'],'dispatched')
                 run.assert_called_once_with(['xdotool','mousemove','12','34'],effect='uncertain')
                 click.assert_called_once_with(button,2,target=42)
+                ready.assert_called_once_with(42)
+
+    def test_held_input_refused_before_any_initial_movement(self):
+        desktop=Desktop();self.addCleanup(desktop.close)
+        desktop.point=Mock(return_value=(12,34))
+        desktop._interaction_point=Mock(return_value=(12,34))
+        desktop._popup_point=Mock(return_value=(12,34))
+        desktop.target_window=Mock(return_value={'xid':42})
+        calls=[lambda:desktop.pointer('w','s',1,2),
+               lambda:desktop.pointer('w','s',1,2,kind='scroll'),
+               lambda:desktop.pointer('w','s',1,2,kind='drag',end_x=4,end_y=5),
+               lambda:desktop.hover('w','s',1,2),
+               lambda:desktop.drag_between('w','other','s',1,2,4,5),
+               lambda:desktop.pointer_popup('w','p','s',1,2),
+               lambda:desktop.pointer_popup('w','p','s',1,2,kind='hover')]
+        for call in calls:
+            with patch('luda.desktop.check_pointer_ready',side_effect=DesktopError('INPUT_HELD','held')),patch('luda.interaction.check_pointer_ready',side_effect=DesktopError('INPUT_HELD','held')),patch('luda.desktop.run') as direct,patch('luda.interaction.run') as mixed:
+                with self.assertRaises(DesktopError) as caught:call()
+                self.assertEqual(caught.exception.code,'INPUT_HELD')
+                direct.assert_not_called();mixed.assert_not_called()

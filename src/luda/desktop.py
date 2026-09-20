@@ -26,7 +26,7 @@ from .waits import ConditionWaitsMixin
 from types import MappingProxyType
 from .common import environment_scope, subprocess_environment
 from .input_guard import held_button
-from .pointer_input import click_button
+from .pointer_input import click_button, check_pointer_ready
 from .keyboard import validate_chord, send_chord, keyboard_capabilities, keyboard_recovery_checkpoint
 from .session_state import session_state
 from .coordinates import image_bounds
@@ -305,6 +305,7 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         if button not in buttons or not 1 <= count <= 20:
             raise DesktopError('INVALID_ARGUMENT','Invalid button or count.')
         target = self.target_window(window_id)['xid']
+        check_pointer_ready(target)
         run(['xdotool','mousemove',str(px),str(py)],effect='uncertain')
         if kind=='click':
             click_button(buttons[button], count, target=target)
