@@ -3,6 +3,7 @@ import asyncio
 import argparse
 import base64
 import io
+import hashlib
 from importlib.metadata import version
 import json
 import os
@@ -38,6 +39,10 @@ async def main():
      assert not r.isError,(name,r)
      return json.loads(r.content[0].text),r
     d,_=await call('desktop_doctor');record('mcp-doctor',d['ready'])
+    declarations=sorted([tool.model_dump(mode='json',exclude_none=True) for tool in tools],key=lambda tool:tool['name'])
+    expected_schema=hashlib.sha256(json.dumps(declarations,sort_keys=True,ensure_ascii=False,separators=(',',':'),allow_nan=False).encode('utf-8')).hexdigest()
+    record('mcp-doctor-discovery-identity',d['versions']['driver_version']==initialization.serverInfo.version and d['versions']['tool_schema']['sha256']==expected_schema and d['versions']['bundled_skill']['status']=='identified')
+
     ws,_=await call('desktop_windows');w=next(w for w in ws['windows'] if w['pid']==p.pid);wid=w['window_id']
     await call('desktop_activate',window_id=wid)
     tree,_=await call('desktop_inspect',window_id=wid)
