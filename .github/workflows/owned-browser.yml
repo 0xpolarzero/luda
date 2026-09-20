@@ -32,11 +32,13 @@ jobs:
           assert capability({'LUDA_CHROMIUM_EXECUTABLE':'/bin/true'})['available'] is False
           PY
       - name: Explicitly provision pinned optional browser in CI
+        id: provision_browser
         run: |
           uv sync --locked --no-default-groups --extra browser
           .venv/bin/python -m playwright install --with-deps --no-shell chromium
           .venv/bin/python scripts/check_owned_browser_ci.py
       - name: Allow this exact CI browser to create its Linux sandbox
+        id: sandbox_policy
         run: |
           # Ubuntu 24.04 may restrict user namespaces for downloaded executables.
           # Follow Chromium's per-executable AppArmor recommendation; never disable
@@ -50,6 +52,7 @@ jobs:
           browser=$(cat artifacts/owned-browser-provision/browser-path.txt)
           .venv/bin/python scripts/qualification_matrix.py --suites owned-browser owned-rich owned-rich-clipboard --executable "$browser"
       - name: Qualify the installed managed wheel and launcher
+        if: ${{ !cancelled() && steps.provision_browser.outcome == 'success' && steps.sandbox_policy.outcome == 'success' }}
         run: |
           browser=$(cat artifacts/owned-browser-provision/browser-path.txt)
           python3 scripts/check_managed_browser_ci.py --prefix "$RUNNER_TEMP/luda-managed-install" --executable "$browser" --output artifacts/managed-browser-installed
