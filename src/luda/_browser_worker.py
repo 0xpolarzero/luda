@@ -36,8 +36,9 @@ SNAPSHOT = """node => {
 
 
 class Refused(Exception):
-    def __init__(self, code):
+    def __init__(self, code, stage=None):
         self.code = code
+        self.stage = stage
 
 
 class Worker:
@@ -228,10 +229,13 @@ class Worker:
         if type(start) is not int or type(end) is not int or not 0<=start<=end<=len(before['text']):
             raise Refused('INVALID_ARGUMENT')
         if before['tag']=='PROSEMIRROR':
-            if not item['bridge'].evaluate("entry=>typeof entry.at==='function'&&typeof entry.identity==='function'"):
-                if (start,end)==(0,len(before['text'])):self.rich_key('a','KeyA',65,2)
-                elif start==end==len(before['text']):self.rich_key('End','End',35,2)
-                else:raise Refused('UNSUPPORTED_SELECTION')
+            # Keep established full/end native selection behavior. The public
+            # editor keymap synchronizes Ctrl+A's model selection directly;
+            # DOM range mapping is only needed for arbitrary interior ranges.
+            if start==end==len(before['text']):self.rich_key('End','End',35,2)
+            elif (start,end)==(0,len(before['text'])):self.rich_key('a','KeyA',65,2)
+            elif not item['bridge'].evaluate("entry=>typeof entry.at==='function'&&typeof entry.identity==='function'"):
+                raise Refused('UNSUPPORTED_SELECTION')
             else:
                 held=item['bridge'].evaluate_handle('entry=>entry.identity()')
                 try:
@@ -254,7 +258,7 @@ class Worker:
                 _,after=self.snapshot(token,mutation=True,focus=True)
                 if after['model']!=before['model']:raise Refused('TEXT_CHANGED')
                 if (after['start'],after['end'])==(start,end):break
-                if time.monotonic()>=deadline:raise Refused('SELECTION_UNVERIFIED')
+                if time.monotonic()>=deadline:raise Refused('SELECTION_UNVERIFIED','selection_sync')
                 self.page.wait_for_timeout(10)
             return {'effect':'verified','start_offset':start,'end_offset':end,'offset_units':'Unicode code points'}
         self.effect = 'uncertain'
@@ -378,7 +382,7 @@ class Worker:
                 if after['text']!=expected or after['paragraphs']!=expected.split('\n'):
                     raise Refused('TEXT_MISMATCH')
                 if original and not unchanged_prefix(original,after):raise Refused('FORMATTING_CHANGED')
-                if after['start']!=after['end'] or after['end']!=len(expected):raise Refused('SELECTION_UNVERIFIED')
+                if after['start']!=after['end'] or after['end']!=len(expected):raise Refused('SELECTION_UNVERIFIED','caret_readback')
                 current=after
         return {'effect':'verified' if self.effect!='none' else 'none','exact_match':True,'expected_characters':len(expected),'actual_characters':len(current['text']),
                 'caret_verified':current['start']==current['end']==len(expected),'text_representation':'paragraphs','line_breaks':'paragraph',
@@ -474,6 +478,7 @@ def main():
                 result=worker.dispatch(json.loads(raw))
             except Refused as exc:
                 result={'error':exc.code,'effect':worker.effect,'clipboard_may_have_changed':worker.clipboard_changed}
+                if exc.stage in ('selection_sync','caret_readback'):result['provider_stage']=exc.stage
             except Exception:
                 result={'error':'BROWSER_OPERATION_FAILED','effect':worker.effect,'clipboard_may_have_changed':worker.clipboard_changed}
             data=json.dumps(result,ensure_ascii=False,separators=(',',':'))

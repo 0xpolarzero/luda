@@ -1,0 +1,96 @@
+{
+  "mode": "prosemirror",
+  "documentId": "328715da-2215-4583-9e3a-69d6a4fbfeb0",
+  "generation": 5,
+  "revision": 3,
+  "htmlValue": "A👩🏽‍💻B éC",
+  "editorComposing": false,
+  "fieldValue": null,
+  "model": {
+    "type": "doc",
+    "content": [
+      {
+        "type": "paragraph",
+        "content": [
+          {
+            "type": "text",
+            "text": "A👩🏽‍💻B éC"
+          }
+        ]
+      }
+    ]
+  },
+  "modelSelection": {
+    "type": "text",
+    "anchor": 1,
+    "head": 1
+  },
+  "storedMarks": null,
+  "modelText": "A👩🏽‍💻B éC",
+  "unsupported": [],
+  "renderedText": "A👩🏽‍💻B éC",
+  "textContent": "A👩🏽‍💻B éC",
+  "html": "<p>A👩🏽‍💻B éC</p>",
+  "active": false,
+  "selection": {
+    "text": "",
+    "anchorOffset": 0,
+    "focusOffset": 0
+  },
+  "events": [
+    {
+      "type": "beforeinput",
+      "inputType": "insertText",
+      "isComposing": false,
+      "trusted": true
+    },
+    {
+      "type": "input",
+      "inputType": "insertText",
+      "isComposing": false,
+      "trusted": true
+    },
+    {
+      "type": "paste",
+      "inputType": null,
+      "isComposing": null,
+      "trusted": true
+    },
+    {
+      "type": "beforeinput",
+      "inputType": "insertText",
+      "isComposing": false,
+      "trusted": true
+    },
+    {
+      "type": "input",
+      "inputType": "insertText",
+      "isComposing": false,
+      "trusted": true
+    },
+    {
+      "type": "paste",
+      "inputType": null,
+      "isComposing": null,
+      "trusted": true
+    },
+    {
+      "type": "beforeinput",
+      "inputType": "insertText",
+      "isComposing": false,
+      "trusted": true
+    },
+    {
+      "type": "input",
+      "inputType": "insertText",
+      "isComposing": false,
+      "trusted": true
+    },
+    {
+      "type": "paste",
+      "inputType": null,
+      "isComposing": null,
+      "trusted": true
+    }
+  ]
+}

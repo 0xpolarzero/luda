@@ -1,0 +1,22 @@
+Traceback (most recent call last):
+  File "/home/runner/work/luda/luda/tests/live_owned_rich_clipboard.py", line 129, in <module>
+    raise SystemExit(asyncio.run(main(p.parse_args().executable)))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/home/runner/work/luda/luda/tests/live_owned_rich_clipboard.py", line 62, in main
+    await call('desktop_type',element_id=eid,text=initial,mode='replace',line_breaks='paragraph')
+  File "/home/runner/work/luda/luda/tests/live_owned_rich_clipboard.py", line 38, in call
+    if response.get('isError'):raise AssertionError((tool,value))
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: ('desktop_type', {'ok': False, 'code': 'SELECTION_UNVERIFIED', 'message': 'The observed browser selection did not match the requested range.', 'effect': 'uncertain', 'details': {'clipboard_may_have_changed': False}, 'operation_id': '59e8e1ce676f4d308be923fa41393427', 'elapsed_ms': 1262})
+A connection to the bus can't be made
+
+(xfconfd:15044): xfconfd-WARNING **: 08:38:49.261: Name org.xfce.Xfconf lost on the message dbus, exiting.

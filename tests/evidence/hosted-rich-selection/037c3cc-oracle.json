@@ -1,0 +1,222 @@
+{
+  "mode": "prosemirror",
+  "documentId": "f3f38605-689c-4eb0-80fc-6714fce7ca8e",
+  "generation": 15,
+  "revision": 31,
+  "htmlValue": "A👩🏽‍💻B éC",
+  "editorComposing": false,
+  "fieldValue": null,
+  "model": {
+    "type": "doc",
+    "content": [
+      {
+        "type": "paragraph",
+        "content": [
+          {
+            "type": "text",
+            "text": "A👩🏽‍💻B éC"
+          }
+        ]
+      }
+    ]
+  },
+  "modelSelection": {
+    "type": "text",
+    "anchor": 1,
+    "head": 1
+  },
+  "storedMarks": null,
+  "modelText": "A👩🏽‍💻B éC",
+  "unsupported": [],
+  "renderedText": "A👩🏽‍💻B éC",
+  "textContent": "A👩🏽‍💻B éC",
+  "html": "<p>A👩🏽‍💻B éC</p>",
+  "active": false,
+  "selection": {
+    "text": "",
+    "anchorOffset": 0,
+    "focusOffset": 0
+  },
+  "events": [
+    {
+      "type": "input",
+      "inputType": "insertText",
+      "isComposing": false,
+      "trusted": true
+    },
+    {
+      "type": "paste",
+      "inputType": null,
+      "isComposing": null,
+      "trusted": true
+    },
+    {
+      "type": "beforeinput",
+      "inputType": "insertText",
+      "isComposing": false,
+      "trusted": true
+    },
+    {
+      "type": "input",
+      "inputType": "insertText",
+      "isComposing": false,
+      "trusted": true
+    },
+    {
+      "type": "beforeinput",
+      "inputType": "insertText",
+      "isComposing": false,
+      "trusted": true
+    },
+    {
+      "type": "input",
+      "inputType": "insertText",
+      "isComposing": false,
+      "trusted": true
+    },
+    {
+      "type": "paste",
+      "inputType": null,
+      "isComposing": null,
+      "trusted": true
+    },
+    {
+      "type": "beforeinput",
+      "inputType": "insertText",
+      "isComposing": false,
+      "trusted": true
+    },
+    {
+      "type": "input",
+      "inputType": "insertText",
+      "isComposing": false,
+      "trusted": true
+    },
+    {
+      "type": "beforeinput",
+      "inputType": "insertText",
+      "isComposing": false,
+      "trusted": true
+    },
+    {
+      "type": "input",
+      "inputType": "insertText",
+      "isComposing": false,
+      "trusted": true
+    },
+    {
+      "type": "beforeinput",
+      "inputType": "insertText",
+      "isComposing": false,
+      "trusted": true
+    },
+    {
+      "type": "input",
+      "inputType": "insertText",
+      "isComposing": false,
+      "trusted": true
+    },
+    {
+      "type": "beforeinput",
+      "inputType": "insertText",
+      "isComposing": false,
+      "trusted": true
+    },
+    {
+      "type": "input",
+      "inputType": "insertText",
+      "isComposing": false,
+      "trusted": true
+    },
+    {
+      "type": "beforeinput",
+      "inputType": "insertText",
+      "isComposing": false,
+      "trusted": true
+    },
+    {
+      "type": "input",
+      "inputType": "insertText",
+      "isComposing": false,
+      "trusted": true
+    },
+    {
+      "type": "beforeinput",
+      "inputType": "insertText",
+      "isComposing": false,
+      "trusted": true
+    },
+    {
+      "type": "input",
+      "inputType": "insertText",
+      "isComposing": false,
+      "trusted": true
+    },
+    {
+      "type": "beforeinput",
+      "inputType": "insertText",
+      "isComposing": false,
+      "trusted": true
+    },
+    {
+      "type": "input",
+      "inputType": "insertText",
+      "isComposing": false,
+      "trusted": true
+    },
+    {
+      "type": "paste",
+      "inputType": null,
+      "isComposing": null,
+      "trusted": true
+    },
+    {
+      "type": "beforeinput",
+      "inputType": "insertText",
+      "isComposing": false,
+      "trusted": true
+    },
+    {
+      "type": "input",
+      "inputType": "insertText",
+      "isComposing": false,
+      "trusted": true
+    },
+    {
+      "type": "beforeinput",
+      "inputType": "insertText",
+      "isComposing": false,
+      "trusted": true
+    },
+    {
+      "type": "input",
+      "inputType": "insertText",
+      "isComposing": false,
+      "trusted": true
+    },
+    {
+      "type": "beforeinput",
+      "inputType": "insertText",
+      "isComposing": false,
+      "trusted": true
+    },
+    {
+      "type": "input",
+      "inputType": "insertText",
+      "isComposing": false,
+      "trusted": true
+    },
+    {
+      "type": "paste",
+      "inputType": null,
+      "isComposing": null,
+      "trusted": true
+    },
+    {
+      "type": "paste",
+      "inputType": null,
+      "isComposing": null,
+      "trusted": true
+    }
+  ]
+}

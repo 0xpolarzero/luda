@@ -122,7 +122,9 @@ class OwnedBrowser:
                         mark_effect(effect)
                         if 'error' in value:
                             code=value['error']
-                            raise DesktopError(code if code in MESSAGES else 'BROWSER_OPERATION_FAILED',MESSAGES.get(code,MESSAGES['BROWSER_OPERATION_FAILED']),effect=effect,details={'clipboard_may_have_changed':value.get('clipboard_may_have_changed') is True})
+                            details={'clipboard_may_have_changed':value.get('clipboard_may_have_changed') is True}
+                            if value.get('provider_stage') in ('selection_sync','caret_readback'):details['provider_stage']=value['provider_stage']
+                            raise DesktopError(code if code in MESSAGES else 'BROWSER_OPERATION_FAILED',MESSAGES.get(code,MESSAGES['BROWSER_OPERATION_FAILED']),effect=effect,details=details)
                         return value
         except DesktopError as exc:
             if exc.code not in MESSAGES or exc.code in ('BROWSER_CLOSED','BROWSER_TIMEOUT'):

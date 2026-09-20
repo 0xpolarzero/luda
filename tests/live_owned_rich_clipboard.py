@@ -88,6 +88,12 @@ async def main(executable):
             limit_before=json.loads(json.dumps(state['model']));clipboard_before=run(['xclip','-selection','clipboard','-out'])
             limit=await denied('desktop_type','VERIFICATION_LIMIT',element_id=eid,text='\n',transport='clipboard',line_breaks='paragraph')
             record('predicted-paragraph-limit-preserves-clipboard',limit['effect']=='none' and state['model']==limit_before and run(['xclip','-selection','clipboard','-out'])==clipboard_before)
+            # Native Ctrl+End legitimately scrolls the 128-paragraph editor.
+            # Return the viewport to its controls before requesting a reset.
+            await call('desktop_press_keys',window_id=wid,chord='ctrl+Home')
+            shot=await call('desktop_observe');bounds=next(w['image_bounds'] for w in shot['windows'] if w['window_id']==wid)
+            await call('desktop_scroll',window_id=wid,snapshot_id=shot['snapshot_id'],x=bounds['x']+bounds['width']/2,y=bounds['y']+bounds['height']/2,direction='up',ticks=5)
+            record('scroll-preserves-limit-model',state['model']==limit_before)
             eid=await fresh();await call('desktop_focus_element',element_id=eid);await call('desktop_select',element_id=eid,start_offset=2,end_offset=4)
             clipboard_before=run(['xclip','-selection','clipboard','-out'])
             run(['xdotool','keydown','Shift_L'])
