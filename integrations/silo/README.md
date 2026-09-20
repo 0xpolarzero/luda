@@ -320,4 +320,22 @@ binary versions/hashes and cleanup evidence are in
 `artifacts/silo-native-registration/native-ssh.json`. This closes Linux native
 helper execution, not real Silo routing or macOS application acceptance.
 
-The eighth patch polls its temporary output size; that is an acceptance bound, not a hard disk-write quota. Follow-up review is tightening capture and cleanup when a successful parent leaves a child behind.
+### Bounded pipe capture and unconditional keygen cleanup (ninth patch)
+
+`0009-bound-keygen-capture.patch` corrects two limitations in patch eight's capture:
+file-size polling was an acceptance check, not a hard disk-write bound, and a
+successful direct child could leave a descendant running. Capture now uses a
+nonblocking pipe and a user-space buffer of at most 4097 bytes (one byte detects
+exceeding the 4096-byte acceptance limit). Kernel pipe capacity provides bounded
+backpressure; no output file is created. This does not claim the child cannot
+write more than 4096 bytes into the pipe before termination. An ownership guard
+terminates the whole process group and reaps the direct child on every exit path,
+including successful status, parse/I/O failure, overflow and timeout.
+
+Nine editor/helper tests pass with the same actual OpenSSH binaries; one real-VM
+test remains explicitly ignored. New cases run a rapid 64 MiB output command and
+successful/failed parents with background children scheduled to write late
+markers. Overflow is refused promptly, and no marker appears after cleanup.
+Actual native key generation, SSH parsing and literal proxy arguments still pass.
+The temporary binary symlinks were again removed afterward. Evidence is
+`artifacts/silo-native-registration/keygen-pipe.json` and its captured test log.
