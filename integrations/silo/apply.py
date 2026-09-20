@@ -11,7 +11,8 @@ ASSETS = Path(__file__).resolve().parent
 PATCHES = ('0001-guest-onboarding.patch', '0002-desktop-onboarding.patch',
            '0003-host-codex-registration.patch', '0004-preserve-registered-transport.patch',
            '0005-refresh-agent-skill.patch', '0006-host-registration-lifecycle.patch',
-           '0007-reviewed-version-update.patch', '0008-native-ssh-qualification.patch')
+           '0007-reviewed-version-update.patch', '0008-native-ssh-qualification.patch',
+           '0009-bound-keygen-capture.patch')
 
 
 def apply(checkout, mutate=False):
