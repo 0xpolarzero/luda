@@ -15,7 +15,7 @@ import threading
 import time
 import uuid
 
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 from .common import DesktopError, display_identity, checkpoint, mark_effect, process_identity, run, stop_process, validate_text
 from .x11 import X11
 from .interaction import InteractionMixin
@@ -253,15 +253,21 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         with tempfile.TemporaryDirectory(dir=self.runtime) as directory:
             path = str(Path(directory)/'screen.png')
             run(['scrot','--overwrite',path],timeout=4)
-            with Image.open(path) as source:
-                native = source.size
-                if native!=(root['width'],root['height']):
-                    raise DesktopError('DESKTOP_CHANGED','Display resolution changed during capture; observe again.')
-                scale = min(1,max_width/source.width,2560/source.height)
-                height = max(1,round(source.height*scale))
-                width = max(1,round(source.width*scale))
-                source = source.convert('RGB').resize((width,height),Image.Resampling.LANCZOS)
-                buf = io.BytesIO();source.save(buf,format='PNG')
+            try:
+                with Image.open(path) as source:
+                    native = source.size
+                    if native!=(root['width'],root['height']):
+                        raise DesktopError('DESKTOP_CHANGED','Display resolution changed during capture; observe again.')
+                    scale = min(1,max_width/source.width,2560/source.height)
+                    height = max(1,round(source.height*scale))
+                    width = max(1,round(source.width*scale))
+                    source = source.convert('RGB').resize((width,height),Image.Resampling.LANCZOS)
+                    buf = io.BytesIO();source.save(buf,format='PNG')
+            except (UnidentifiedImageError, Image.DecompressionBombError) as exc:
+                raise DesktopError('SCREENSHOT_UNAVAILABLE','Capture did not produce a valid bounded image; no screenshot returned.') from exc
+            except OSError as exc:
+                if exc.errno is not None:raise  # Preserve storage/resource diagnostics.
+                raise DesktopError('SCREENSHOT_UNAVAILABLE','Capture image could not be fully decoded; no screenshot returned.') from exc
         after = self.list_windows()
         after_popups = self.observe_popups(after)
         if topology != self.display().topology():

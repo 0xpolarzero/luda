@@ -1,4 +1,7 @@
 import tempfile
+import base64
+import io
+from pathlib import Path
 import unittest
 from unittest.mock import Mock, patch
 from PIL import Image
@@ -28,5 +31,23 @@ class ScreenshotLimitsTests(unittest.TestCase):
         def capture(args,**kwargs):Image.new('RGB',(101,100)).save(args[-1])
         with patch('luda.desktop.run',side_effect=capture),self.assertRaises(DesktopError) as caught:d.observe()
         self.assertEqual(caught.exception.code,'DESKTOP_CHANGED');self.assertFalse(d.snapshots)
+
+    def test_valid_black_frame_remains_real_black_image(self):
+        d=self.driver(100,100)
+        def capture(args,**kwargs):Image.new('RGB',(100,100),(0,0,0)).save(args[-1])
+        with patch('luda.desktop.run',side_effect=capture):result=d.observe()
+        with Image.open(io.BytesIO(base64.b64decode(result['image_base64']))) as actual:
+            self.assertEqual(actual.getextrema(),((0,0),(0,0),(0,0)))
+        self.assertIn(result['snapshot_id'],d.snapshots)
+
+    def test_missing_or_corrupt_capture_never_becomes_synthetic_black_frame(self):
+        buffer=io.BytesIO();Image.new('RGB',(100,100),'white').save(buffer,format='PNG')
+        for payload in (b'',b'not an image',buffer.getvalue()[:50]):
+            d=self.driver(100,100)
+            def capture(args,**kwargs):Path(args[-1]).write_bytes(payload)
+            with patch('luda.desktop.run',side_effect=capture),self.assertRaises(DesktopError) as caught:d.observe()
+            self.assertEqual(caught.exception.code,'SCREENSHOT_UNAVAILABLE')
+            self.assertEqual(caught.exception.effect,'none')
+            self.assertFalse(d.snapshots)
 
 if __name__=='__main__':unittest.main()
