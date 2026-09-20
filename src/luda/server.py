@@ -47,7 +47,7 @@ def execute(method, *args, _cancelled=None, **kwargs):
         if _quarantined.is_set():
             raise DesktopError('BUSY', 'Previous cancelled operation is still cleaning up; no new input sent.')
         d = get_backend()
-        observation = method in ('list_applications','doctor','list_windows','observe','inspect','workspaces','wait_for') or (method=='element' and len(args)>1 and args[1]=='read')
+        observation = method in ('list_applications','doctor','list_windows','observe','inspect','workspaces','wait_for','wait_condition') or (method=='element' and len(args)>1 and args[1]=='read')
         guard = None if observation else d.control.require_active
         with operation_scope(timeout=12, cancelled=_cancelled, guard=guard) as operation:
             try:

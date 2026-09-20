@@ -21,9 +21,10 @@ from .x11 import X11
 from .interaction import InteractionMixin
 from .control import Control
 from .timing import elapsed_time, suspend_offset
+from .waits import ConditionWaitsMixin
 
 
-class Desktop(InteractionMixin):
+class Desktop(InteractionMixin, ConditionWaitsMixin):
     def __init__(self):
         self.x = None
         self.closed = False
