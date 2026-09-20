@@ -1,0 +1,17 @@
+# Controlled process resource exhaustion
+
+These probes cover narrow PERF-10/FAULT resource failures without host-wide pressure. Only disposable test processes change their own soft `RLIMIT_NOFILE` or `RLIMIT_AS`; original limits are restored in `finally`. No host disk fill, global process limit, mount change or shared display is used.
+
+`tests/test_resource_limits.py` runs five actual kernel-limit cases through `tests/rlimit_fixture.py`:
+
+- A descriptor limit of 48, filled with owned `/dev/null` descriptors, prevents backend initialization, helper spawning, or helper stdin staging.
+- An address-space limit of the process's current mapped size plus 8 MiB prevents buffering a synthetic helper's 32 MiB output, both for a read-only request and for a request already classified as dispatched.
+- Every case restores its limit, starts a successful new helper, checks no descriptor delta or surviving child, and checks that an independent delayed sentinel never appears. These are bounded child/process-output checks, not simulated GUI delivery.
+
+The initial regression run failed four of five cases: helper setup returned raw `OSError` and output capture returned raw `MemoryError`. Existing backend initialization was already typed. Commit `cd48c2f` puts helper allocation/setup inside the cleanup boundary and converts known resource exhaustion into redacted `RESOURCE_UNAVAILABLE`. Before spawn the effect remains `none`; after a possibly mutating dispatch it remains uncertain. Cancellation and prior-operation uncertainty have separate ordering tests. Unknown I/O errors are not relabeled as resource exhaustion. The full unit suite passed 503 tests on the recorded implementation snapshot.
+
+`tests/live_resource_limits.py` additionally drives an actual owned GTK fixture through public Desktop methods. Run as an ordinary user in a private Xvfb/D-Bus/Xfwm4 session, with private XDG paths established before D-Bus and `LUDA_ISOLATED_TEST_DISPLAY=1`. After initial inspection/edit/capture, the test fills its own limit of 64 descriptors and attempts inspection, screenshot capture and text mutation separately. It restores descriptors after each request and independently checks the fixture's persisted buffer.
+
+On Ubuntu 24.04 ARM64, UID 1001, all seven live assertions passed. Each failure returned `RESOURCE_UNAVAILABLE`, effect `none`, before GUI input; each measured request took under 1 ms in this run. After 300 ms recovery observation the buffer was unchanged and descriptor counts matched baseline. A fresh semantic edit delivered exact Unicode/emoji text and a new screenshot succeeded. Bounded runner cleanup found no tagged-process survivors. Results are in `artifacts/resource-limits/results.json`; elapsed times are observations, not performance guarantees.
+
+Limits: this does not qualify system-wide CPU pressure, swapping/OOM-killer behavior, thread/process exhaustion, all allocation sites, failures inside every native accessibility/image library, long-duration memory growth, or MCP transport behavior under exhaustion. The memory probe stresses the Python helper-output path; it does not establish a universal RAM budget or recovery from an OOM-killed server. The independent delayed sentinel is observed after 700 ms, and the killed helper is reaped; arbitrary external application side effects still require application-specific recovery evidence. Existing `live_resource_stress.py` remains the separate short repeated-load test, not an hours-long soak.
