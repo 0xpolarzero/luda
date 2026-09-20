@@ -37,6 +37,7 @@ async def editor_doctor() -> CallToolResult:
     result = await execute_async('doctor')
     if not result.isError:
         value = json.loads(result.content[0].text)
+        value['ready'] = value.get('ready') is True and value.get('owned_browser',{}).get('available') is True
         value['editor_bridge'] = {'version':version('luda-editor-bridge'),'application_bridge_required':True,'automatic_injection':False,'browser_lifetime':'temporary_session','connection_check':'editor_open then editor_inspect'}
         result.content[0].text = json.dumps(value,separators=(',',':'))
     return result

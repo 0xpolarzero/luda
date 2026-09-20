@@ -7,10 +7,10 @@ from .browser import OwnedBrowser
 class EditorDesktop(Desktop):
     browser_class = OwnedBrowser
 
-    def target_window(self, window_id, active=False):
+    def target_window(self, window_id, require_focus=True):
         if window_id != self.browser.window_id or self.browser.window_id is None:
             raise DesktopError('BROWSER_SCOPE_UNSUPPORTED', 'Use the window returned by editor_open in this add-on session.')
-        return super().target_window(window_id, active)
+        return super().target_window(window_id, require_focus)
 
     def inspect(self, window_id, limit=150, name=None, role=None, states=None, max_depth=30):
         result = super().inspect(window_id,limit,name,role,states,max_depth)

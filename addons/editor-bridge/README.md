@@ -32,7 +32,13 @@ Add a separate stdio MCP server to your agent's configuration, replacing the exa
 }
 ```
 
-The process needs the graphical account's real `DISPLAY`, `XAUTHORITY` when used, and session D-Bus environment, just like core Luda. Use your existing desktop-session launcher when the agent runs over SSH. Do not run a root browser or disable Chromium's sandbox to bypass missing prerequisites.
+The process needs the graphical account's real `DISPLAY`, `XAUTHORITY` when used, and session D-Bus environment, just like core Luda. For an agent over SSH, attach first and set the browser variable **after** `luda-session` (it intentionally sanitizes inherited variables):
+
+```sh
+~/.local/share/luda-editor-bridge/venv/bin/luda-session --user "$(id -un)" -- /usr/bin/env LUDA_CHROMIUM_EXECUTABLE=/absolute/path/to/chrome "$HOME/.local/share/luda-editor-bridge/venv/bin/luda-editor-bridge"
+```
+
+Use this executable/argument sequence in the MCP registration. The agent must run on that Linux machine as the graphical account, or an explicitly authorized root launcher must select it. Do not run a root browser or disable Chromium's sandbox to bypass missing prerequisites.
 
 Install **only this add-on's skill** into the agent's additional skill location, for example:
 
@@ -57,7 +63,13 @@ Wheel/source installation also places the complete skill and application adapter
 
 For wheel-only installs, copy the skill from that `skills` directory and give the application developer the module from `application`. [GitHub releases](https://github.com/0xpolarzero/luda/releases) publish matching assets when available; install both downloaded wheel paths with the add-on environment's `pip install /path/to/luda-…whl /path/to/luda_editor_bridge-…whl`. Do not install an unrelated similarly named package.
 
-Register the separate plugin through your agent's local-plugin installer using this repository's `addons/editor-bridge` directory, or the installed data directory above. MCP-only clients use the explicit configuration already shown and install the skill through their own skill mechanism. No setup step modifies another agent's configuration automatically.
+For Codex, direct MCP registration plus the separate skill above is a complete supported setup:
+
+```sh
+codex mcp add luda-editor-bridge -- /usr/bin/env LUDA_CHROMIUM_EXECUTABLE=/absolute/path/to/chrome "$HOME/.local/share/luda-editor-bridge/venv/bin/luda-editor-bridge"
+```
+
+For a Codex plugin bundle, this repository's `addons/editor-bridge` directory and the installed data directory above are self-contained plugin roots; the packaged `.mcp.json` requires the executable on PATH. Use the current client's plugin/marketplace registration flow with that separate root. Choose plugin registration or direct MCP plus skill, not both. MCP-only clients use the explicit configuration already shown and install the skill through their own skill mechanism. No setup step modifies another agent's configuration automatically.
 
 To remove the add-on, remove its MCP/plugin registration and `luda-editor-bridge` skill from your agent, then delete only its dedicated environment. Your independently installed core Luda environment and registration remain intact.
 

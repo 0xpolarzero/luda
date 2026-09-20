@@ -48,7 +48,7 @@ print(json.dumps(names))
                 self.assertEqual(caught.exception.code,'BROWSER_SCOPE_UNSUPPORTED')
             lookup.assert_not_called()
             backend.target_window('owned')
-            lookup.assert_called_once_with('owned',False)
+            lookup.assert_called_once_with('owned',True)
 
     def test_invalid_read_limit_is_structured_without_backend(self):
         with patch.object(server,'execute_async') as execute:
@@ -63,3 +63,12 @@ print(json.dumps(names))
         backend.elements={'button':{'time':elapsed_time(),'provider':'native'}}
         with self.assertRaises(DesktopError) as caught:backend.type_text('button','value')
         self.assertEqual(caught.exception.code,'UNSUPPORTED_FIELD')
+
+    def test_readiness_requires_configured_browser(self):
+        from unittest.mock import AsyncMock
+        from mcp.types import CallToolResult,TextContent
+        for browser in (False,True):
+            response=CallToolResult(content=[TextContent(type='text',text=json.dumps({'ready':True,'owned_browser':{'available':browser}}))])
+            with patch.object(server,'execute_async',new=AsyncMock(return_value=response)):
+                result=asyncio.run(server.editor_doctor())
+            self.assertEqual(json.loads(result.content[0].text)['ready'],browser)
