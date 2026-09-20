@@ -1,0 +1,311 @@
+{
+  "scope": "Research only: private Xvfb, XFWM, two GTK3 fixture processes. XI2 master devices and device-specific XTEST input.",
+  "uid": 0,
+  "cases": [
+    {
+      "case": "independent-click-visible-background",
+      "before": {
+        "pointer": "X=600\nY=400\nSCREEN=0\nWINDOW=543",
+        "active": "_NET_ACTIVE_WINDOW(WINDOW): window id # 0x800003, 0x0",
+        "focus": "8388611",
+        "stacking": "_NET_CLIENT_LIST_STACKING(WINDOW): window id # 0x600003, 0x800003"
+      },
+      "after": {
+        "pointer": "X=600\nY=400\nSCREEN=0\nWINDOW=543",
+        "active": "_NET_ACTIVE_WINDOW(WINDOW): window id # 0x600003, 0x0",
+        "focus": "6291459",
+        "stacking": "_NET_CLIENT_LIST_STACKING(WINDOW): window id # 0x800003, 0x600003"
+      },
+      "agent_before": {
+        "clicks": 0,
+        "menu": 0,
+        "text": "",
+        "menu_visible": false,
+        "bounds": {
+          "button": [
+            205,
+            169
+          ],
+          "entry": [
+            205,
+            249
+          ],
+          "menu_button": [
+            205,
+            329
+          ]
+        }
+      },
+      "agent_after": {
+        "clicks": 1,
+        "menu": 0,
+        "text": "",
+        "menu_visible": false,
+        "bounds": {
+          "button": [
+            205,
+            169
+          ],
+          "entry": [
+            205,
+            249
+          ],
+          "menu_button": [
+            205,
+            329
+          ]
+        }
+      },
+      "human_after": {
+        "clicks": 0,
+        "menu": 0,
+        "text": "",
+        "menu_visible": false,
+        "bounds": {
+          "button": [
+            655,
+            169
+          ],
+          "entry": [
+            655,
+            249
+          ],
+          "menu_button": [
+            655,
+            329
+          ]
+        }
+      }
+    },
+    {
+      "case": "independent-keyboard-background",
+      "before": {
+        "pointer": "X=600\nY=400\nSCREEN=0\nWINDOW=543",
+        "active": "_NET_ACTIVE_WINDOW(WINDOW): window id # 0x800003, 0x0",
+        "focus": "8388611",
+        "stacking": "_NET_CLIENT_LIST_STACKING(WINDOW): window id # 0x600003, 0x800003"
+      },
+      "after": {
+        "pointer": "X=600\nY=400\nSCREEN=0\nWINDOW=543",
+        "active": "_NET_ACTIVE_WINDOW(WINDOW): window id # 0x800003, 0x0",
+        "focus": "8388611",
+        "stacking": "_NET_CLIENT_LIST_STACKING(WINDOW): window id # 0x600003, 0x800003"
+      },
+      "agent_before": {
+        "clicks": 1,
+        "menu": 0,
+        "text": "",
+        "menu_visible": false,
+        "bounds": {
+          "button": [
+            205,
+            169
+          ],
+          "entry": [
+            205,
+            249
+          ],
+          "menu_button": [
+            205,
+            329
+          ]
+        }
+      },
+      "agent_after": {
+        "clicks": 1,
+        "menu": 0,
+        "text": "a",
+        "menu_visible": false,
+        "bounds": {
+          "button": [
+            205,
+            169
+          ],
+          "entry": [
+            205,
+            249
+          ],
+          "menu_button": [
+            205,
+            329
+          ]
+        }
+      },
+      "human_after": {
+        "clicks": 0,
+        "menu": 0,
+        "text": "",
+        "menu_visible": false,
+        "bounds": {
+          "button": [
+            655,
+            169
+          ],
+          "entry": [
+            655,
+            249
+          ],
+          "menu_button": [
+            655,
+            329
+          ]
+        }
+      }
+    },
+    {
+      "case": "independent-click-covered-background",
+      "before": {
+        "pointer": "X=600\nY=400\nSCREEN=0\nWINDOW=543",
+        "active": "_NET_ACTIVE_WINDOW(WINDOW): window id # 0x800003, 0x0",
+        "focus": "8388611",
+        "stacking": "_NET_CLIENT_LIST_STACKING(WINDOW): window id # 0x600003, 0x800003"
+      },
+      "after": {
+        "pointer": "X=600\nY=400\nSCREEN=0\nWINDOW=543",
+        "active": "_NET_ACTIVE_WINDOW(WINDOW): window id # 0x800003, 0x0",
+        "focus": "8388611",
+        "stacking": "_NET_CLIENT_LIST_STACKING(WINDOW): window id # 0x600003, 0x800003"
+      },
+      "agent_before": {
+        "clicks": 1,
+        "menu": 0,
+        "text": "a",
+        "menu_visible": false,
+        "bounds": {
+          "button": [
+            205,
+            169
+          ],
+          "entry": [
+            205,
+            249
+          ],
+          "menu_button": [
+            205,
+            329
+          ]
+        }
+      },
+      "agent_after": {
+        "clicks": 1,
+        "menu": 0,
+        "text": "a",
+        "menu_visible": false,
+        "bounds": {
+          "button": [
+            205,
+            169
+          ],
+          "entry": [
+            205,
+            249
+          ],
+          "menu_button": [
+            205,
+            329
+          ]
+        }
+      },
+      "human_after": {
+        "clicks": 1,
+        "menu": 0,
+        "text": "",
+        "menu_visible": false,
+        "bounds": {
+          "button": [
+            205,
+            169
+          ],
+          "entry": [
+            205,
+            249
+          ],
+          "menu_button": [
+            205,
+            329
+          ]
+        }
+      }
+    },
+    {
+      "case": "independent-popup-visible-background",
+      "before": {
+        "pointer": "X=600\nY=400\nSCREEN=0\nWINDOW=543",
+        "active": "_NET_ACTIVE_WINDOW(WINDOW): window id # 0x800003, 0x0",
+        "focus": "8388611",
+        "stacking": "_NET_CLIENT_LIST_STACKING(WINDOW): window id # 0x600003, 0x800003"
+      },
+      "after": {
+        "pointer": "X=600\nY=400\nSCREEN=0\nWINDOW=543",
+        "active": "_NET_ACTIVE_WINDOW(WINDOW): window id # 0x0, 0x0",
+        "focus": "6291459",
+        "stacking": "_NET_CLIENT_LIST_STACKING(WINDOW): window id # 0x800003, 0x600003"
+      },
+      "agent_before": {
+        "clicks": 1,
+        "menu": 0,
+        "text": "a",
+        "menu_visible": false,
+        "bounds": {
+          "button": [
+            205,
+            169
+          ],
+          "entry": [
+            205,
+            249
+          ],
+          "menu_button": [
+            205,
+            329
+          ]
+        }
+      },
+      "agent_after": {
+        "clicks": 1,
+        "menu": 0,
+        "text": "a",
+        "menu_visible": true,
+        "bounds": {
+          "button": [
+            205,
+            169
+          ],
+          "entry": [
+            205,
+            249
+          ],
+          "menu_button": [
+            205,
+            329
+          ]
+        }
+      },
+      "human_after": {
+        "clicks": 1,
+        "menu": 0,
+        "text": "",
+        "menu_visible": false,
+        "bounds": {
+          "button": [
+            655,
+            169
+          ],
+          "entry": [
+            655,
+            249
+          ],
+          "menu_button": [
+            655,
+            329
+          ]
+        }
+      }
+    }
+  ],
+  "limits": [
+    "Before/after sampling does not rule out transient changes.",
+    "Keyboard test deliberately preselected entry; arbitrary focused widgets unqualified.",
+    "No concurrent human input, other toolkits, compositor capture, or production runtime qualification."
+  ]
+}
