@@ -153,3 +153,55 @@ passed**, both monitor-recovery assertions failed, exit 1, no survivors. Source
 fingerprint `b4584e9114cbdaeb3dd577db8baac95a14bd32bf1faff7d5fcc54baf5343d93e`
 was unchanged during the run; this evidence paragraph and generated inventory
 were updated afterward. Asset/matrix/inventory unit checks passed (20 total).
+
+## Native end provenance comparison
+
+Follow-up `run-1789883492944756677` records **window capture-phase** lifecycle,
+input and keyboard events installed before application code, alongside
+read-only `EditorView.composing`. The same native sequence was exercised in
+ProseMirror, generic pre-wrap contenteditable and textarea. All three exposed
+an untrusted compositionend after both native Return and Escape. No swallowed
+trusted end or trusted `insertFromComposition` appeared: final input events
+still used `insertCompositionText` with `isComposing=true`. Each explicit action
+produced the expected actual value. This is not a ProseMirror-only artifact.
+
+The exact browser tag provides a concrete explanation. In Chromium
+153.0.8010.12, composition start/update use `EventTarget::DispatchEvent`, which
+marks the event trusted. Composition end instead uses
+`EventDispatcher::DispatchScopedEvent`. That queues the event without setting
+trust, and its eventual dispatch bypasses the trusted setter; the event
+constructor defaults to false. This source path is consistent with the direct
+before-handler observation. It is not evidence that every Chromium version or
+IME behaves identically. Primary source files at the exact tag:
+
+- [InputMethodController](https://chromium.googlesource.com/chromium/src/+/refs/tags/153.0.8010.12/third_party/blink/renderer/core/editing/ime/input_method_controller.cc)
+- [EventTarget dispatch](https://chromium.googlesource.com/chromium/src/+/refs/tags/153.0.8010.12/third_party/blink/renderer/core/dom/events/event_target.cc)
+- [Scoped dispatch](https://chromium.googlesource.com/chromium/src/+/refs/tags/153.0.8010.12/third_party/blink/renderer/core/dom/events/event_dispatcher.cc)
+- [Scoped event queue](https://chromium.googlesource.com/chromium/src/+/refs/tags/153.0.8010.12/third_party/blink/renderer/core/dom/events/scoped_event_queue.cc)
+- [Event initialization](https://chromium.googlesource.com/chromium/src/+/refs/tags/153.0.8010.12/third_party/blink/renderer/core/dom/events/event.cc)
+
+The pinned ProseMirror view 1.39.2 source handles compositionend but does not
+synthesize that event. Its `composing` flag is not an authoritative substitute:
+an additional fixture button arms an app-generated end event during the next
+real native preedit. The button is invoked before focus and composition, so no
+focus-changing input is needed while preedit is pending. The scheduled
+untrusted end changes `view.composing` to false while the native preedit remains.
+The trusted-only monitor stays active and refuses input; explicit later Escape
+still cancels the native preedit. This demonstrates why merely consulting the
+editor flag or accepting an arbitrary end event would be unsafe.
+
+An explicit native Escape additionally produced a trusted keyup with
+`isComposing=false`; native Return did not consistently expose such a keyup.
+This is a candidate positive signal for a **separately authorized cancellation
+recovery**, not an implemented general recovery rule. It would need event/target
+identity, ordering and race qualification. No implicit cancellation, synthetic
+end acceptance, or inference from current text clears the monitor here.
+[UI Events](https://www.w3.org/TR/uievents/) defines composition lifecycle and
+keyboard composition state; a key name by itself is not evidence of IME action.
+
+The comparison run took 16.603 seconds, **16/22 assertions passed**, all six
+monitor-recovery expectations failed, and exit 1 was preserved. Source
+fingerprint `842659b9cfb52f0dd112aa0618197e5be8fb4e6f43dae3e5f98269223dfe8fcc`
+was unchanged during execution and cleanup had no survivors. This report was
+added afterward. Event data are retained only for synthetic test documents.
+The production adapter remains unimplemented pending a sound recovery contract.

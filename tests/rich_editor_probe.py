@@ -58,7 +58,7 @@ class Readback:
         if not current:
             raise Refused('DOCUMENT_CHANGED')
         value = self.node.evaluate("""node => ({
-          connected: node.isConnected, editable: node.isContentEditable,
+          connected: node.isConnected, editable: node.isContentEditable || (node.tagName === 'TEXTAREA' && !node.readOnly),
           visible: node.getClientRects().length > 0 && document.visibilityState === 'visible',
           focused: document.hasFocus() && document.activeElement === node,
           snapshot: window.ludaRichProbe.snapshot(),
@@ -77,8 +77,8 @@ class Readback:
         snapshot = value['snapshot']
         if snapshot['unsupported']:
             raise Refused('MODEL_EMBED_UNSUPPORTED')
-        snapshot['representation'] = 'prosemirror-paragraph-lf-hardbreak-lf-v1' if snapshot['mode'] == 'prosemirror' else 'whatwg-rendered-innerText'
-        snapshot['logicalText'] = snapshot['modelText'] if snapshot['mode'] == 'prosemirror' else snapshot['renderedText']
+        snapshot['representation'] = ('prosemirror-paragraph-lf-hardbreak-lf-v1' if snapshot['mode'] == 'prosemirror' else 'html-textarea-value' if snapshot['mode'] == 'textarea' else 'whatwg-rendered-innerText')
+        snapshot['logicalText'] = (snapshot['modelText'] if snapshot['mode'] == 'prosemirror' else snapshot['fieldValue'] if snapshot['mode'] == 'textarea' else snapshot['renderedText'])
         return snapshot
 
     def before_input(self):
@@ -94,6 +94,15 @@ class Readback:
 # Separate candidate: the original synthetic baseline monitor above is retained.
 NATIVE_COMPOSITION_MONITOR = """(() => {
   let active = false, trustedStarts = 0, trustedEnds = 0, ignored = 0;
+  const events = [];
+  for (const type of ['compositionstart', 'compositionupdate', 'compositionend', 'beforeinput', 'input', 'keydown', 'keyup']) {
+    window.addEventListener(type, event => {
+      events.push({type, trusted: event.isTrusted, inputType: event.inputType ?? null,
+        isComposing: event.isComposing ?? null, data: event.data ?? null,
+        key: event.key ?? null, target: event.target?.id ?? null});
+      if (events.length > 160) events.shift();
+    }, true);
+  }
   document.addEventListener('compositionstart', event => {
     if (!event.isTrusted) { ignored++; return; }
     active = true; trustedStarts++;
@@ -103,7 +112,7 @@ NATIVE_COMPOSITION_MONITOR = """(() => {
     active = false; trustedEnds++;
   }, true);
   Object.defineProperty(window, '__ludaRichComposition', {
-    get: () => ({known: true, active, trustedStarts, trustedEnds, ignored}),
+    get: () => ({known: true, active, trustedStarts, trustedEnds, ignored, events: events.slice()}),
     configurable: false
   });
 })()"""

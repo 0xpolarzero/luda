@@ -10,6 +10,7 @@ const documentId = crypto.randomUUID();
 const events = [];
 let generation = 0, revision = 0, view = null, root;
 let persistTail = Promise.resolve();
+let spoofNextComposition = false;
 const allowed = new Set(['doc', 'paragraph', 'text', 'hard_break']);
 
 function snapshot() {
@@ -19,6 +20,8 @@ function snapshot() {
   const selection = getSelection();
   return {
     mode, documentId, generation, revision,
+    editorComposing: view?.composing ?? null,
+    fieldValue: root instanceof HTMLTextAreaElement ? root.value : null,
     model: model?.toJSON() ?? null,
     modelText: model?.textBetween(0, model.content.size, '\n', node => node.type.name === 'hard_break' ? '\n' : '\uFFFC') ?? null,
     unsupported,
@@ -55,14 +58,20 @@ function mount() {
     root = view.dom;
   } else {
     view = null;
-    root = document.createElement('div');
-    root.contentEditable = 'true';root.className = 'editor';root.id = 'generic-editor';
+    root = document.createElement(mode === 'textarea' ? 'textarea' : 'div');
+    if (mode !== 'textarea') root.contentEditable = 'true';root.className = 'editor';root.id = 'generic-editor';
     root.setAttribute('role', 'textbox');root.setAttribute('aria-label', 'Observed rich editor');
     if (mode === 'generic-prewrap') root.style.whiteSpace = 'pre-wrap';
     document.querySelector('#host').append(root);
     root.addEventListener('input', () => {revision++;persist();});
   }
   root.id = 'editor';
+  root.addEventListener('compositionstart', event => {
+    if (event.isTrusted && spoofNextComposition) {
+      spoofNextComposition = false;
+      setTimeout(() => { root.dispatchEvent(new CompositionEvent('compositionend', {data: '', bubbles: true})); persist(); }, 1500);
+    }
+  });
   for (const type of ['beforeinput', 'input', 'paste', 'compositionstart', 'compositionend']) {
     root.addEventListener(type, event => {
       events.push({type, inputType: event.inputType ?? null, isComposing: event.isComposing ?? null, trusted: event.isTrusted});
@@ -74,6 +83,7 @@ function mount() {
 }
 mount();
 document.querySelector('#replace').onclick = mount;
+document.querySelector('#spoof').onclick = () => { spoofNextComposition = true; };
 document.querySelector('#reload').onclick = () => location.reload();
 document.querySelector('#composition').onclick = () => {
   root.focus();root.dispatchEvent(new CompositionEvent('compositionstart', {data: '', bubbles: true}));persist();

@@ -28,3 +28,10 @@ The declared model text representation separates paragraphs with one LF and
 maps a `hard_break` to one LF. The model JSON remains available to distinguish
 those structurally different meanings. Empty-editor DOM filler and rendered
 `innerText` are recorded separately, never silently normalized into model text.
+
+The native IME follow-up adds a plain textarea comparison and read-only
+`EditorView.composing` telemetry. The “Arm synthetic end” button schedules one
+untrusted compositionend during the next trusted native composition; it is
+used to test spoof resistance without refocusing an active preedit. It does
+not represent a real IME completion. The driver still uses native keys for
+actual commit/cancel.

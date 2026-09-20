@@ -129,7 +129,7 @@ def main(executable, native_composition_only=False):
                         page.wait_for_timeout(30)
                 if native_composition_only:
                     from live_rich_ime import exercise
-                    exercise(page, desktop, browser_pid, wid, load, focus, persisted, record)
+                    exercise(page, desktop, browser_pid, wid, load, focus, persisted, record, button)
                     return 0 if rows and all(row['passed'] for row in rows) else 1
                 for mode in ('prosemirror','generic-normal','generic-prewrap'):
                     for name,payload in SAMPLES:
