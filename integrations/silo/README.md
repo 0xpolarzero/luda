@@ -444,3 +444,5 @@ after applying the patch. It uses an existing Chromium/Playwright installation a
 a loopback Vite server; it adds no production dependency. Before/after screenshots,
 layout measurements and test logs are retained in
 `artifacts/silo-native-registration/panel/`.
+
+Patch 0017 refreshes agent guidance for native browser insertion at Unicode grapheme boundaries. Offsets remain code points; unsupported interior boundaries are refused without silently widening a selection.
