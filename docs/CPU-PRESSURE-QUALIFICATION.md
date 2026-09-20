@@ -32,3 +32,11 @@ The second run's source fingerprint was `adeae959f7dde5f6f6cde64307388894699906b
 ## Scope
 
 This is successful operation under one measured scheduling-contention scenario. It did not force or exercise a timeout/resource-error response, sustained system-wide starvation, OOM, disk exhaustion, or arbitrary application behavior. The harness can record a typed bounded failure with an honest none/uncertain effect, but that branch is not claimed as live-qualified by these successful runs. No production runtime change was required and no catalog qualification status changed.
+
+## Integrated matrix check
+
+The `cpu-pressure` matrix entry passed again as UID 1001 on main `e75f154`
+in 9.445 seconds, retained in `artifacts/qualification-matrix/run-1789879611309772534/`.
+The full run fingerprint was `a112b270c38b3474e027234b4ed48dff2e2b786f8c98e99f16b4ab9e02404f7b`,
+unchanged throughout both suites. Eighteen matrix/inventory contract tests passed.
+This integration check preserves the scope and limitations above.

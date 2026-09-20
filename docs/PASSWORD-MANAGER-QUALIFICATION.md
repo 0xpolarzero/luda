@@ -84,3 +84,11 @@ No protected-input result is inferred from successful username copying. No runti
 change was indicated; AUTH-03 remains release-unqualified pending the broader
 acceptance matrix. The standalone suite is not silently added to ordinary desktop
 startup or a mandatory CI package installation.
+
+## Integrated matrix check
+
+The `password-manager` matrix entry passed again as UID 1001 on main `e75f154`
+in 15.210 seconds, retained in `artifacts/qualification-matrix/run-1789879611309772534/`.
+The full run fingerprint was `a112b270c38b3474e027234b4ed48dff2e2b786f8c98e99f16b4ab9e02404f7b`,
+unchanged throughout both suites. Eighteen matrix/inventory contract tests passed.
+This integration check preserves the scope and limitations above.
