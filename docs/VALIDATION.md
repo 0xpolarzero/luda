@@ -24,7 +24,7 @@ The [346-case catalog](REQUIREMENTS.md) defines acceptance targets. [Qualificati
 
 - `scripts/qualify.py`: named unit evidence linked to requirements. Unit success alone never grants release qualification.
 - `scripts/headless_tests.py`: sixteen isolated suites covering native/MCP input, cancellation, controls, menus, geometry, resources, waits, keyboard identity/repetition, input cleanup, server replacement and session-state hints. All sixteen passed locally at `8792f28`; subsequent changes require their own affected checks.
-- `scripts/native_app_tests.py`: five isolated ordinary-account suites for Mousepad, Thunar, window states, MCP launches and terminals. Both hosted AMD64 workflows completed successfully at `48a409b`, including these suites and desktop contracts.
+- `scripts/native_app_tests.py`: five isolated ordinary-account suites for Mousepad, Thunar, window states, MCP launches and terminals. Both hosted AMD64 workflows completed successfully at `5ef173b`, including these suites and desktop contracts.
 - Provider suites: `live_semantic.py`, `live_toolkits.py`, `live_controls.py`, `live_combo.py`, and browser suites retain independent widget/DOM oracles and failures. See [toolkits](TOOLKIT-QUALIFICATION.md), [browser](BROWSER-QUALIFICATION.md) and [browser text](BROWSER-TEXT-CONTRACT.md).
 - [Reconnect](RECONNECT.md), [clipboard](CLIPBOARD-QUALIFICATION.md), [terminals](TERMINAL-QUALIFICATION.md), [geometry](GEOMETRY-QUALIFICATION.md), [resources](RESOURCE-QUALIFICATION.md) and [storage](STORAGE-FAULT-QUALIFICATION.md) document exact local assertions and limits.
 - `scripts/agent_eval.py` requires an already authenticated CLI and explicit private-display opt-in. [Agent evaluation](AGENT-EVALUATION.md) records every retained attempt, independent oracles, trace grading, source hashes and usage.
@@ -73,8 +73,24 @@ fingerprint. The newer scoped records include [locale forms](DATA-ENTRY-QUALIFIC
 [download completion](BROWSER-DOWNLOAD-QUALIFICATION.md),
 [resource limits](RESOURCE-LIMIT-QUALIFICATION.md),
 [bus generations](BUS-GENERATION.md), [selection identities](SELECTION-IDENTITY-REVIEW.md),
+[detached menus](DETACHED-MENU-QUALIFICATION.md),
+[nested pane scrolling](NESTED-SCROLL-QUALIFICATION.md),
+[native full-disk save](DISK-FULL-SAVE-QUALIFICATION.md),
 and [authentication boundaries](AUTH-QUALIFICATION.md). These have distinct source
 snapshots and supported scopes; they are not a single universal acceptance pass.
+
+The integrated `5ef173b` unit run passed 565 tests with unchanged source
+(`artifacts/qualification/live-inventory-auth-unit.json`). Later live-only additions
+have their own recorded runs. The [live inventory](LIVE-COVERAGE.md) distinguishes
+registered fixtures from standalone experiments; its associations are not passes.
+
+Native full-disk saving exposed an application data-loss failure: Mousepad truncated
+the existing document to zero bytes while reporting ENOSPC. The buffer survived
+and an explicit retry recovered it after space was freed. Luda reported dispatch
+only, so FILE-06’s no-false-success criterion held, but the failed preservation
+diagnostic remains visible. Browser auth menu repetition also found a varying
+last menu item; a screenshot-reviewed route passed two fresh runs after correction.
+Neither finding is hidden by a suite count.
 
 ## Confirmed unresolved issues
 

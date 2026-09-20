@@ -73,6 +73,7 @@ Matrix IDs and declared gaps come from [qualification_matrix.py](../scripts/qual
 These existing live scripts are not registered in the three inventoried runners. They may have standalone commands or historical evidence; no status or requirement mapping is fabricated here. This list is generated from filenames, not imported tests.
 
 - [live_apps.py](../tests/live_apps.py)
+- [live_disk_full_save.py](../tests/live_disk_full_save.py)
 - [live_font_diagnostic.py](../tests/live_font_diagnostic.py)
 - [live_font_rendering.py](../tests/live_font_rendering.py)
 - [live_randr_backends.py](../tests/live_randr_backends.py)
