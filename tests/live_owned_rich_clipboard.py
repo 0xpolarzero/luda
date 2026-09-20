@@ -3,7 +3,7 @@ import argparse,asyncio,http.server,json,os,threading,time
 from pathlib import Path
 from unittest.mock import patch
 import live_mcp_disconnect as wire
-from live_rich_editor import SAMPLES
+from cancellation_finalization import finalized_cancellation
 ROOT=Path(__file__).resolve().parents[1];OUT=ROOT/'artifacts/owned-rich-clipboard';ASSETS=ROOT/'tests/fixtures/pm-selection'
 
 
@@ -142,6 +142,8 @@ async def main(executable):
             eid=await field();await call('desktop_type',element_id=eid,text='',mode='replace')
             record('cancel-empty-baseline',await wait(lambda:state.get('modelText')==''))
             await button('Arm cancellation barrier')
+            baseline=await call('desktop_status')
+            prior_ids={event['operation_id'] for event in baseline['operations']}
             owned=wire.process_identities(client.process.pid)
             payload='\n'.join('segment-'+str(i) for i in range(27))
             pending=await client.begin('tools/call',{'name':'desktop_type','arguments':{'element_id':eid,'text':payload,'line_breaks':'paragraph','transport':'clipboard'}})
@@ -154,6 +156,18 @@ async def main(executable):
                 while wire.alive(owned) and time.monotonic()<deadline:await asyncio.sleep(.05)
                 record('cancel-owned-browser-processes-closed',not wire.alive(owned),survivors=wire.alive(owned),response=pending.result() if pending.done() else None)
             finally:barrier_release.set()
+            try:
+                cancelled_response=await asyncio.wait_for(asyncio.shield(pending),3)
+            except asyncio.TimeoutError:
+                record('cancel-response-received',False,response=None)
+            record('cancel-response-received',cancelled_response.get('id')==request_id and 'error' in cancelled_response,response=cancelled_response)
+            deadline=time.monotonic()+5;finalized=None;final_status=None
+            while time.monotonic()<deadline:
+                final_status=await call('desktop_status')
+                finalized=finalized_cancellation(final_status,prior_ids)
+                if finalized:break
+                await asyncio.sleep(.02)
+            record('cancel-operation-finalized',finalized is not None,status=final_status)
             partial=barrier_state.get('modelText')
             record('cancel-stops-without-replay',partial=='segment-0' and partial!=payload,partial=partial)
             document_id=state['documentId'];opened=await call('desktop_open_browser',url=f'http://127.0.0.1:{service.server_port}',lifetime='temporary_session');wid=opened['window_id']
