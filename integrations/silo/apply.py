@@ -23,7 +23,8 @@ PATCHES = ('0001-guest-onboarding.patch', '0002-desktop-onboarding.patch',
            '0019-browser-completion-status.patch',
            '0020-refresh-rich-clipboard-skill.patch',
            '0021-refresh-selection-focus-skill.patch',
-           '0022-refresh-password-skill.patch')
+           '0022-refresh-password-skill.patch',
+           '0023-refresh-range-skill.patch')
 
 
 def apply(checkout, mutate=False):

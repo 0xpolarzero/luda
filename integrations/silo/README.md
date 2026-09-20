@@ -536,3 +536,5 @@ Patch 0020 refreshes the embedded agent skill for explicitly selected cooperatin
 Patch 0021 clarifies the owned-browser field focus prerequisite before selecting text, following the held-out rich-editor agent evaluation.
 
 Patch 0022 documents the explicit owned-browser password-entry exception, including dispatch-only results and clipboard preservation. Other protected-field text tools remain unsupported.
+
+Patch 0023 aligns the bundled skill with inclusive observed list/table ranges, explicit replacement/addition, and the same-inspection endpoint requirement.
