@@ -1,10 +1,10 @@
-# Unit mapping coverage: 589-test snapshot
+# Unit mapping coverage: 602-test snapshot
 
-This scoped audit uses source snapshot `bba9c45` and its immutable unit evidence (`artifacts/qualification/native-representation-compact-unit.json`). It preserves the [earlier 489-test snapshot](UNIT-COVERAGE.md) as historical evidence. Counts are not release qualification.
+This scoped audit uses source snapshot `e7fea80` and its immutable unit evidence (`artifacts/qualification/bootstrap-cleanup-unit.json`). It preserves the [earlier 489-test snapshot](UNIT-COVERAGE.md) as historical evidence. Counts are not release qualification.
 
 - Catalog: 346 cases (296 P0, 30 P1, 20 P2); all remain release-unqualified.
 - Mapped: 131 requirements, 264 distinct exact unit IDs.
-- Actual discovery/execution: 589 tests, all passed; every mapped test exists.
+- Actual discovery/execution: 602 tests, all passed; every mapped test exists.
 - Evidence statuses: 131 local-tests-passed; 215 cases without mapped unit evidence.
 
 | Cases | Added evidence | Limit |

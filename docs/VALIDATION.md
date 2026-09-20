@@ -24,7 +24,7 @@ The [346-case catalog](REQUIREMENTS.md) defines acceptance targets. [Qualificati
 
 - `scripts/qualify.py`: named unit evidence linked to requirements. Unit success alone never grants release qualification.
 - `scripts/headless_tests.py`: sixteen isolated suites covering native/MCP input, cancellation, controls, menus, geometry, resources, waits, keyboard identity/repetition, input cleanup, server replacement and session-state hints. All sixteen passed locally at `e987d22`; subsequent changes require their own affected checks.
-- `scripts/native_app_tests.py`: five isolated ordinary-account suites for Mousepad, Thunar, window states, MCP launches and terminals. Both hosted AMD64 workflows completed successfully at `0adc090`, including these suites and desktop contracts.
+- `scripts/native_app_tests.py`: five isolated ordinary-account suites for Mousepad, Thunar, window states, MCP launches and terminals. Both hosted AMD64 workflows completed successfully at `0cc9fff`, including these suites and desktop contracts.
 - Provider suites: `live_semantic.py`, `live_toolkits.py`, `live_controls.py`, `live_combo.py`, and browser suites retain independent widget/DOM oracles and failures. See [toolkits](TOOLKIT-QUALIFICATION.md), [browser](BROWSER-QUALIFICATION.md) and [browser text](BROWSER-TEXT-CONTRACT.md).
 - [Reconnect](RECONNECT.md), [clipboard](CLIPBOARD-QUALIFICATION.md), [terminals](TERMINAL-QUALIFICATION.md), [geometry](GEOMETRY-QUALIFICATION.md), [resources](RESOURCE-QUALIFICATION.md) and [storage](STORAGE-FAULT-QUALIFICATION.md) document exact local assertions and limits.
 - `scripts/agent_eval.py` requires an already authenticated CLI and explicit private-display opt-in. [Agent evaluation](AGENT-EVALUATION.md) records every retained attempt, independent oracles, trace grading, source hashes and usage.
@@ -91,13 +91,18 @@ fingerprint. The newer scoped records include [locale forms](DATA-ENTRY-QUALIFIC
 and [authentication boundaries](AUTH-QUALIFICATION.md). These have distinct source
 snapshots and supported scopes; they are not a single universal acceptance pass.
 
-The integrated `bba9c45` unit run passed **589 tests** with unchanged source
-(`artifacts/qualification/native-representation-compact-unit.json`). The same revision passed
-the ordinary-account actual MCP suite, including elapsed time on a real error
-response. This revision includes native text representation guards and compact
-JSON responses; the public MCP suite passed after both changes. [Error privacy](ERROR-PRIVACY.md) specifies the timing boundary; the
-earlier installed wheel predates this change. Later live-only additions have
-their own recorded runs. The [live inventory](LIVE-COVERAGE.md) distinguishes
+The integrated `e7fea80` unit run passed **602 tests** with unchanged source
+(`artifacts/qualification/bootstrap-cleanup-unit.json`). Earlier `bba9c45` passed
+the ordinary-account actual MCP suite after native representation guards and
+compact JSON responses were added, including elapsed time on a real error.
+[Error privacy](ERROR-PRIVACY.md) specifies the timing boundary.
+
+The [guest bootstrap](GUEST-BOOTSTRAP.md) subsequently installed source `7294d86`
+on the actual Silo desktop; its installed package passed 31 native and 18 MCP
+checks as UID 1001. A later root upgrade at `e7fea80` completed with a fresh remote
+configuration/skill bundle, verified both installed payloads and preserved the
+prior release. These are existing-guest proofs with system provisioning skipped,
+not fresh Mac/Silo onboarding. The [live inventory](LIVE-COVERAGE.md) distinguishes
 registered fixtures from standalone experiments; its associations are not passes.
 
 Native full-disk saving exposed an application data-loss failure: Mousepad truncated

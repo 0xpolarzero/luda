@@ -110,3 +110,17 @@ This tests root bootstrap with existing dependencies and a running desktop. It
 does not test fresh provisioning, apt installation, ordinary-user unreadable
 process cleanup, Mac discovery or Silo's automatic invocation. Later wrapper
 changes retain their own source-bound tests; this is not a pass for later source.
+
+The later root bootstrap at `e7fea80` also completed against the existing test
+prefix, selecting `0.1.0-7a5a7d242c750e09` and generating a fresh remote bundle.
+Its wheel SHA-256 is
+`8695bc56c83f7eca583f44dc9dd19198ccefbd8762e1151298a262f682587b83`.
+The prior release remained present, and both releases passed the installer's
+payload integrity verification. All 35 installed runtime Python files matched
+the earlier smoke-tested wheel byte for byte; the GUI suite was not repeated
+for this wrapper-only change. The integrated **602-test** unit run passed with
+unchanged source fingerprint
+`f3ff9f61e13c33a43eb5c396af6e4d14d92b124f0bb24ac465b1590943759bc1`.
+This wrapper includes the ordinary-user unreadable-process regression above,
+but the actual upgrade itself ran as root. Records are retained under
+`artifacts/guest-bootstrap/root-upgrade-e7fea80/`.
