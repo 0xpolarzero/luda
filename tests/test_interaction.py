@@ -21,13 +21,14 @@ class InteractionTests(unittest.TestCase):
     def test_close_verifies_disappearance(self, run):
         self.assertEqual(Dummy().manage_window('a','close')['effect'],'verified')
         run.assert_called_once_with(['wmctrl','-ic','42'],effect='uncertain')
+    @patch('luda.interaction.held_button')
     @patch('luda.interaction.time.sleep')
     @patch('luda.interaction.run')
-    def test_drag_releases_after_motion_failure(self, run, sleep):
-        run.side_effect = [b'',b'',DesktopError('TIMEOUT','test'),b'']
+    def test_drag_guard_exits_after_motion_failure(self, run, sleep, guard):
+        run.side_effect = [b'',DesktopError('TIMEOUT','test')]
         with self.assertRaises(DesktopError): Dummy().drag_between('a','b','s',1,2,3,4)
-        self.assertEqual(run.call_args.args[0],['xdotool','mouseup','1'])
-        self.assertTrue(run.call_args.kwargs['cleanup'])
+        guard.assert_called_once_with('1')
+        self.assertIs(guard.return_value.__exit__.call_args.args[0],DesktopError)
     @patch('luda.interaction.run')
     def test_destination_validated_before_input(self, run):
         d=Dummy()
@@ -40,14 +41,13 @@ class InteractionTests(unittest.TestCase):
 
 
 class MoreInteractionTests(unittest.TestCase):
-    @patch('luda.interaction.time.sleep')
+    @patch('luda.interaction.held_button')
     @patch('luda.interaction.run')
-    def test_cleanup_failure_retains_original_error(self, run, sleep):
-        run.side_effect=[b'',DesktopError('CANCELLED','cancel'),DesktopError('BACKEND_ERROR','release')]
+    def test_guard_failure_retains_code_and_prevents_drag_motion(self, run, guard):
+        guard.return_value.__enter__.side_effect=DesktopError('INPUT_GUARD_UNAVAILABLE','test')
         with self.assertRaises(DesktopError) as caught: Dummy().drag_between('a','b','s',1,2,3,4)
-        self.assertEqual(caught.exception.code,'CANCELLED')
-        self.assertEqual(caught.exception.details['button_release_failed'],'BACKEND_ERROR')
-        self.assertEqual(caught.exception.effect,'uncertain')
+        self.assertEqual(caught.exception.code,'INPUT_GUARD_UNAVAILABLE')
+        run.assert_called_once_with(['xdotool','mousemove','10','20'],effect='uncertain')
     @patch('luda.interaction.run')
     def test_invalid_pointer_button_has_no_effect(self, run):
         with self.assertRaises(DesktopError): Dummy().drag_between('a','b','s',1,2,3,4,button='invalid')
