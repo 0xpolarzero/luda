@@ -171,6 +171,9 @@ class Desktop(InteractionMixin):
     def observe(self, max_width=1280):
         if not 320 <= max_width <= 2560:
             raise DesktopError('INVALID_ARGUMENT','max_width must be 320–2560.')
+        root = self.display().geometry(self.display().root)
+        if root['width']<=0 or root['height']<=0 or root['width']*root['height']>32_000_000:
+            raise DesktopError('SCREENSHOT_LIMIT','Desktop capture is limited to 32 million native pixels; reduce display resolution.')
         before = self.list_windows()
         before_popups = self.observe_popups(before)
         with tempfile.TemporaryDirectory(dir=self.runtime) as directory:
@@ -178,9 +181,12 @@ class Desktop(InteractionMixin):
             run(['scrot','--overwrite',path],timeout=4)
             with Image.open(path) as source:
                 native = source.size
-                height = max(1, round(source.height * min(1,max_width/source.width)))
-                width = min(source.width,max_width)
-                source = source.convert('RGB').resize((width,height))
+                if native!=(root['width'],root['height']):
+                    raise DesktopError('DESKTOP_CHANGED','Display resolution changed during capture; observe again.')
+                scale = min(1,max_width/source.width,2560/source.height)
+                height = max(1,round(source.height*scale))
+                width = max(1,round(source.width*scale))
+                source = source.convert('RGB').resize((width,height),Image.Resampling.LANCZOS)
                 buf = io.BytesIO();source.save(buf,format='PNG')
         after = self.list_windows()
         after_popups = self.observe_popups(after)
