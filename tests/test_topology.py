@@ -5,8 +5,9 @@ from PIL import Image
 from luda._randr import bounded_values
 from luda.common import DesktopError
 from luda.interaction import InteractionMixin
-from tests import test_interaction, test_screenshot_limits
-from tests.test_popups import Driver
+import test_interaction
+import test_screenshot_limits
+from test_popups import Driver
 
 
 class TopologyTests(unittest.TestCase):
