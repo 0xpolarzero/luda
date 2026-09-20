@@ -97,3 +97,9 @@ account, confirm tools and skill appear in a new thread, observe the correct
 desktop, perform and verify one owned-file UI task, then reconnect after a
 session restart. Record Codex, Silo and guest versions and retain evidence
 of the selected remote host. That host-side test is not available here.
+
+A separate [host-SSH registration utility](HOST-REGISTRATION.md) can build a
+VM-specific plugin and explicitly register its tools and verified skill into a
+selected host profile. It uses Silo's private SSH configuration with ordinary
+host stdio, rather than assuming experimental executor placement. This is a
+Python developer utility, not yet a turnkey Silo/Mac app action.
