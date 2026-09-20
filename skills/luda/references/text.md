@@ -54,7 +54,7 @@ desktop_paste(window_id="<window_id>", text="literal text")
 
 Luda chooses a common paste shortcut from the window class. Override with `shortcut="ctrl_v"`, `"ctrl_shift_v"`, or `"shift_insert"` only when the application's actual binding is known. Shift+Insert can read PRIMARY in some terminals, so it is not interchangeable with CLIPBOARD paste.
 
-Clipboard contents are replaced and **not restored**. A successful paste receipt verifies the clipboard, not the receiving application. Inspect the destination, and handle any paste confirmation dialog explicitly. Do not silently switch to paste after an uncertain semantic edit; first determine what arrived.
+Clipboard contents are replaced and **not restored**. Native `desktop_type` can also replace the clipboard when an editable accessibility provider lacks direct text mutation (for example, an existing Chromium window); it verifies the destination text after that fallback. A successful paste receipt verifies the clipboard, not the receiving application. Inspect the destination, and handle any paste confirmation dialog explicitly. Do not silently switch to paste after an uncertain semantic edit; first determine what arrived.
 
 A pasted LF can execute a terminal command immediately. Preserve the user's intended command and submission scope; never add a trailing LF as a convenience. Treat terminal bracketed/multiline-paste dialogs as real application choices, not obstacles to dismiss automatically.
 
