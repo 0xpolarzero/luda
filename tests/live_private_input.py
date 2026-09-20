@@ -13,6 +13,7 @@ import sys
 import tempfile
 import threading
 import time
+from PIL import ImageGrab
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 from live_keyboard_guard import Oracle, wait
@@ -48,7 +49,7 @@ async def child():
             command('xdotool', 'mousemove', '1300', '800')
             oracle = Oracle()
             def human_state():
-                return {'focus': command('xdotool', 'getwindowfocus'),
+                return {'focus': command('xdotool', 'getwindowfocus', '-f'),
                         'pointer': command('xdotool', 'getmouselocation', '--shell'),
                         'keys': sorted(oracle.pressed()), 'buttons': oracle.buttons()}
             initial = human_state()
@@ -101,7 +102,15 @@ async def child():
                         count = state()['clicks']
                         await point('desktop_click', 'button')
                         wait(lambda: state()['clicks'] == count+1)
+                        x, y = state()['bounds']['button']
+                        assert ImageGrab.grab(xdisplay=os.environ['DISPLAY']).getpixel((x+1,y+6)) == (255,85,170)
                     await case('click preserves human pointer, focus and device state', click)
+                    async def hover_scroll():
+                        await point('desktop_hover', 'area')
+                        previous = state()['scrolls']
+                        await point('desktop_scroll', 'area', direction='down', ticks=3)
+                        wait(lambda: state()['scrolls'] == previous+3)
+                    await case('hover and three wheel ticks preserve human devices', hover_scroll)
                     async def type_keys():
                         await point('desktop_click', 'entry')
                         await call('desktop_press_keys', window_id=wid, chord='a', count=3)
@@ -117,6 +126,16 @@ async def child():
                         finally:
                             command('xdotool', 'keyup', 'Shift_L')
                     await case('human held Shift does not block or uppercase agent key', held_human)
+                    async def held_mouse():
+                        command('xdotool', 'mousedown', '1')
+                        try:
+                            before = human_state()
+                            await call('desktop_press_keys', window_id=wid, chord='d')
+                            wait(lambda: state()['text'].endswith('d'))
+                            assert human_state() == before
+                        finally:
+                            command('xdotool', 'mouseup', '1')
+                    await case('human held mouse button remains down during agent keyboard action', held_mouse)
                     async def drag():
                         previous = state()
                         x, y = previous['bounds']['area']
@@ -147,6 +166,17 @@ async def child():
                         await call('desktop_press_keys', window_id=wid, chord='Return')
                         wait(lambda: state()['menu_actions'] == 1)
                     await case('agent menu leaves human typing usable and activates exactly once', popup)
+                    async def stale():
+                        shot = await call('desktop_observe', max_width=2560)
+                        previous = state()['clicks']
+                        x, y = state()['bounds']['button']
+                        command('xdotool', 'windowmove', agent, '60', '100')
+                        response = await client.call_tool('desktop_click', {'window_id':wid,
+                            'snapshot_id':shot['snapshot_id'], 'x':x, 'y':y})
+                        value = json.loads(response.content[0].text)
+                        assert response.isError and value['code'] == 'STALE_OBSERVATION', value
+                        assert state()['clicks'] == previous
+                    await case('stale screenshot rejects before application input', stale)
             assert not oracle.pressed() and not oracle.buttons()
     finally:
         if oracle: oracle.close()

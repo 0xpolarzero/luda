@@ -1,0 +1,16 @@
+{
+  "scope": "real MCP, private Xvfb/XFWM, GTK file oracles, independent human core connection",
+  "passed": [
+    "click preserves human pointer, focus and device state",
+    "hover and three wheel ticks preserve human devices",
+    "typing reaches agent entry without changing human focus",
+    "human held Shift does not block or uppercase agent key",
+    "human held mouse button remains down during agent keyboard action",
+    "drag delivers press motion release without moving human pointer",
+    "concurrent human and agent typing reach separate applications",
+    "agent menu leaves human typing usable and activates exactly once",
+    "stale screenshot rejects before application input"
+  ],
+  "failed": [],
+  "qualification": "bounded fixture coverage, not universal app support"
+}

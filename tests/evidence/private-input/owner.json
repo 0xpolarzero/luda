@@ -1,0 +1,1 @@
+{"passed": true, "checks": ["private pointer", "private keyboard", "same-key release isolation", "normal cleanup", "owner SIGKILL cleanup", "unchanged human devices"]}

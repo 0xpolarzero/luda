@@ -8,7 +8,7 @@ gi.require_version('Gdk', '3.0')
 from gi.repository import Gdk, GLib, Gtk
 
 out, title = Path(sys.argv[1]), sys.argv[2]
-state = {'clicks': 0, 'menu_actions': 0, 'presses': 0, 'releases': 0, 'motions': 0, 'keys': []}
+state = {'clicks': 0, 'menu_actions': 0, 'presses': 0, 'releases': 0, 'motions': 0, 'keys': [], 'scrolls': 0}
 window = Gtk.Window(title=title)
 window.set_default_size(420, 390)
 box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
@@ -20,7 +20,7 @@ box.pack_start(button, False, False, 0)
 menu_button = Gtk.Button(label='Open menu')
 box.pack_start(menu_button, False, False, 0)
 area = Gtk.DrawingArea()
-area.add_events(Gdk.EventMask.BUTTON_PRESS_MASK | Gdk.EventMask.BUTTON_RELEASE_MASK | Gdk.EventMask.POINTER_MOTION_MASK)
+area.add_events(Gdk.EventMask.BUTTON_PRESS_MASK | Gdk.EventMask.BUTTON_RELEASE_MASK | Gdk.EventMask.POINTER_MOTION_MASK | Gdk.EventMask.SCROLL_MASK)
 box.pack_start(area, True, True, 0)
 menu = Gtk.Menu()
 item = Gtk.MenuItem(label='Count menu action')
@@ -34,6 +34,7 @@ menu_button.connect('button-press-event', lambda widget, event: menu.popup_at_po
 area.connect('button-press-event', lambda *_: increment('presses'))
 area.connect('button-release-event', lambda *_: increment('releases'))
 area.connect('motion-notify-event', lambda *_: increment('motions'))
+area.connect('scroll-event', lambda *_: increment('scrolls'))
 window.connect('key-press-event', lambda widget, event: state['keys'].append({'key': Gdk.keyval_name(event.keyval), 'state': int(event.state)}))
 def save():
     state['text'] = entry.get_text()
