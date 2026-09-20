@@ -189,7 +189,11 @@ class Worker:
         # merely the background page focus used for addressed CDP operations.
         self.effect='uncertain'
         self.protocol.send('Emulation.setFocusEmulationEnabled', {'enabled':False})
-        self.page.bring_to_front()
+        # With additional tabs/popups, native keys address the currently active
+        # browser UI. Selecting our original page would redirect shortcuts such
+        # as Ctrl+W and close the wrong tab.
+        if len(self.context.pages) == 1:
+            self.page.bring_to_front()
         return {'effect':'dispatched'}
 
     def focus(self, token):

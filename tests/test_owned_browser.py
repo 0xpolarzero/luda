@@ -15,11 +15,18 @@ class OwnedBrowserTests(unittest.TestCase):
         w=Worker('unused');w.protocol=Mock();w.page=Mock();w.page.evaluate.return_value=True;return w
 
     def test_native_keyboard_handoff_restores_real_widget_focus(self):
-        w=self.worker();w.page.is_closed.return_value=False
+        w=self.worker();w.page.is_closed.return_value=False;w.context=Mock(pages=[w.page])
         result=w.native_focus()
         self.assertEqual(result['effect'],'dispatched')
         w.protocol.send.assert_called_once_with('Emulation.setFocusEmulationEnabled', {'enabled':False})
         w.page.bring_to_front.assert_called_once()
+
+    def test_multi_page_native_handoff_preserves_active_tab(self):
+        w=self.worker();w.page.is_closed.return_value=False
+        w.context=Mock(pages=[w.page,Mock()])
+        w.native_focus()
+        w.protocol.send.assert_called_once_with('Emulation.setFocusEmulationEnabled', {'enabled':False})
+        w.page.bring_to_front.assert_not_called()
 
     def test_closed_browser_never_attempts_native_handoff(self):
         w=self.worker();w.page.is_closed.return_value=True
