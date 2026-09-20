@@ -24,6 +24,40 @@ def toolkit_name(node):
     return (app.get_toolkit_name() or "") if app else ""
 
 
+def application_toolkit(req):
+    """Read provider metadata only when one live process registration matches."""
+    pid, start = req.get('pid'), req.get('start')
+    if (type(pid) is not int or pid <= 0 or not isinstance(start, str)
+            or not start.isdecimal() or len(start) > 64):
+        return failure('INVALID_ARGUMENT', 'Toolkit lookup requires a process generation.')
+    if identity(pid) != start:
+        return failure('STALE_TARGET', 'Process changed before toolkit lookup.')
+    desktop = Atspi.get_desktop(0)
+    count = desktop.get_child_count()
+    if type(count) is not int or not 0 <= count <= 256:
+        return failure('ACCESSIBILITY_UNAVAILABLE', 'Application registration scan exceeds its budget.')
+    began = time.monotonic()
+    matches = []
+    for index in range(count):
+        if time.monotonic() - began > .6:
+            return failure('ACCESSIBILITY_UNAVAILABLE', 'Application registration scan exceeded its time budget.')
+        app = desktop.get_child_at_index(index)
+        if app is None:
+            return failure('ACCESSIBILITY_UNAVAILABLE', 'Application registration is unreadable.')
+        if app.get_process_id() == pid:
+            matches.append(app)
+    if len(matches) != 1:
+        return failure('ACCESSIBILITY_UNAVAILABLE', 'No unique accessibility application matches the process.')
+    app = matches[0]
+    toolkit, version = app.get_toolkit_name(), app.get_toolkit_version()
+    if (not isinstance(toolkit, str) or not isinstance(version, str)
+            or len(toolkit) > 128 or len(version) > 128):
+        return failure('ACCESSIBILITY_UNAVAILABLE', 'Toolkit metadata is missing or invalid.')
+    if identity(pid) != start:
+        return failure('STALE_TARGET', 'Process changed during toolkit lookup.')
+    return {'toolkit': toolkit, 'toolkit_version': version}
+
+
 def native_text_mutation_supported(node, current):
     # Gecko advertises EditableText for text roles while its ATK callbacks
     # return without editing them. Keep the raw interfaces visible to agents.
@@ -1079,6 +1113,8 @@ def semantic(node, current, req):
 
 
 def main(req):
+    if req.get("op") == "toolkit":
+        return application_toolkit(req)
     pid = req["pid"]
     if req.get("op") not in {"inspect", "read", "locate", "set", "focus", "invoke", "insert", "select", "value", "check", "expand", "secret", "choose"}:
         return failure("UNSUPPORTED_OPERATION", "Unknown accessibility operation.")
@@ -1287,7 +1323,7 @@ def _dispatch(request):
     except Exception:
         return {"error": "ACCESSIBILITY_ERROR",
                 "message": "The accessibility provider failed. Inspect again before retrying an action.",
-                "effect": "none" if request.get("op") in ("read", "inspect") else "uncertain"}
+                "effect": "none" if request.get("op") in ("read", "inspect", "toolkit") else "uncertain"}
 
 
 def dispatch(request):
