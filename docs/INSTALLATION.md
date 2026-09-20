@@ -2,6 +2,8 @@
 
 Luda runs inside the Linux guest and attaches to its existing XFCE/X11 session. The SSH account must be the desktop account or root; the session launcher drops root privileges before GUI access. Installing tools does not create the desktop itself.
 
+For an already running Silo desktop, the [explicit guest bootstrap](GUEST-BOOTSTRAP.md) composes installation, readiness and a reviewable remote configuration in one command. The individual lifecycle commands below remain available.
+
 ## Install and check
 
 From the source checkout, provision the declared Ubuntu dependencies and install:
