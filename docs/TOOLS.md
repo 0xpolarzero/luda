@@ -34,7 +34,7 @@ Read uncertain local OCR word candidates from this exact retained screenshot, ne
 desktop_status()
 ```
 
-Return recent operation outcomes after timeout/cancellation. No input text or screenshots are retained.
+Return recent operation outcomes after timeout/cancellation. This operation history excludes input text and screenshots.
 
 ## `desktop_report`
 

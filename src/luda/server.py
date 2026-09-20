@@ -189,7 +189,7 @@ async def desktop_ocr(snapshot_id: str, language: str = 'eng', limit: int = 200)
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
 async def desktop_status() -> CallToolResult:
-    """Return recent operation outcomes after timeout/cancellation. No input text or screenshots are retained."""
+    """Return recent operation outcomes after timeout/cancellation. This operation history excludes input text and screenshots."""
     with _history_lock:
         history = list(_history)
     return CallToolResult(content=[TextContent(type='text',text=json.dumps({'ok':True,'recovering':_quarantined.is_set(),'operations':history},separators=(',',':')))])
