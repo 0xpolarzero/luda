@@ -6,6 +6,7 @@ import time
 from ._x11_helper import _NativeX11, _decode_window_token
 from .common import DesktopError
 from ._input_native import generation
+from .input_validation import validate_generation
 
 
 class State(C.Structure):
@@ -81,9 +82,23 @@ class Keyboard:
         consumed=C.c_uint();symbol=C.c_ulong()
         okay=self.x.lib.XkbLookupKeySym(self.x.display,code,mask | ((group&3)<<13),C.byref(consumed),C.byref(symbol))
         return symbol.value if okay else None
-    def plan(self,chord,target):
+    def target_token(self,target,expected=None):
+        if type(target) is not int or not 0<target<=0xffffffff:
+            raise DesktopError('INVALID_ARGUMENT','Invalid native target window.')
+        if expected is not None:validate_generation(expected)
+        if expected is None:
+            # Direct low-level callers may capture current identity. Production
+            # Desktop.key always supplies the token already observed by Desktop.
+            return self.x.window_tokens([target])[target]
+        prop=self.x._property(target,'_LUDA_WINDOW_TOKEN',9)
+        if not prop or _decode_window_token(*prop)!=expected:
+            raise DesktopError('STALE_TARGET','Target window generation changed; no keys pressed.')
+        return expected
+
+    def plan(self,chord,target,target_generation=None):
         from .keyboard import validate_chord
         parts=validate_chord(chord)
+        target_token=self.target_token(target,target_generation)
         state=self.state()
         if self.pressed() or self.buttons() or state.base_mods:
             raise DesktopError('INPUT_HELD','Keys or pointer buttons are already held; release them before requesting a chord. No input changed.')
@@ -113,7 +128,22 @@ class Keyboard:
         codes.append(code)
         if len(codes)!=len(set(codes)) or not 1<=len(codes)<=5:
             raise DesktopError('UNSUPPORTED_KEYMAP','Chord has overlapping keycodes.')
-        return {'chord':chord,'target':target,'keycodes':codes,'group':state.group,'locked_mods':state.locked_mods,'server_generation':generation(self.x)}
+        return {'chord':chord,'target':target,'keycodes':codes,'group':state.group,'locked_mods':state.locked_mods,'server_generation':generation(self.x),'target_generation':target_token}
+    def press_target(self,code,target,target_generation):
+        # The server cannot destroy/reuse a target between this identity check
+        # and its key-down. Never keep the grab across sleeps or application
+        # work; disconnecting this isolated helper also releases the grab.
+        self.x.lib.XGrabServer(self.x.display)
+        try:
+            self.target_token(target,target_generation)
+            active=self.x._property(self.x.root,'_NET_ACTIVE_WINDOW',1)
+            if not active or active[2]!=[target]:
+                raise DesktopError('FOCUS_CHANGED','Target lost focus before key-down.',effect='uncertain')
+            self.event(code,True)
+        finally:
+            self.x.lib.XUngrabServer(self.x.display)
+            self.x.lib.XSync(self.x.display,False)
+
     def client_resource(self):
         resource=self.x.lib.XCreateSimpleWindow(self.x.display,self.x.root,0,0,1,1,0,0,0)
         token=self.x.window_tokens([resource])[resource]
@@ -167,7 +197,7 @@ def main():
                   'latched_input':bool(state.latched_mods or state.latched_group),
                   'mapping':'Current group, named keys with ordinary Shift; unsupported symbols are refused.',
                   'cleanup':'Owned injector termination and planned-key release; concurrent same-key human input remains indistinguishable.'})
-        elif sys.argv[1]=='plan':emit(keyboard.plan(request['chord'],request['target']))
+        elif sys.argv[1]=='plan':emit(keyboard.plan(request['chord'],request['target'],request.get('target_generation')))
         elif sys.argv[1]=='release':
             codes=request['keycodes']
             if not isinstance(codes,list) or not 1<=len(codes)<=5 or any(type(c) is not int or not 8<=c<=255 for c in codes):raise ValueError()
@@ -179,13 +209,13 @@ def main():
         elif sys.argv[1]=='inject':
             if generation(keyboard.x)!=request['server_generation']:
                 raise DesktopError('SESSION_CHANGED','X server changed before injection; no keys pressed.')
-            if keyboard.plan(request['chord'],request['target'])!=request:
+            if keyboard.plan(request['chord'],request['target'],request.get('target_generation'))!=request:
                 raise DesktopError('KEYMAP_CHANGED','Keyboard state changed before dispatch; no input sent.')
             emit({'armed':True,'client':keyboard.client_resource()})
             pressed=[]
             try:
                 for code in request['keycodes']:
-                    pressed.append(code);keyboard.event(code,True);time.sleep(.012)
+                    pressed.append(code);keyboard.press_target(code,request['target'],request['target_generation']);time.sleep(.012)
             finally:
                 for code in reversed(pressed):keyboard.event(code,False)
             state=keyboard.state()

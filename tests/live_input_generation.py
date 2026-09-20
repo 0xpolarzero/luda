@@ -59,6 +59,13 @@ def main():
             server=subprocess.Popen(['Xvfb',env['DISPLAY'],'-screen','0','800x600x24','-nolisten','tcp','-ac','-auth',str(authority)],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
             wait(lambda:subprocess.run(['xdpyinfo'],env=env,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL).returncode==0)
             oracle=Oracle();new_generation=native({'operation':'generation'})['server_generation'];assert new_generation!=old_generation
+            oracle.x.XCreateSimpleWindow.argtypes=[C.c_void_p,C.c_ulong,C.c_int,C.c_int,C.c_uint,C.c_uint,C.c_uint,C.c_ulong,C.c_ulong];oracle.x.XCreateSimpleWindow.restype=C.c_ulong
+            new_window=oracle.x.XCreateSimpleWindow(oracle.d,oracle.x.XDefaultRootWindow(oracle.d),0,0,200,100,0,0,0)
+            oracle.x.XSync(oracle.d,False)
+            assert new_window==window,'replacement must reuse numeric target XID'
+            command('xprop','-root','-f','_NET_ACTIVE_WINDOW','32x','-set','_NET_ACTIVE_WINDOW',hex(new_window))
+            refused=json.loads(subprocess.check_output([sys.executable,'-m','luda._keyboard_native','plan'],input=json.dumps({'chord':'Return','target':new_window,'target_generation':plan['target_generation']}).encode()+b'\n',env=env,timeout=3))
+            assert refused['code']=='STALE_TARGET' and refused['effect']=='none',refused
             command('xdotool','keydown','Control_L');command('xdotool','mousedown','1')
             command('xdotool','mousemove','321','234')
             def pointer_position():

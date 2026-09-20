@@ -10,6 +10,7 @@ import threading
 import uuid
 from .common import DesktopError, checkpoint, mark_effect, run, subprocess_environment, environment_scope
 from .timing import elapsed_time
+from .input_validation import validate_generation
 
 
 _recovery_lock=threading.Lock()
@@ -160,12 +161,13 @@ def keyboard_capabilities():
         return {'available':False,'reason':'invalid_response'}
 
 
-def send_chord(chord,target):
+def send_chord(chord,target,target_generation=None):
     validate_chord(chord)
     keyboard_recovery_checkpoint()
     if type(target) is not int or not 0<target<=0xffffffff:
         raise DesktopError('INVALID_ARGUMENT','Invalid native target window.')
     request={'chord':chord,'target':target}
+    if target_generation is not None:request['target_generation']=validate_generation(target_generation)
     plan=json.loads(run([sys.executable,'-m','luda._keyboard_native','plan'],data=json.dumps(request).encode()+b'\n',timeout=2,max_output_bytes=4096))
     if plan.get('code'):raise DesktopError(plan['code'],plan['message'])
     return _dispatch_plan(plan)

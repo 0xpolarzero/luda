@@ -13,7 +13,7 @@ class FakeKeyboard(Keyboard):
     def __init__(self):
         self.current=SimpleNamespace(base_mods=0,latched_mods=0,latched_group=0,group=0,locked_mods=0)
         self.keys=[];self.pointer=[]
-        self.x=SimpleNamespace(root=1,_property=Mock(return_value=(33,32,[99],0)),window_tokens=lambda ids:{1:'a'*32})
+        self.x=SimpleNamespace(root=1,_property=Mock(return_value=(33,32,[99],0)),window_tokens=lambda ids:{xid:'a'*32 for xid in ids})
     def state(self):return self.current
     def pressed(self):return self.keys
     def buttons(self):return self.pointer
@@ -50,6 +50,25 @@ class KeyboardContract(unittest.TestCase):
     def test_focus_checked_in_native_preflight(self):
         with self.assertRaises(DesktopError) as error:FakeKeyboard().plan('Return',100)
         self.assertEqual(error.exception.code,'FOCUS_CHANGED')
+    def test_observed_target_token_required_before_mapping(self):
+        keyboard=FakeKeyboard();keyboard.x._property.return_value=(31,8,b'b'*32,0)
+        with self.assertRaises(DesktopError) as error:keyboard.plan('Return',99,'a'*32)
+        self.assertEqual(error.exception.code,'STALE_TARGET')
+        keyboard.x._property.return_value=None
+        with self.assertRaises(DesktopError) as error:keyboard.plan('Return',99,'a'*32)
+        self.assertEqual(error.exception.code,'STALE_TARGET')
+    def test_press_identity_failure_always_ungrabs_without_down(self):
+        keyboard=FakeKeyboard();keyboard.x.lib=Mock();keyboard.x.display=123
+        keyboard.x._property.return_value=(31,8,b'b'*32,0);keyboard.event=Mock()
+        with self.assertRaises(DesktopError):keyboard.press_target(36,99,'a'*32)
+        keyboard.event.assert_not_called();keyboard.x.lib.XGrabServer.assert_called_once_with(123)
+        keyboard.x.lib.XUngrabServer.assert_called_once_with(123);keyboard.x.lib.XSync.assert_called_once_with(123,False)
+    def test_expected_token_is_passed_to_native_plan(self):
+        with patch('luda.keyboard.run',return_value=b'{"code":"STALE_TARGET","message":"replaced"}') as run,self.assertRaises(DesktopError):send_chord('Return',99,target_generation='a'*32)
+        import json
+        self.assertEqual(json.loads(run.call_args.kwargs['data'])['target_generation'],'a'*32)
+        with patch('luda.keyboard.run') as run,self.assertRaises(DesktopError):send_chord('Return',99,target_generation='invalid')
+        run.assert_not_called()
     def test_case_planning_preserves_caps_lock(self):
         keyboard=FakeKeyboard()
         self.assertEqual(keyboard.plan('A',99)['keycodes'],[50,38])
