@@ -279,9 +279,10 @@ async def desktop_drag_to(source_window_id: str, target_window_id: str, snapshot
 
 
 @mcp.tool()
-async def desktop_wait(condition: Literal['window_present','window_absent','window_active','text_equals','text_contains'], window_id: str | None = None, element_id: str | None = None, text: str | None = None, timeout: float = 5) -> CallToolResult:
-    """Wait up to 10 seconds for an observable condition without repeating input. Window conditions use window_id; text conditions use element_id and text. A timeout returns matched=false."""
-    return await execute_async('wait_for',condition,window_id=window_id,element_id=element_id,text=text,timeout=timeout)
+async def desktop_wait(condition: Literal['window_present','window_absent','window_active','text_equals','text_contains','element_present','element_absent','pixels_stable'], window_id: str | None = None, element_id: str | None = None, text: str | None = None, timeout: float = 5, name: str | None = None, role: str | None = None, states: list[str] | None = None, stable_for: float = .3) -> CallToolResult:
+    """Wait for a bounded observed condition. Element waits use fresh name/role substring and required-state filters; absence requires complete coverage. pixels_stable samples the target client rectangle for stable_for seconds, not general application idleness."""
+    return await execute_async('wait_condition',condition,window_id=window_id,element_id=element_id,text=text,timeout=timeout,name=name,role=role,states=states,stable_for=stable_for)
+
 
 
 def main():
