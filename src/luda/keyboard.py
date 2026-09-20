@@ -184,6 +184,18 @@ def send_chord(chord,target,target_generation=None,count=1):
     return _dispatch_plan(plan)
 
 
+def key_dispatch_progress(value, expected_count=None):
+    """Validate payload-free companion metadata before exposing or retaining it."""
+    keys={'unit','requested','dispatched','possibly_partial','not_started','application_outcome_verified'}
+    if not isinstance(value,dict) or set(value)!=keys:return None
+    if value['unit']!='key_chord' or value['application_outcome_verified'] is not False:return None
+    count=value['requested'];done=value['dispatched'];partial=value['possibly_partial'];pending=value['not_started']
+    if any(type(n) is not int for n in (count,done,partial,pending)):return None
+    if not 1<=count<=20 or not 0<=done<=count or partial not in (0,1) or not 0<=pending<=count:return None
+    if done+partial+pending!=count or expected_count is not None and count!=expected_count:return None
+    return dict(value)
+
+
 def _dispatch_plan(plan):
     keyboard_recovery_checkpoint()
     checkpoint()
@@ -222,16 +234,18 @@ def _dispatch_plan(plan):
                 if len(output)>8192:raise DesktopError('KEYBOARD_UNAVAILABLE','Input companion response exceeded its bound.',effect='uncertain')
         guard.wait(timeout=max(.01,cleanup_deadline-elapsed_time()))
         if output:result=json.loads(output.splitlines()[-1])
+        progress=key_dispatch_progress(result.get('progress'),plan.get('count',1)) if result else None
         proven=_completion_proven(result)
         if result and result.get('armed'):mark_effect()
         if failure:
             if result and result.get('armed'):failure.effect='uncertain'
             if result:failure.details.update({k:result[k] for k in ('cleanup_verified','session_changed','cleanup_skipped') if k in result})
+            if progress is not None:failure.details['progress']=progress
             raise failure
         if not result:raise DesktopError('KEYBOARD_UNAVAILABLE','Input companion returned no result.',effect='uncertain')
         if result.get('code'):
-            raise DesktopError(result['code'],result['message'],effect=result.get('effect','uncertain'),details={k:result[k] for k in ('cleanup_verified','session_changed','cleanup_skipped') if k in result})
-        return {'effect':'dispatched',**{key:result[key] for key in ('group_unchanged','locks_unchanged','dispatched_count') if key in result},'verification':result.get('verification','Key delivery does not prove application outcome.')}
+            raise DesktopError(result['code'],result['message'],effect=result.get('effect','uncertain'),details={**{k:result[k] for k in ('cleanup_verified','session_changed','cleanup_skipped') if k in result},**({'progress':progress} if progress is not None else {})})
+        return {'effect':'dispatched',**({'progress':progress} if progress is not None else {}),**{key:result[key] for key in ('group_unchanged','locks_unchanged','dispatched_count') if key in result},'verification':result.get('verification','Key delivery does not prove application outcome.')}
     except BaseException as exc:
         if not proven:
             mark_effect()

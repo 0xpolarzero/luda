@@ -65,3 +65,11 @@ CANCELLED/uncertain after real `111`, with no later changes or held keys. This
 confirms the race mechanism, not the exact cause of the underspecified CI failure.
 All sixteen headless suites subsequently passed on ARM64 at `e987d22` with an
 unchanged source fingerprint.
+
+## Interrupted repetitions
+
+A final companion receipt can include `progress`: `unit: "key_chord"`, the requested count, fully acknowledged `dispatched` repetitions, at most one `possibly_partial` repetition, and `not_started` repetitions. These three counts partition the request. `application_outcome_verified` is always false: a complete native press/release acknowledgment does not prove that the application acted on it. Never resume the remainder automatically; observe the application first.
+
+The native worker flushes a start record before possible key input and a completion record only after the chord is released and its keyboard-state check passes. The guardian retains those bounded records internally and drains them after stopping the worker. It does not stream them as an early final response. Missing or malformed proof omits progress; it does not invent zero completed actions. Public errors and sanitized operation history retain only validated numeric counts and fixed labels. A cancelled client need not receive a final reply; `desktop_status` may show the completed cleanup outcome later. If cleanup is still pending and no final receipt exists, progress can remain unavailable.
+
+Validation includes actual private ordinary-account Xvfb exact twenty-repeat text, interrupted repetitions bounded by independent application text, and no held keys or replay; existing controller-death, stopped-guardian and input-recovery checks also pass. Independent real-process protocol probes verify cancellation between acknowledgments, no premature frontend response, and omission on malformed completion records. These are native key-dispatch counts, not rich-editor segment progress or universal compound-action coverage.

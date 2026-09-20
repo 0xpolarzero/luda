@@ -17,7 +17,7 @@ from mcp.types import CallToolResult, ImageContent, TextContent, ToolAnnotations
 
 from .common import DesktopError, operation_scope, checkpoint, environment_scope
 from .session_reconnect import prepare_reconnect
-from .keyboard import set_recovery_hooks, recover_keyboard_input
+from .keyboard import set_recovery_hooks, recover_keyboard_input, key_dispatch_progress
 from .desktop import Desktop
 from .apps import list_applications, launch_application
 from .session_state import require_session_input
@@ -136,12 +136,16 @@ def execute(method, *args, _cancelled=None, **kwargs):
         image = result.pop('image_base64',None)
         result={'ok':True,'operation_id':operation_id,'elapsed_ms':round((time.monotonic()-started)*1000),**result}
         event.update(ok=True, effect=result.get('effect','none'))
+        progress=key_dispatch_progress(result.get('progress'))
+        if progress is not None:event['progress']=progress
         content=[TextContent(type='text',text=json.dumps(result,ensure_ascii=False,separators=(',',':')))]
         if image:
             content.append(ImageContent(type='image',data=image,mimeType='image/png'))
         return CallToolResult(content=content,isError=False)
     except DesktopError as exc:
         event.update(ok=False, code=exc.code, effect=exc.effect)
+        progress=key_dispatch_progress(exc.details.get('progress'))
+        if progress is not None:event['progress']=progress
         return result_error(exc.code,str(exc),exc.effect,details=exc.details,operation_id=operation_id,elapsed_ms=round((time.monotonic()-started)*1000))
     except Exception:
         # Exception text/repr can contain protected input or provider contents.
@@ -335,7 +339,7 @@ async def desktop_paste(window_id: str, text: str, shortcut: Literal['ctrl_v','c
 
 @mcp.tool()
 async def desktop_press_keys(window_id: str, chord: str, count: int = 1) -> CallToolResult:
-    """Send a deliberate chord, e.g. ctrl+s, ctrl+plus, ctrl+minus, Return, Tab, Escape or Down. Punctuation uses X11 names (plus, equal, bracketleft, slash); implicit Shift follows the current layout. count is 1–20 complete press/release repetitions, default 1. Revalidates target identity, focus and input state between repetitions; stops on the first failure and never retries. Requires target focus, refuses held keys/buttons, and preserves the current keyboard mapping. Unavailable symbols return UNSUPPORTED_KEYMAP; text belongs in desktop_type. Dispatched count is not application completion."""
+    """Send a deliberate chord, e.g. ctrl+s, ctrl+plus, ctrl+minus, Return, Tab, Escape or Down. Punctuation uses X11 names (plus, equal, bracketleft, slash); implicit Shift follows the current layout. count is 1–20 complete press/release repetitions, default 1. Revalidates target identity, focus and input state between repetitions; stops on the first failure and never retries. Requires target focus, refuses held keys/buttons, and preserves the current keyboard mapping. Unavailable symbols return UNSUPPORTED_KEYMAP; text belongs in desktop_type. When a final companion receipt is available, progress reports fully dispatched, possibly partial and not-started repetitions. Dispatched count is not application completion."""
     return await execute_async('key',window_id,chord,count)
 
 

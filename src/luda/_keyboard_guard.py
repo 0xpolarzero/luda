@@ -34,11 +34,31 @@ def release_owned(request,client):
         return {'cleanup_verified':False,'session_changed':False,'cleanup_skipped':False}
 
 
+class KeyDispatchProgress:
+    """Only flushed native acknowledgments count; application outcome is unknown."""
+    def __init__(self, count):
+        if type(count) is not int or not 1 <= count <= 20:raise ValueError()
+        self.count=count;self.started=0;self.completed=0
+
+    def start(self, number):
+        if type(number) is not int or number != self.completed+1 or self.started != self.completed or number > self.count:raise ValueError()
+        self.started=number
+
+    def complete(self, number):
+        if type(number) is not int or number != self.started or number != self.completed+1:raise ValueError()
+        self.completed=number
+
+    def snapshot(self):
+        return {'unit':'key_chord','requested':self.count,'dispatched':self.completed,
+                'possibly_partial':self.started-self.completed,'not_started':self.count-self.started,
+                'application_outcome_verified':False}
+
+
 def main():
     worker=None;armed=False;client=None;done=None;buffer=b'';partial=b'';request=None
-    reason=None
+    reason=None;progress=None;progress_enabled=False
     def consume(chunk,final=False):
-        nonlocal armed,client,done,partial
+        nonlocal armed,client,done,partial,progress_enabled
         partial+=chunk
         lines=partial.split(b'\n')
         partial=lines.pop()
@@ -46,7 +66,15 @@ def main():
         for line in lines:
             if not line:continue
             message=json.loads(line)
-            if message.get('armed'):armed=True;client=message['client']
+            if message.get('armed'):
+                armed=True;client=message['client']
+                progress_enabled=progress is not None and type(message.get('dispatch_progress_version')) is int and message['dispatch_progress_version']==1
+            elif 'dispatch_started' in message:
+                if not armed or not progress_enabled:raise ValueError()
+                progress.start(message['dispatch_started'])
+            elif 'dispatch_completed' in message:
+                if not armed or not progress_enabled:raise ValueError()
+                progress.complete(message['dispatch_completed'])
             elif message.get('held'):emit({'held':True})
             elif message.get('done') or message.get('code'):done=message
     try:
@@ -62,6 +90,7 @@ def main():
                 initial+=chunk
                 if len(initial)>4096:raise ValueError()
             request=json.loads(initial)
+            if request.get('kind')!='pointer':progress=KeyDispatchProgress(request.get('count',1))
             if request.get('hold'):deadline=elapsed_time()+30
             # No controller pipe is inherited by this owned worker.
             worker=subprocess.Popen([sys.executable,'-m',native_module(request),'inject'],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,start_new_session=True)
@@ -92,6 +121,7 @@ def main():
             buffer+=chunk;consume(chunk)
             if len(buffer)>8192:break
         consume(b'',final=True)
+        if done and done.get('done') and progress_enabled and progress.completed!=progress.count:raise ValueError()
         if armed and (reason or not done or not done.get('done')):
             cleaned=release_owned(request,client)
             result={'code':reason or 'KEYBOARD_INTERRUPTED','message':'Input operation interrupted; owned input release was attempted. Inspect the application before retrying.','effect':'uncertain',**cleaned,'cleanup_request':cleanup_request(request,client)}
@@ -103,6 +133,7 @@ def main():
         else:
             result=done or {'code':'KEYBOARD_UNAVAILABLE','message':'Input worker ended without a result.','effect':'none'}
         result['armed']=armed
+        if progress_enabled:result['progress']=progress.snapshot()
         emit(result)
     except Exception:
         if worker and worker.poll() is None:

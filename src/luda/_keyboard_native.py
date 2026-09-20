@@ -212,10 +212,11 @@ def main():
                 raise DesktopError('SESSION_CHANGED','X server changed before injection; no keys pressed.')
             if keyboard.plan(request['chord'],request['target'],request.get('target_generation'),request.get('count',1))!=request:
                 raise DesktopError('KEYMAP_CHANGED','Keyboard state changed before dispatch; no input sent.')
-            emit({'armed':True,'client':keyboard.client_resource()})
+            emit({'armed':True,'client':keyboard.client_resource(),'dispatch_progress_version':1})
             for repetition in range(request['count']):
                 if repetition and keyboard.plan(request['chord'],request['target'],request['target_generation'],request['count'])!=request:
                     raise DesktopError('KEYMAP_CHANGED','Keyboard state changed between repetitions; remaining chords were not sent.',effect='uncertain')
+                emit({'dispatch_started':repetition+1})
                 pressed=[]
                 try:
                     for code in request['keycodes']:
@@ -225,6 +226,7 @@ def main():
                 state=keyboard.state()
                 if state.group!=request['group'] or state.locked_mods!=request['locked_mods']:
                     raise DesktopError('KEYMAP_CHANGED','Keyboard group or locks changed; remaining chords were not sent.',effect='uncertain')
+                emit({'dispatch_completed':repetition+1})
                 if repetition+1<request['count']:time.sleep(.035)
             emit({'done':True,'effect':'dispatched','group_unchanged':True,'locks_unchanged':True,'dispatched_count':request['count']})
         else:raise ValueError()

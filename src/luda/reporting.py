@@ -89,6 +89,7 @@ def project_versions(health):
 
 
 def project_history(history):
+    from .keyboard import key_dispatch_progress
     result = []
     for value in list(history)[-32:]:
         if not isinstance(value, dict):
@@ -114,6 +115,8 @@ def project_history(history):
             row['elapsed_ms'] = round(elapsed, 3)
         if type(value.get('ok')) is bool:
             row['ok'] = value['ok']
+        progress=key_dispatch_progress(value.get('progress'))
+        if progress is not None:row['progress']=progress
         if row:
             result.append(row)
     return result

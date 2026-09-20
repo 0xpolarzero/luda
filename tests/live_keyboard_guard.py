@@ -87,6 +87,7 @@ def run_child():
             clear()
             result=send_chord('1',window['xid'],target_generation=window['window_id'].rsplit(':',1)[-1],count=20)
             wait(lambda:text()=='1'*20);assert result['dispatched_count']==20 and not oracle.pressed()
+            assert result['progress']=={'unit':'key_chord','requested':20,'dispatched':20,'possibly_partial':0,'not_started':0,'application_outcome_verified':False}
             clear();send_chord('Return',window['xid'],count=3);send_chord('Up',window['xid'],count=2);key('A')
             wait(lambda:text()=='\nA\n\n')
             clear();result=send_chord('shift+A',window['xid'],count=3)
@@ -100,6 +101,9 @@ def run_child():
             assert not repeating.is_alive() and repeat_errors and repeat_errors[0].code=='CANCELLED' and repeat_errors[0].effect=='uncertain', {'thread_alive':repeating.is_alive(),'errors':[(e.code,e.effect) for e in repeat_errors],'text':text()}
             after=text();assert 3<=len(after)<20 and not oracle.pressed();time.sleep(.1);assert text()==after
             assert 'dispatched_count' not in repeat_errors[0].details
+            progress=repeat_errors[0].details['progress']
+            assert progress['requested']==20 and progress['dispatched']<=len(after)<=progress['dispatched']+progress['possibly_partial'], (progress,after)
+            assert progress['dispatched']+progress['possibly_partial']+progress['not_started']==20 and progress['application_outcome_verified'] is False
             rows.append('bounded-repeats-exact-text-navigation-full-chords-and-cancellation-no-replay')
 
             subprocess.run(['xdotool','keydown','Shift_L'],check=True)
