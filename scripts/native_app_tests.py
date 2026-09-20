@@ -97,9 +97,11 @@ def main():
                                       '--inside', suite], env, log, 120)
                 results.append({'suite': suite, **result, 'seconds': round(time.monotonic() - began, 3)})
     finally:
+        evidence['source_after'] = source_fingerprint(ROOT)
+        evidence['source_unchanged'] = evidence['source'] == evidence['source_after']
         (output / 'results.json').write_text(json.dumps(evidence, indent=2) + '\n')
     print(json.dumps(results, indent=2))
-    return 0 if len(results) == len(SUITES) and all(r['status'] == 'passed' for r in results) else 1
+    return 0 if evidence['source_unchanged'] and len(results) == len(SUITES) and all(r['status'] == 'passed' for r in results) else 1
 
 
 if __name__ == '__main__':

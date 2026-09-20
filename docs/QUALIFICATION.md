@@ -33,3 +33,7 @@ The protocol cancellation fixture stops only its own GTK process, begins an MCP 
 In MCP SDK 1.30.0, cancelling a local asyncio waiter does not itself send the MCP cancellation notification. A local client timeout can therefore leave a server action running. Tests must deliver the protocol message explicitly; agents must inspect uncertain outcomes before retrying. The fixture uses the pinned SDK's next request counter solely to address that notification.
 
 The MCP cancellation response can arrive before worker cleanup finishes. An observed `recovering=true` is not permission to assume pending input was revoked. The fixture waits for a recorded `CANCELLED` outcome and `recovering=false` before resuming its stopped provider. Input dispatched before that boundary may still have effects.
+
+## Source consistency
+
+Evidence fingerprints include runtime code, all test fixtures (including HTML), scripts, documentation, skills, plugin manifests, workflows and dependency metadata. Python bytecode caches and generated artifacts are excluded. Unit, headless and native-app runners compare fingerprints before and after their suites; a changed source tree makes the run fail even if its individual assertions passed. Keep each evaluated checkout unchanged while a suite runs. Passing evidence from one revision must not silently be assigned to another.

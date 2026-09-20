@@ -45,6 +45,7 @@ def main():
     output = ROOT / 'artifacts/headless'
     output.mkdir(parents=True, exist_ok=True)
     results = []
+    source_before = source_fingerprint(ROOT)
     with tempfile.TemporaryDirectory(prefix='luda-test-session-') as runtime:
         env['XDG_RUNTIME_DIR'] = runtime
         with (output / 'window-manager.log').open('wb') as log:
@@ -84,14 +85,16 @@ def main():
                                     'seconds': round(time.monotonic() - began, 3)})
             finally:
                 stop(wm)
+                source_after = source_fingerprint(ROOT)
+                source_unchanged = source_before == source_after
                 (output / 'results.json').write_text(json.dumps({'schema_version': 1, 'suites': results,
-                    'source': source_fingerprint(ROOT),
+                    'source': source_before, 'source_after': source_after, 'source_unchanged': source_unchanged,
                     'environment': {'architecture': platform.machine(), 'python': platform.python_version(),
                                     'distribution': platform.freedesktop_os_release(),
                                     'backend': 'isolated Xvfb + XFWM4 + session D-Bus',
                                     'uid': os.getuid()}}, indent=2) + '\n')
     print(json.dumps(results, indent=2))
-    return 0 if len(results) == len(suites) and all(r['status'] == 'passed' for r in results) else 1
+    return 0 if source_unchanged and len(results) == len(suites) and all(r['status'] == 'passed' for r in results) else 1
 
 
 if __name__ == '__main__':

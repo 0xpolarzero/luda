@@ -52,10 +52,11 @@ class EvidenceResult(unittest.TextTestResult):
 
 def source_fingerprint(root):
     """Hash actual sources, including uncommitted changes, rather than just HEAD."""
-    paths = [p for folder in ('src', 'tests', 'scripts', 'docs')
+    paths = [p for folder in ('src', 'tests', 'scripts', 'docs', 'skills', '.codex-plugin', '.github')
              for p in (root / folder).rglob('*')
-             if p.is_file() and '__pycache__' not in p.parts and p.suffix in ('.py', '.json', '.md')]
-    paths += [root / 'pyproject.toml', root / 'requirements.lock']
+             if p.is_file() and '__pycache__' not in p.parts and p.suffix not in ('.pyc', '.pyo')]
+    paths += [root / name for name in ('pyproject.toml', 'requirements.lock', 'uv.lock',
+                                      'README.md', 'MANIFEST.in', '.mcp.json', 'AGENTS.md')]
     files = {str(p.relative_to(root)): hashlib.sha256(p.read_bytes()).hexdigest()
              for p in sorted(paths) if p.exists()}
     digest = hashlib.sha256(json.dumps(files, sort_keys=True).encode()).hexdigest()
@@ -99,14 +100,18 @@ def main():
     parser.add_argument('--output', type=Path, default=ROOT / 'artifacts/qualification/unit.json')
     parser.add_argument('--pattern', default='test_*.py')
     args = parser.parse_args()
+    source_before = source_fingerprint(ROOT)
     suite = unittest.defaultTestLoader.discover(str(ROOT / 'tests'), pattern=args.pattern)
     result = unittest.TextTestRunner(verbosity=2, resultclass=EvidenceResult).run(suite)
     catalog = json.loads((ROOT / 'docs/requirements.json').read_text())
     mapping = json.loads((ROOT / 'docs/test-map.json').read_text())['requirements']
     cases = build_report(catalog, mapping, result.outcomes)
     revision = subprocess.run(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True, capture_output=True).stdout.strip()
+    source_after = source_fingerprint(ROOT)
+    source_unchanged = source_before == source_after
     report = {'schema_version': 1, 'created_at': datetime.now(timezone.utc).isoformat(),
-              'revision': revision, 'source': source_fingerprint(ROOT),
+              'revision': revision, 'source': source_before, 'source_after': source_after,
+              'source_unchanged': source_unchanged,
               'environment': {'system': platform.system(), 'release': platform.release(),
                               'architecture': platform.machine(), 'python': platform.python_version(),
                               'distribution': platform.freedesktop_os_release() if platform.system() == 'Linux' else {},
@@ -117,7 +122,7 @@ def main():
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2) + '\n')
     print(f'Evidence: {args.output}')
-    return 0 if result.wasSuccessful() else 1
+    return 0 if result.wasSuccessful() and source_unchanged else 1
 
 
 if __name__ == '__main__':

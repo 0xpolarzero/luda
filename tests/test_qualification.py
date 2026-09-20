@@ -3,6 +3,7 @@ import importlib.util
 import io
 from pathlib import Path
 import unittest
+import tempfile
 
 spec = importlib.util.spec_from_file_location('qualify', Path(__file__).resolve().parents[1] / 'scripts/qualify.py')
 qualify = importlib.util.module_from_spec(spec)
@@ -11,6 +12,22 @@ spec.loader.exec_module(qualify)
 
 class QualificationContracts(unittest.TestCase):
     catalog = {'features': [{'cases': [{'id': 'A-01', 'acceptance': 'Example'}]}]}
+
+    def test_fingerprint_includes_fixture_skill_and_plugin_changes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            cases=['tests/fixtures/browser.html','skills/luda/SKILL.md',
+                   '.mcp.json','.codex-plugin/plugin.json','.github/workflows/tests.yml']
+            prior=qualify.source_fingerprint(root)
+            for name in cases:
+                path=root/name;path.parent.mkdir(parents=True,exist_ok=True);path.write_text('first')
+                added=qualify.source_fingerprint(root)
+                self.assertIn(name,added['files']);self.assertNotEqual(prior['sha256'],added['sha256'])
+                path.write_text('changed')
+                changed=qualify.source_fingerprint(root)
+                self.assertNotEqual(added['sha256'],changed['sha256']);prior=changed
+            cache=root/'src/luda/__pycache__/module.pyc';cache.parent.mkdir(parents=True);cache.write_bytes(b'cache')
+            self.assertEqual(prior,qualify.source_fingerprint(root))
 
     def test_passing_tests_never_qualify_release(self):
         result = qualify.build_report(self.catalog, {'A-01': {'implementation': 'implemented', 'tests': ['test']}}, {'test': 'passed'})[0]
