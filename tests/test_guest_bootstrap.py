@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import sys
 import subprocess
+import time
 import tempfile
 from types import SimpleNamespace
 import unittest
@@ -30,6 +31,9 @@ class GuestBootstrap(unittest.TestCase):
         self.prefix = self.root / 'prefix with spaces'
         self.output = self.root / 'fresh output'
         self.account = patch.object(b.pwd, 'getpwnam', return_value=SimpleNamespace(pw_uid=os.getuid() or 1001))
+        identity = patch.object(b, 'release_identity', return_value='selected')
+        identity.start()
+        self.addCleanup(identity.stop)
         self.account.start()
         self.addCleanup(self.account.stop)
 
@@ -69,7 +73,7 @@ class GuestBootstrap(unittest.TestCase):
             self.assertIs(kwargs['stdout'], sys.stderr)
             self.assertIs(kwargs['stderr'], sys.stderr)
             self.prefix.mkdir()
-            (self.prefix / 'current').symlink_to('releases/existing-release')
+            (self.prefix / 'current').symlink_to('releases/selected')
             return 0
         def doctor(prefix, user):
             events.append('doctor')
@@ -82,7 +86,7 @@ class GuestBootstrap(unittest.TestCase):
             result = self.call(skip_system=True)
         self.assertEqual(events, ['install', 'doctor', 'config'])
         self.assertTrue(result['ok'])
-        self.assertFalse(result['settings_modified'])
+        self.assertFalse(result['codex_settings_modified'])
         self.assertNotIn('not-forwarded', json.dumps(result))
         self.assertEqual(self.output.stat().st_mode & 0o777, 0o700)
 
@@ -111,6 +115,63 @@ class GuestBootstrap(unittest.TestCase):
                 self.assertEqual(current.readlink(), Path('releases/selected'))
                 self.assertNotIn('SENSITIVE', json.dumps(result))
                 self.assertIn('fresh output', result['error'])
+
+    def test_all_path_overlaps_and_nonroot_apt_refused_before_child(self):
+        with patch.object(b, 'desktop_status') as status, patch.object(b, 'run_process') as run:
+            for prefix, output in ((self.source, self.output), (self.source/'install', self.output),
+                                   (self.prefix, self.source/'output'), (self.prefix, self.prefix/'output')):
+                result=b.bootstrap(self.source,prefix,output,'desktop')
+                self.assertEqual(result['stage'],'validation')
+                self.assertFalse(result['installation_completed'])
+            with patch.object(b.os,'getuid',return_value=1001), patch.object(b,'validate',return_value=(self.source,self.prefix,self.output)):
+                result=self.call()
+                self.assertEqual(result['stage'],'validation')
+                self.assertIn('requires root',result['reason'])
+            status.assert_not_called();run.assert_not_called()
+
+    def test_changed_selection_refused_before_doctor_or_config(self):
+        self.prefix.mkdir();(self.prefix/'current').symlink_to('releases/unexpected')
+        with patch.object(b,'desktop_status',return_value=self.status()),patch.object(b,'run_process',return_value=0),patch.object(b,'doctor') as doctor,patch.object(b,'config') as config:
+            result=self.call()
+        self.assertEqual(result['stage'],'release_validation')
+        self.assertTrue(result['installation_completed'])
+        doctor.assert_not_called();config.assert_not_called()
+        self.assertEqual((self.prefix/'current').readlink(),Path('releases/unexpected'))
+
+    def test_readiness_and_config_hold_installation_lock(self):
+        self.prefix.mkdir();(self.prefix/'current').symlink_to('releases/selected')
+        observed=[]
+        def require_locked(*args,**kwargs):
+            with self.assertRaises(b.InstallError):
+                with b.locked(self.prefix):pass
+            observed.append(True)
+            return {'ready':True}
+        with patch.object(b,'desktop_status',return_value=self.status()),patch.object(b,'run_process',return_value=0),patch.object(b,'doctor',side_effect=require_locked),patch.object(b,'config',side_effect=require_locked):
+            self.assertTrue(self.call()['ok'])
+        self.assertEqual(len(observed),2)
+
+    def test_detached_child_timeout_has_no_late_effect(self):
+        marker=self.root/'delayed-effect'
+        pidfile=self.root/'child-pid'
+        child_code='import os,time;from pathlib import Path;Path('+repr(str(pidfile))+').write_text(str(os.getpid()));time.sleep(1);Path('+repr(str(marker))+').write_text("late");time.sleep(20)'
+        parent_code='import subprocess,sys,time;subprocess.Popen([sys.executable,"-c",'+repr(child_code)+'],start_new_session=True);time.sleep(20)'
+        with self.assertRaises(b.InterruptedProcess) as caught:
+            b.run_process([sys.executable,'-c',parent_code],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=.4)
+        self.assertTrue(pidfile.exists())
+        self.assertTrue(caught.exception.cleanup_verified)
+        time.sleep(.8)
+        self.assertFalse(marker.exists())
+        child=Path('/proc')/pidfile.read_text()
+        if child.exists():
+            self.assertEqual((child/'stat').read_text().rsplit(')',1)[1].split()[0],'Z')
+
+    def test_unproved_cleanup_marks_unknown_and_prohibits_automatic_retry(self):
+        with patch.object(b,'desktop_status',return_value=self.status()),patch.object(b,'run_process',side_effect=b.InterruptedProcess(False)),patch.object(b,'doctor') as doctor:
+            result=self.call()
+        self.assertEqual(result['installation_outcome'],'unknown')
+        self.assertFalse(result['cleanup_verified'])
+        self.assertFalse(result['automatic_retry_allowed'])
+        doctor.assert_not_called()
 
     def test_cli_failure_stdout_is_one_json_result(self):
         result = subprocess.run([sys.executable, str(ROOT / 'scripts/bootstrap_guest.py'),
