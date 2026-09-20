@@ -1,0 +1,30 @@
+name: Native application workflows
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  native-apps:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install desktop applications and dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mousepad thunar xfwm4 xvfb xauth dbus-x11 at-spi2-core python3-gi gir1.2-atspi-2.0 gir1.2-gtk-3.0 xdotool wmctrl scrot xclip x11-utils
+          python -m venv .venv
+          .venv/bin/python -m pip install --require-hashes -r requirements.lock
+          .venv/bin/python -m pip install --no-deps -e .
+      - name: Run isolated native and MCP application workflows
+        run: .venv/bin/python scripts/native_app_tests.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-app-evidence
+          path: artifacts/
+          if-no-files-found: warn
