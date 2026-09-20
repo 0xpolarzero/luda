@@ -19,3 +19,5 @@ Observation now retains screenshot PNG bytes in memory for OCR: at most 16 snaps
 This English high-contrast fixture does not qualify every script, font, handwriting, rotated text or low-quality capture. Empty/mistaken OCR remains possible and must never become a claim of exact text or safe automatic input. MEDIA-07 remains release-unqualified.
 
 The final matrix run `run-1789883566534125212` passed in 2.272 seconds with unchanged source and no surviving tagged processes; see its `results.json` for exact source hashes. Earlier direct MCP evidence remains retained separately.
+
+Hosted Ubuntu 24.04 AMD64 [optional desktop media CI](https://github.com/0xpolarzero/luda/actions/runs/35494437866) passed the three OCR assertions at `7bf8cf5` with Tesseract 5.3.4. The suite took 12.668 seconds and retained unchanged source fingerprint `27c32125031d21cdfeb50367fdb0216dee2c36f799cba64e49e04d0638f675e1`. This confirms the same owned English/Pango fixture on a second architecture, not general recognition accuracy.
