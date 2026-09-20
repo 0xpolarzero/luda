@@ -52,7 +52,7 @@ class EvidenceResult(unittest.TextTestResult):
 
 def source_fingerprint(root):
     """Hash actual sources, including uncommitted changes, rather than just HEAD."""
-    paths = [p for folder in ('src', 'tests', 'scripts', 'docs', 'skills', '.codex-plugin', '.github')
+    paths = [p for folder in ('src', 'tests', 'scripts', 'docs', 'skills', '.codex-plugin', '.github', 'integrations')
              for p in (root / folder).rglob('*')
              if p.is_file() and '__pycache__' not in p.parts and p.suffix not in ('.pyc', '.pyo')
              and not any(part.endswith('.egg-info') for part in p.parts)]

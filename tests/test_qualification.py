@@ -17,7 +17,8 @@ class QualificationContracts(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory)
             cases=['tests/fixtures/browser.html','skills/luda/SKILL.md',
-                   '.mcp.json','.codex-plugin/plugin.json','.github/workflows/tests.yml']
+                   '.mcp.json','.codex-plugin/plugin.json','.github/workflows/tests.yml',
+                   'integrations/silo/guest/agent-tools.py']
             prior=qualify.source_fingerprint(root)
             for name in cases:
                 path=root/name;path.parent.mkdir(parents=True,exist_ok=True);path.write_text('first')
