@@ -4,6 +4,7 @@ from luda.interaction import InteractionMixin, integer
 from luda.common import DesktopError
 
 class Dummy(InteractionMixin):
+    snapshots={'s':{'topology':{'server_generation':'generation'}}}
     def target_window(self,*args): return {'xid':42}
     def _interaction_point(self, window,*args): return (10,20) if window == 'a' else (40,50)
     def list_windows(self): return []

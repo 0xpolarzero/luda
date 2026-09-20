@@ -6,12 +6,23 @@ from luda.common import DesktopError
 
 
 class PointerRouting(unittest.TestCase):
+    def test_restart_between_snapshot_check_and_preflight_cannot_rebind_click(self):
+        desktop=Desktop();self.addCleanup(desktop.close)
+        desktop.point=Mock(return_value=(12,34))
+        desktop.target_window=Mock(return_value={'xid':42})
+        desktop.snapshots['s']={'topology':{'server_generation':'original'}}
+        with patch('luda.interaction.check_pointer_ready',return_value={'server_generation':'replacement'}),patch('luda.desktop.click_button') as click:
+            with self.assertRaises(DesktopError) as caught:desktop.pointer('w','s',1,2)
+            self.assertEqual(caught.exception.code,'STALE_OBSERVATION')
+            click.assert_not_called()
+
     def test_client_click_and_wheel_use_owned_supervisor(self):
         desktop=Desktop();self.addCleanup(desktop.close)
         desktop.point=Mock(return_value=(12,34))
         desktop.target_window=Mock(return_value={'xid':42})
+        desktop.snapshots['s']={'topology':{'server_generation':'generation'}}
         for kind,kwargs,button in [('click',{},'1'),('click',{'button':'right'},'3'),('scroll',{'direction':'left'},'6')]:
-            with patch('luda.desktop.run') as run,patch('luda.desktop.click_button') as click,patch('luda.desktop.check_pointer_ready',return_value={'server_generation':'generation'}) as ready:
+            with patch('luda.desktop.run') as run,patch('luda.desktop.click_button') as click,patch('luda.interaction.check_pointer_ready',return_value={'server_generation':'generation'}) as ready:
                 result=desktop.pointer('w','s',1,2,kind=kind,count=2,**kwargs)
                 self.assertEqual(result['effect'],'dispatched')
                 run.assert_not_called()
@@ -19,9 +30,10 @@ class PointerRouting(unittest.TestCase):
                 ready.assert_called_once_with(42)
 
     def test_popup_click_and_wheel_use_owner_focus(self):
-        driver=Mock()
-        driver._popup_point.return_value=(12,34)
-        driver.target_window.return_value={'xid':42}
+        driver=Desktop();self.addCleanup(driver.close)
+        driver._popup_point=Mock(return_value=(12,34))
+        driver.target_window=Mock(return_value={'xid':42})
+        driver.snapshots['s']={'topology':{'server_generation':'generation'}}
         for kind,button in [('click','1'),('scroll','5')]:
             with patch('luda.interaction.run') as run,patch('luda.interaction.click_button') as click,patch('luda.interaction.check_pointer_ready',return_value={'server_generation':'generation'}) as ready:
                 result=InteractionMixin.pointer_popup(driver,'w','p','s',1,2,kind=kind,count=2)
@@ -36,6 +48,7 @@ class PointerRouting(unittest.TestCase):
         desktop._interaction_point=Mock(return_value=(12,34))
         desktop._popup_point=Mock(return_value=(12,34))
         desktop.target_window=Mock(return_value={'xid':42})
+        desktop.snapshots['s']={'topology':{'server_generation':'generation'}}
         calls=[lambda:desktop.pointer('w','s',1,2),
                lambda:desktop.pointer('w','s',1,2,kind='scroll'),
                lambda:desktop.pointer('w','s',1,2,kind='drag',end_x=4,end_y=5),
@@ -44,7 +57,7 @@ class PointerRouting(unittest.TestCase):
                lambda:desktop.pointer_popup('w','p','s',1,2),
                lambda:desktop.pointer_popup('w','p','s',1,2,kind='hover')]
         for call in calls:
-            with patch('luda.desktop.check_pointer_ready',side_effect=DesktopError('INPUT_HELD','held')),patch('luda.interaction.check_pointer_ready',side_effect=DesktopError('INPUT_HELD','held')),patch('luda.desktop.run') as direct,patch('luda.interaction.run') as mixed:
+            with patch('luda.interaction.check_pointer_ready',side_effect=DesktopError('INPUT_HELD','held')),patch('luda.desktop.run') as direct,patch('luda.interaction.run') as mixed:
                 with self.assertRaises(DesktopError) as caught:call()
                 self.assertEqual(caught.exception.code,'INPUT_HELD')
                 direct.assert_not_called();mixed.assert_not_called()

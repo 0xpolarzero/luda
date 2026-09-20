@@ -20,6 +20,13 @@ def properties(xid):
 
 class InteractionMixin:
     """Public operations use existing opaque window/screenshot identities."""
+    def pointer_readiness(self, snapshot_id, target):
+        ready=check_pointer_ready(target)
+        observed=self.snapshots.get(snapshot_id,{}).get('topology',{}).get('server_generation')
+        if not observed or ready['server_generation']!=observed:
+            raise DesktopError('STALE_OBSERVATION','X server changed after observation; observe again.')
+        return ready
+
     def workspaces(self):
         result = []
         for row in run(['wmctrl', '-d']).decode(errors='replace').splitlines():
@@ -189,7 +196,7 @@ class InteractionMixin:
     def hover(self, window_id, snapshot_id, x, y):
         px,py = self._interaction_point(window_id,snapshot_id,x,y)
         target=self.target_window(window_id)['xid']
-        ready=check_pointer_ready(target)
+        ready=self.pointer_readiness(snapshot_id,target)
         move_pointer(px,py,ready['server_generation'],target=target)
         return {'effect':'dispatched','verification':'Pointer motion sent; observe tooltips or hover state.'}
 
@@ -199,7 +206,7 @@ class InteractionMixin:
         start = self._interaction_point(source_window_id,snapshot_id,x,y)
         end = self._interaction_point(target_window_id,snapshot_id,end_x,end_y,False)
         target=self.target_window(source_window_id)['xid']
-        ready=check_pointer_ready(target)
+        ready=self.pointer_readiness(snapshot_id,target)
         with held_button(buttons[button],target=target,position=start,server_generation=ready['server_generation']) as pointer:
             for step in range(1,16):
                 p = [round(start[i]+(end[i]-start[i])*step/15) for i in (0,1)]
@@ -280,7 +287,7 @@ class InteractionMixin:
             raise DesktopError('INVALID_ARGUMENT','Unknown pointer button or scroll direction.')
         px,py=self._popup_point(owner_window_id,popup_id,snapshot_id,x,y)
         target=self.target_window(owner_window_id)['xid']
-        ready=check_pointer_ready(target)
+        ready=self.pointer_readiness(snapshot_id,target)
         if kind!='hover':
             click_button(buttons[button] if kind=='click' else directions[direction],count,target=target,position=(px,py),server_generation=ready['server_generation'])
         else:
