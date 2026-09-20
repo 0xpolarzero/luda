@@ -96,6 +96,44 @@ def describe(node, pid):
     return r
 
 
+class BusIdentityUnavailable(ValueError):
+    """The worker cannot establish its actual accessibility connection epoch."""
+
+
+def bus_generation():
+    # GI does not expose atspi_get_a11y_bus. Read the authenticated server GUID
+    # from that exact libatspi connection, not a separately discovered bus.
+    import ctypes
+    try:
+        atspi = ctypes.CDLL("libatspi.so.0")
+        dbus = ctypes.CDLL("libdbus-1.so.3")
+        atspi.atspi_get_a11y_bus.argtypes = []
+        atspi.atspi_get_a11y_bus.restype = ctypes.c_void_p
+        dbus.dbus_connection_get_is_connected.argtypes = [ctypes.c_void_p]
+        dbus.dbus_connection_get_is_connected.restype = ctypes.c_int
+        dbus.dbus_connection_get_server_id.argtypes = [ctypes.c_void_p]
+        dbus.dbus_connection_get_server_id.restype = ctypes.c_void_p
+        dbus.dbus_free.argtypes = [ctypes.c_void_p]
+        dbus.dbus_free.restype = None
+        # libatspi 2.52 returns its cached connection without adding a ref.
+        # Never close/unref it here; only the allocated GUID string is ours.
+        connection = atspi.atspi_get_a11y_bus()
+        if not connection or not dbus.dbus_connection_get_is_connected(connection):
+            raise BusIdentityUnavailable()
+        value = dbus.dbus_connection_get_server_id(connection)
+        if not value:
+            raise BusIdentityUnavailable()
+        try:
+            guid = ctypes.string_at(value).decode("ascii")
+        finally:
+            dbus.dbus_free(value)
+        if not re.fullmatch(r"[0-9a-f]{32}", guid):
+            raise BusIdentityUnavailable()
+        return guid
+    except Exception:
+        raise BusIdentityUnavailable() from None
+
+
 def provider_identity(node):
     # Object paths are local to one D-Bus connection, not to an OS process.
     name = node.app.bus_name
@@ -744,6 +782,7 @@ def main(req):
         # sibling windows as if they belonged to the selected target.
         if type(req.get("limit", 150)) is not int or not 1 <= req.get("limit", 150) <= 500:
             return failure("INVALID_ARGUMENT", "Inspection limit must be an integer from 1 to 500.")
+        generation = bus_generation()
         bounds = req["bounds"]
         roots = []
         fallback_roots = []
@@ -796,6 +835,7 @@ def main(req):
                 value["depth"] = depth
                 value["root_path"] = root_path
                 value["root_provider"] = root_provider
+                value["root_bus_guid"] = generation
                 value["bounds_coordinates"] = "unavailable" if mapping == "unique_title_and_size" else "screen"
                 if mapping == "unique_title_and_size":
                     value.pop("bounds", None)
@@ -810,6 +850,8 @@ def main(req):
                 "coverage": "selected accessible top-level window", "available": visited > 0,
                 "window_mapping": mapping, "bounds_coordinates": "unavailable" if mapping == "unique_title_and_size" else "screen"}
     target = req["target"]
+    if target.get("root_bus_guid") != bus_generation():
+        return {"error": "STALE_TARGET", "message": "Accessibility bus changed; inspect again.", "effect": "none"}
     for node, _ in candidates(pid,root_path=target["root_path"],root_provider=target.get("root_provider")):
         if node.path != target["path"]:
             continue
@@ -823,6 +865,8 @@ def main(req):
             return {"error": "NOT_INTERACTABLE", "message": "Element must be enabled and showing for mutation; inspect the visible target."}
         if op in ("read", "set", "insert", "select", "value") and current["protected"]:
             return {"error": "PROTECTED_FIELD", "message": "This implementation does not read or write protected fields."}
+        if target["root_bus_guid"] != bus_generation():
+            return {"error": "STALE_TARGET", "message": "Accessibility bus changed before operation; inspect again.", "effect": "none"}
         result = semantic(node, current, req)
         if result is not None:
             return result
@@ -893,6 +937,8 @@ def dispatch(request):
     request.pop("_mutation_started", None)
     try:
         return main(request)
+    except BusIdentityUnavailable:
+        return {"error": "ACCESSIBILITY_UNAVAILABLE", "message": "Cannot establish accessibility bus identity; inspect again before input.", "effect": "none"}
     except IdentityLimit:
         return {"error": "TARGET_IDENTITY_UNAVAILABLE",
                 "message": "Accessible name exceeds the one-MiB identity budget; exact target identity cannot be established.",

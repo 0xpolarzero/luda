@@ -25,5 +25,7 @@ reported unavailable; its misleading earlier tree artifact was stale.
 
 This is connection scoping, not a provider-issued element generation. Same-path,
 same-name reuse within one provider remains indistinguishable. Unique connection
-names are scoped to one accessibility bus lifetime; broader bus/session restart
-handling remains subject to the [lifecycle limitations](LIFECYCLE-QUALIFICATION.md).
+names are scoped to one accessibility bus lifetime. A private authenticated
+[bus-generation guard](BUS-GENERATION.md) additionally prevents reuse across
+replacement connections; application reconnection remains subject to the
+[lifecycle limitations](LIFECYCLE-QUALIFICATION.md).

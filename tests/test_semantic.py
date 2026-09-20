@@ -14,6 +14,8 @@ def load_worker():
     spec=importlib.util.spec_from_file_location('semantic_worker',Path(__file__).resolve().parents[1]/'src/luda/ax_worker.py')
     module=importlib.util.module_from_spec(spec)
     with patch.dict(sys.modules,{'gi':gi,'gi.repository':repo}):spec.loader.exec_module(module)
+    module._native_bus_generation=module.bus_generation
+    module.bus_generation=lambda:'a'*32
     return module
 w=load_worker()
 class Text:
@@ -169,7 +171,7 @@ class ScopeAndState(unittest.TestCase):
         for states,expected in ((['sensitive','showing'],'verified'),(['showing'],'NOT_INTERACTABLE'),(['sensitive'],'NOT_INTERACTABLE')):
             current={**self.description,'states':states,'protected':False}
             with patch.object(w,'candidates',return_value=[(self.node,0)]),patch.object(w,'describe',return_value=current),patch.object(w,'semantic',return_value={'effect':'verified'}):
-                r=w.main({'op':'check','pid':42,'checked':True,'target':{**current,'root_path':'/root','path':'/root'}})
+                r=w.main({'op':'check','pid':42,'checked':True,'target':{**current,'root_path':'/root','root_bus_guid':'a'*32,'path':'/root'}})
             self.assertEqual(r.get('effect',r.get('error')),expected)
 
 class CaretPostcondition(unittest.TestCase):
@@ -299,7 +301,7 @@ class FocusRequest(unittest.TestCase):
         node=types.SimpleNamespace(path='/field',get_component_iface=lambda:types.SimpleNamespace(grab_focus=grab))
         current={'role':'entry','name':'Input','start':'1','states':['focused','enabled','showing'],'interfaces':['Component'],'protected':False}
         with patch.object(w,'candidates',return_value=[(node,0)]),patch.object(w,'describe',return_value=current),patch.object(w,'states_of',return_value=states):
-            return w.main({'op':'focus','pid':42,'target':{**current,'root_path':'/root','path':'/field'}})
+            return w.main({'op':'focus','pid':42,'target':{**current,'root_path':'/root','root_bus_guid':'a'*32,'path':'/field'}})
     def test_focus_request_occurs_even_if_accessibility_says_focused(self):
         grab=__import__('unittest').mock.Mock(return_value=True);r=self.run_focus(grab,{'focused'});grab.assert_called_once();self.assertEqual(r['effect'],'verified')
     def test_unsupported_request_retains_only_observed_focus(self):
@@ -334,7 +336,7 @@ class TextBudgets(unittest.TestCase):
         raw.path='/field'
         current={'role':'entry','name':'Input','start':'1','states':['editable','enabled','showing'],'interfaces':['Text','EditableText'],'protected':False}
         with patch.object(w.Atspi,'Text',Text,create=True),patch.object(w,'candidates',return_value=[(raw,0)]),patch.object(w,'describe',return_value=current):
-            return w.dispatch({'op':'set','pid':42,'text':'new','target':{**current,'root_path':'/root','path':'/field'}})
+            return w.dispatch({'op':'set','pid':42,'text':'new','target':{**current,'root_path':'/root','root_bus_guid':'a'*32,'path':'/field'}})
     def test_set_refuses_oversized_existing_content_before_edit(self):
         raw=Text();raw.text='x'*2_000_001;raw.set_text_contents=unittest.mock.Mock()
         r=self.run_set(raw);self.assertEqual(r['error'],'VERIFICATION_LIMIT');self.assertEqual(r['effect'],'none');raw.set_text_contents.assert_not_called()

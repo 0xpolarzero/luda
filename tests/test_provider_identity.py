@@ -28,14 +28,14 @@ class ProviderScope(unittest.TestCase):
     def test_geometry_selected_root_stays_in_its_provider(self):
         r=self.inspect();self.assertEqual([n['provider_marker'] for n in r['nodes']],[':1.10']);self.assertEqual(r['nodes'][0]['root_provider'],':1.10')
     def test_mutation_cannot_choose_first_colliding_provider(self):
-        target=dict(self.description,root_path='/root',path='/root',root_provider=':1.10')
+        target=dict(self.description,root_path='/root',root_bus_guid='a'*32,path='/root',root_provider=':1.10')
         with patch.object(w,'describe',return_value=self.description),patch.object(w,'semantic',return_value={'effect':'verified'}) as action:
             r=w.main(dict(op='check',pid=42,target=target,checked=True))
         self.assertEqual(r['effect'],'verified');self.assertIs(action.call_args.args[0],self.a)
     def test_disappeared_provider_never_rebinds_identical_path(self):
         self.desktop.children=self.desktop.children[:1]
         with patch.object(w,'semantic') as action:
-            r=w.main(dict(op='check',pid=42,target=dict(root_path='/root',path='/root',root_provider=':1.10')))
+            r=w.main(dict(op='check',pid=42,target=dict(root_path='/root',root_bus_guid='a'*32,path='/root',root_provider=':1.10')))
         self.assertEqual(r['error'],'STALE_TARGET');action.assert_not_called()
     def test_missing_provider_identity_never_widens_scope(self):
         self.assertEqual(list(w.candidates(42,root_path='/root')),[])

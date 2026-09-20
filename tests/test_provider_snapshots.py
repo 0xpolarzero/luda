@@ -26,7 +26,7 @@ class Snapshots(unittest.TestCase):
         raw=CountReads();raw.path='/field'
         current={'role':'entry','name':'Input','start':'1','states':['editable','enabled','showing'],'interfaces':['Text'],'protected':False}
         with patch.object(w.Atspi,'Text',CountReads,create=True),patch.object(w,'candidates',return_value=[(raw,0)]),patch.object(w,'describe',return_value=current):
-            result=w.dispatch({'op':'read','pid':42,'limit':2,'target':{**current,'root_path':'/root','path':'/field'}})
+            result=w.dispatch({'op':'read','pid':42,'limit':2,'target':{**current,'root_path':'/root','root_bus_guid':'a'*32,'path':'/field'}})
         self.assertEqual(result['text'],'ab');self.assertEqual(result['characters'],3);self.assertTrue(result['truncated'])
         self.assertEqual(raw.reads,1)
 
@@ -49,7 +49,7 @@ class Snapshots(unittest.TestCase):
         raw=GrowingAfterSet();raw.path='/field'
         current={'role':'entry','name':'Input','start':'1','states':['editable','enabled','showing'],'interfaces':['Text','EditableText'],'protected':False}
         with patch.object(w.Atspi,'Text',GrowingAfterSet,create=True),patch.object(w,'candidates',return_value=[(raw,0)]),patch.object(w,'describe',return_value=current):
-            result=w.dispatch({'op':'set','pid':42,'text':'new','target':{**current,'root_path':'/root','path':'/field'}})
+            result=w.dispatch({'op':'set','pid':42,'text':'new','target':{**current,'root_path':'/root','root_bus_guid':'a'*32,'path':'/field'}})
         self.assertEqual(result['error'],'TEXT_CHANGED');self.assertEqual(result['effect'],'uncertain')
         self.assertEqual(raw.text,'newsuffix')
 

@@ -19,7 +19,7 @@ class Names(unittest.TestCase):
   a=self.describe(Node('a'*300+'first'));b=self.describe(Node('a'*300+'second'))
   self.assertEqual(a['name'],b['name']);self.assertNotEqual(a['name_fingerprint'],b['name_fingerprint'])
  def test_reused_path_with_changed_cropped_suffix_is_stale_before_action(self):
-  node=Node('a'*300+'first');target={**self.describe(node),'root_path':'/root'};node.name='a'*300+'second'
+  node=Node('a'*300+'first');target={**self.describe(node),'root_path':'/root','root_bus_guid':'a'*32};node.name='a'*300+'second'
   with patch.object(w,'identity',return_value='start'),patch.object(w,'candidates',return_value=[(node,0)]),patch.object(w,'semantic') as semantic:
    result=w.dispatch({'op':'focus','pid':42,'target':target})
   self.assertEqual(result['error'],'STALE_TARGET');semantic.assert_not_called()
@@ -36,11 +36,13 @@ class Names(unittest.TestCase):
  def test_public_inspection_hides_digest_but_handle_retains_it(self):
   desktop=Desktop.__new__(Desktop);desktop.elements={}
   desktop.target_window=Mock(return_value={'pid':42,'start':'1','bounds':{},'frame_bounds':{},'title':'Fixture'})
-  node={'path':'/field','parent_path':None,'root_path':'/root','start':'1','name':'label','name_fingerprint':'private-digest','root_provider':':1.42'}
+  node={'path':'/field','parent_path':None,'root_path':'/root','root_bus_guid':'a'*32,'start':'1','name':'label','name_fingerprint':'private-digest','root_provider':':1.42'}
   desktop.ax=Mock(return_value={'nodes':[node]})
   result=desktop.inspect('window');public=result['nodes'][0]
   self.assertNotIn('name_fingerprint',public)
   self.assertNotIn('root_provider',public)
+  self.assertNotIn('root_bus_guid',public)
+  self.assertEqual(desktop.elements[public['element_id']]['node']['root_bus_guid'],'a'*32)
   self.assertEqual(desktop.elements[public['element_id']]['node']['root_provider'],':1.42')
   self.assertEqual(desktop.elements[public['element_id']]['node']['name_fingerprint'],'private-digest')
  def test_unreadable_name_marks_inspection_incomplete(self):
