@@ -25,7 +25,7 @@ Use `desktop_choose` on an observed option for list/radio/combo selection; `exte
 
 Use `desktop_wait` for an observable text/window condition or a freshly inspected element matching name/role/states. `pixels_stable` checks sampled pixels in the target rectangle; it does not prove that the application is idle or a save/download finished. It never retries input. After cancellation, `desktop_status` reports recovery and recent outcomes without retaining typed text. A client-side timeout may not send MCP cancellation; even a cancellation acknowledgment can precede worker cleanup. Wait for recovery and inspect effects before another mutation.
 
-If interrupted keyboard cleanup remains blocked, call `desktop_recover_input`. It retries only owned cleanup in the original session, never the chord, and works while paused. Check `pending_count` and `recovering`; unresolved ownership stays blocked. When it proves the original X server was replaced, reconnect and observe again. Recovery never resumes input or establishes whether the interrupted application action succeeded.
+If interrupted supervised input cleanup remains blocked, call `desktop_recover_input`. It retries only owned cleanup in the original session, never the keys or clicks, and works while paused. Check `pending_count` and `recovering`; unresolved ownership stays blocked. When it proves the original X server was replaced, reconnect and observe again. Recovery never resumes input or establishes whether the interrupted application action succeeded.
 
 `desktop_control` pauses or resumes mutations across cooperating Luda clients on this display; observations remain available. Never resume a user-requested pause without their instruction.
 

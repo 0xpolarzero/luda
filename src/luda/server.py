@@ -169,7 +169,7 @@ async def desktop_status() -> CallToolResult:
 
 @mcp.tool()
 async def desktop_recover_input() -> CallToolResult:
-    """Retry cleanup of this server's interrupted keyboard input, without replaying a chord or resuming a paused desktop. Uses each operation's original session; a replaced X server is left untouched. Unproven cleanup stays blocked. Returns pending_count and recovery proofs; observe again before acting. Returns BUSY if another operation is still running."""
+    """Retry cleanup of this server's interrupted supervised input, without replaying keys/clicks or resuming a paused desktop. Uses each operation's original session; a replaced X server is left untouched. Unproven cleanup stays blocked. Returns pending_count and recovery proofs; observe again before acting. Returns BUSY if another operation is still running."""
     return await execute_async('recover_input')
 
 

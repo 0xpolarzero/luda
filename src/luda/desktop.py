@@ -26,6 +26,7 @@ from .waits import ConditionWaitsMixin
 from types import MappingProxyType
 from .common import environment_scope, subprocess_environment
 from .input_guard import held_button
+from .pointer_input import click_button
 from .keyboard import validate_chord, send_chord, keyboard_capabilities, keyboard_recovery_checkpoint
 from .session_state import session_state
 from .coordinates import image_bounds
@@ -303,14 +304,15 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         buttons = {'left':'1','middle':'2','right':'3'}
         if button not in buttons or not 1 <= count <= 20:
             raise DesktopError('INVALID_ARGUMENT','Invalid button or count.')
+        target = self.target_window(window_id)['xid']
         run(['xdotool','mousemove',str(px),str(py)],effect='uncertain')
         if kind=='click':
-            run(['xdotool','click','--repeat',str(count),'--delay','100',buttons[button]],effect='uncertain')
+            click_button(buttons[button], count, target=target)
         elif kind=='scroll':
             mapping={'up':'4','down':'5','left':'6','right':'7'}
             if direction not in mapping:
                 raise DesktopError('INVALID_ARGUMENT','Invalid scroll direction.')
-            run(['xdotool','click','--repeat',str(count),'--delay','35',mapping[direction]],effect='uncertain')
+            click_button(mapping[direction], count, target=target)
         elif kind=='drag':
             with held_button(buttons[button]):
                 for step in range(1,11):

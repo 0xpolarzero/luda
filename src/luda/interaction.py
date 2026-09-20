@@ -5,6 +5,7 @@ import uuid
 from .common import DesktopError, process_identity, run
 from .timing import elapsed_time
 from .input_guard import held_button
+from .pointer_input import click_button
 
 
 def integer(value, name, low, high):
@@ -275,7 +276,8 @@ class InteractionMixin:
         if button not in buttons or direction not in directions:
             raise DesktopError('INVALID_ARGUMENT','Unknown pointer button or scroll direction.')
         px,py=self._popup_point(owner_window_id,popup_id,snapshot_id,x,y)
+        target=self.target_window(owner_window_id)['xid']
         run(['xdotool','mousemove',str(px),str(py)],effect='uncertain')
         if kind!='hover':
-            run(['xdotool','click','--repeat',str(count),'--delay','100',buttons[button] if kind=='click' else directions[direction]],effect='uncertain')
+            click_button(buttons[button] if kind=='click' else directions[direction],count,target=target)
         return {'effect':'dispatched','verification':'Popup input sent; observe the menu or resulting application state.'}
