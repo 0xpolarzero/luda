@@ -4,7 +4,7 @@ import os
 import selectors
 import subprocess
 import sys
-from .common import DesktopError, run, stop_process
+from .common import DesktopError, run, stop_process, subprocess_environment
 
 
 @contextmanager
@@ -16,7 +16,7 @@ def held_button(button):
     try:
         child=subprocess.Popen([sys.executable,'-m','luda._input_guard',str(reader),button],
                                pass_fds=(reader,),stdin=subprocess.DEVNULL,stdout=subprocess.PIPE,
-                               stderr=subprocess.DEVNULL,start_new_session=True)
+                               stderr=subprocess.DEVNULL,start_new_session=True,env=subprocess_environment())
         os.close(reader);reader=None
         with selectors.DefaultSelector() as ready:
             ready.register(child.stdout,selectors.EVENT_READ)

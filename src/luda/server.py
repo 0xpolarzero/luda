@@ -13,13 +13,15 @@ import anyio
 from mcp.server.fastmcp import FastMCP
 from mcp.types import CallToolResult, ImageContent, TextContent, ToolAnnotations
 
-from .common import DesktopError, operation_scope
+from .common import DesktopError, operation_scope, checkpoint
+from .session_reconnect import prepare_reconnect
 from .desktop import Desktop
 from .apps import list_applications, launch_application
 
 mcp = FastMCP('luda', instructions='Local desktop: observe, select a window, inspect its controls, then act. Screenshot coordinates use the returned image, with its snapshot ID. Text replacement and insertion are distinct. Verify dispatched actions before repeating them; cancellation or timeout can leave effects. Use desktop_status to inspect recent operation outcomes.')
 backend = None
 _backend_lock = threading.Lock()
+_operation_gate = threading.Lock()
 _history_lock = threading.Lock()
 _history = deque(maxlen=32)
 _quarantined = threading.Event()
@@ -40,21 +42,34 @@ def result_error(code, message, effect='none', **details):
 
 
 def execute(method, *args, _cancelled=None, **kwargs):
+    global backend
+    acquired = False
     started = time.monotonic()
     operation_id = uuid.uuid4().hex
     event = {'operation_id':operation_id, 'method':method}
     try:
         if _quarantined.is_set():
             raise DesktopError('BUSY', 'Previous cancelled operation is still cleaning up; no new input sent.')
+        acquired = _operation_gate.acquire(blocking=False)
+        if not acquired:
+            raise DesktopError('BUSY', 'Another operation is in progress; reconnect does not cancel it.')
         d = get_backend()
-        observation = method in ('list_applications','doctor','list_windows','window_overview','observe','inspect','workspaces','wait_for','wait_condition') or (method=='element' and len(args)>1 and args[1]=='read')
+        observation = method in ('reconnect','list_applications','doctor','list_windows','window_overview','observe','inspect','workspaces','wait_for','wait_condition') or (method=='element' and len(args)>1 and args[1]=='read')
         guard = None if observation else d.control.require_active
         with operation_scope(timeout=12, cancelled=_cancelled, guard=guard) as operation:
             try:
-                with d.transaction():
-                    application_methods = {'list_applications':list_applications, 'launch_application':launch_application}
-                    handler = application_methods[method] if method in application_methods else getattr(d,method)
-                    result = handler(*args,**kwargs)
+                if method == 'reconnect':
+                    with prepare_reconnect(d, args[0] if args else None, Desktop) as (candidate, result):
+                        checkpoint()
+                        with _backend_lock:
+                            backend = candidate
+                            atexit.register(candidate.close)
+                    d.close()
+                else:
+                    with d.transaction():
+                        application_methods = {'list_applications':list_applications, 'launch_application':launch_application}
+                        handler = application_methods[method] if method in application_methods else getattr(d,method)
+                        result = handler(*args,**kwargs)
             except DesktopError as exc:
                 if operation.effect != 'none' and exc.effect == 'none':
                     exc.effect = 'uncertain'
@@ -76,6 +91,8 @@ def execute(method, *args, _cancelled=None, **kwargs):
         event.update(ok=False, code='INTERNAL_ERROR', effect='uncertain')
         return result_error('INTERNAL_ERROR', str(exc)[:400], 'uncertain', operation_id=operation_id)
     finally:
+        if acquired:
+            _operation_gate.release()
         event['elapsed_ms'] = round((time.monotonic()-started)*1000)
         with _history_lock:
             _history.append(event)
@@ -118,6 +135,12 @@ async def desktop_status() -> CallToolResult:
     with _history_lock:
         history = list(_history)
     return CallToolResult(content=[TextContent(type='text',text=json.dumps({'ok':True,'recovering':_quarantined.is_set(),'operations':history}))])
+
+
+@mcp.tool()
+async def desktop_reconnect(session_pid: int | None = None) -> CallToolResult:
+    """Reconnect this MCP connection to a running XFCE session owned by this account after a desktop restart. Omit PID only when exactly one session exists. Validates display and bus before replacing the backend; failed validation preserves it. Returns BUSY during other operations, never restarts apps or replays input. All prior window, element and screenshot IDs expire; observe again. The selected display's pause state remains in force."""
+    return await execute_async('reconnect', session_pid)
 
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))

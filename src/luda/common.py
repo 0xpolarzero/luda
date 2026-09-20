@@ -1,6 +1,7 @@
 import contextvars
 from contextlib import contextmanager
 from dataclasses import dataclass
+from types import MappingProxyType
 import os
 import math
 import re
@@ -29,6 +30,23 @@ class Operation:
 
 
 _current_operation = contextvars.ContextVar("luda_operation", default=None)
+
+
+_current_environment = contextvars.ContextVar("luda_environment", default=None)
+
+
+def subprocess_environment():
+    """Return the immutable backend environment selected for this operation."""
+    return _current_environment.get()
+
+
+@contextmanager
+def environment_scope(environment):
+    token = _current_environment.set(MappingProxyType(dict(environment)))
+    try:
+        yield
+    finally:
+        _current_environment.reset(token)
 
 
 @contextmanager
@@ -96,7 +114,7 @@ def run(args, *, data=None, timeout=3, effect="none", cleanup=False,
             source.seek(0)
         process = subprocess.Popen(args, stdin=source if source else subprocess.DEVNULL,
                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                   start_new_session=True)
+                                   start_new_session=True, env=subprocess_environment())
     except FileNotFoundError as exc:
         raise DesktopError("DEPENDENCY_MISSING", f"Missing executable: {args[0]}") from exc
     finally:

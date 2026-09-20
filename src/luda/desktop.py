@@ -22,12 +22,16 @@ from .interaction import InteractionMixin
 from .control import Control
 from .timing import elapsed_time, suspend_offset
 from .waits import ConditionWaitsMixin
+from types import MappingProxyType
+from .common import environment_scope, subprocess_environment
 from .input_guard import held_button
 from .session_state import session_state
 
 
 class Desktop(InteractionMixin, ConditionWaitsMixin):
-    def __init__(self):
+    def __init__(self, environment=None):
+        self.environment = MappingProxyType(dict(os.environ if environment is None else environment))
+        self.identity_epoch = uuid.uuid4().hex
         self.x = None
         self.closed = False
         self._suspend_offset = suspend_offset()
@@ -36,7 +40,7 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         self.windows = {}
         self.clipboard_owner = None
         self.local_lock = threading.Lock()
-        name = hashlib.sha256(display_identity(os.environ.get('DISPLAY','')).encode()).hexdigest()[:12]
+        name = hashlib.sha256(display_identity(self.environment.get('DISPLAY','')).encode()).hexdigest()[:12]
         directory = Path(tempfile.gettempdir()) / f'silo-desktop-{os.getuid()}'
         directory.mkdir(mode=0o700, exist_ok=True)
         if directory.is_symlink() or directory.stat().st_uid != os.getuid() or directory.stat().st_mode & 0o077:
@@ -63,7 +67,8 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
                     self.snapshots.clear()
                     self.elements.clear()
                 self._suspend_offset = offset
-                yield
+                with environment_scope(self.environment):
+                    yield
             finally:
                 fcntl.flock(self.lockfd, fcntl.LOCK_UN)
         finally:
@@ -77,7 +82,7 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
     def doctor(self):
         dependencies = {c: shutil.which(c) is not None for c in ('xdotool','wmctrl','scrot','xclip','xprop')}
         result = {'version':'0.1.0','backend':'X11 + AT-SPI','dependencies':dependencies,
-                  'display':os.environ.get('DISPLAY'),'session_bus':bool(os.environ.get('DBUS_SESSION_BUS_ADDRESS')),
+                  'display':self.environment.get('DISPLAY'),'session_bus':bool(self.environment.get('DBUS_SESSION_BUS_ADDRESS')),
                   'uid':os.getuid(),'transport':'stdio','support':'experimental X11; Wayland unsupported',
                   'limitations':['Human viewer input is not locked out.','No automatic clipboard restoration.',
                                  'Accessibility mapping requires a uniquely identified application window.','No automatic retry of mutations.']}
@@ -416,7 +421,7 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         with tempfile.NamedTemporaryFile(dir=self.runtime) as source:
             source.write(payload);source.flush()
             mark_effect()
-            self.clipboard_owner=subprocess.Popen(['xclip','-quiet','-selection','clipboard','-in',source.name],stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+            self.clipboard_owner=subprocess.Popen(['xclip','-quiet','-selection','clipboard','-in',source.name],stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,env=subprocess_environment())
             deadline=elapsed_time()+1
             while True:
                 try:
