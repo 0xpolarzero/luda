@@ -1,0 +1,7 @@
+# Hosted portal cleanup failure and scoped fix
+
+Original run35503837414, source76f9085: rich-clipboard51/51 checks passed, child exit0, elapsed195.528s (below300s suite cap). Matrix status was harness_error because TemporaryDirectory removal hit disconnected private FUSE path `/tmp/luda-matrix-lhxedf31/runtime/doc`. The retained original job log, suite log, matrix and case receipts are gzip-compressed without editing. Other five browser suites passed. No claim that the failed job was green.
+
+local-disconnected-mount.jsonl records a real reproduction/fix: callerUID1001 in a fresh user+mount namespace, mappedUID0 inside; real fuse.portal mount and connection closure; original rmtree failsENOTCONN; fixed cleanup detaches exactly that mount, verifies disappearance and removes the private directory, preserving an unrelated sibling. No GUI, browser, shared portal or system service was changed.
+
+Local test dependency was downloaded/extracted official Ubuntu noble/main arm64 fuse3 version3.14.0-5build1, package SHA256 `133c0e1c1fd0ce655b8f15c693f3ee6d2aeb22b2675512ccc6bef82de8a88d09`; no package installation or postinst was used. Its extracted bin directory was supplied in the test-only PATH. The hosted workflow declares fuse3 explicitly. The actual probe is `tests/live_private_portal_cleanup.py`; it uses no downloaded test code. Passing local cleanup is not a new hosted browser-suite result.

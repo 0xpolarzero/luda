@@ -9,12 +9,12 @@ import shutil
 import signal
 import subprocess
 import sys
-import tempfile
 import time
 import uuid
 
 from headless_tests import stop
 from qualify import source_fingerprint
+from private_directory_cleanup import private_directory
 
 ROOT = Path(__file__).resolve().parents[1]
 TOKEN_KEY = 'LUDA_MATRIX_PROCESS_TOKEN'
@@ -303,7 +303,7 @@ def main():
                 if not all(row['dependencies'].values()):
                     row.update(status='dependency_missing', returncode=None)
                 else:
-                    with tempfile.TemporaryDirectory(prefix='luda-matrix-') as directory:
+                    with private_directory(row) as directory:
                         token = uuid.uuid4().hex
                         env = private_environment(Path(directory), token)
                         env['LUDA_MATRIX_STARTUP_REPORT'] = str(destination / 'startup.json')

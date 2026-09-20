@@ -1,0 +1,2 @@
+{"caller_uid": 1001, "isolation": "new user and mount namespaces"}
+{"original": "rmtree ENOTCONN", "fixed": {"status": "removed", "owned_portal_mounts_detached": 1}, "unrelated_preserved": true, "mount_absent": true, "namespace_uid": 0}

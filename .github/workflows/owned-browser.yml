@@ -21,7 +21,7 @@ jobs:
       - name: Install private desktop dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y xvfb xauth xfwm4 xfce4-session dbus-x11 at-spi2-core python3-gi gir1.2-atspi-2.0 gir1.2-gtk-3.0 xdotool wmctrl scrot xclip x11-utils x11-xserver-utils libxrandr2 fonts-dejavu-core apparmor-utils
+          sudo apt-get install -y fuse3 xvfb xauth xfwm4 xfce4-session dbus-x11 at-spi2-core python3-gi gir1.2-atspi-2.0 gir1.2-gtk-3.0 xdotool wmctrl scrot xclip x11-utils x11-xserver-utils libxrandr2 fonts-dejavu-core apparmor-utils
       - name: Assert default installation excludes the browser extra
         run: |
           uv sync --locked --no-default-groups

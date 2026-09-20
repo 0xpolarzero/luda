@@ -9,3 +9,32 @@ The ordinary runner account executes the `owned-browser` qualification matrix in
 Local validation used the same locked default/extra installation sequence: Playwright was absent by default, then installed as exactly 1.63.0. The checker accepted the already provisioned official ARM64 Chromium 153.0.8010.12 revision 1243. Matrix run `run-1789888248755165697` passed in 12.697 seconds as UID1001, with source unchanged and no remaining tagged processes. Local validation reused that existing browser binary; the fresh hosted download and AppArmor attachment still require the first GitHub run after integration. It does not claim AMD64 or hosted success in advance.
 
 Actual hosted run [35496454208](https://github.com/0xpolarzero/luda/actions/runs/35496454208) passed at `f98b139` on ordinary UID1001/AMD64 Ubuntu: explicit locked provisioning, exact-executable AppArmor setup, sandbox-enabled Chromium and the 32.737-second matrix all passed. The source fingerprint matches the root/ordinary unit evidence in [the current record](UNIT-COVERAGE-CURRENT.md). The first workflow at `e78adab` failed before creating jobs because `runner.temp` was used in job-level environment configuration; the corrected workflow initializes the path in a runner step. Both outcomes remain recorded.
+
+## Private document-portal teardown
+
+Hosted run [35503837414](https://github.com/0xpolarzero/luda/actions/runs/35503837414)
+at source76f9085 passed all51 rich-clipboard fixture checks and exited0, but the
+matrix correctly failed cleanup with `ENOTCONN` while removing its private
+`runtime/doc`. The private D-Bus session had activated xdg-document-portal;
+a disconnected FUSE mount remained after process teardown. The other five
+browser suites passed. This was neither a browser assertion failure nor the
+previous aggregate suite timeout; no operation deadline is increased.
+
+The matrix now reads mountinfo before directory removal. It detaches only the
+exact `runtime/doc` `fuse.portal` mount inside its fresh current-UID0700 root and
+runtime directory, requiring the mount's user_id to match and its mount record
+to remain unchanged. `fusermount3` is an explicit CI dependency. Mount-table
+removal must be observed before recursive deletion. Unexpected, foreign or
+unconfirmed mounts preserve the directory and fail cleanup; the original fixture
+verdict is retained separately. This does not authorize unmounting ordinary user
+portals or unrelated mount points.
+
+An actual ordinary-UID caller test in fresh user/mount namespaces creates a FUSE
+mount, closes its connection, reproduces the original `rmtree` ENOTCONN, then
+verifies scoped detach/removal and preservation of an unrelated sibling. The
+namespace maps that caller to UID0 for the mount syscall; it is not a hosted
+normal-namespace rerun. Run `tests/live_private_portal_cleanup.py` as an ordinary
+user with Linux unshare, /dev/fuse and fusermount3 available. Focused unit tests
+cover foreign/type/path/mount-record changes, failed unmounts, permissions,
+symlinks and separate fixture/cleanup outcomes. Original hosted failure evidence
+and local proof are retained in `tests/evidence/hosted-portal-cleanup/`.
