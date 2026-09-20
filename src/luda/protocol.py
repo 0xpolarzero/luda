@@ -6,6 +6,27 @@ from mcp.server.fastmcp import FastMCP
 from mcp.types import CallToolResult, TextContent
 
 
+def declared_path(schema, path):
+    """Return only path names present in our schema, never user-supplied keys."""
+    current, names = schema, []
+    for part in path:
+        seen = set()
+        while isinstance(current, dict) and '$ref' in current:
+            reference = current['$ref']
+            if not isinstance(reference, str) or not reference.startswith('#/') or reference in seen:
+                return names
+            seen.add(reference)
+            current = schema
+            for key in reference[2:].split('/'):
+                current = current.get(key.replace('~1', '/').replace('~0', '~'), {})
+        properties = current.get('properties', {}) if isinstance(current, dict) else {}
+        if not isinstance(part, str) or part not in properties:
+            break
+        names.append(part)
+        current = properties[part]
+    return names
+
+
 class DesktopMCP(FastMCP):
     def __init__(self, *args, product_version, **kwargs):
         super().__init__(*args, **kwargs)
@@ -31,10 +52,13 @@ class DesktopMCP(FastMCP):
                 issue = {'rule': error.validator}
                 if path and path[0] in known:
                     issue['parameter'] = path[0]
-                if error.validator == 'required' and isinstance(arguments, dict):
-                    issue['missing_parameters'] = [name for name in tool.inputSchema.get('required', []) if name not in arguments]
+                names = declared_path(tool.inputSchema, path)
+                if len(names) > 1:
+                    issue['field'] = '.'.join(names[1:])
+                if error.validator == 'required' and isinstance(error.instance, dict):
+                    issue['missing_fields' if path else 'missing_parameters'] = [name for name in error.schema.get('required', []) if name not in error.instance]
                 if error.validator == 'additionalProperties':
-                    issue['accepted_parameters'] = list(known)
+                    issue['accepted_fields' if path else 'accepted_parameters'] = list(error.schema.get('properties', {}))
                 if error.validator in ('type', 'enum', 'minimum', 'maximum', 'minLength', 'maxLength'):
                     issue['expected'] = error.validator_value
                 issues.append(issue)

@@ -6,10 +6,11 @@ from collections import deque
 import json
 import threading
 import time
-from typing import Literal
+from typing import Annotated, Literal, TypedDict
 import uuid
 
 import anyio
+from pydantic import Field, with_config
 from .protocol import DesktopMCP
 from .identity import version_identity
 from mcp.types import CallToolResult, ImageContent, TextContent, ToolAnnotations
@@ -20,6 +21,15 @@ from .keyboard import set_recovery_hooks, recover_keyboard_input
 from .desktop import Desktop
 from .apps import list_applications, launch_application
 from .session_state import require_session_input
+
+
+@with_config({'extra': 'forbid'})
+class ImageBounds(TypedDict):
+    x: Annotated[int, Field(ge=0)]
+    y: Annotated[int, Field(ge=0)]
+    width: Annotated[int, Field(ge=8, le=512)]
+    height: Annotated[int, Field(ge=8, le=512)]
+
 
 mcp = DesktopMCP('luda', product_version=version('luda'), instructions='Local desktop: observe, select a window, inspect its controls, then act. Screenshot coordinates use the returned image, with its snapshot ID. Text replacement and insertion are distinct. Verify dispatched actions before repeating them; cancellation or timeout can leave effects. Use desktop_status to inspect recent operation outcomes.')
 backend = None
@@ -182,8 +192,8 @@ async def desktop_recording(action: Literal['start', 'status', 'stop', 'delete']
 
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
-async def desktop_match_image(template_snapshot_id: str, template_bounds: dict[str, int], snapshot_id: str, threshold: float = .95, limit: int = 20) -> CallToolResult:
-    """Find historical visual candidates from a selected screenshot crop in another retained screenshot. Both IDs must be retained and fresh, from the same server and image scale; only the target must still have its captured layout. Historical source crops may come from a window that moved. Bounds and results use returned-image pixels. Threshold is finite 0–1, limit 1–100; scores are uncalibrated correlation, never semantic identity or click permission. Returns non-overlapping candidates, preserving distinct duplicates; flat templates are refused. No new capture or input. Optional system OpenCV required."""
+async def desktop_match_image(template_snapshot_id: str, template_bounds: ImageBounds, snapshot_id: str, threshold: float = .95, limit: int = 20) -> CallToolResult:
+    """Find historical visual candidates from a selected screenshot crop in another retained screenshot. template_bounds requires x, y, width and height in source returned-image pixels; x/y are nonnegative and width/height are 8–512. Both IDs must be retained and fresh, from the same server and image scale; only the target must still have its captured layout. Historical source crops may come from a window that moved. Results use target returned-image pixels. Threshold is finite 0–1, limit 1–100; scores are uncalibrated correlation, never semantic identity or click permission. Returns non-overlapping candidates, preserving distinct duplicates; flat templates are refused. No new capture or input. Optional system OpenCV required."""
     return await execute_async('match_image', template_snapshot_id, template_bounds, snapshot_id, threshold, limit)
 
 

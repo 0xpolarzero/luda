@@ -6,6 +6,35 @@ from luda.server import mcp
 
 
 class ProtocolValidation(unittest.IsolatedAsyncioTestCase):
+    async def test_matching_rectangle_advertises_required_bounded_fields(self):
+        tool = next(t for t in await mcp.list_tools() if t.name == 'desktop_match_image')
+        bounds = tool.inputSchema['$defs']['ImageBounds']
+        self.assertEqual(bounds['required'], ['x', 'y', 'width', 'height'])
+        self.assertIs(bounds['additionalProperties'], False)
+        self.assertEqual(bounds['properties']['width']['minimum'], 8)
+        self.assertEqual(bounds['properties']['width']['maximum'], 512)
+        args = dict(template_snapshot_id='source', snapshot_id='target')
+        cases = [
+            {'left': 0, 'top': 0, 'width': 16, 'height': 16},
+            {'x': 0, 'y': 0, 'width': 7, 'height': 16},
+            {'x': 0, 'y': 0, 'width': 16, 'height': 16, 'PRIVATE_KEY': 1},
+            {'x': True, 'y': 0, 'width': 16, 'height': 16},
+        ]
+        with patch('luda.server.execute_async', new_callable=AsyncMock) as dispatch:
+            for value in cases:
+                result = await mcp.call_tool('desktop_match_image', dict(args, template_bounds=value))
+                self.assertTrue(result.isError)
+                content = result.content[0].text
+                self.assertNotIn('PRIVATE_KEY', content)
+                self.assertEqual(json.loads(content)['effect'], 'none')
+            dispatch.assert_not_called()
+        result = await mcp.call_tool('desktop_match_image', dict(args, template_bounds=cases[0]))
+        issues = json.loads(result.content[0].text)['issues']
+        self.assertTrue(any(i.get('missing_fields') == ['x', 'y'] for i in issues))
+        self.assertTrue(any(i.get('accepted_fields') == ['x', 'y', 'width', 'height'] for i in issues))
+        result = await mcp.call_tool('desktop_match_image', dict(args, template_bounds=cases[1]))
+        self.assertIn({'rule': 'minimum', 'parameter': 'template_bounds', 'field': 'width', 'expected': 8}, json.loads(result.content[0].text)['issues'])
+
     async def test_bad_values_and_unknown_fields_never_dispatch(self):
         cases=[
             ('desktop_click',dict(window_id='w',snapshot_id='s',x=True,y=2)),

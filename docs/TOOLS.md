@@ -23,10 +23,10 @@ Explicit temporary screen recording: start, status, stop or delete by ticket. St
 ## `desktop_match_image`
 
 ```python
-desktop_match_image(template_snapshot_id: str, template_bounds: dict[str, int], snapshot_id: str, threshold: float=0.95, limit: int=20)
+desktop_match_image(template_snapshot_id: str, template_bounds: ImageBounds, snapshot_id: str, threshold: float=0.95, limit: int=20)
 ```
 
-Find historical visual candidates from a selected screenshot crop in another retained screenshot. Both IDs must be retained and fresh, from the same server and image scale; only the target must still have its captured layout. Historical source crops may come from a window that moved. Bounds and results use returned-image pixels. Threshold is finite 0–1, limit 1–100; scores are uncalibrated correlation, never semantic identity or click permission. Returns non-overlapping candidates, preserving distinct duplicates; flat templates are refused. No new capture or input. Optional system OpenCV required.
+Find historical visual candidates from a selected screenshot crop in another retained screenshot. template_bounds requires x, y, width and height in source returned-image pixels; x/y are nonnegative and width/height are 8–512. Both IDs must be retained and fresh, from the same server and image scale; only the target must still have its captured layout. Historical source crops may come from a window that moved. Results use target returned-image pixels. Threshold is finite 0–1, limit 1–100; scores are uncalibrated correlation, never semantic identity or click permission. Returns non-overlapping candidates, preserving distinct duplicates; flat templates are refused. No new capture or input. Optional system OpenCV required.
 
 ## `desktop_ocr`
 
