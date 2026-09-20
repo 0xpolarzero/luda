@@ -1,0 +1,21 @@
+{
+  "packages": {
+    "orderedmap": "2.1.1",
+    "prosemirror-commands": "1.7.1",
+    "prosemirror-keymap": "1.2.3",
+    "prosemirror-model": "1.25.1",
+    "prosemirror-schema-basic": "1.2.4",
+    "prosemirror-state": "1.4.3",
+    "prosemirror-transform": "1.12.1",
+    "prosemirror-view": "1.39.2",
+    "w3c-keyname": "2.2.8"
+  },
+  "files": {
+    "app.js": "bec54585c50c5001158989f16a4e7d327b744c538e2b94f2e45b54f07388ab6b",
+    "app.bundle.js": "f5b1ea4c824a98a89824e4581bfce2ca7f6098a8cb58a2ea0b4353ed415e0b3f",
+    "index.html": "a7ef51cba8ebc6a3120c914734fd053240bec3b1a5d1b259ba6bdbc9fef69da9",
+    "package-lock.json": "ecb8aba7917dbb3dc5ea44666b02d6a0bfaf84ddc8318fdc4aaf04b4d772f90b",
+    "package.json": "26186d4874b9ca54e62d3374c224fcf9a9efd1b878f5a2f5602ba97d29534e78"
+  },
+  "bridge_sha256": "bf554b1850dbeaf5a74927ff105ca899049e8b91a6b3a0a7b5dd4b141219a20e"
+}
