@@ -15,6 +15,8 @@ from .common import DesktopError, checkpoint, mark_effect, process_identity
 from .timing import elapsed_time
 
 MESSAGES = {
+    'STORAGE_UNAVAILABLE':'Cannot stage clipboard input; check temporary storage space and permissions.',
+    'RESOURCE_UNAVAILABLE':'Cannot stage clipboard input; check process and file-descriptor resources.',
     'DEPENDENCY_MISSING':'The explicit clipboard transport requires xclip.',
     'CLIPBOARD_FAILED':'Clipboard staging could not be verified; no paste shortcut was sent at this step.',
     'CLIPBOARD_CHANGED':'Clipboard changed before paste; no shortcut was sent at this step.',
@@ -120,7 +122,7 @@ class OwnedBrowser:
                         mark_effect(effect)
                         if 'error' in value:
                             code=value['error']
-                            raise DesktopError(code if code in MESSAGES else 'BROWSER_OPERATION_FAILED',MESSAGES.get(code,MESSAGES['BROWSER_OPERATION_FAILED']),effect=effect,details={'clipboard_changed':value.get('clipboard_changed') is True})
+                            raise DesktopError(code if code in MESSAGES else 'BROWSER_OPERATION_FAILED',MESSAGES.get(code,MESSAGES['BROWSER_OPERATION_FAILED']),effect=effect,details={'clipboard_may_have_changed':value.get('clipboard_may_have_changed') is True})
                         return value
         except DesktopError as exc:
             if exc.code not in MESSAGES or exc.code in ('BROWSER_CLOSED','BROWSER_TIMEOUT'):

@@ -97,7 +97,7 @@ async def main(executable):
             await button('Move focus after next input')
             failed=await denied('desktop_type','FOCUS_CHANGED',element_id=eid,text='first\nsecond',transport='clipboard',line_breaks='paragraph')
             await asyncio.sleep(.2)
-            record('paste-focus-loss-stops-remainder',failed['effect']=='uncertain' and failed.get('details',{}).get('clipboard_changed') and 'second' not in state['modelText'],oracle=dict(state))
+            record('paste-focus-loss-stops-remainder',failed['effect']=='uncertain' and failed.get('details',{}).get('clipboard_may_have_changed') and 'second' not in state['modelText'],oracle=dict(state))
             eid=await fresh();await call('desktop_focus_element',element_id=eid)
             await call('desktop_press_keys',window_id=wid,chord='ctrl+shift+u')
             for key in ('3','0','6','b'):await call('desktop_press_keys',window_id=wid,chord=key)

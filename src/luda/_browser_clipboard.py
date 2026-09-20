@@ -1,11 +1,13 @@
 """Bounded X11 clipboard owner for an explicitly requested rich-editor route."""
+import json
+import sys
 import shutil
 import subprocess
 import time
 from pathlib import Path
 from .common import DesktopError, run, stop_process
-from .storage import staged_payload
-from .keyboard import send_chord, keyboard_capabilities
+from .storage import staged_payload, storage_errors
+from .keyboard import keyboard_capabilities
 
 
 class Clipboard:
@@ -20,9 +22,11 @@ class Clipboard:
         if state.get('latched_input'):raise DesktopError('UNSUPPORTED_INPUT_STATE','Clear latched input before clipboard typing.')
         if state.get('input_held'):raise DesktopError('INPUT_HELD','Release held input before clipboard typing.')
 
-    def stage(self, text):
+    @storage_errors("stage clipboard input", effect="none")
+    def stage(self, text, publishing):
         payload=text.encode('utf-8')
         with staged_payload(self.directory,payload) as path:
+            publishing()
             if self.owner:stop_process(self.owner)
             self.owner=subprocess.Popen(['xclip','-quiet','-selection','clipboard','-in',path],stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
             deadline=time.monotonic()+.8
@@ -38,8 +42,13 @@ class Clipboard:
         if not self.owner or self.owner.poll() is not None or run(['xclip','-selection','clipboard','-out'],timeout=.3,max_output_bytes=256001)!=text.encode('utf-8'):
             raise DesktopError('CLIPBOARD_CHANGED','Clipboard changed before paste; no shortcut sent.')
 
-    def key(self, target, chord):
-        return send_chord(chord,target['xid'],target_generation=target['generation'])
+    def prepare_key(self, target, chord):
+        # Read-only native target/generation, focus, held and latched state check.
+        # Do not start an XTest injector inside the killable browser owner.
+        request={'chord':chord,'target':target['xid'],'target_generation':target['generation']}
+        result=json.loads(run([sys.executable,'-m','luda._keyboard_native','plan'],data=json.dumps(request).encode()+b'\n',timeout=1,max_output_bytes=16384))
+        if result.get('code'):raise DesktopError(result['code'],'Native clipboard input preflight failed.')
+
 
     def close(self):
         if self.owner:stop_process(self.owner)

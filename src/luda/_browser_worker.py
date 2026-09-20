@@ -415,15 +415,22 @@ class Worker:
                 try:
                     self.clipboard.preflight()
                     if action=='paste':
-                        self.effect='uncertain';self.clipboard_changed=True
-                        self.clipboard.stage(payload)
+                        def publishing():
+                            self.effect='uncertain';self.clipboard_changed=True
+                        self.clipboard.stage(payload,publishing)
                         _,staged=self.snapshot(token,mutation=True,focus=True)
                         if (staged['model'],staged['selection'],staged['stored_marks'])!=(fresh['model'],fresh['selection'],fresh['stored_marks']):raise Refused('TEXT_CHANGED')
                         self.clipboard.verify(payload)
-                        self.clipboard.key(self.native_target,'ctrl+v');inserted+=payload
+                        self.clipboard.prepare_key(self.native_target,'ctrl+v')
+                        self.clipboard.verify(payload)
+                        _,ready=self.snapshot(token,mutation=True,focus=True)
+                        if (ready['model'],ready['selection'],ready['stored_marks'])!=(fresh['model'],fresh['selection'],fresh['stored_marks']):raise Refused('TEXT_CHANGED')
+                        self.rich_key('v','KeyV',86,2);inserted+=payload
                     else:
-                        self.effect='uncertain'
-                        self.clipboard.key(self.native_target,'Return' if action=='return' else 'BackSpace')
+                        self.clipboard.prepare_key(self.native_target,'Return' if action=='return' else 'BackSpace')
+                        _,ready=self.snapshot(token,mutation=True,focus=True)
+                        if (ready['model'],ready['selection'],ready['stored_marks'])!=(fresh['model'],fresh['selection'],fresh['stored_marks']):raise Refused('TEXT_CHANGED')
+                        self.rich_key('Enter','Enter',13) if action=='return' else self.rich_key('Backspace','Backspace',8)
                         if action=='return':inserted+='\n'
                 except DesktopError as exc:raise Refused(exc.code) from None
                 intended=prefix+inserted+suffix
@@ -466,9 +473,9 @@ def main():
             try:
                 result=worker.dispatch(json.loads(raw))
             except Refused as exc:
-                result={'error':exc.code,'effect':worker.effect,'clipboard_changed':worker.clipboard_changed}
+                result={'error':exc.code,'effect':worker.effect,'clipboard_may_have_changed':worker.clipboard_changed}
             except Exception:
-                result={'error':'BROWSER_OPERATION_FAILED','effect':worker.effect,'clipboard_changed':worker.clipboard_changed}
+                result={'error':'BROWSER_OPERATION_FAILED','effect':worker.effect,'clipboard_may_have_changed':worker.clipboard_changed}
             data=json.dumps(result,ensure_ascii=False,separators=(',',':'))
             if len(data.encode())>1024*1024:
                 data=json.dumps({'error':'VERIFICATION_LIMIT','effect':worker.effect})
