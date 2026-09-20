@@ -1,41 +1,73 @@
 # Luda
 
-A standalone plugin, skill, and MCP toolset for agents operating graphical Linux machines. Luda controls an existing desktop; it does not provision a desktop or require a sandbox manager, cloud service, or model API.
+**Let your coding agent use a Linux desktop.**
 
-## Install and connect
+Luda gives agents tools to see applications, read their controls, click, type, and check what changed. Use it to fill forms, edit documents, work with files, or test a graphical application.
 
-Supported baseline: Linux with Python 3.12+, native X11, an EWMH window manager, and the dependencies in [installation](docs/INSTALLATION.md). Ubuntu 24.04 with XFCE/XFWM4 is tested on ARM64 and AMD64. Native Wayland and Xwayland are unsupported and rejected before desktop input.
+It runs on the Linux machine that owns the desktop. No hosted service or model API is required by Luda.
 
-From a trusted checkout, as your desktop account:
+## How it works
+
+Luda has two parts:
+
+- **Tools** connect your agent to the desktop through MCP, a protocol supported by many coding agents.
+- **A skill** teaches the agent how to choose controls, enter text, verify results, and recover when something changes.
+
+The agent can read accessible controls directly or work from screenshots. Actions report whether their result was verified, merely sent, or uncertain. Clicking “Save,” for example, is not itself proof that a file was saved.
+
+## Get started
+
+You need an existing **Linux X11 desktop** and **Python 3.12 or newer**. Ubuntu 24.04 with XFCE is the tested starting point. Wayland and Xwayland are not supported.
+
+On that Linux machine, from your desktop account:
 
 ```sh
+git clone https://github.com/0xpolarzero/luda.git
+cd luda
 sudo bash scripts/install.sh /opt/luda --user "$(id -un)"
 /opt/luda/current/.venv/bin/luda doctor
-python3 scripts/build_plugin.py --prefix /opt/luda \
-  --marketplace-root "$HOME/.local/share/luda-marketplace"
 ```
 
-Run the diagnostic and agent in the graphical session so they inherit `DISPLAY`, session D-Bus and X authorization. The generated plugin uses the installed executable directly. For SSH or another account, see [explicit session attachment](docs/INSTALLATION.md). Register the generated [plugin and skill](docs/CODEX-PLUGIN.md) in the agent that will use them.
+Run the diagnostic from your graphical session. If you connect over SSH, follow [session attachment](docs/INSTALLATION.md#ssh-and-explicit-session-attachment).
 
-## Use
+**Next: [connect your agent](docs/AGENT-INTEGRATIONS.md).** The guide covers Codex, Claude Code, Cursor, Gemini CLI, and OpenCode, with account-wide and project installation options. Installing the runtime alone does not register the tools or skill with your agent.
 
-1. Run `desktop_doctor`, list windows, and select the intended one.
-2. Inspect controls; prefer semantic desired-state actions and verified text editing.
-3. When controls are inaccessible, observe the desktop and use the returned screenshot coordinates.
-4. Verify the application's resulting state. After uncertainty, inspect before retrying input.
+You can also ask an agent with terminal access:
 
-Core tools cover screenshots, windows/workspaces, pointer and keyboard input, Unicode/multiline text, accessibility controls, clipboard paste, waits, cancellation and input recovery. Optional tools provide owned-browser interaction, OCR, image matching and recording. See the generated [tool reference](docs/TOOLS.md) and [agent skill](skills/luda/SKILL.md).
+> Read Luda's installation and agent-integration guides. Install it for this Linux desktop and make its tools and skill available to your agent account. Preserve unrelated configuration.
 
-## Support and testing
+For other Linux distributions, existing dependencies, updates, and removal, see [installation](docs/INSTALLATION.md). Downloadable packages are listed under [releases](https://github.com/0xpolarzero/luda/releases).
 
-[Validation](docs/VALIDATION.md) separates demonstrated behavior, product defects, test-harness failures and unsupported environments. The supported backend and provider limitations are explicit; successful dispatch is not proof of task completion. The existing acceptance inventory is frozen rather than a promise to support every desktop configuration.
+## What can it do?
 
-```sh
-uv sync --frozen --extra test
-.venv/bin/python scripts/qualify.py
-LUDA_ISOLATED_TEST_DISPLAY=1 xvfb-run -a \
-  -s '-screen 0 1440x900x24 -nolisten tcp' dbus-run-session -- \
-  .venv/bin/python scripts/headless_tests.py
-```
+- **Work with applications:** find and activate windows, inspect controls, operate menus, select items, and manage windows or workspaces.
+- **Enter and check text:** Unicode, multiple lines, selections, clipboard paste, and readback where the application supports it.
+- **Use the screen:** screenshots, clicks, drags, scrolling, and keyboard shortcuts. Optional OCR, image matching, and recording provide additional ways to observe.
+- **Handle interruptions:** wait for changes, cancel work, pause agent input, and recover owned input after a disconnect.
 
-Live tests use synthetic documents and independent widget/file/DOM readback. Tests against a shared desktop must hold `/tmp/luda-live-tests.lock` throughout. CI also runs private X11 sessions. [Backend support](docs/BACKEND-SUPPORT.md) and [semantic contracts](docs/SEMANTIC-CONTROLS.md) describe the boundaries.
+The optional browser provider opens a temporary Chromium session for ordinary web fields. Existing browser profiles are not attached automatically.
+
+### Optional editor add-on
+
+**[Editor Bridge](addons/editor-bridge/README.md)** adds exact rich-text verification for applications built with ProseMirror. It is a separate installation with its own tools and skill, and the application's developer must also register the adapter. **It is not included or enabled by installing core Luda.** Most desktop tasks do not need it.
+
+## Package it into an environment
+
+You can preinstall Luda in a workstation, container with a graphical session, or VM image. Your integration owns desktop provisioning, account setup, and agent registration. Luda supplies the runtime, skill files, and explicit setup commands.
+
+Use the [environment packaging guide](docs/ENVIRONMENT-PACKAGING.md) to make tools and skills available across folders for each agent account. There is no universal installation directory that every agent automatically discovers.
+
+## Learn more
+
+| I want to… | Read |
+| --- | --- |
+| Install or attach to a graphical session | [Installation](docs/INSTALLATION.md) |
+| Connect an agent and install its skill | [Agent integrations](docs/AGENT-INTEGRATIONS.md) |
+| Understand the tools and their parameters | [Tool reference](docs/TOOLS.md) |
+| Read the agent's operating instructions | [Core skill](skills/luda/SKILL.md) |
+| Check supported backends and known limits | [Backend support](docs/BACKEND-SUPPORT.md) · [Validation](docs/VALIDATION.md) |
+| Build packages or contribute | [Development and releases](docs/DEVELOPMENT.md) |
+
+Application accessibility varies, and human input can race with an agent. Luda reports these limits rather than treating every dispatched action as success.
+
+[MIT license](LICENSE).

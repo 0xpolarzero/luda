@@ -5,9 +5,20 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "luda"
 version = "0.1.0"
-description = "Local X11 desktop tools with explicit targeting and observable outcomes"
+description = "Linux desktop tools and skills for coding agents"
+readme = "README.md"
+license = {file = "LICENSE"}
+authors = [{name = "polarzero"}]
+keywords = ["mcp", "linux", "desktop", "computer-use", "agent-skills"]
 requires-python = ">=3.12"
 dependencies = ["mcp==1.30.0", "jsonschema==4.26.0", "Pillow>=12.0,<13"]
+
+[project.urls]
+Homepage = "https://github.com/0xpolarzero/luda"
+Documentation = "https://github.com/0xpolarzero/luda#readme"
+Source = "https://github.com/0xpolarzero/luda"
+Issues = "https://github.com/0xpolarzero/luda/issues"
+Releases = "https://github.com/0xpolarzero/luda/releases"
 
 [project.optional-dependencies]
 test = ["playwright==1.63.0"]
