@@ -1,6 +1,6 @@
 # Control and cancellation recovery review
 
-Two concrete lifecycle failures now have deterministic regression tests.
+Three concrete lifecycle failures now have deterministic regression tests.
 
 A cancelled request used to clear a shared recovery flag when its worker
 finished, even if a different cancelled worker remained active. A later
@@ -11,6 +11,14 @@ worker separately and removes only that worker's ownership on completion.
 Repeated completion cleanup is idempotent. Tests cover both overlapping
 cancellation and a worker that exceeds the two-second cleanup wait, with
 new operations rejected until its eventual completion.
+
+Control commands previously fetched a backend and then read or updated its
+pause state outside the backend-swap lock. A concurrent reconnect could
+switch displays before the old display's pause completed. Control commands
+now linearize their selected backend and state operation with reconnect's
+swap. A thread-barrier test holds the pause write and verifies reconnect
+cannot swap early; another confirms control status remains available while
+an ordinary operation holds the separate operation gate.
 
 Pause-state reads previously used a blocking file open and unbounded JSON
 read. A FIFO substituted for the state file could hang a checkpoint or the

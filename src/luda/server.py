@@ -20,7 +20,7 @@ from .apps import list_applications, launch_application
 
 mcp = DesktopMCP('luda', product_version=version('luda'), instructions='Local desktop: observe, select a window, inspect its controls, then act. Screenshot coordinates use the returned image, with its snapshot ID. Text replacement and insertion are distinct. Verify dispatched actions before repeating them; cancellation or timeout can leave effects. Use desktop_status to inspect recent operation outcomes.')
 backend = None
-_backend_lock = threading.Lock()
+_backend_lock = threading.RLock()
 _operation_gate = threading.Lock()
 _history_lock = threading.Lock()
 _history = deque(maxlen=32)
@@ -140,8 +140,10 @@ async def execute_async(method, *args, **kwargs):
 async def desktop_control(action: Literal['status','pause','resume']='status') -> CallToolResult:
     """Pause/resume cooperating agent input across servers on this display. Pause interrupts at the next checkpoint; already-delivered input is not undone. Observation remains available. This does not stop arbitrary external input programs."""
     try:
-        control = get_backend().control
-        state = control.status() if action=='status' else control.set_paused(action=='pause')
+        # Linearize control's selected display with reconnect's backend swap.
+        with _backend_lock:
+            control = get_backend().control
+            state = control.status() if action=='status' else control.set_paused(action=='pause')
         return CallToolResult(content=[TextContent(type='text',text=json.dumps({'ok':True,**state}))])
     except DesktopError as exc:
         return result_error(exc.code,str(exc),exc.effect)

@@ -1,5 +1,5 @@
 import asyncio
-from contextlib import nullcontext
+from contextlib import contextmanager, nullcontext
 import json
 import threading
 import unittest
@@ -80,6 +80,57 @@ class QuarantineOwnership(unittest.IsolatedAsyncioTestCase):
                     await asyncio.sleep(.01)
             self.assertFalse(server._quarantined.is_set())
             self.assertEqual(server._quarantine_owners, set())
+
+
+class ControlReconnectOrdering(unittest.TestCase):
+    def test_pause_finishes_on_selected_backend_before_swap(self):
+        control_started = threading.Event()
+        finish_control = threading.Event()
+        reconnect_started = threading.Event()
+        reconnect_done = threading.Event()
+        responses = {}
+        old = Mock()
+        new = Mock()
+        def paused(value):
+            control_started.set()
+            self.assertTrue(finish_control.wait(2))
+            return {'paused': value, 'revision': 1}
+        old.control.set_paused.side_effect = paused
+        @contextmanager
+        def prepared(*args):
+            yield new, {'effect': 'verified'}
+        def control():
+            responses['control'] = asyncio.run(server.desktop_control('pause'))
+        def reconnect():
+            reconnect_started.set()
+            responses['reconnect'] = server.execute('reconnect')
+            reconnect_done.set()
+        with patch.object(server, 'backend', old), patch.object(server, 'prepare_reconnect', side_effect=prepared), patch.object(server.atexit, 'register'), patch.object(server.atexit, 'unregister'):
+            first = threading.Thread(target=control)
+            second = threading.Thread(target=reconnect)
+            first.start()
+            self.assertTrue(control_started.wait(1))
+            second.start()
+            try:
+                self.assertTrue(reconnect_started.wait(1))
+                self.assertFalse(reconnect_done.wait(.1), 'backend swapped while old display pause was unfinished')
+                self.assertIs(server.backend, old)
+            finally:
+                finish_control.set()
+                first.join(2)
+                second.join(2)
+            self.assertFalse(first.is_alive() or second.is_alive())
+            self.assertIs(server.backend, new)
+            self.assertFalse(responses['control'].isError)
+            self.assertFalse(responses['reconnect'].isError)
+            old.close.assert_called_once()
+
+    def test_control_does_not_wait_for_operation_gate(self):
+        desktop = Mock()
+        desktop.control.status.return_value = {'paused': False, 'revision': 0}
+        with patch.object(server, 'backend', desktop), server._operation_gate:
+            result = asyncio.run(server.desktop_control())
+        self.assertFalse(result.isError)
 
 
 if __name__ == '__main__':
