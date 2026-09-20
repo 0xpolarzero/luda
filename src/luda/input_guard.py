@@ -9,7 +9,7 @@ from .common import DesktopError,checkpoint,mark_effect,run,subprocess_environme
 from .keyboard import keyboard_recovery_checkpoint,_completion_proven,_retain_guardian
 from .timing import elapsed_time
 from .pointer_input import _move_pointer
-from ._pointer_native import validate_position,validate_generation
+from .input_validation import validate_position,validate_generation
 
 
 class HeldPointer:

@@ -1,7 +1,7 @@
 """Bounded one-shot clicks/wheels with supervised owned-button release."""
 import json
 import sys
-from ._pointer_native import validate_position,validate_generation
+from .input_validation import validate_position,validate_generation
 from .common import DesktopError,run
 from .keyboard import _dispatch_plan,keyboard_recovery_checkpoint
 
