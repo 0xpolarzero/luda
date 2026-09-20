@@ -137,6 +137,21 @@ async def main(executable):
                     ok,r=await raw('desktop_paste',window_id=wid,text=payload)
                     actual=await settled('text',payload)
                     record('explicit-clipboard-multiline',ok and actual==payload,response=r,oracle=dict(observed))
+                    for case,initial,start,end,insert,expected in [
+                        ('ascii-to-astral-caret','AB',1,1,'😀','A😀B'),
+                        ('genuine-feff-preserved','\ufeffA😀\ufeff\ufeffB\n',2,3,'🦊','\ufeffA🦊\ufeff\ufeffB\n'),
+                    ]:
+                        setup_ok,setup=await raw('desktop_type',element_id=textid,text=initial,mode='replace')
+                        setup_actual=await settled('text',initial)
+                        if not setup_ok or setup_actual!=initial:
+                            record(case,False,stage='setup',response=setup,oracle=dict(observed));continue
+                        select_ok,selected=await raw('desktop_select',element_id=textid,start_offset=start,end_offset=end)
+                        if not select_ok:
+                            record(case,False,stage='selection',response=selected);continue
+                        ok,r=await raw('desktop_type',element_id=textid,text=insert,mode='insert')
+                        actual=await settled('text',expected)
+                        read_ok,read=await raw('desktop_read_text',element_id=textid)
+                        record(case,ok and read_ok and actual==expected and read.get('text')==expected and read.get('caret_offset')==start+len(insert),response=r,readback=read,oracle=dict(observed))
         except Exception as exc:
             import traceback
             record('suite-completion',False,error=''.join(traceback.format_exception(exc)))
