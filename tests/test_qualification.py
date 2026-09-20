@@ -30,7 +30,7 @@ class QualificationContracts(unittest.TestCase):
             root=Path(directory)
             cases=['requirements-browser.lock','tests/fixtures/browser.html','skills/luda/SKILL.md',
                    '.mcp.json','.codex-plugin/plugin.json','.github/workflows/tests.yml',
-                   'integrations/silo/guest/agent-tools.py']
+                   'integrations/prosemirror/luda-prosemirror.mjs']
             prior=qualify.source_fingerprint(root)
             for name in cases:
                 path=root/name;path.parent.mkdir(parents=True,exist_ok=True);path.write_text('first')

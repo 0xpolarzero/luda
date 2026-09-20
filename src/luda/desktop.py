@@ -59,7 +59,7 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         self.lockfd = None
         try:
             with storage_errors('initialize desktop runtime'):
-                directory = Path(tempfile.gettempdir()) / f'silo-desktop-{os.getuid()}'
+                directory = Path(tempfile.gettempdir()) / f'luda-desktop-{os.getuid()}'
                 directory.mkdir(mode=0o700, exist_ok=True)
                 if directory.is_symlink() or directory.stat().st_uid != os.getuid() or directory.stat().st_mode & 0o077:
                     raise DesktopError('UNSAFE_RUNTIME', 'Runtime directory must be owned by this account and mode 0700.')

@@ -29,7 +29,7 @@ def outside_snapshot():
 def main():
  parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--packages',type=Path,required=True);args=parser.parse_args()
  if os.getuid()!=0:parser.error('Explicit private-namespace root provisioning is required.')
- if pwd.getpwnam('silo-desktop').pw_uid!=1001:parser.error('Fixture requires existing ordinary UID1001.')
+ if pwd.getpwnam(os.environ.get('LUDA_TEST_USER', 'desktop')).pw_uid!=1001:parser.error('Fixture requires existing ordinary UID1001.')
  for lookup,value in ((pwd.getpwnam,'polkitd'),(pwd.getpwuid,65530),(grp.getgrnam,'polkitd'),(grp.getgrgid,65530)):
   try:lookup(value)
   except KeyError:continue

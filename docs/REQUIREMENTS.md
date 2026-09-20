@@ -1,11 +1,11 @@
-# Feature and acceptance catalog
+# Computer-use acceptance inventory
 
-This is a bounded engineering catalog, not a claim that all possible GUI states can be enumerated. Extend it for every newly observed failure. P0 is required before declaring the supported product production-ready; P1 is the fuller product surface; P2 is optional expansion. All cases begin unqualified. See VALIDATION.md for the narrower actual test evidence.
+Frozen inventory for supported Linux computer-use functionality. It is not a promise to implement every optional capability or support every desktop. Removed environment-integration cases retain their original ID gaps. See [validation](VALIDATION.md) for supported behavior and evidence.
 
-## ENV: Guest and session attachment (P0)
+## ENV: Linux graphical session attachment (P0)
 
-- **ENV-01** — ARM64 Ubuntu 24.04 fresh VM: install and operate without nested virtualization.
-- **ENV-02** — AMD64 Ubuntu 24.04 fresh VM: same public tool contract and acceptance workflows.
+- **ENV-01** — ARM64 Ubuntu 24.04: install and operate on an existing native X11 desktop.
+- **ENV-02** — AMD64 Ubuntu 24.04: same public tool contract and supported workflows.
 - **ENV-03** — SSH root account: resolve explicit desktop account and drop privileges before GUI access.
 - **ENV-04** — SSH desktop account: attach without root or sudo.
 - **ENV-05** — DISPLAY unset in SSH: find the selected desktop session, never assume :0.
@@ -259,7 +259,7 @@ This is a bounded engineering catalog, not a claim that all possible GUI states 
 
 - **PERF-01** — Tool list: compact enough for agent discovery without hundreds of redundant actions.
 - **PERF-02** — Idle server: no busy polling of desktop.
-- **PERF-03** — Screenshot latency: measured budget on ARM64 microsandbox.
+- **PERF-03** — Screenshot latency: measured budget on supported ARM64 Linux desktop.
 - **PERF-04** — Accessibility latency: bounded even for broken provider.
 - **PERF-05** — Action latency: measured separately from application completion.
 - **PERF-06** — Memory growth: bounded handle caches and image buffers.
@@ -335,13 +335,8 @@ This is a bounded engineering catalog, not a claim that all possible GUI states 
 
 ## SHIP: Packaging and product acceptance (P0)
 
-- **SHIP-01** — Clean install from Silo GUI: desktop and tools appear together.
-- **SHIP-02** — Existing VM upgrade: preserve user desktop/files and add control capability.
-- **SHIP-03** — Fresh Codex remote task: no hand-written environment setup needed.
 - **SHIP-04** — Skill auto-discovery: correct scope and actual tool names.
 - **SHIP-05** — Offline startup after install: no vendor login or model API required.
-- **SHIP-06** — Guest health view: report desktop and tool readiness separately.
-- **SHIP-07** — Human viewer reconnect: same session as agent controls.
 - **SHIP-08** — Version reporting: driver, skill and tool schema identifiable.
 - **SHIP-09** — Reproducible acceptance command: independent observer and recorded failures.
 - **SHIP-10** — Release gate: no claim of production readiness with unqualified P0 cases.
@@ -449,4 +444,3 @@ This is a bounded engineering catalog, not a claim that all possible GUI states 
 - **EVAL-08** — Performance measurements: report distributions and environment instead of an unsupported speed claim.
 - **EVAL-09** — Evidence retention: synthetic fixtures, failure transcripts and reproducible commands.
 - **EVAL-10** — Release decision: separate implementation coverage, local test evidence and production qualification.
-

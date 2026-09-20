@@ -25,6 +25,13 @@ class SessionDiscoveryTests(unittest.TestCase):
         result=self.discover()
         self.assertEqual(result['DISPLAY'],':7')
         self.assertEqual(result['DBUS_SESSION_BUS_ADDRESS'],'unix:path=/session')
+    def test_explicit_pid_accepts_other_session_manager_without_guessing(self):
+        self.fixture(12, comm='other-session')
+        with self.assertRaises(SystemExit): self.discover()
+        self.assertEqual(self.discover(12)['DISPLAY'], ':7')
+    def test_explicit_pid_still_requires_selected_account(self):
+        self.fixture(12, comm='other-session')
+        with patch('luda.session.os.getuid', return_value=999999), self.assertRaises(SystemExit): self.discover(12)
     def test_ambiguous_requires_explicit_session(self):
         self.fixture(10);self.fixture(11)
         with self.assertRaises(SystemExit) as caught:self.discover()
@@ -65,6 +72,13 @@ class SessionLaunchTests(unittest.TestCase):
                  patch('luda.session.pwd.getpwnam',return_value=account),patch('luda.session.discover',return_value=values),
                  patch('luda.session.os.getuid',return_value=uid),patch('luda.session.Path.is_file',return_value=True),patch('luda.session.os.chdir')]
         for p in patches:p.start();self.addCleanup(p.stop)
+    def test_omitted_user_resolves_current_uid_without_named_account(self):
+        self.setup_launch(1001)
+        account=SimpleNamespace(pw_uid=1001,pw_gid=1002,pw_name='generic',pw_dir='/home/generic')
+        with patch('sys.argv',['luda-session','--','/opt/luda']), patch('luda.session.pwd.getpwuid',return_value=account) as lookup, patch('luda.session.os.execvpe') as execute:
+            session.main()
+        lookup.assert_called_once_with(1001)
+        self.assertEqual(execute.call_args.args[2]['USER'],'generic')
     def test_privilege_drop_precedes_exec_and_environment_is_allowlisted(self):
         self.setup_launch();events=[]
         def capture(name):return lambda *args:events.append((name,args))

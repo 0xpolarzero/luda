@@ -1,105 +1,20 @@
-# Codex plugin package
+# Agent plugin and skill
 
-The repository contains a Codex compatibility manifest at
-`.codex-plugin/plugin.json`, MCP launch configuration in `.mcp.json`, and the
-existing `skills/luda` agent skill. The default launcher uses the installed
-Linux guest release at `/opt/luda/current`, joining the existing
-`silo-desktop` graphical session through `luda-session`. It does not install
-another VM, replace Kasm/XFCE, open a public listener or require an API key.
-The Luda runtime and its desktop dependencies must already be installed.
+Luda's plugin packages an MCP server registration and `skills/luda/SKILL.md`. Runtime installation is separate. The repository plugin runs `luda` from PATH in the agent's graphical environment.
 
-## Build a bundle and register it in the intended Codex profile
-
-For Codex CLI running **inside the guest**, build and register a fresh, self-contained local marketplace from this checkout:
+Build a bundle with an explicit installed path:
 
 ```sh
-python3 scripts/build_plugin.py \
-  --prefix /opt/luda \
-  --user silo-desktop \
-  --marketplace-root /tmp/luda-marketplace
-codex plugin marketplace add /tmp/luda-marketplace
+python3 scripts/build_plugin.py --prefix /opt/luda \
+  --marketplace-root "$HOME/.local/share/luda-marketplace"
+codex plugin marketplace add "$HOME/.local/share/luda-marketplace"
 codex plugin add luda@luda-local
 ```
 
-Run the two `codex plugin` commands as the account whose Codex profile should own the plugin, without inheriting `sudo` from system provisioning. Guest-side plugin registration does not install into a Mac Codex profile.
+Use a fresh persistent directory; the builder refuses to overwrite existing output. Run registration as the agent account. The bundled executable runs directly in the agent environment. Add `--user desktop` to the builder only when attachment through `luda-session` is needed; replace `desktop` with the account that owns the graphical session. See [installation](INSTALLATION.md) for discovery limitations.
 
-Use a persistent marketplace path for normal installation; `/tmp` above is
-for a disposable evaluation. The builder refuses an existing output and
-copies the skill into the bundle, with no links outside it. To build only a
-plugin directory for another distribution workflow, use
-`--output /path/to/luda` instead. Configuration generation does not write to
-any Codex registry; the two explicit `codex plugin` commands perform the
-installation. Start a new conversation after installing or reinstalling.
+Restart/reconnect the client, verify that the Luda skill is discoverable, and run `desktop_doctor`, `desktop_windows`, and `desktop_observe`. Plugin installation alone does not establish graphical access.
 
-Custom installation paths are literal executable arguments, including paths
-with spaces. The launcher always invokes the guest's installed
-`current/.venv/bin/luda-session --user <account> -- current/.venv/bin/luda`.
-The builder copies the skill from this checkout, so use the same source revision as the installed runtime. Rebuilding/upgrading the runtime does not automatically refresh an already cached plugin skill. The plugin cache contains instructions and configuration; runtime updates
-remain managed by Luda's versioned installer. Regenerate the bundle if the
-prefix or desktop account changes, then remove/reinstall the plugin so its
-cached configuration is refreshed.
+Other MCP clients can register `/opt/luda/current/.venv/bin/luda` as a stdio server and load the same skill using their own discovery mechanism. No client-specific API credentials are required by Luda. Configure transport separately if the agent runs on another machine.
 
-## Tool approval policy
-
-Plugin server policy belongs in Codex configuration, separate from the MCP
-launch JSON. For the installed ID above, an explicit prompt policy is:
-
-```toml
-[plugins."luda@luda-local".mcp_servers.luda]
-default_tools_approval_mode = "prompt"
-```
-
-Review and merge this setting yourself; the builder does not modify existing
-policy. Plugin-scoped server policy and compatibility manifests are described
-in the [official plugin packaging documentation](https://developers.openai.com/plugins/build/plugins).
-
-## Mac app with a remote Linux executor
-
-Official Codex MCP configuration documents
-`mcp_servers.<id>.experimental_environment = "remote"` for a stdio server
-executed through an available remote environment. It also distinguishes
-local versus remote environment-variable sources. See the
-[official MCP documentation](https://developers.openai.com/codex/mcp).
-
-For the host workflow, build with `--remote`, make the resulting marketplace available at a persistent path on the host, and register it in the intended host Codex profile. Do not assume the guest `/tmp` path or its plugin registry is visible on the Mac. This describes configuration placement, not a tested Mac installation flow.
-
-The builder's `--remote` flag writes `experimental_environment: "remote"`
-into the plugin's server launch configuration. This is an experimental
-remote-executor request, **not proof of Mac SSH plugin discovery or plugin
-server placement**. The guest release paths must exist in the actual
-executor. An ordinary MCP configuration generated by the installer remains
-an alternative when plugin routing is unavailable.
-
-The package avoids relying on plugin-root interpolation in MCP command
-arguments: official plugin documentation explicitly describes `PLUGIN_ROOT`
-for hooks, which does not establish the same behavior for MCP arguments.
-Absolute guest installation paths make the intended execution location
-reviewable. Installing a plugin on the Mac does not itself install Luda into
-the guest.
-
-## Validation and remaining host test
-
-Validated locally with Codex CLI 0.155.1:
-
-- The plugin-creator manifest validator accepts the repository manifest.
-- Six automated packaging tests pass, including real CLI marketplace
-  registration, plugin installation/listing and inspection of cached MCP
-  configuration and skill files, all inside a temporary Codex configuration.
-- The generated launcher against an installed guest release completed MCP
-  initialization, tool discovery and `desktop_doctor` under the shared GUI
-  lease. This probe uses the Linux guest, not a simulated Mac executor.
-
-No existing user registry was changed during these checks. Before claiming
-Mac/Silo onboarding is qualified, test a fresh Mac Codex profile connected
-to a new Silo GUI sandbox: install the plugin in the intended host context,
-verify the MCP process runs in that guest under the expected desktop
-account, confirm tools and skill appear in a new thread, observe the correct
-desktop, perform and verify one owned-file UI task, then reconnect after a
-session restart. Record Codex, Silo and guest versions and retain evidence
-of the selected remote host. That host-side test is not available here.
-
-A separate [host-SSH registration utility](HOST-REGISTRATION.md) can build a
-VM-specific plugin and explicitly register its tools and verified skill into a
-selected host profile. It uses Silo's private SSH configuration with ordinary
-host stdio, rather than assuming experimental executor placement. This is a
-Python developer utility, not yet a turnkey Silo/Mac app action.
+The builder also supports `--output /absolute/new/luda` for a standalone plugin folder. Optional `--remote` emits an experimental remote-executor placement hint; it neither establishes SSH nor makes local paths available on another machine. Local direct execution is the documented default.

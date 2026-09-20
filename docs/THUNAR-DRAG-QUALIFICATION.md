@@ -60,7 +60,7 @@ The ordinary file-operation suite separately tests deliberate Replace via clipbo
 Run on an installed test-only Thunar environment:
 
 ```sh
-runuser -u silo-desktop -- .venv/bin/python scripts/qualification_matrix.py \
+runuser -u desktop -- .venv/bin/python scripts/qualification_matrix.py \
   --suites thunar-drag --timeout 90
 ```
 

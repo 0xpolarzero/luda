@@ -52,7 +52,7 @@ class Contracts(unittest.TestCase):
     def test_symlink_runtime_refused(self):
         with tempfile.TemporaryDirectory() as folder:
             target=Path(folder)/'target';target.mkdir()
-            (Path(folder)/f'silo-desktop-{os.getuid()}').symlink_to(target,target_is_directory=True)
+            (Path(folder)/f'luda-desktop-{os.getuid()}').symlink_to(target,target_is_directory=True)
             with patch('luda.desktop.tempfile.gettempdir',return_value=folder):
                 with self.assertRaises(DesktopError) as ctx:Desktop()
             self.assertEqual(ctx.exception.code,'UNSAFE_RUNTIME')
@@ -60,7 +60,7 @@ class Contracts(unittest.TestCase):
 
     def test_world_readable_runtime_refused(self):
         with tempfile.TemporaryDirectory() as folder:
-            target=Path(folder)/f'silo-desktop-{os.getuid()}';target.mkdir(mode=0o755)
+            target=Path(folder)/f'luda-desktop-{os.getuid()}';target.mkdir(mode=0o755)
             with patch('luda.desktop.tempfile.gettempdir',return_value=folder):
                 with self.assertRaises(DesktopError) as ctx:Desktop()
             self.assertEqual(ctx.exception.code,'UNSAFE_RUNTIME')

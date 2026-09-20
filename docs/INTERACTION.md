@@ -10,7 +10,7 @@
 
 ## Evidence
 
-On the Silo Ubuntu 24.04 ARM64 XFCE/KasmVNC guest, `tests/live_interaction.py` verified move, resize, maximize, restore, minimize, restore and close against the WM's observed state; hover against independent `xdotool getmouselocation` output. `tests/live_popup.py` created an actual GTK override-redirect popup and verified its transient owner and exact 100×80 client dimensions. Both tests hold the shared desktop lease for their entire process lifetime and terminate only their own fixtures.
+On the Linux Ubuntu 24.04 ARM64 XFCE/KasmVNC guest, `tests/live_interaction.py` verified move, resize, maximize, restore, minimize, restore and close against the WM's observed state; hover against independent `xdotool getmouselocation` output. `tests/live_popup.py` created an actual GTK override-redirect popup and verified its transient owner and exact 100×80 client dimensions. Both tests hold the shared desktop lease for their entire process lifetime and terminate only their own fixtures.
 
 `tests/test_interaction.py` covers malformed arguments with zero dispatch, finite coordinate validation, screenshot scale and half-open bounds, stale/missing observations, changed layout/resolution, destination prevalidation, input release after failure, release failure preserving the initial error, and unverified state reporting.
 

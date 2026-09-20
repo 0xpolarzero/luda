@@ -67,7 +67,7 @@ class Installation(unittest.TestCase):
 
     def test_packaged_source_changes_alter_release_identity(self):
         previous=installer.release_identity(self.source)
-        for name in ('.mcp.json','.codex-plugin/plugin.json','scripts/manage_install.py','docs/example.md','tests/fixtures/page.html','tests/fixtures/editor/package-lock.json','tests/fixtures/editor/THIRD_PARTY_NOTICES.md','integrations/silo/0001-guest-onboarding.patch'):
+        for name in ('.mcp.json','.codex-plugin/plugin.json','scripts/manage_install.py','docs/example.md','tests/fixtures/page.html','tests/fixtures/editor/package-lock.json','tests/fixtures/editor/THIRD_PARTY_NOTICES.md','integrations/prosemirror/luda-prosemirror.mjs'):
             path=self.source/name;path.parent.mkdir(parents=True,exist_ok=True);path.write_text('package content')
             current=installer.release_identity(self.source)
             self.assertNotEqual(previous,current);previous=current
@@ -139,22 +139,22 @@ class Installation(unittest.TestCase):
         self.prefix = self.root / 'literal " path'
         installer.install(self.prefix, self.source, self.runner)
         output = self.root / 'configuration'
-        installer.config(self.prefix, output, 'silo-desktop')
+        installer.config(self.prefix, output, 'desktop')
         parsed = installer.tomllib.loads((output / 'config.toml.fragment').read_text())
-        self.assertEqual(parsed['mcp_servers']['luda']['args'][1], 'silo-desktop')
+        self.assertEqual(parsed['mcp_servers']['luda']['args'][1], 'desktop')
         self.assertEqual(parsed['mcp_servers']['luda']['command'], str(self.prefix / 'current/.venv/bin/luda-session'))
         with self.assertRaises(installer.InstallError):
-            installer.config(self.prefix, output, 'silo-desktop')
+            installer.config(self.prefix, output, 'desktop')
         self.assertEqual((output / '.agents/skills/luda/SKILL.md').read_text(), 'fixture skill')
         instructions=(output/'README.txt').read_text()
         self.assertIn('LOCAL PLACEMENT',instructions)
-        self.assertIn('Codex running inside the Linux guest',instructions)
+        self.assertIn('Codex running on the selected Linux machine',instructions)
         self.assertNotIn('REMOTE PLACEMENT:',instructions)
 
     def test_remote_unattended_config_is_explicit_and_parseable(self):
         installer.install(self.prefix,self.source,self.runner)
         output=self.root/'remote-config'
-        result=installer.config(self.prefix,output,'silo-desktop',tool_approval='approve',placement='remote')
+        result=installer.config(self.prefix,output,'desktop',tool_approval='approve',placement='remote')
         server=installer.tomllib.loads((output/'config.toml.fragment').read_text())['mcp_servers']['luda']
         self.assertEqual(server['default_tools_approval_mode'],'approve')
         self.assertEqual(server['experimental_environment'],'remote')
@@ -164,7 +164,7 @@ class Installation(unittest.TestCase):
         self.assertIn('host Codex profile/project configuration',instructions)
         self.assertIn('does not create an SSH connection',instructions)
         self.assertNotIn('LOCAL PLACEMENT:',instructions)
-        with self.assertRaises(installer.InstallError):installer.config(self.prefix,self.root/'bad','silo-desktop',tool_approval='unknown')
+        with self.assertRaises(installer.InstallError):installer.config(self.prefix,self.root/'bad','desktop',tool_approval='unknown')
         self.assertFalse((self.root/'bad').exists())
 
     def test_unknown_current_path_is_preserved(self):

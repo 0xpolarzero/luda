@@ -1,21 +1,21 @@
 {
   "schema_version": 1,
-  "scope": "Silo local Linux X11 desktop; P2 optional expansions",
+  "scope": "Standalone Linux X11 computer-use tools and agent skill; supported functionality only",
   "status_policy": "unqualified means no release-level evidence; implementation alone is not qualification",
   "features": [
     {
       "id": "ENV",
-      "title": "Guest and session attachment",
+      "title": "Linux graphical session attachment",
       "priority": "P0",
       "cases": [
         {
           "id": "ENV-01",
-          "acceptance": "ARM64 Ubuntu 24.04 fresh VM: install and operate without nested virtualization",
+          "acceptance": "ARM64 Ubuntu 24.04: install and operate on an existing native X11 desktop",
           "qualification": "unqualified"
         },
         {
           "id": "ENV-02",
-          "acceptance": "AMD64 Ubuntu 24.04 fresh VM: same public tool contract and acceptance workflows",
+          "acceptance": "AMD64 Ubuntu 24.04: same public tool contract and supported workflows",
           "qualification": "unqualified"
         },
         {
@@ -1133,7 +1133,7 @@
         },
         {
           "id": "PERF-03",
-          "acceptance": "Screenshot latency: measured budget on ARM64 microsandbox",
+          "acceptance": "Screenshot latency: measured budget on supported ARM64 Linux desktop",
           "qualification": "unqualified"
         },
         {
@@ -1464,21 +1464,6 @@
       "priority": "P0",
       "cases": [
         {
-          "id": "SHIP-01",
-          "acceptance": "Clean install from Silo GUI: desktop and tools appear together",
-          "qualification": "unqualified"
-        },
-        {
-          "id": "SHIP-02",
-          "acceptance": "Existing VM upgrade: preserve user desktop/files and add control capability",
-          "qualification": "unqualified"
-        },
-        {
-          "id": "SHIP-03",
-          "acceptance": "Fresh Codex remote task: no hand-written environment setup needed",
-          "qualification": "unqualified"
-        },
-        {
           "id": "SHIP-04",
           "acceptance": "Skill auto-discovery: correct scope and actual tool names",
           "qualification": "unqualified"
@@ -1486,16 +1471,6 @@
         {
           "id": "SHIP-05",
           "acceptance": "Offline startup after install: no vendor login or model API required",
-          "qualification": "unqualified"
-        },
-        {
-          "id": "SHIP-06",
-          "acceptance": "Guest health view: report desktop and tool readiness separately",
-          "qualification": "unqualified"
-        },
-        {
-          "id": "SHIP-07",
-          "acceptance": "Human viewer reconnect: same session as agent controls",
           "qualification": "unqualified"
         },
         {

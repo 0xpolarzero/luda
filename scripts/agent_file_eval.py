@@ -69,7 +69,7 @@ def main():
     parser.add_argument('--backend-root',type=Path,required=True)
     parser.add_argument('--desktop-launch',type=Path)
     parser.add_argument('--desktop-child',type=Path)
-    parser.add_argument('--desktop-user',default='silo-desktop')
+    parser.add_argument('--desktop-user',default=os.environ.get('LUDA_TEST_USER', 'desktop'))
     parser.add_argument('--timeout',type=int,default=300)
     args=parser.parse_args();backend=args.backend_root.resolve()
     if args.desktop_child:desktop_child(args.desktop_child,backend);return 0

@@ -31,10 +31,10 @@ ordinary `--user` account, never root. That account needs access to the selected
 browser and its resources.
 
 ```sh
-bash scripts/install.sh /opt/luda --browser-config /absolute/browser.json --user silo-desktop
+bash scripts/install.sh /opt/luda --browser-config /absolute/browser.json --user desktop
 # Existing system dependencies may be explicitly reused:
 python3 scripts/manage_install.py install --prefix /opt/luda \
-  --browser-config /absolute/browser.json --user silo-desktop
+  --browser-config /absolute/browser.json --user desktop
 ```
 
 The browser-enabled release installs `requirements-browser.lock` with hash checking;
@@ -42,12 +42,6 @@ that export includes the default dependencies plus the pinned browser extra.
 The default release still installs `requirements.lock`. Browser options contribute
 to release identity, so base/browser selections and changed versions are distinct
 installations. A failed preparation leaves the previous selection intact.
-
-Bootstrap accepts the same explicit `--browser-config` alongside its existing
-`--user`. [Silo patch 0018](../integrations/silo/README.md) adds a trusted optional
-manifest candidate and explicit enable/disable UI, with selection-aware status
-and reviewed retries. These patches are not yet shipped in Silo; the source
-manifest remains disabled. Neither path publishes a release or downloads a browser artifact.
 
 Each browser-enabled release stores `.venv/luda-browser.json`. `luda-session`
 revalidates that fixed selection **after switching to the desktop account**, then
@@ -74,5 +68,5 @@ timeout and successful-parent background-child cleanup, distinct release identit
 idempotency, failure preservation, rollback refusal, and post-UID-drop handoff.
 `tests/evidence/managed-browser/` exercises a real installed wheel through the
 managed launcher and public MCP on an ordinary-account private XFCE/Xvfb desktop,
-with an independent HTTP text oracle. It does not establish Silo UI or macOS
+with an independent HTTP text oracle. It does not establish Linux UI or macOS
 provisioning readiness.

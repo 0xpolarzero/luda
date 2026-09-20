@@ -44,7 +44,7 @@ decoded CRLF values; it does not silently normalize them. No oracle values were
 used to aim input, and no DOM injection or value setter fixed the fixture.
 
 The browser PID 25720 was absent and its observed temporary profile
-`/tmp/silo-desktop-1001/owned-browser-lrraqasz` was removed after disconnect.
+`/tmp/desktop-1001/owned-browser-lrraqasz` was removed after disconnect.
 This checks this normal disconnect only. It does not retest subsequent download
 cleanup fixes, abnormal termination, or every possible descendant process.
 
@@ -84,10 +84,10 @@ No production code, schemas, or skill were changed for this evaluation.
 ## Reproduction and preserved failures
 
 Provision this worktree's environment with `uv sync --locked --extra browser`.
-Make `artifacts/browser-usability` writable by `silo-desktop`, then run:
+Make `artifacts/browser-usability` writable by `desktop`, then run:
 
 ```sh
-runuser -u silo-desktop -- dbus-run-session -- \
+runuser -u desktop -- dbus-run-session -- \
   .venv/bin/python scripts/evaluation/browser_usability.py --scripted
 ```
 

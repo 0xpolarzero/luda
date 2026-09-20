@@ -76,7 +76,7 @@ grader tests pass. Run in a dedicated provisioned checkout with existing CLI aut
 
 ```sh
 uv sync --locked --no-default-groups
-# Existing root CLI auth; the harness drops GUI and MCP to silo-desktop.
+# Existing root CLI auth; the harness drops GUI and MCP to desktop.
 .venv/bin/python scripts/agent_range_eval.py
 ```
 

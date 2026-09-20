@@ -19,13 +19,13 @@ class PluginBundleTests(unittest.TestCase):
         manifest = json.loads((ROOT / '.codex-plugin/plugin.json').read_text())
         self.assertEqual(manifest['name'], 'luda')
         self.assertTrue((ROOT / manifest['skills'] / 'luda/SKILL.md').is_file())
-        self.assertEqual(json.loads((ROOT / manifest['mcpServers']).read_text()), plugin.mcp_config('/opt/luda'))
+        self.assertEqual(json.loads((ROOT / manifest['mcpServers']).read_text()), {'mcpServers': {'luda': {'command': 'luda', 'args': []}}})
 
     def test_custom_prefix_is_literal_argv_and_remote_is_explicit(self):
-        server = plugin.mcp_config('/tmp/guest prefix $(literal)', remote=True)['mcpServers']['luda']
+        server = plugin.mcp_config('/tmp/guest prefix $(literal)', user='desktop', remote=True)['mcpServers']['luda']
         self.assertEqual(server['command'], '/tmp/guest prefix $(literal)/current/.venv/bin/luda-session')
         self.assertEqual(server['experimental_environment'], 'remote')
-        self.assertEqual(server['args'][:3], ['--user', 'silo-desktop', '--'])
+        self.assertEqual(server['args'][:3], ['--user', 'desktop', '--'])
         self.assertNotIn('experimental_environment', plugin.mcp_config('/opt/luda')['mcpServers']['luda'])
 
     def test_invalid_prefix_and_account(self):

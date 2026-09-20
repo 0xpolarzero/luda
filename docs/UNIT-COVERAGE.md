@@ -1,6 +1,6 @@
 # Historical unit mapping coverage snapshot
 
-This is the historical 489-test snapshot. See [the later 551-test mapping audit](UNIT-COVERAGE-CURRENT.md) for the newer scoped inventory.
+This is the historical 489-test snapshot. See [the later 551-test mapping audit](../tests/evidence/historical-reports/UNIT-COVERAGE-CURRENT.md) for the newer scoped inventory.
 
 Generated from `docs/requirements.json`, `docs/test-map.json`, actual unittest discovery and the local qualification report on the `f506037` runtime snapshot plus this mapping update. This is a mapping audit, not release qualification.
 

@@ -14,7 +14,7 @@ Eight focused unit assertions cover constrained output, no late upgrade, later g
 
 ## Scope and remaining work
 
-This is a bounded WM-02/WM-03 improvement, not release qualification. Luda does not snap sizes to hints or force a saved rectangle. The bounded historical comparison described below detects observed changes; it does not establish continuous external-change history. Only GTK3/XFWM/Xvfb behavior is demonstrated here, not other window managers, Silo/macOS, real display hardware, or race-free EWMH dispatch.
+This is a bounded WM-02/WM-03 improvement, not release qualification. Luda does not snap sizes to hints or force a saved rectangle. The bounded historical comparison described below detects observed changes; it does not establish continuous external-change history. Only GTK3/XFWM/Xvfb behavior is demonstrated here, not other window managers, Linux/macOS, real display hardware, or race-free EWMH dispatch.
 
 Run the fixture only under an isolated ordinary-account Xvfb/D-Bus session with private HOME/XDG, `LUDA_ISOLATED_TEST_DISPLAY=1` and a fresh `LUDA_GEOMETRY_OUTPUT` directory. It starts and stops only its own GTK process and XFWM; no shared desktop is used. Raw evidence contains synthetic window IDs and geometry, not user application data.
 

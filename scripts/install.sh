@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Provision guest dependencies, then atomically select a versioned installation.
+# Provision Linux dependencies, then atomically select a versioned installation.
 set -euo pipefail
 prefix=${1:?Usage: install.sh /absolute/install/path [--skip-system] [--browser-config FILE] [--user ACCOUNT]}
 shift
@@ -15,11 +15,11 @@ done
 source_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 # Validate before apt or any installation mutation.
 python3 - "$source_dir/scripts" "$prefix" "${optional[@]}" <<'PYVALIDATE'
-import argparse,sys
+import argparse,sys,os,pwd
 sys.path.insert(0,sys.argv[1])
 from manage_install import checked_prefix, read_browser_config, verify_browser, check_install_access
 checked_prefix(sys.argv[2])
-p=argparse.ArgumentParser();p.add_argument('--browser-config');p.add_argument('--user',default='silo-desktop')
+p=argparse.ArgumentParser();p.add_argument('--browser-config');p.add_argument('--user',default=pwd.getpwuid(os.getuid()).pw_name)
 a=p.parse_args(sys.argv[3:])
 check_install_access(checked_prefix(sys.argv[2]),a.user)
 if a.browser_config:verify_browser(read_browser_config(a.browser_config),a.user)

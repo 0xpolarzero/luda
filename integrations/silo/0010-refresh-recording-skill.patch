@@ -1,9 +1,0 @@
-diff --git a/app/SiloUI/src-tauri/guest/luda-codex-skill.md b/app/SiloUI/src-tauri/guest/luda-codex-skill.md
---- a/app/SiloUI/src-tauri/guest/luda-codex-skill.md
-+++ b/app/SiloUI/src-tauri/guest/luda-codex-skill.md
-@@ -44,3 +44,5 @@
- The tool serializes its own clients but does not exclude a human using the guest viewer. Unexpected focus/layout changes require a new observation. Clipboard contents are replaced and are not restored. Wayland and browser DOM automation are outside this version's implemented support.
- 
- Use `desktop_ocr(snapshot_id=...)` only for requested local text grounding from a screenshot already observed. Its words and image-pixel boxes are candidates; engine confidence is uncalibrated and does not establish exact or current text. OCR never recaptures, verifies application state or authorizes a click. Content can change while layout stays fixed. Missing Tesseract/language leaves other tools usable; deliberately observe again for an expired or evicted snapshot.
-+
-+Use `desktop_recording(action="start")` only for an explicitly requested recording of the selected display. Keep its ticket; `start` means capture began, while only `stop`/`status` with `state="complete"` and `playable_verified=true` supplies a validated file. It has no audio. Copy a completed file elsewhere explicitly if it must survive backend close/reconnect, then delete the temporary ticket. Stop/delete also work while paused.

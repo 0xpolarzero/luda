@@ -15,3 +15,5 @@ prune tests/fixtures/agent-hard-breaks/node_modules
 include .mcp.json
 recursive-include .codex-plugin *.json
 recursive-include integrations *.py *.json *.md *.patch *.mjs
+
+prune tests/evidence/historical-reports

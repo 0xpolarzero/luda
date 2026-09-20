@@ -26,8 +26,8 @@ For a root-owned development checkout:
 
 ```sh
 mkdir -p artifacts/mcp-soak
-chown silo-desktop:silo-desktop artifacts/mcp-soak
-runuser -u silo-desktop -- .venv/bin/python tests/live_mcp_soak.py --seconds 600
+chown desktop:desktop artifacts/mcp-soak
+runuser -u desktop -- .venv/bin/python tests/live_mcp_soak.py --seconds 600
 ```
 
 The runner creates a private session itself. It never uses the shared desktop. Results go to a unique `artifacts/mcp-soak/run-*/` directory; `--output` selects an explicit fresh location. `--seconds 12` is useful for harness smoke tests but must not be reported as sustained-use evidence. The outer watchdog allows workload duration plus 60 seconds for startup/shutdown. The ordinary matrix runner's 300-second maximum is intentionally not used for this ten-minute run.

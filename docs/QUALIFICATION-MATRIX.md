@@ -13,7 +13,7 @@
   --executable /absolute/path/to/chromium
 ```
 
-`LUDA_CHROMIUM_EXECUTABLE` is the alternative to `--executable`. The IME browser probe now also requires its browser executable explicitly. No browser download or credential provisioning occurs. The account running the command needs write access to the worktree's `artifacts` directory; source and venv can remain read-only to that account. Run as the actual ordinary desktop account, using `runuser -u silo-desktop -- ...` only when invoking from an authorized root development shell. Do not run the matrix through an existing desktop's display environment.
+`LUDA_CHROMIUM_EXECUTABLE` is the alternative to `--executable`. The IME browser probe now also requires its browser executable explicitly. No browser download or credential provisioning occurs. The account running the command needs write access to the worktree's `artifacts` directory; source and venv can remain read-only to that account. Run as the actual ordinary desktop account, using `runuser -u desktop -- ...` only when invoking from an authorized root development shell. Do not run the matrix through an existing desktop's display environment.
 
 `--all` or `--suites` is required. `--list` reports scripts, related requirement IDs, toolkit dependencies, known gaps and which suites own their window manager. The default per-suite deadline is 180 seconds; `--timeout` accepts 1..300. Known gaps are explanatory metadata only: failed assertions, nonzero exits, timeouts, missing dependencies, cleanup failures and source changes all make the final exit nonzero. There is no “expected failure” success category.
 
@@ -35,7 +35,7 @@ Related requirement IDs are navigation aids for reviewing the underlying asserti
 
 ## First broad run, 2026-09-20
 
-The immutable first run used commit `3ba2029`, based on main `611f419`, in `/workspace/luda-matrix` with its own venv. It ran as `silo-desktop` (UID 1001) on ARM64 Ubuntu with the configured local Chromium executable. All 22 suites ran: **16 passed, 6 failed**. There were no dependency omissions, timeouts, reported cleanup survivors or source changes. The process exited 1.
+The immutable first run used commit `3ba2029`, based on main `611f419`, in `/workspace/luda-matrix` with its own venv. It ran as `desktop` (UID 1001) on ARM64 Ubuntu with the configured local Chromium executable. All 22 suites ran: **16 passed, 6 failed**. There were no dependency omissions, timeouts, reported cleanup survivors or source changes. The process exited 1.
 
 Passing suites: semantic, protected-options, combos, browser-offsets, mcp-reconnect, x11-isolation, window-tokens, window-metadata-capacity, window-metadata, geometry, clipboard-interference, drag, popup, resource-stress, application-launch and application-services.
 

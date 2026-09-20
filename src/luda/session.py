@@ -12,7 +12,7 @@ import sys
 class SessionDiscoveryError(SystemExit):
     def __init__(self, count):
         self.count = count
-        super().__init__(f'Expected one ready XFCE session for this account, found {count}. Start its desktop or specify --session-pid; DISPLAY and session D-Bus must be available.')
+        super().__init__(f'Expected one ready graphical session for this account, found {count}. Start its desktop or specify --session-pid; DISPLAY and session D-Bus must be available.')
 
 
 def discover(uid, session_pid=None):
@@ -21,7 +21,7 @@ def discover(uid, session_pid=None):
         if not path.name.isdigit() or (session_pid and int(path.name) != session_pid):
             continue
         try:
-            if path.stat().st_uid != uid or (path/'comm').read_text().strip() != 'xfce4-session':
+            if path.stat().st_uid != uid or (session_pid is None and (path/'comm').read_text().strip() != 'xfce4-session'):
                 continue
             env = dict(item.decode().split('=', 1) for item in (path/'environ').read_bytes().split(b'\0') if b'=' in item)
             if env.get('DISPLAY') and env.get('DBUS_SESSION_BUS_ADDRESS'):
@@ -46,7 +46,7 @@ def wait_for_session(uid, session_pid=None, timeout=5):
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument('--user', default='silo-desktop')
+    p.add_argument('--user', help='Desktop account; defaults to the invoking account.')
     p.add_argument('--session-pid', type=int)
     p.add_argument('--cwd', help='Absolute working directory for the command; default is the desktop account home, or / if unavailable.')
     p.add_argument('--wait', type=float, default=5, help='Wait up to this many seconds for the selected session (0–30; default 5).')
@@ -65,7 +65,7 @@ def main():
     if args.session_pid is not None and args.session_pid<=0:
         p.error('--session-pid must be positive')
     try:
-        account = pwd.getpwnam(args.user)
+        account = pwd.getpwnam(args.user) if args.user is not None else pwd.getpwuid(os.getuid())
     except KeyError:
         p.error('The selected desktop account does not exist')
     if os.getuid() not in (0, account.pw_uid):

@@ -1,13 +1,8 @@
 {
   "mcpServers": {
     "luda": {
-      "command": "/opt/luda/current/.venv/bin/luda-session",
-      "args": [
-        "--user",
-        "silo-desktop",
-        "--",
-        "/opt/luda/current/.venv/bin/luda"
-      ]
+      "command": "luda",
+      "args": []
     }
   }
 }

@@ -224,7 +224,8 @@ def select(prefix, release):
         temporary.unlink(missing_ok=True)
 
 
-def install(prefix, source, runner=invoke, browser_config=None, user="silo-desktop"):
+def install(prefix, source, runner=invoke, browser_config=None, user=None):
+    user = user or pwd.getpwuid(os.getuid()).pw_name
     check_install_access(prefix, user)
     browser = verify_browser(read_browser_config(browser_config), user) if browser_config is not None else None
     identity = release_identity(source, browser)
@@ -294,7 +295,8 @@ def install(prefix, source, runner=invoke, browser_config=None, user="silo-deskt
         return {'status': 'installed', 'release': identity, 'prefix': str(prefix)}
 
 
-def rollback(prefix, release, user="silo-desktop"):
+def rollback(prefix, release, user=None):
+    user = user or pwd.getpwuid(os.getuid()).pw_name
     with locked(prefix):
         metadata = state(prefix)
         if release not in metadata['releases'] or (prefix / 'releases').is_symlink() or (prefix / 'releases' / release).is_symlink() or not (prefix / 'releases' / release / 'release.json').is_file():
@@ -305,7 +307,8 @@ def rollback(prefix, release, user="silo-desktop"):
         return {'status': 'selected', 'release': release}
 
 
-def verify_release(directory, identity, user="silo-desktop"):
+def verify_release(directory, identity, user=None):
+    user = user or pwd.getpwuid(os.getuid()).pw_name
     """Verify owned payloads before reusing a completed release; preserve edits."""
     manifest = directory / 'release.json'
     try:
@@ -422,13 +425,13 @@ def config(prefix, output, user, tool_approval="auto", placement="local"):
         (output / 'config.toml.fragment').write_text(toml)
         shutil.copytree(prefix / 'current/skills/luda', output / '.agents/skills/luda')
         placement_note = (
-            'REMOTE PLACEMENT: Merge the fragment into the host Codex profile/project configuration that owns the selected remote executor. The guest paths must execute in that guest; this bundle does not create an SSH connection. Guest-only registration does not configure a Mac profile. Verify remote skill discovery separately; a copied guest skill alone does not prove host discovery.\n'
+            'REMOTE PLACEMENT: Merge the fragment into the host Codex profile/project configuration that owns the selected remote executor. Paths must execute on the selected Linux machine; this bundle does not create an SSH connection. Verify tool and skill discovery in the client.\n'
             if placement == 'remote' else
-            'LOCAL PLACEMENT: Merge the fragment into the configuration of Codex running inside the Linux guest. Do not use this local launcher in a Mac profile; generate --placement remote for an available remote executor instead.\n'
+            'LOCAL PLACEMENT: Merge the fragment into the configuration of Codex running on the selected Linux machine.\n'
         )
         (output / 'README.txt').write_text(
             placement_note +
-            'Review config.toml.fragment before merging its [mcp_servers.luda] table; preserve other entries. Copy .agents/skills/luda into the guest workspace .agents/skills or the guest agent account ~/.agents/skills. Restart/reconnect Codex and verify desktop_doctor, desktop_observe and the Luda skill in a fresh task. No existing configuration has been modified.\n'
+            'Review config.toml.fragment before merging its [mcp_servers.luda] table; preserve other entries. Copy .agents/skills/luda into the Linux workspace .agents/skills or the agent account ~/.agents/skills. Restart/reconnect Codex and verify desktop_doctor, desktop_observe and the Luda skill in a fresh task. No existing configuration has been modified.\n'
         )
     except BaseException:
         shutil.rmtree(output)
@@ -457,7 +460,7 @@ def main():
     parser.add_argument('--release')
     parser.add_argument('--browser-config', type=Path, help='Explicit verified Chromium selection; install only.')
     parser.add_argument('--output', type=Path)
-    parser.add_argument('--user', default='silo-desktop')
+    parser.add_argument('--user', default=pwd.getpwuid(os.getuid()).pw_name)
     parser.add_argument('--tool-approval',choices=['auto','prompt','writes','approve'],default='auto',help='MCP tool approval policy in generated config; approve supports unattended sandbox tasks.')
     parser.add_argument('--placement',choices=['local','remote'],default='local',help='Use remote for a host Codex config targeting its selected SSH executor; local for Codex running inside the guest.')
     args = parser.parse_args()

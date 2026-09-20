@@ -24,7 +24,7 @@ CI runs unit contracts and the isolated desktop job on Ubuntu 24.04 AMD64. A con
 
 ## Remaining release evidence
 
-Fresh microsandbox provisioning, a clean Mac-to-Codex SSH onboarding session, KasmVNC-specific reconnects, repeated held-out workflows, distribution/toolkit/display matrices, human-input interference, rich clipboard formats and protected credential workflows require separate evidence. Headless GTK fixtures do not replace these. Failure transcripts and independent file/DOM/application oracles are required for actual application claims; fixture text is synthetic and should never contain user data.
+Fresh Linux environment provisioning, a clean Mac-to-Codex SSH onboarding session, KasmVNC-specific reconnects, repeated held-out workflows, distribution/toolkit/display matrices, human-input interference, rich clipboard formats and protected credential workflows require separate evidence. Headless GTK fixtures do not replace these. Failure transcripts and independent file/DOM/application oracles are required for actual application claims; fixture text is synthetic and should never contain user data.
 
 ## Cancellation evidence
 

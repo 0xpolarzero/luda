@@ -22,7 +22,7 @@ def main():
         raise SystemExit('Pinned Codex CLI version mismatch.')
     os.environ['PATH'] = str(executable.parent)+os.pathsep+os.environ.get('PATH','')
     suite = unittest.TestSuite()
-    for pattern in ('test_host_plugin.py', 'test_plugin_bundle.py'):
+    for pattern in ('test_plugin_bundle.py',):
         suite.addTests(unittest.defaultTestLoader.discover(str(ROOT/'tests'), pattern=pattern))
     result = unittest.TextTestRunner(verbosity=2).run(suite)
     evidence = {'cli_version': version, 'package_lock_sha256': hashlib.sha256((TOOL/'package-lock.json').read_bytes()).hexdigest(),

@@ -1,82 +1,61 @@
-# Guest installation and agent discovery
+# Linux installation
 
-Luda runs inside the Linux guest and attaches to its existing XFCE/X11 session. The SSH account must be the desktop account or root; the session launcher drops root privileges before GUI access. Installing tools does not create the desktop itself.
+Luda attaches to an existing graphical session. It does not install a desktop, start a login session, or require a particular machine manager.
 
-For an already running Silo desktop, the [explicit guest bootstrap](GUEST-BOOTSTRAP.md) composes installation, readiness and a reviewable remote configuration in one command. The individual lifecycle commands below remain available.
+## Prerequisites
 
-## Install and check
+- Linux, Python 3.12+, Python venv support.
+- Native X11 with XTEST, XInput and RandR; an EWMH window manager. Ubuntu 24.04 with XFCE/XFWM4 and private Xvfb/XFWM4 sessions are tested.
+- `xdotool`, `wmctrl`, `scrot`, `xclip`, `x11-utils`, and the X11/XInput/XTest/RandR shared libraries.
+- A session D-Bus and AT-SPI2 accessibility bridge for semantic tools; system Python GI with Atspi and Pango introspection.
+- Fonts for the scripts you use. The Ubuntu installer includes international and emoji fonts.
 
-From the source checkout, provision the declared Ubuntu dependencies and install:
+Wayland and Xwayland are unsupported. Other native X11 window managers must meet the same contracts but are not universally qualified. Accessibility depends on application providers; screenshots and pointer/keyboard tools remain the fallback where appropriate. OCR, recording and owned-browser tools have separately documented optional dependencies.
+
+## Managed installation
+
+From a trusted source checkout, run as your desktop account:
 
 ```sh
-sudo bash scripts/install.sh /opt/luda
+sudo bash scripts/install.sh /opt/luda --user "$(id -un)"
 ```
 
-System provisioning includes `fonts-noto-core`, `fonts-noto-cjk` and `fonts-noto-color-emoji` so basic international text is visible to humans and screenshot-driven agents. These are additive distro packages; the installer does not change application or user font settings. `--skip-system` assumes equivalent font coverage was provisioned separately. See [font rendering evidence and limits](FONT-RENDERING.md).
+The installer uses Ubuntu/Debian `apt-get` for system prerequisites. On other distributions, install equivalent dependencies yourself, then use `--skip-system`. A writable user prefix can be installed without root using `--skip-system`. Account selection defaults to the invoking account; when using sudo, specify the intended desktop account explicitly. The selected account must be able to traverse the prefix. No desktop account is created or assumed.
 
-If dependencies were provisioned separately, use `bash scripts/install.sh /absolute/prefix --skip-system`. The prefix must be a dedicated absolute directory owned by the installer account; symlink components, system roots and writable-by-others prefixes are refused. Do not install beneath a private root home if the desktop account must execute the result.
+Runtime and build dependencies are hash-locked. Installation creates an immutable versioned release, checks selected-account access, and switches `current` atomically. Existing unrelated directories are not made public. Source builds execute trusted checkout code.
 
-Each release virtual environment is created in its final `releases/VERSION-SOURCEHASH` directory. This matters because virtual-environment launchers embed absolute paths. Runtime dependencies are installed from `requirements.lock` with mandatory hash checking; the locally built wheel is installed without dependency resolution. Build tools are installed with hashes from the separate `build-requirements.lock`; wheel construction disables build isolation so pip cannot silently fetch a different backend. The lock currently pins setuptools 80.9.0 and wheel 0.45.1. System Python, its bundled pip, and apt packages remain supplied by the selected Ubuntu image/repositories. Wheel construction uses a private writable copy of the declared source inputs, removed before recording the installed inventory. Existing checkout `build/`, egg-info, `__pycache__` and installed Node dependencies are excluded; stale build modules and source-directory write permissions cannot contaminate this build. The original checkout is not modified. The same input list, including `uv.lock`, determines the release identity. Installer Python commands use isolated mode; child build environments omit inherited `PYTHON*` startup settings, and pip ignores user configuration and environment options. The isolated import check must load the installed package, so checkout egg-info cannot substitute for installation.
-
-Release identities cover runtime, skill, plugin metadata, installer and packaged support files. A source change detected during preparation rejects that build and preserves the prior selection; build from an unchanged checkout. A successful preparation switches `current` atomically. Repeating the same source installation reuses its release after verifying recorded payloads. Reuse and rollback refuse missing or modified owned files, preserving edits and the current selection. Refreshed Python bytecode is excluded from this integrity check; this is a local consistency check, not a signature or hostile-account security boundary. Failed preparation preserves the previously selected release. An interrupted installer that could not clean up leaves its owned directory intact; a subsequent attempt archives that incomplete directory before retrying. System packages installed by apt are not rolled back.
-
-New installer-owned directories and release payloads receive explicit readable/traversable modes, so a restrictive caller umask does not silently make the selected release unusable by the desktop account. Existing ancestors and caller-owned files are never chmodded. Before provisioning, the installer checks existing-path traversal as the selected account; before selecting a new, reused or rollback release, that account must import the installed server/session from the release virtual environment, execute its launcher paths, and read the bundled skill. A failed check preserves the prior selection. This is an installation access check, not desktop or GUI readiness.
-
-The examples use a root-owned `/opt/luda`; run all `manage_install.py` actions as that prefix owner, including read-only `doctor` and configuration generation. For an ordinary-account-owned prefix, omit `sudo`. Generated files belong to the generating account but can be copied into the intended agent workspace. Do not run `codex plugin add` with `sudo` unless root is deliberately the Codex profile owner.
-
-Per-capability diagnostics account for the public tool prerequisites. Missing `wmctrl` prevents window enumeration, screenshot observation and target-based actions. Missing `xdotool` prevents focus verification and input, while screenshots and accessibility reads can remain available. A healthy X11 connection or native keyboard probe alone does not imply those tools are usable.
-
-Run the guest/session diagnostic:
+In the graphical session:
 
 ```sh
-sudo python3 scripts/manage_install.py doctor --prefix /opt/luda --user silo-desktop
+/opt/luda/current/.venv/bin/luda doctor
+/opt/luda/current/.venv/bin/luda
 ```
 
-This runs the selected release’s `luda doctor` through its session launcher, checking the actual desktop session, display, accessibility bus and input dependencies. Its `versions` field also identifies the installed driver, tool declarations and bundled skill; the bundled skill identity does not prove that an agent loaded it. Missing sessions, ambiguous sessions and inaccessible authority files are errors. It does not fabricate readiness from an installed executable. The launcher waits up to five seconds for the selected session by default; `luda-session --wait 0` disables waiting and `--wait 30` is the maximum. Ambiguous sessions fail immediately. It never substitutes another account or session.
+The second command serves MCP over stdio. Configure the agent to invoke this absolute executable and install the [plugin/skill](CODEX-PLUGIN.md). The repository plugin invokes `luda` on PATH; the bundle builder writes the selected absolute installation path.
 
-## Generate a reviewable Codex configuration bundle
+## SSH and explicit session attachment
+
+When the agent does not inherit the graphical environment, run as the desktop account or root:
 
 ```sh
-sudo python3 scripts/manage_install.py config --prefix /opt/luda \
-  --user silo-desktop --output /absolute/new/luda-config
+/opt/luda/current/.venv/bin/luda-session --user desktop -- \
+  /opt/luda/current/.venv/bin/luda
 ```
 
-The new directory contains:
+Replace `desktop` with your actual account. Automatic attachment discovers exactly one ready XFCE session for that account. For another session manager, select a process from that account that carries the graphical session environment with `--session-pid PID`. Missing or ambiguous sessions fail; display numbers are not guessed. Required environment includes `DISPLAY`, `DBUS_SESSION_BUS_ADDRESS`, and a readable Xauthority file. Direct invocation can use an already established graphical environment without this discovery helper.
 
-- `config.toml.fragment`: a `[mcp_servers.luda]` entry invoking the installed session launcher and stdio server, with explicit timeouts.
-- `.agents/skills/luda/SKILL.md`: the bundled agent instructions.
-- `README.txt`: placement and verification steps.
+The launcher drops root privileges, uses an allowlisted environment, and changes to the selected account's home (or `/`). `--cwd /absolute/path` selects an accessible working directory. Session readiness waits at most five seconds by default (`--wait 0` through `--wait 30`). It never starts or unlocks a session.
 
-Existing files are never overwritten. The example defaults to Codex running inside the guest. For the Mac app using an available SSH executor, add `--placement remote` and merge the fragment into the host Codex profile/project configuration that owns that executor, checking for an existing `mcp_servers.luda` entry. Registering only in the guest does not configure the host profile. Place the skill in the guest workspace's `.agents/skills/luda`, or the agent account's `~/.agents/skills/luda`. A project configuration belongs in `.codex/config.toml`; user configuration belongs in `~/.codex/config.toml`. Codex's project trust rules may affect project configuration loading. See the official [MCP documentation](https://developers.openai.com/codex/mcp) and [skill discovery documentation](https://developers.openai.com/codex/skills).
+SSH transport must execute the server on the Linux machine that owns the desktop. Keep host keys verified and use stdio; no public MCP listener is needed. A configuration file alone does not create a transport.
 
-These executable paths are guest paths. They must execute on the guest side of the remote connection; copying them into a host-local MCP configuration does not create an SSH transport. After reconnecting/restarting Codex, verify that the Luda skill is listed and that `desktop_doctor` and `desktop_observe` reach the intended desktop. A fresh Mac Codex SSH onboarding session is not qualified by this Linux-only installation test.
-
-The [maintained Silo integration patch series](../integrations/silo/README.md) implements explicit guest provisioning and host registration UI. It has not been shipped in Silo or accepted on macOS; these standalone commands do not install that app integration. For that integration, the required lifecycle is: provision desktop and dependencies, install a release, run readiness, register the reviewed guest-side MCP entry and skill, then open a fresh agent connection. Registration is kept explicit so an installer cannot silently replace unrelated agent configuration.
-
-## Tool approval and SSH placement
-
-For unattended sandbox tasks, generate the bundle with `--tool-approval approve`. This explicitly preauthorizes Luda's tools in that profile. `writes` asks before mutations, `prompt` asks for every tool, and the default `auto` leaves the client policy in control. A noninteractive client with policy `never` can otherwise discover/read the desktop but reject every mutation; the fresh-agent evaluation reproduced this configuration distinction.
-
-Use `--placement local` (default) when Codex itself runs inside the guest. For a host-side Codex configuration intended to use the selected SSH executor, `--placement remote` emits `experimental_environment = "remote"`; executable paths remain guest paths. This follows the current official [MCP configuration reference](https://learn.chatgpt.com/docs/config-file/config-reference). Remote placement is experimental, and the actual fresh Mac SSH onboarding flow still requires end-to-end testing. Generating the fragment alone does not qualify it.
-
-The generated server is `required = true`, so a client supporting this option reports startup failure instead of silently continuing without Luda. These configuration fields and the fresh local agent test were checked with Codex CLI 0.155.1.
-
-## Rollback and uninstall
-
-Select a previously completed release without rebuilding it:
+## Rollback and removal
 
 ```sh
-sudo python3 scripts/manage_install.py rollback --prefix /opt/luda --release VERSION-SOURCEHASH
-```
-
-Release IDs are listed in `/opt/luda/.luda-install.json`. Rollback changes future launches; it does not replace an already running server. Stop/reconnect the client deliberately when selecting a different release.
-
-```sh
+sudo python3 scripts/manage_install.py rollback --prefix /opt/luda \
+  --user desktop --release VERSION-SOURCEHASH
 sudo python3 scripts/manage_install.py uninstall --prefix /opt/luda
 ```
 
-Uninstall removes the managed `current` link and installed files that still match their recorded hashes or symlink targets. Modified or unknown files, interrupted-build archives and external agent configuration are preserved. The result reports retained modified releases. Stop clients before uninstalling: removing files beneath a running process is not a supported hot-uninstall mechanism. If an agent configuration or copied skill was registered separately, remove its Luda entry explicitly while preserving other entries.
+Release IDs are recorded in `/opt/luda/.luda-install.json`. Reconnect clients after selecting a different release. Uninstall preserves modified and unknown files and external agent settings. Stop clients before uninstalling; remove their Luda registration separately while preserving other entries.
 
-Installation logs can contain package names and paths. The installer does not collect desktop screenshots, input text, tokens or authority cookies. Its source checkout must be trusted: package builds execute source-controlled build code.
-
-The session launcher changes working directory **after** dropping privileges: it uses the selected desktop account’s home, or `/` if that home is unavailable. This prevents root SSH sessions from leaving MCP in an inaccessible `/root`. Use `luda-session --cwd /absolute/workspace -- ...` when the command needs a particular working directory; an inaccessible explicit directory is an error. Relative executable paths are resolved before this change, while relative command arguments are interpreted from the selected working directory. The launcher does not create a missing home directory.
+`desktop_doctor` reports actual dependency and capability availability. Missing `wmctrl` prevents target enumeration; missing `xdotool` prevents focus-dependent input while read-only screenshot/accessibility capabilities can remain available. Installed files alone are not evidence of a ready desktop.

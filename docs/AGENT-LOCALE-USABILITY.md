@@ -25,8 +25,6 @@ The backend and copied installed skill came from immutable revision `d9be0222e97
 
 Codex CLI was **0.155.1**, using existing authentication and its default model. The JSON events did not identify the resolved model; none is inferred. CLI usage reported 507,863 cumulative input tokens, 461,824 cached input tokens and 1,597 output tokens, including 58 reasoning output tokens. These are cumulative turn usage, not a unique prompt size.
 
-The CLI ran as uid 0 because its installed executable and existing authentication belong to root. A root-only CLI did not prevent an ordinary-user desktop test: a controlled `runuser` MCP command ran Luda as uid **1001**, confirmed by `desktop_doctor`, and the GTK fixture, private Xvfb, D-Bus and locale environment also ran as uid 1001. No authentication file was inspected or copied, and no existing CLI configuration was changed. This does not qualify ordinary-user Codex authentication or fresh Mac/SSH onboarding.
-
 Full JSON tool events, screenshots, stderr, prompt, oracle and source hashes are retained under `artifacts/agent-locale/run-1789871033598290361/` in the evaluation checkout `/workspace/luda-agent-data-eval` and copied to the main checkout. Private-desktop cleanup left no process carrying the run's unique temporary paths. One successful local trial is not a statistical reliability claim.
 
 `scripts/agent_locale_eval.py` reproduces the bounded evaluation with an explicit immutable `--backend-root`, existing root Codex authentication, an ordinary `--desktop-user`, and installed or extracted locale sources through `--locale-source`. It copies the backend's installed skill into an otherwise empty agent workspace and grades the independent fixture oracle after the run.

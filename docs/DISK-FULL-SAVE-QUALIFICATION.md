@@ -17,7 +17,7 @@ nor this record changes release qualification.
 From the checkout's locked-dependency environment:
 
 ```bash
-sudo .venv/bin/python tests/live_disk_full_save.py --user silo-desktop
+sudo .venv/bin/python tests/live_disk_full_save.py --user desktop
 ```
 
 The outer launcher requires mount capability and creates a new mount namespace

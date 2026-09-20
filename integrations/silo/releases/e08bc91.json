@@ -1,7 +1,0 @@
-{
-  "schema_version": 1,
-  "enabled": true,
-  "source_url": "https://github.com/0xpolarzero/luda/archive/e08bc912d56b918df30b750a6fe68f7ab598369f.tar.gz",
-  "source_sha256": "f19738787349b790ecc73b5de10b1158db1c8e7849edf33469e6b53434edbf3b",
-  "source_commit": "e08bc912d56b918df30b750a6fe68f7ab598369f"
-}

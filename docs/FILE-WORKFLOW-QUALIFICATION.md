@@ -1,12 +1,5 @@
 # Native file workflow qualification
 
-`tests/live_file_workflows.py` qualifies Mousepad 0.6.1 on Linux ARM64,
-GTK 3, X11/Xfwm4 and AT-SPI. It drives the real native application through
-Luda's `Desktop` API. Independent reads of owned files verify the outcome;
-the test does not substitute app automation for Luda input. This suite does
-not independently qualify MCP transport, other editors, other languages,
-Wayland, network filesystems or fresh Mac/Silo provisioning.
-
 The local run passed all ten assertions:
 
 - Save As to an existing Unicode filename opens the replacement dialog.

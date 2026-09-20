@@ -113,8 +113,8 @@ NODE_PATH=/workspace/luda-rich-prototype-build-deps \
   /workspace/luda-rich-prototype-build-deps/@esbuild/linux-arm64/bin/esbuild \
   scripts/evaluation/prosemirror-usability-app.js --bundle --format=esm \
   --external:/bridge.mjs --outfile=artifacts/prosemirror-usability/app.bundle.js
-chown -R silo-desktop:silo-desktop artifacts/prosemirror-usability
-runuser -u silo-desktop -- dbus-run-session -- \
+chown -R desktop:desktop artifacts/prosemirror-usability
+runuser -u desktop -- dbus-run-session -- \
   .venv/bin/python scripts/evaluation/prosemirror_usability.py
 ```
 

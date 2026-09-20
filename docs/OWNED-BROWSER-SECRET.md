@@ -29,4 +29,4 @@ Run the optional suite after explicitly installing the browser extra and test br
   --executable /absolute/test-browser/chrome
 ```
 
-This scopes AUTH-01/AUTH-07 to an owned password input and the tested provider. It does not qualify existing browser profiles, other engines, arbitrary masked custom controls, browser extensions, real accounts, or macOS/Silo. No requirement is marked release-qualified.
+This scopes AUTH-01/AUTH-07 to an owned password input and the tested provider. It does not qualify existing browser profiles, other engines, arbitrary masked custom controls, browser extensions, real accounts, or macOS/Linux. No requirement is marked release-qualified.

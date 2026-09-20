@@ -2,7 +2,7 @@
 
 ## Product definition
 
-A local agent should operate the same visible desktop that the Silo user sees, inside the same microsandbox guest, without a vendor account, separate model loop, second VM, or cloud desktop. The interface must make intended targets and observed effects explicit. Silo owns VM lifecycle and viewer delivery; this package owns desktop control and agent instructions.
+A local agent should operate the same visible desktop that the Linux user sees, inside the same Linux environment guest, without a vendor account, separate model loop, second VM, or cloud desktop. The interface must make intended targets and observed effects explicit. Linux owns VM lifecycle and viewer delivery; this package owns desktop control and agent instructions.
 
 The current implementation is a working experimental prototype for Ubuntu 24.04/XFCE/X11, developed on ARM64 with KasmVNC. Its name and version do not imply production support. The 346-case acceptance catalog defines the broader target; it is not a list of implemented or passed cases.
 
@@ -16,7 +16,7 @@ This does not make us independent of Linux toolkit bugs. An application can expo
 
 ```text
 Codex MCP client (inside guest remote execution context)
-  └─ luda-session --user silo-desktop -- luda
+  └─ luda-session --user desktop -- luda
        ├─ discovers one explicit user's XFCE session
        ├─ drops to that ordinary user
        └─ stdio MCP server
@@ -73,4 +73,4 @@ Locks serialize cooperating server instances for the same Unix user/display. The
 
 ## Source references
 
-The implementation uses the installed MCP SDK's v1.30 interface (pinned), not an assumed latest API. Reference: [official Python MCP SDK](https://github.com/modelcontextprotocol/python-sdk/tree/v1.30.0). Accessibility contract: [AT-SPI documentation](https://gnome.pages.gitlab.gnome.org/at-spi2-core/libatspi/). X11 primitives: [xdotool](https://github.com/jordansissel/xdotool), [xclip](https://github.com/astrand/xclip). Silo's [desktop implementation](https://github.com/0xpolarzero/silo/blob/main/docs/SiloUI-DESKTOP.md) remains unchanged.
+The implementation uses the installed MCP SDK's v1.30 interface (pinned), not an assumed latest API. Reference: [official Python MCP SDK](https://github.com/modelcontextprotocol/python-sdk/tree/v1.30.0). Accessibility contract: [AT-SPI documentation](https://gnome.pages.gitlab.gnome.org/at-spi2-core/libatspi/). X11 primitives: [xdotool](https://github.com/jordansissel/xdotool), [xclip](https://github.com/astrand/xclip).

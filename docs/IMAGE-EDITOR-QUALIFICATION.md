@@ -30,8 +30,8 @@ For a root-owned development checkout, prepare a writable artifact parent and us
 
 ```sh
 mkdir -p artifacts/image-editor
-chown silo-desktop:silo-desktop artifacts/image-editor
-runuser -u silo-desktop -- .venv/bin/python tests/live_image_editor.py
+chown desktop:desktop artifacts/image-editor
+runuser -u desktop -- .venv/bin/python tests/live_image_editor.py
 ```
 
 Each default run preserves a separate `artifacts/image-editor/run-*/` directory with screenshots, tool transcript, source/export images, GIMP log and result metadata. `LUDA_IMAGE_ARTIFACTS` can select an explicit new directory. The outer process group has a 100-second limit and only its private session is cleaned up. It does not use or modify the shared desktop.

@@ -64,7 +64,7 @@ def launch(base):
         env=dict(os.environ)
         for key in ('XDG_CONFIG_HOME','XDG_DATA_HOME','XDG_CACHE_HOME','XDG_RUNTIME_DIR'):
             path=Path(tmp)/key;path.mkdir(mode=0o700);env[key]=str(path)
-        env.update(LUDA_CHROMIUM_EXECUTABLE='/workspace/silo-desktop-research/browsers/chromium-1243/chrome-linux-arm64/chrome',XDG_CONFIG_DIRS=env['XDG_CONFIG_HOME'],LANG='C.UTF-8',LC_ALL='C.UTF-8',NO_AT_BRIDGE='0',GTK_MODULES='gail:atk-bridge',GSETTINGS_BACKEND='memory')
+        env.update(LUDA_CHROMIUM_EXECUTABLE=os.environ['LUDA_CHROMIUM_EXECUTABLE'],XDG_CONFIG_DIRS=env['XDG_CONFIG_HOME'],LANG='C.UTF-8',LC_ALL='C.UTF-8',NO_AT_BRIDGE='0',GTK_MODULES='gail:atk-bridge',GSETTINGS_BACKEND='memory')
         process=subprocess.Popen(['xvfb-run','-a','-s','-screen 0 1440x1000x24 -nolisten tcp','dbus-run-session','--',sys.executable,__file__,'--child',str(base)],env=env,start_new_session=True)
         try:return process.wait(timeout=235)
         finally:stop(process)
@@ -76,7 +76,7 @@ def main():
     if args.launch:return launch(args.launch)
     if os.getuid()!=0:parser.error('Existing root CLI authentication is used; desktop/MCP drop to the ordinary account.')
     if not 1<=args.timeout<=180:parser.error('Bound must be1..180 seconds')
-    codex=shutil.which('codex');account=pwd.getpwnam('silo-desktop')
+    codex=shutil.which('codex');account=pwd.getpwnam(os.environ.get('LUDA_TEST_USER', 'desktop'))
     if not codex:parser.error('Existing authenticated Codex CLI required')
     out=ROOT/'artifacts/agent-owned-secret'/('run-'+str(time.time_ns()));out.mkdir(parents=True)
     result={'attempt':1,'passed':False,'source_before':source_fingerprint(ROOT),'codex':version([codex,'--version']),'providers':version(['dpkg-query','-W','libgtk-3-0t64','libatspi2.0-0t64']),'resolved_model':'unknown unless exposed by CLI JSON','agent_uid':os.getuid(),'desktop_uid':account.pw_uid,'budget_seconds':args.timeout}
@@ -86,7 +86,7 @@ def main():
         workspace=base/'workspace';workspace.mkdir();skill=workspace/'.agents/skills/luda/SKILL.md';skill.parent.mkdir(parents=True);shutil.copyfile(ROOT/'skills/luda/SKILL.md',skill)
         try:
             with (out/'desktop.log').open('wb') as log:
-                launcher=subprocess.Popen(['/usr/sbin/runuser','-u','silo-desktop','--',str(ROOT/'.venv/bin/python'),__file__,'--launch',str(desktop)],stdout=log,stderr=log,start_new_session=True)
+                launcher=subprocess.Popen(['/usr/sbin/runuser','-u',os.environ.get('LUDA_TEST_USER', 'desktop'),'--',str(ROOT/'.venv/bin/python'),__file__,'--launch',str(desktop)],stdout=log,stderr=log,start_new_session=True)
                 end=time.monotonic()+30
                 while not (desktop/'ready.json').exists():
                     if launcher.poll() is not None or time.monotonic()>end:raise RuntimeError('Private desktop startup failed')
@@ -94,7 +94,7 @@ def main():
                 ready=json.loads((desktop/'ready.json').read_text())
                 prompt='Open a temporary browser at '+ready['url']+' (a local synthetic practice form). Replace Password with exactly the string represented by this JSON literal: '+json.dumps(SECRET,ensure_ascii=False)+'. Do not submit the form or put the password on any clipboard. Leave the page open and verify the visible entry receipt without revealing the password. Use only public Luda desktop MCP tools. Read the installed Luda skill first; you may read .agents/skills/luda/SKILL.md. Do not read application source, hidden files or oracle data, run other programs, modify files directly, or visit other websites.'
                 result['prompt']=prompt
-                server_args=['-u','silo-desktop','--','/usr/bin/env',*[k+'='+v for k,v in ready['environment'].items()],str(ROOT/'.venv/bin/luda')]
+                server_args=['-u',os.environ.get('LUDA_TEST_USER', 'desktop'),'--','/usr/bin/env',*[k+'='+v for k,v in ready['environment'].items()],str(ROOT/'.venv/bin/luda')]
                 cmd=[codex,'exec','--ignore-user-config','--ephemeral','--skip-git-repo-check','--json','--sandbox','read-only','-C',str(workspace),'-c','approval_policy="never"','-c','mcp_servers.luda.command="/usr/sbin/runuser"','-c','mcp_servers.luda.args='+json.dumps(server_args),'-c','mcp_servers.luda.default_tools_approval_mode="approve"','-c','mcp_servers.luda.required=true','-c','mcp_servers.luda.startup_timeout_sec=20','-c','mcp_servers.luda.tool_timeout_sec=20',prompt]
                 result['argv']=cmd;started=time.monotonic()
                 with (out/'events.jsonl').open('wb') as stdout,(out/'stderr.log').open('wb') as stderr:

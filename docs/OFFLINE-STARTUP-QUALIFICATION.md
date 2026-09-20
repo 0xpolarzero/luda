@@ -45,7 +45,7 @@ and AT-SPI). Use a fresh output path and an explicit ordinary desktop account:
 ```sh
 sudo python3 tests/evidence/offline-startup/run.py \
   --release /opt/luda/current \
-  --user silo-desktop \
+  --user desktop \
   --output /workspace/offline-proof-new
 ```
 
@@ -54,10 +54,3 @@ with retained stage logs and does not fall back to simulated denial. The harness
 uses the existing bounded CI subreaper for descendant cleanup. Its limits include
 SIGKILL of that supervisor and kernel/VM failure; it cannot undo application
 changes already performed. The fixture deliberately uses a synthetic document.
-
-[Retained result files](../tests/evidence/offline-startup/result/) include the
-network proof, pinned-runtime hashes, public operation metadata, source hashes,
-result and cleanup receipt. The source runner and probe live in the same evidence
-directory. Full local logs and the synthetic screenshot remain under
-`/workspace/luda-offline-proof-3/`. This is a bounded installed Linux runtime test,
-not fresh Mac/Silo provisioning or a catalog-level release qualification.

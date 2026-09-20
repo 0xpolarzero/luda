@@ -31,7 +31,7 @@ Changes that occur and revert between reads can remain undetected.
 without changing root size. It checks independent `xrandr` output, rejection of
 the old snapshot and acceptance after observing again. Unit tests also cover
 popup targeting, layout changes during capture and bounded native arrays. Actual
-Silo/KasmVNC 1.5.0 and Xvfb both expose the required metadata in this ARM64 guest.
+Linux/KasmVNC 1.5.0 and Xvfb both expose the required metadata in this ARM64 guest.
 
 ## Logical workspace context
 

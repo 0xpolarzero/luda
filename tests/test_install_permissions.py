@@ -30,7 +30,7 @@ class InstallPermissions(unittest.TestCase):
         self.assertEqual((release/'skills/luda/SKILL.md').stat().st_mode&0o777,0o644)
         self.assertEqual(original.stat().st_mode&0o777,0o600)
         self.assertEqual(peer.stat().st_mode&0o777,0o600)
-        installer.verify_desktop_access.assert_called_once_with(self.prefix/'releases'/result['release'],'silo-desktop')
+        installer.verify_desktop_access.assert_called_once_with(self.prefix/'releases'/result['release'],pwd.getpwuid(os.getuid()).pw_name)
 
     def test_access_failure_preserves_selected_release_and_cleans_new_one(self):
         first=installer.install(self.prefix,self.source,self.runner)

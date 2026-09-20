@@ -687,7 +687,7 @@
         "test_control.PauseControl.test_pause_shared_and_resume_persist",
         "test_control.PauseControl.test_pause_interrupts_running_operation_with_cleanup_available"
       ],
-      "limits": "Cooperative explicit pause mechanism tested. No automatic human input detection or integrated Silo viewer button claim."
+      "limits": "Cooperative explicit pause mechanism tested. No automatic human input detection claim."
     },
     "CONC-06": {
       "implementation": "partial",
@@ -695,7 +695,7 @@
         "test_control.PauseControl.test_pause_shared_and_resume_persist",
         "test_control.PauseControl.test_pause_interrupts_running_operation_with_cleanup_available"
       ],
-      "limits": "Cooperative explicit pause mechanism tested. No automatic human input detection or integrated Silo viewer button claim."
+      "limits": "Cooperative explicit pause mechanism tested. No automatic human input detection claim."
     },
     "SEC-09": {
       "implementation": "partial",
@@ -878,7 +878,7 @@
         "test_reconnect.ReconnectTests.test_server_failed_probe_keeps_backend",
         "test_reconnect.ReconnectTests.test_closed_backend_discards_cached_targets"
       ],
-      "limits": "Unit checks cover atomic backend replacement and old-cache disposal. Separate live_mcp_reconnect suite supplies private actual XFCE/display/bus restart evidence; fresh Silo VM behavior remains external."
+      "limits": "Unit checks cover atomic backend replacement and old-cache disposal. Separate live_mcp_reconnect suite supplies private actual XFCE/display/bus restart evidence."
     },
     "LIFE-07": {
       "implementation": "implemented",

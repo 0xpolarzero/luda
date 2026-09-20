@@ -50,7 +50,7 @@ async def main():
     display = ':' + os.read(rfd, 32).decode().strip()
     os.close(rfd)
     os.environ['DISPLAY'] = display
-    os.environ['LUDA_CHROMIUM_EXECUTABLE'] = '/workspace/silo-desktop-research/browsers/chromium-1243/chrome-linux-arm64/chrome'
+    os.environ['LUDA_CHROMIUM_EXECUTABLE'] = os.environ['LUDA_CHROMIUM_EXECUTABLE']
     wm_log = (RUN / 'wm.log').open('w')
     wm = subprocess.Popen(['xfwm4'], stdout=wm_log, stderr=wm_log)
     server = http.server.ThreadingHTTPServer(('127.0.0.1', 0), Fixture)

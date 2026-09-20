@@ -1,58 +1,41 @@
 # Luda
 
-Local Linux desktop control for agents. Luda attaches to the XFCE/X11 desktop already visible in a Silo microsandbox and exposes typed MCP tools plus an agent skill. It runs entirely inside the guest, without a model API, cloud worker or second VM.
+A standalone plugin, skill, and MCP toolset for agents operating graphical Linux machines. Luda controls an existing desktop; it does not provision a desktop or require a sandbox manager, cloud service, or model API.
 
-**Under active development; not yet release-qualified.** The [346-case acceptance catalog](docs/REQUIREMENTS.md) defines the target, and [validation status](docs/VALIDATION.md) distinguishes working features from remaining gaps. Successful input dispatch is never presented as proof that an application completed the intended task.
+## Install and connect
 
-## Use it
+Supported baseline: Linux with Python 3.12+, native X11, an EWMH window manager, and the dependencies in [installation](docs/INSTALLATION.md). Ubuntu 24.04 with XFCE/XFWM4 is tested on ARM64 and AMD64. Native Wayland and Xwayland are unsupported and rejected before desktop input.
 
-For an existing running Silo desktop, the [guest bootstrap](docs/GUEST-BOOTSTRAP.md) composes installation, readiness checks and a remote Codex configuration/skill bundle in one command. For host Codex, the [VM-specific SSH plugin builder and explicit profile registration](docs/HOST-REGISTRATION.md) package the tools and skill together. Each VM has its own resolved MCP server name. The [native Silo integration patch](integrations/silo/README.md) adds discovery, path pickers, registration, explicit disconnect/reconnect, reviewed version updates and interrupted-operation recovery; it has not been shipped in Silo or accepted on macOS.
-
-For manual installation on an existing Ubuntu 24.04 XFCE/X11 desktop:
+From a trusted checkout, as your desktop account:
 
 ```sh
-sudo bash scripts/install.sh /opt/luda
-sudo python3 scripts/manage_install.py doctor --prefix /opt/luda --user silo-desktop
-sudo python3 scripts/manage_install.py config --prefix /opt/luda \
-  --user silo-desktop --placement remote --output /absolute/new/luda-config
+sudo bash scripts/install.sh /opt/luda --user "$(id -un)"
+/opt/luda/current/.venv/bin/luda doctor
+python3 scripts/build_plugin.py --prefix /opt/luda \
+  --marketplace-root "$HOME/.local/share/luda-marketplace"
 ```
 
-Run these commands inside the guest checkout. `sudo` is needed for management of this root-owned prefix; the graphical launcher drops to `silo-desktop`. The example generates an experimental remote-executor fragment for a host Codex SSH profile. If Codex itself runs inside the guest, use `--placement local` instead. Generation alone does not register the server or skill; follow the placement instructions in the bundle.
+Run the diagnostic and agent in the graphical session so they inherit `DISPLAY`, session D-Bus and X authorization. The generated plugin uses the installed executable directly. For SSH or another account, see [explicit session attachment](docs/INSTALLATION.md). Register the generated [plugin and skill](docs/CODEX-PLUGIN.md) in the agent that will use them.
 
-The installer creates versioned releases and switches `current` atomically. The configuration command generates a guest-side MCP fragment and discoverable skill without overwriting existing agent settings. See [installation, registration, rollback and uninstall](docs/INSTALLATION.md). An [installable Codex plugin](docs/CODEX-PLUGIN.md) packages the MCP registration and skill together. Fresh Mac Codex SSH onboarding still needs end-to-end qualification; guest installation alone does not prove host-side discovery.
+## Use
 
-## Agent workflow
+1. Run `desktop_doctor`, list windows, and select the intended one.
+2. Inspect controls; prefer semantic desired-state actions and verified text editing.
+3. When controls are inaccessible, observe the desktop and use the returned screenshot coordinates.
+4. Verify the application's resulting state. After uncertainty, inspect before retrying input.
 
-1. Check `desktop_doctor`, then list windows and activate the intended one.
-2. Inspect its controls. Use `desktop_type` for verified insertion or whole-field replacement where exact text access is supported, and desired-state operations for selection, checkboxes, expansion and values.
-3. When accessibility is unavailable, observe the screenshot and use its coordinates. The same click/hover tools handle owned context menus and submenus.
-4. Read back or wait for the intended state. After an uncertain result, inspect before repeating input.
+Core tools cover screenshots, windows/workspaces, pointer and keyboard input, Unicode/multiline text, accessibility controls, clipboard paste, waits, cancellation and input recovery. Optional tools provide owned-browser interaction, OCR, image matching and recording. See the generated [tool reference](docs/TOOLS.md) and [agent skill](skills/luda/SKILL.md).
 
-The [tool reference](docs/TOOLS.md) is generated from actual MCP declarations. The [skill](skills/luda/SKILL.md) explains targeting, text and recovery. Other capabilities include [optional temporary owned-browser text control](docs/OWNED-BROWSER.md), [optional local OCR](docs/OCR.md) over a selected screenshot, [visual candidate matching](docs/IMAGE-MATCHING.md), [temporary screen recording](docs/RECORDING.md), window/workspace management, cross-window drag, table-row selection, clipboard paste, shared pause/resume and explicit input cleanup recovery. Pointer and key dispatch still require application-specific verification.
+## Support and testing
 
-## Develop and test
+[Validation](docs/VALIDATION.md) separates demonstrated behavior, product defects, test-harness failures and unsupported environments. The supported backend and provider limitations are explicit; successful dispatch is not proof of task completion. The existing acceptance inventory is frozen rather than a promise to support every desktop configuration.
 
 ```sh
 uv sync --frozen --extra test
-.venv/bin/python -m unittest discover -s tests -p 'test_*.py'
+.venv/bin/python scripts/qualify.py
 LUDA_ISOLATED_TEST_DISPLAY=1 xvfb-run -a \
   -s '-screen 0 1440x900x24 -nolisten tcp' dbus-run-session -- \
   .venv/bin/python scripts/headless_tests.py
 ```
 
-The fresh-display runner exercises native controls, actual MCP, cancellation, shared pause, controller crashes and X-server replacement. Other live suites cover GTK3, Qt5, GTK4, Chromium, [Firefox](docs/FIREFOX-QUALIFICATION.md), [Electron](docs/ELECTRON-QUALIFICATION.md), native applications and installation. They use synthetic documents and independent widget/file/DOM readback. See [qualification methodology](docs/QUALIFICATION.md) and the [optional qualification matrix](docs/QUALIFICATION-MATRIX.md) for failures as well as passes. The installer also provisions international and emoji [fallback fonts](docs/FONT-RENDERING.md).
-
-Tests using the existing guest desktop must hold the shared lease throughout their lifetime:
-
-```sh
-flock /tmp/luda-live-tests.lock /absolute/luda/.venv/bin/luda-session -- \
-  /absolute/luda/.venv/bin/python /absolute/luda/tests/live_backend.py
-```
-
-`artifacts/` is ignored by Git. CI runs unit and isolated X11 workflows on Ubuntu AMD64; local guest tests run on ARM64. Neither substitutes for a fresh Silo VM acceptance run.
-
-## Contracts and scope
-
-Window identities include process lifetime and an X-resource generation token. Screenshot coordinates expire and are revalidated against display topology, geometry, focus, menus and the topmost surface. Semantic handles are scoped to an observed window and expire; private full-name fingerprints detect changes beyond displayed name prefixes. Provider reuse of an identical identity remains a limitation; see the [semantic contract](docs/SEMANTIC-CONTROLS.md). Input is serialized across cooperating clients, and `desktop_control` can pause their mutations. Owned injectors provide bounded cleanup after interruption; unproven cleanup remains blocked, and old cleanup does not touch a replacement X server.
-
-X11 does not provide exclusive ownership against human viewer input. Clipboard paste replaces CLIPBOARD, leaves PRIMARY alone and may trigger a terminal paste dialog. Direct typing verifies exact text where supported; browser and toolkit differences remain under qualification. Native Wayland and modern Xwayland are explicitly rejected before desktop requests; see the [backend boundary and live refusal evidence](docs/BACKEND-SUPPORT.md). Rich clipboard formats and generic rich-editor automation remain outside the production implementation; the optional owned browser supports ordinary HTML fields and explicitly cooperating paragraph editors with opt-in hard-break support. Read the [architecture and behavioral contracts](docs/DESIGN.md) before embedding Luda as a release component.
+Live tests use synthetic documents and independent widget/file/DOM readback. Tests against a shared desktop must hold `/tmp/luda-live-tests.lock` throughout. CI also runs private X11 sessions. [Backend support](docs/BACKEND-SUPPORT.md) and [semantic contracts](docs/SEMANTIC-CONTROLS.md) describe the boundaries.

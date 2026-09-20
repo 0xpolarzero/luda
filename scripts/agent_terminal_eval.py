@@ -77,7 +77,7 @@ def main():
     if args.launch:return launch(args.launch)
     if os.getuid()!=0:parser.error('Existing root CLI authentication is used; desktop/MCP drop to the ordinary account.')
     if not 1<=args.timeout<=180:parser.error('Bound must be1..180 seconds')
-    codex=shutil.which('codex');account=pwd.getpwnam('silo-desktop')
+    codex=shutil.which('codex');account=pwd.getpwnam(os.environ.get('LUDA_TEST_USER', 'desktop'))
     if not codex:parser.error('Existing authenticated Codex CLI required')
     out=ROOT/'artifacts/agent-terminal-confirmation'/('run-'+str(time.time_ns()));out.mkdir(parents=True)
     result={'attempt':1,'passed':False,'source_before':source_fingerprint(ROOT),'codex':version([codex,'--version']),'providers':version(['dpkg-query','-W','xfce4-terminal','libvte-2.91-0']),'resolved_model':'unknown unless exposed by CLI JSON','agent_uid':os.getuid(),'desktop_uid':account.pw_uid,'budget_seconds':args.timeout}
@@ -87,7 +87,7 @@ def main():
         workspace=base/'workspace';workspace.mkdir();skill=workspace/'.agents/skills/luda/SKILL.md';skill.parent.mkdir(parents=True);shutil.copyfile(ROOT/'skills/luda/SKILL.md',skill)
         try:
             with (out/'desktop.log').open('wb') as log:
-                launcher=subprocess.Popen(['/usr/sbin/runuser','-u','silo-desktop','--',str(ROOT/'.venv/bin/python'),__file__,'--launch',str(desktop)],stdout=log,stderr=log,start_new_session=True)
+                launcher=subprocess.Popen(['/usr/sbin/runuser','-u',os.environ.get('LUDA_TEST_USER', 'desktop'),'--',str(ROOT/'.venv/bin/python'),__file__,'--launch',str(desktop)],stdout=log,stderr=log,start_new_session=True)
                 end=time.monotonic()+30
                 while not (desktop/'ready.json').exists():
                     if launcher.poll() is not None or time.monotonic()>end:raise RuntimeError('Private desktop startup failed')
@@ -95,7 +95,7 @@ def main():
                 ready=json.loads((desktop/'ready.json').read_text())
                 prompt='In Delivery receiver, paste exactly the text represented by this JSON string once: '+json.dumps(PAYLOAD,ensure_ascii=False)+'. Verify the received text without sending a duplicate or extra input. Use only public Luda desktop MCP tools. Read the installed Luda skill first; you may read .agents/skills/luda/SKILL.md. Do not read application source, hidden files or oracle data, run other programs, modify files directly, or browse websites.'
                 result['prompt']=prompt
-                server_args=['-u','silo-desktop','--','/usr/bin/env',*[k+'='+v for k,v in ready['environment'].items()],str(ROOT/'.venv/bin/luda')]
+                server_args=['-u',os.environ.get('LUDA_TEST_USER', 'desktop'),'--','/usr/bin/env',*[k+'='+v for k,v in ready['environment'].items()],str(ROOT/'.venv/bin/luda')]
                 cmd=[codex,'exec','--ignore-user-config','--ephemeral','--skip-git-repo-check','--json','--sandbox','read-only','-C',str(workspace),'-c','approval_policy="never"','-c','mcp_servers.luda.command="/usr/sbin/runuser"','-c','mcp_servers.luda.args='+json.dumps(server_args),'-c','mcp_servers.luda.default_tools_approval_mode="approve"','-c','mcp_servers.luda.required=true','-c','mcp_servers.luda.startup_timeout_sec=20','-c','mcp_servers.luda.tool_timeout_sec=20',prompt]
                 result['argv']=cmd;started=time.monotonic()
                 with (out/'events.jsonl').open('wb') as stdout,(out/'stderr.log').open('wb') as stderr:

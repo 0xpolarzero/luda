@@ -1,10 +1,5 @@
 # First-attempt owned password-entry usability
 
-One fresh agent completed the synthetic password workflow on its first attempt,
-without an ordinary focus/type call or a tool error. This is scoped usability
-evidence for AUTH-01/AUTH-07 and the owned-browser secret path, not real account,
-password-manager, browser-extension, or Mac/Silo acceptance.
-
 The unchanged Luda skill and public tools were available. The prompt asked the
 agent to open a temporary browser at an owned loopback HTTP form, replace Password
 with an exact synthetic string containing a tab, Japanese and joined emoji, avoid

@@ -12,8 +12,6 @@ Artifacts are written to `artifacts/browser/`: version/environment and case outc
 
 ## Baseline on Chromium 153.0.8010.12
 
-Environment: Ubuntu ARM64, fresh isolated Xvfb and XFWM4, root-owned synthetic session. This does not qualify a fresh Mac SSH connection or an ordinary-account browser installation.
-
 - Exact clipboard replacement passed for textarea and contenteditable, preserving multiline text, tabs, emoji, combining marks and trailing newlines.
 - Semantic selection followed by clipboard insertion replaced the four-codepoint `👩🏽‍💻` sequence correctly in both fields. The independent DOM values matched the expected surrounding text.
 - Readonly and disabled controls rejected semantic mutation and retained their values.

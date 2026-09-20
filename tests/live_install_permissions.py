@@ -13,11 +13,12 @@ ROOT=Path(__file__).resolve().parents[1]
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--user', required=True, help='Existing ordinary Linux test account')
     parser.add_argument('--prefix',type=Path,required=True)
     parser.add_argument('--output',type=Path,required=True)
     args=parser.parse_args()
-    if os.getuid()!=0:parser.error('This qualification requires root and the existing silo-desktop account.')
-    account=pwd.getpwnam('silo-desktop')
+    if os.getuid()!=0:parser.error('This qualification requires root and the explicit existing ordinary account.')
+    account=pwd.getpwnam(args.user)
     if args.prefix.exists() or args.output.exists():parser.error('Use fresh prefix and evidence paths.')
     args.output.mkdir(mode=0o700)
     source_files=[ROOT/'scripts/manage_install.py',ROOT/'scripts/install.sh']
@@ -47,7 +48,7 @@ print(json.dumps({'uid':os.getuid(),'package':str(package),'skill_sha256':hashli
     assert proof['skill_sha256']==hashlib.sha256((ROOT/'skills/luda/SKILL.md').read_bytes()).hexdigest()
     assert before=={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in source_files}
     proof.update(installed=True,release=release.name,umask='077',source_unchanged=True,installer_sources=before,
-        scope='Actual locked default wheel installation and isolated desktop-account imports/skill reads; no GUI or Mac claim.')
+        scope='Actual locked default wheel installation and isolated desktop-account imports/skill reads; no GUI claim.')
     (args.output/'result.json').write_text(json.dumps(proof,indent=2)+'\n')
     print(json.dumps({'installed':True,'uid':proof['uid'],'modules':len(expected),'release':release.name}))
 

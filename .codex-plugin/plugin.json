@@ -9,7 +9,7 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Luda",
-    "shortDescription": "Drive your sandbox desktop.",
+    "shortDescription": "Drive your Linux desktop.",
     "longDescription": "MCP tools and an agent skill for operating existing Linux X11 applications, inspecting UI state and verifying actions.",
     "developerName": "polarzero",
     "category": "Productivity",
@@ -18,7 +18,7 @@
       "Write"
     ],
     "defaultPrompt": [
-      "Inspect my sandbox desktop and show the available windows."
+      "Inspect my Linux desktop and show the available windows."
     ]
   },
   "mcpServers": "./.mcp.json",

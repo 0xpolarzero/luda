@@ -2,8 +2,6 @@
 
 On 2026-09-20, the existing `scripts/agent_eval.py` ran one fresh attempt each for canvas and draft recovery against immutable revision `2d0ae2df8f11b0a884eb95f9fc21f409aa666723`. Both passed. No failed attempt was discarded and no unchanged-code retry was run.
 
-The CLI was Codex 0.155.1, using its existing authentication and default model; JSON events did not expose a resolved model name. The process ran as uid 0 in an isolated Xvfb 1440×1000 display, private D-Bus and XDG environment on arm64 Linux, with Python 3.12.3, MCP 1.30.0, GTK 3.24.41, XFWM 4.18.0 and Xvfb 21.1.12. This is local tool usability evidence, not a fresh Mac/SSH onboarding or ordinary-user authentication qualification. No authentication file was inspected, and no existing CLI configuration was modified.
-
 | First attempt | Wall time | Desktop calls | Server-reported tool time | Independent outcome |
 | --- | ---: | ---: | ---: | --- |
 | Canvas | 49.199 s | 13 | 2.728 s | Amber, cell B2, board committed |
