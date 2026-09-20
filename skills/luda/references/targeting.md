@@ -7,7 +7,7 @@ desktop_windows(query="Notes", limit=50, offset=0)
 desktop_inspect(window_id="<window_id>", role="entry")
 ```
 
-Window queries filter title/class. Each paginated call is a new enumeration, so do not assume a frozen list. Use actual identity and context when multiple windows match. Routine activation is unnecessary: native semantics can operate in the background and foreground input activates automatically. Explicit activation is useful to reveal a covered target; observe again afterward.
+Window queries filter title/class. Each paginated call is a new enumeration, so do not assume a frozen list. Use actual identity and context when multiple windows match. Routine activation is unnecessary: native semantics can operate in the background and Luda focuses its own keyboard automatically. Explicit activation reveals a covered target and focuses the agent keyboard; observe again afterward. The window list’s active flag describes the window manager’s foreground state, not the agent keyboard’s focus.
 
 `desktop_inspect` returns native accessibility `nodes`, parent IDs, roles, names, states, and supported actions. Optional browser `text_fields` use separate provider-bound IDs. Filter known controls with `name`, `role` (substring matches), or required `states`; increase `limit` or `max_depth` when justified by truncation. Defaults are 150 nodes and depth 30. Read returned availability and coverage before interpreting an empty result. It can mean no matches, incomplete traversal, or unsupported accessibility.
 

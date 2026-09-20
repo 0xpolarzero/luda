@@ -20,7 +20,7 @@ The local X11 run passed 15 checks:
 
 Evidence is written under `artifacts/mcp-input-recovery` and copied into the immutable per-run matrix directory with source fingerprints and process-cleanup outcome. The first complete run took approximately 15 seconds, with no tagged survivors.
 
-This qualifies the tested Xvfb lifecycle, not arbitrary remote X proxies, Wayland, a hostile client modifying Luda's root properties, or separation of concurrent human presses of the exact same key on one unchanged server. A same-server client-resource reuse review is separate from server-generation replacement.
+This historical run qualifies the tested Xvfb lifecycle, not arbitrary remote X proxies, Wayland, or a hostile client modifying Luda’s root properties. Same-key human/agent isolation is now separately demonstrated by the [private input owner test](../tests/evidence/private-input/README.md); this older run is not that evidence. A same-server client-resource reuse review is separate from server-generation replacement.
 
 ## Same-server resource reuse
 

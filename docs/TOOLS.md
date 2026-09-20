@@ -114,7 +114,7 @@ List window identities, titles, focus and client bounds, optionally filtering ti
 desktop_activate(window_id: str)
 ```
 
-Activate a window from desktop_windows and verify focus. Observe again afterward.
+Reveal a window from desktop_windows and focus the agent keyboard without selecting the human keyboard. Observe again afterward.
 
 ## `desktop_observe`
 
@@ -146,7 +146,7 @@ Read accessible text and representation metadata, preserving whitespace. limit c
 desktop_type(element_id: str, text: str, mode: Literal['insert', 'replace']='insert')
 ```
 
-Type into an editable element and verify exact readback. Native supported edits address the control without activating its window; foreground input activates automatically when needed. Insert replaces the selection; replace changes the entire field. Preserves Unicode, LF and tabs without submitting. Owned HTML fields require complete grapheme boundaries. Exact readback does not confirm saving or application commit; inspect before an explicit commit or suggestion selection.
+Type into an editable element and verify exact readback. Native supported edits address the control in the background; native input uses the agent keyboard and focuses its target automatically. Insert replaces the selection; replace changes the entire field. Preserves Unicode, LF and tabs without submitting. Owned HTML fields require complete grapheme boundaries. Exact readback does not confirm saving or application commit; inspect before an explicit commit or suggestion selection.
 
 ## `desktop_type_secret`
 
@@ -170,7 +170,7 @@ Choose an observed list/radio/combo option or a visible table cell and verify se
 desktop_paste(window_id: str, text: str, shortcut: Literal['ctrl_v', 'ctrl_shift_v', 'shift_insert'] | None=None)
 ```
 
-Paste through CLIPBOARD when semantic typing is unavailable, automatically activating the target window. Chooses common app shortcut from window class, with optional override. Destination is unverified; inspect dialogs/read back. Terminals can execute pasted newlines.
+Paste through the shared CLIPBOARD when semantic typing is unavailable, automatically focusing the agent keyboard on the target. Chooses common app shortcut from window class, with optional override. Destination is unverified; inspect dialogs/read back. Terminals can execute pasted newlines.
 
 ## `desktop_press_keys`
 
@@ -178,7 +178,7 @@ Paste through CLIPBOARD when semantic typing is unavailable, automatically activ
 desktop_press_keys(window_id: str, chord: str, count: int=1)
 ```
 
-Send a deliberate chord, e.g. ctrl+s, ctrl+plus, ctrl+minus, Return, Tab, Escape or Down. Punctuation uses X11 names (plus, equal, bracketleft, slash); implicit Shift follows the current layout. count is 1–20 complete press/release repetitions, default 1. Revalidates target identity, focus and input state between repetitions; stops on the first failure and never retries. Automatically activates the target before dispatch, refuses held keys/buttons, and preserves the current keyboard mapping. Unavailable symbols return UNSUPPORTED_KEYMAP; text belongs in desktop_type. When a final companion receipt is available, progress reports fully dispatched, possibly partial and not-started repetitions. Dispatched count is not application completion.
+Send a deliberate chord, e.g. ctrl+s, ctrl+plus, ctrl+minus, Return, Tab, Escape or Down. Punctuation uses X11 names (plus, equal, bracketleft, slash); implicit Shift follows the current layout. count is 1–20 complete press/release repetitions, default 1. Revalidates target identity, focus and input state between repetitions; stops on the first failure and never retries. Automatically focuses the agent keyboard before dispatch, refuses conflicting agent-held keys/buttons, and preserves its keyboard mapping. Human-held keys/buttons are separate. Unavailable symbols return UNSUPPORTED_KEYMAP; text belongs in desktop_type. When a final companion receipt is available, progress reports fully dispatched, possibly partial and not-started repetitions. Dispatched count is not application completion.
 
 ## `desktop_click`
 
@@ -186,7 +186,7 @@ Send a deliberate chord, e.g. ctrl+s, ctrl+plus, ctrl+minus, Return, Tab, Escape
 desktop_click(window_id: str, snapshot_id: str, x: float, y: float, button: Literal['left', 'middle', 'right']='left', count: Literal[1, 2, 3]=1)
 ```
 
-Click screenshot-image coordinates in the target window or its observed menus, automatically activating the target after validation. Rejects expired snapshots, changed window layout/identity and covered targets. Snapshot validity does not prove unchanged application content; observe again after content transitions before selecting a control.
+Click screenshot-image coordinates in the target window or its observed menus, using the agent pointer after target validation. Rejects expired snapshots, changed window layout/identity and covered targets. Snapshot validity does not prove unchanged application content; observe again after content transitions before selecting a control.
 
 ## `desktop_scroll`
 
@@ -194,7 +194,7 @@ Click screenshot-image coordinates in the target window or its observed menus, a
 desktop_scroll(window_id: str, snapshot_id: str, x: float, y: float, direction: Literal['up', 'down', 'left', 'right'], ticks: int=3)
 ```
 
-Scroll 1–20 wheel ticks at a point in the observed target, automatically activating it after validation. Read resulting state to confirm.
+Scroll 1–20 wheel ticks at a point in the observed target, using the agent pointer after validation. Read resulting state to confirm.
 
 ## `desktop_drag`
 
@@ -202,7 +202,7 @@ Scroll 1–20 wheel ticks at a point in the observed target, automatically activ
 desktop_drag(window_id: str, snapshot_id: str, x: float, y: float, end_x: float, end_y: float, button: Literal['left', 'middle', 'right']='left')
 ```
 
-Drag between two observed points inside the same window, automatically activating it after validation; always attempts button release. Use desktop_drag_to for another destination window.
+Drag between two observed points inside the same window, using the agent pointer after validation; always attempts release of its own button. Use desktop_drag_to for another destination window.
 
 ## `desktop_focus_element`
 
@@ -210,7 +210,7 @@ Drag between two observed points inside the same window, automatically activatin
 desktop_focus_element(element_id: str)
 ```
 
-Request element focus, automatically activating its window; owned browser fields refuse active/unknown composition before focus. Inspect to confirm focused state.
+Request element focus for agent input; owned browser fields refuse active/unknown composition before focus. Native application callbacks can still change human focus. Inspect to confirm focused state.
 
 ## `desktop_invoke`
 

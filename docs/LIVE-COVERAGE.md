@@ -115,6 +115,8 @@ These existing live scripts are not registered in the three inventoried runners.
 - [live_install_permissions.py](../tests/live_install_permissions.py)
 - [live_managed_portal_cleanup.py](../tests/live_managed_portal_cleanup.py)
 - [live_mcp_soak.py](../tests/live_mcp_soak.py)
+- [live_private_input.py](../tests/live_private_input.py)
+- [live_private_input_owner.py](../tests/live_private_input_owner.py)
 - [live_private_polkit.py](../tests/live_private_polkit.py)
 - [live_private_portal_cleanup.py](../tests/live_private_portal_cleanup.py)
 - [live_randr_backends.py](../tests/live_randr_backends.py)

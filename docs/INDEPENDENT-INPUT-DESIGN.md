@@ -1,8 +1,6 @@
 # Independent input: implementation research and acceptance design
 
-Status: researched design, not implemented or qualified. Research date: 2026-09-20.
-The runtime at `556d699` still uses shared devices for foreground input. Its
-passing automatic-routing tests do not establish the isolation required here.
+Status: private-device routing implemented; bounded GTK/XFWM and lifecycle checks pass. Research and validation date: 2026-09-20. See [current evidence](../tests/evidence/private-input/README.md). Broader toolkit, legacy-client, and window-manager qualification remains open. GTK accessibility focus can request WM activation and redirect human focus; native device isolation does not prevent that callback. The earlier runtime at `556d699` used shared devices; its passing routing tests do not qualify independent input.
 
 ## Requirements
 
@@ -88,14 +86,14 @@ a retained unmapped pixmap a live observation. Use automatic redirection where
 needed on an existing desktop, not Xpra's own-WM manual-redirection arrangement.
 Observation of a covered window does not enable clicking through its covering window.
 
-## Focused implementation sequence
+## Implementation decisions and remaining qualification
 
-1. Introduce one private input-pair owner per Luda session. Track exact device IDs,
+1. The implementation owns one private input pair per Luda session. Track exact device IDs,
    pair relationships, unique ownership, and server generation. Bind every Luda
    injector and cleanup connection before state queries or keymap initialization.
    Never identify owned devices by a loose name substring or reuse stale IDs.
-2. Move pointer, keyboard, held-state, release, crash recovery, and browser native
-   input onto that pair together. Relevant existing files are `_pointer_native.py`,
+2. Pointer, keyboard, held-state, release, crash recovery, and browser native
+   focus operations bind to that pair together. Relevant existing files are `_pointer_native.py`,
    `_keyboard_native.py`, `_input_native.py`, and `_browser_input.py`. Never silently
    fall back to the human devices if private initialization or recovery fails.
 3. Separate agent keyboard focus from global activation. Use device-specific
@@ -110,8 +108,7 @@ Observation of a covered window does not enable clicking through its covering wi
    behind existing observation tools with explicit source/freshness metadata, so
    covered pixels cannot accidentally authorize an unsafe root-coordinate click.
 
-The first delivery gate is functional device isolation plus ordinary input and
-cleanup. The second is WM/toolkit compatibility, especially grabs. If the second
+The first delivery gate—device isolation plus ordinary GTK input and cleanup—has bounded passing evidence. The private pair uses `send_core=False`, which avoids the tested XFWM core-focus interference; legacy clients relying only on core events are not qualified. The second is WM/toolkit compatibility, especially grabs. If the second
 gate fails, the complete user requirement remains unresolved; neither a passing
 click demo nor an input-refusal-only backend counts as fully working computer use.
 These sources do not establish a generic solution to every WM/grab interaction.

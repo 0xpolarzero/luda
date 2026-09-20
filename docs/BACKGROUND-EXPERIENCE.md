@@ -1,54 +1,64 @@
 # Visible agent actions and automatic input routing
 
-The stricter requirement to never take over human input is not met by this
-shared-input implementation. See the subsequent
-[independent-input research and acceptance design](INDEPENDENT-INPUT-DESIGN.md).
-That design supersedes the earlier decision to set MPX aside; it is not yet a
-shipped or qualified input backend.
-
-Luda uses its existing tools to perform actions with as little desktop interference
-as the available mechanism permits. The agent does not select a background mode
-or use a separate set of tools. When foreground input is needed, Luda activates
-the target automatically. Application callbacks may also bring windows forward.
-This is not a guarantee of uninterrupted simultaneous use or macOS feature parity.
+Luda keeps the same tools and selects the input route internally. Supported
+accessibility actions address the control directly. Native clicks, drags, wheel
+input and chords use a session-owned XI2 pointer/keyboard pair; they never fall
+back to the human devices. Device-specific focus lets the agent type without
+requiring the window manager’s foreground window to change.
 
 The agent indicator is rendered directly into the existing Linux X11 desktop.
-An ordinary desktop viewer can display those pixels; no separate preview, Silo
+Ordinary desktop viewers can display those pixels. No separate preview, Silo
 integration, model credentials, or public network listener is required.
 
 ## Implementation scope
 
 | Action | Route |
 | --- | --- |
-| Supported native accessibility mutations | Address the observed control directly without activating its window or moving the shared pointer |
-| Focus requests, shortcuts, clipboard paste, and foreground text input | Activate the identified target when needed, then validate before input |
-| Screenshot clicks, hover, scrolling, and drags | Validate observed points, activate when needed, then revalidate before shared-pointer input |
-| Visible action feedback | Best-effort click-through cursor overlay; no change to the human pointer merely to display it |
+| Supported native accessibility mutations | Address the observed control directly |
+| Shortcuts and clipboard paste | Focus the private agent keyboard and validate before input; CLIPBOARD itself remains shared |
+| Screenshot clicks, hover, scrolling, and drags | Validate observed points and use the private agent pointer |
+| Explicit window activation | Reveal the target and focus the agent keyboard |
+| Visible action feedback | Best-effort click-through cursor overlay without moving the human pointer |
 
-Automatic activation does not bypass stale identity, geometry, display, popup,
-or coverage checks. Covered targets still require revealing the intended window
-and observing again before using screenshot coordinates. Luda does not invent a
-coordinate click when an accessibility operation is unsupported, or replay an
-action whose effects are uncertain. Existing cancellation, pause, held-input,
-and effect-reporting contracts still apply.
+The private pair disables core event emulation. This avoids the tested XFWM
+legacy focus path while retaining XI2-aware application input. Applications that
+require core events, other toolkits, and other window managers need separate
+qualification. The implementation does not guarantee that arbitrary application
+callbacks cannot change shared windows, selection, dialogs, or focus. In particular,
+GTK accessibility focus can call `gtk_window_present_with_time`, requesting WM
+activation and redirecting human keyboard focus; private device ownership does
+not prevent that application request.
 
-The cursor renderer runs in an isolated child process using X11 SHAPE input
-regions. It takes no keyboard focus, intercepts no pointer input, and unmaps stale
-feedback after 1.5 seconds. Luda hides it before pointer validation so the marker
-does not obscure target checks. EOF ends the helper; cleanup and acknowledgement
-waits are bounded. The marker indicates an action target, not application success.
-A missing renderer must not prevent an otherwise valid action.
-Semantic feedback uses a short, read-only lookup of current control bounds; if
-geometry is unavailable, it marks the current window instead of using stale
-inspection coordinates. Feedback is not a claim that the application accepted
-the action.
-
-Screenshots still capture the visible desktop. This implementation does not add
-covered-window capture or independent X11 keyboard/pointer devices. Foreground
-input uses the shared mouse and keyboard, and users can act between checks.
+Automatic routing retains stale identity, geometry, display, popup, and coverage
+checks. Covered screenshot targets require revealing the intended window and
+observing again. Luda neither invents coordinate clicks for unsupported semantic
+actions nor retries uncertain input. No new agent mode or tool is required.
 Native Wayland and Xwayland remain unsupported.
 
-## Validation and evidence
+The overlay uses X11 SHAPE input regions, takes no focus, intercepts no pointer
+input, and unmaps stale feedback after 1.5 seconds. It hides before pointer
+validation; EOF ends the helper. Its marker means action target, not application
+success. Missing rendering does not prevent otherwise valid input. Semantic
+feedback uses current control geometry where available, otherwise window bounds.
+
+## Current independent-input evidence
+
+[Nine real MCP cases and lifecycle checks](../tests/evidence/private-input/README.md)
+pass on private Xvfb/XFWM with independent GTK file oracles: actual click, wheel,
+drag, key and popup effects, simultaneous human/agent typing, human-held keys and
+buttons, captured cursor pixels, stale-observation refusal, same-key release
+isolation, normal shutdown, and owner SIGKILL cleanup. Human keyboard focus is
+sampled during each public action, not only checked at the end. This is bounded
+fixture coverage, not qualification of all apps or remote viewers.
+
+The [implementation research](INDEPENDENT-INPUT-DESIGN.md) records the pinned
+upstream precedents and outstanding compatibility questions. Covered-window
+capture is not added by this change.
+
+The following older results remain as history; they do not establish the new
+backend’s compatibility or noninterference.
+
+## Historical shared-input validation
 
 The [integrated evidence](../tests/evidence/automatic-input/README.md) records
 920 passing unit tests and one optional package-build test skipped. Live tests
