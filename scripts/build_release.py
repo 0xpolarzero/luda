@@ -92,7 +92,7 @@ def build(output):
             before = set(assets.glob('*.whl'))
             before_source = set(assets.glob('*.tar.gz'))
             subprocess.run([sys.executable, '-I', '-c',
-                'import sys; from setuptools import build_meta; build_meta.build_wheel(sys.argv[1]); build_meta.build_sdist(sys.argv[1])',
+                'import sys; from setuptools import build_meta; output=sys.argv[1]; build_meta.build_wheel(output); build_meta.build_sdist(output)',
                 str(assets)], cwd=project, check=True)
             wheels = set(assets.glob('*.whl')) - before
             if len(wheels) != 1:
