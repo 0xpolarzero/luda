@@ -196,17 +196,57 @@ class TextAccess:
     def get_n_selections(self):
         return Atspi.Text.get_n_selections(self.raw)
 
+    def document_offset(self, endpoint, offset, is_end):
+        """Lift exact embedded-object boundaries into this parent's hypertext.
+
+        Interior positions in another object have no parent character equivalent
+        and are deliberately rejected, rather than flattening rich text.
+        """
+        current = endpoint
+        for _ in range(30):
+            if current.path == self.raw.path:
+                return self.public_offset(offset)
+            if "password" in current.get_role_name().casefold():
+                raise ValueError("Protected endpoint cannot be mapped.")
+            parent = current.get_parent()
+            if parent is None or "Hypertext" not in parent.get_interfaces() or "Text" not in current.get_interfaces():
+                break
+            count = Atspi.Text.get_character_count(current.get_text_iface())
+            if offset not in (0, count):
+                break
+            hypertext = parent.get_hypertext_iface()
+            links = Atspi.Hypertext.get_n_links(hypertext)
+            if links > 100:
+                break
+            found = False
+            for i in range(links):
+                link = Atspi.Hypertext.get_link(hypertext, i)
+                linked = link.get_object(0)
+                if linked is not None and linked.path == current.path:
+                    offset = link.get_end_index() if offset == count and (count > 0 or is_end) else link.get_start_index()
+                    current = parent
+                    found = True
+                    break
+            if not found:
+                break
+        raise ValueError("Document endpoint has no exact offset in this text object.")
+
     def get_selection(self, index):
         from types import SimpleNamespace
         if self.document is not None:
             ranges = Atspi.Document.get_text_selections(self.document)
-            matching = [r for r in ranges if r.start_object.path == self.raw.path and r.end_object.path == self.raw.path]
+            matching = []
+            for selected in ranges:
+                try:
+                    start = self.document_offset(selected.start_object, selected.start_offset, False)
+                    end = self.document_offset(selected.end_object, selected.end_offset, True)
+                except (ValueError, AttributeError):
+                    continue
+                matching.append(SimpleNamespace(start_offset=start, end_offset=end))
             if index >= len(matching):
                 raise ValueError("Document selection does not map to this exact text object.")
-            selected = matching[index]
             self.selection_source = "Document.GetTextSelections"
-            return SimpleNamespace(start_offset=self.public_offset(selected.start_offset),
-                                   end_offset=self.public_offset(selected.end_offset))
+            return matching[index]
         if self.toolkit.casefold() == "chromium" and any(ord(c) > 0xFFFF for c in self.text):
             raise ValueError("Chromium non-BMP selection requires the Document selection interface.")
         selection = Atspi.Text.get_selection(self.raw, index)
@@ -617,11 +657,15 @@ def main(req):
                     "exact_match": actual == text, "expected_characters": len(text),
                     "actual_characters": len(actual)}
         if op == "focus":
-            if "focused" in current["states"]:
-                return {"effect": "verified", "accepted": True, "focused": True, "changed": False}
             if "Component" not in current["interfaces"]:
                 return {"error": "UNSUPPORTED", "message": "Element has no Component interface."}
-            ok = node.get_component_iface().grab_focus()
+            try:
+                ok = node.get_component_iface().grab_focus()
+            except Exception:
+                if "focused" in states_of(node):
+                    return {"effect": "verified", "accepted": False, "focused": True,
+                            "changed": False, "focus_request_supported": False}
+                raise
             focused = verify(lambda: "focused" in states_of(node))
             return {"effect": "verified" if focused else "uncertain", "accepted": bool(ok), "focused": focused}
         if op == "invoke":

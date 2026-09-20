@@ -275,4 +275,37 @@ class ChromiumSelections(unittest.TestCase):
         self.raw.text='literal \ufffc';t=w.TextAccess(self.raw)
         self.assertTrue(t.representation()['plain_text_verification_supported'])
 
+
+
+class EmbeddedBoundaryOffsets(unittest.TestCase):
+    def setUp(self):
+        ChromiumSelections.setUp(self);self.raw.text='abc\ufffc'
+        self.child=Text();self.child.text='nested';self.child.path='/child'
+        self.child.get_role_name=lambda:'section';self.child.get_parent=lambda:self.raw
+        self.child.get_interfaces=lambda:['Text'];self.child.get_text_iface=lambda:self.child
+        self.raw.get_interfaces=lambda:['Hypertext'];self.raw.get_hypertext_iface=lambda:self.raw
+        link=types.SimpleNamespace(get_object=lambda _:self.child,get_start_index=lambda:3,get_end_index=lambda:4)
+        w.Atspi.Hypertext=types.SimpleNamespace(get_n_links=lambda _:1,get_link=lambda *_:link)
+    def tearDown(self):ChromiumSelections.tearDown(self)
+    def test_child_start_maps_to_object_start(self):self.assertEqual(w.TextAccess(self.raw).document_offset(self.child,0,False),3)
+    def test_child_end_maps_to_object_end(self):self.assertEqual(w.TextAccess(self.raw).document_offset(self.child,6,True),4)
+    def test_child_interior_is_not_guessed(self):
+        with self.assertRaises(ValueError):w.TextAccess(self.raw).document_offset(self.child,2,True)
+    def test_empty_child_uses_endpoint_direction(self):
+        self.child.text='';t=w.TextAccess(self.raw);self.assertEqual(t.document_offset(self.child,0,False),3);self.assertEqual(t.document_offset(self.child,0,True),4)
+
+class FocusRequest(unittest.TestCase):
+    def run_focus(self,grab,states):
+        node=types.SimpleNamespace(path='/field',get_component_iface=lambda:types.SimpleNamespace(grab_focus=grab))
+        current={'role':'entry','name':'Input','start':'1','states':['focused','enabled','showing'],'interfaces':['Component'],'protected':False}
+        with patch.object(w,'candidates',return_value=[(node,0)]),patch.object(w,'describe',return_value=current),patch.object(w,'states_of',return_value=states):
+            return w.main({'op':'focus','pid':42,'target':{**current,'root_path':'/root','path':'/field'}})
+    def test_focus_request_occurs_even_if_accessibility_says_focused(self):
+        grab=__import__('unittest').mock.Mock(return_value=True);r=self.run_focus(grab,{'focused'});grab.assert_called_once();self.assertEqual(r['effect'],'verified')
+    def test_unsupported_request_retains_only_observed_focus(self):
+        grab=__import__('unittest').mock.Mock(side_effect=RuntimeError('unsupported'));r=self.run_focus(grab,{'focused'});self.assertTrue(r['focused']);self.assertFalse(r['accepted'])
+    def test_unsupported_unfocused_request_is_not_verified(self):
+        grab=__import__('unittest').mock.Mock(side_effect=RuntimeError('unsupported'))
+        with self.assertRaises(RuntimeError):self.run_focus(grab,set())
+
 if __name__=='__main__':unittest.main()

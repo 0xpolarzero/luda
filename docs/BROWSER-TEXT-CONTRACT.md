@@ -46,3 +46,41 @@ shared desktop lease with the optional `--executable` browser path.
 The separate browser qualification suite exercises actual MCP fallback typing.
 This worker regression establishes authoritative selection readback and explicit
 representation limits; it does not claim full rich-editor plaintext verification.
+
+## Focus routing and exact embedded boundaries
+
+An accessibility focused state alone did not ensure native keyboard events reached
+Chromium WebContents. The worker now attempts Component.grab_focus even when the
+state already says focused. Only an unsupported request with a freshly observed
+focused state retains the existing-focus result (needed for GTK4); it never
+upgrades an unfocused error to success. An independent browser key/paste event
+probe established the distinction.
+
+Document selections can end at linked child-object boundaries. Exact offset zero
+or the complete child length can be lifted through a bounded Hypertext link chain
+into the parent's object offsets. Interior offsets and foreign objects remain
+unrepresentable and are refused. This supports verifying a rich parent's selected
+range without inventing a flattened plaintext representation. It does not promise
+that the parent end offset is the browser's final insertion position.
+
+## WEB-03 remains blocked: copy is not an exact general verifier
+
+`tests/live_rich_copy.py` is a **failing qualification probe**, not a production
+fallback. It uses fresh browser documents, verifies native focus, selects parent
+content, installs a distinct sentinel clipboard owner, copies, requires an owner
+transition, compares copied text, attempts caret restoration and checks subsequent
+insertion against an independent DOM oracle.
+
+The final fresh-document probe recorded 31 successful assertions out of 43; the
+remaining 12 failures are retained and the script exits nonzero. Both AT-SPI
+select-all and native Ctrl+A/Ctrl+C can omit trailing newlines. Leading/trailing
+spaces can become NBSP in rich DOM, and blank-line serialization can differ between
+DOM innerText and clipboard text. Parent end-offset restoration also failed for
+some multiline content and could place subsequent text before an intended final
+newline. A changed clipboard owner proves copy occurred; it does not prove a
+lossless serialization or safe caret restoration.
+
+No copy verification fallback is integrated. Do not trim expected newlines, map
+NBSP to spaces or count these cases as qualified. Initial opaque rich text must be
+refused before exact typing mutation; newly opaque output after paste requires an
+explicit uncertain representation error until a correct dedicated backend exists.
