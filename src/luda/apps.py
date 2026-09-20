@@ -82,8 +82,10 @@ def launch_and_observe(desktop,application_id,files_or_uris=None,wait_timeout=1.
             windows=desktop.list_windows()
         except DesktopError as exc:
             if exc.code in ('CANCELLED','TIMEOUT'):raise
+            checkpoint()
             observation.update(state='unavailable',reason='Window enumeration failed after launch.')
             return result
+        checkpoint()
         candidates=[{k:w[k] for k in ('window_id','pid','start','title','active') if k in w}
                     for w in windows if (w.get('pid'),w.get('start')) in identities]
         unavailable=getattr(desktop,'window_diagnostics',{}).get('unavailable_count',0)

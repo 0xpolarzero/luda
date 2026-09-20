@@ -56,6 +56,17 @@ class LaunchObservationTests(unittest.TestCase):
         with patch('luda.apps.launch_application',return_value=self.launch()) as launch,operation_scope(timeout=.01):
             with self.assertRaises(DesktopError) as caught:launch_and_observe(desktop,'fixture.desktop',wait_timeout=3)
         self.assertEqual((caught.exception.code,caught.exception.effect),('TIMEOUT','uncertain'));launch.assert_called_once()
+    def test_cancellation_inside_final_enumeration_is_not_swallowed(self):
+        for error in (None,DesktopError('BACKEND_ERROR','private')):
+            cancelled=threading.Event()
+            def enumerate_windows():
+                cancelled.set()
+                if error:raise error
+                return []
+            desktop=SimpleNamespace(list_windows=enumerate_windows,window_diagnostics={})
+            with self.subTest(error=error),patch('luda.apps.launch_application',return_value=self.launch()) as launch,patch('luda.apps.time.monotonic',side_effect=[0,5]),operation_scope(cancelled=cancelled):
+                with self.assertRaises(DesktopError) as caught:launch_and_observe(desktop,'fixture.desktop',wait_timeout=.1)
+            self.assertEqual((caught.exception.code,caught.exception.effect),('CANCELLED','uncertain'));launch.assert_called_once()
     def test_invalid_wait_before_dispatch(self):
         with patch('luda.apps.launch_application') as launch:
             for value in (True,'1',None,-1,3.1,float('nan'),float('inf')):
