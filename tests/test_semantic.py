@@ -148,7 +148,7 @@ class Utf16Semantics(unittest.TestCase):
 class ScopeAndState(unittest.TestCase):
     def setUp(self):
         self.old=w.Atspi;w.Atspi=types.SimpleNamespace(CoordType=types.SimpleNamespace(SCREEN=0))
-        self.node=types.SimpleNamespace(path='/root',get_interfaces=lambda:['Component'],get_name=lambda:'Fixture',get_parent=lambda:None)
+        self.node=types.SimpleNamespace(app=types.SimpleNamespace(bus_name=':1.42'),path='/root',get_interfaces=lambda:['Component'],get_name=lambda:'Fixture',get_parent=lambda:None)
         self.node.get_component_iface=lambda:types.SimpleNamespace(get_extents=lambda _:types.SimpleNamespace(x=0,y=0,width=100,height=50))
         self.description={'role':'frame','name':'Fixture','start':'1','states':['sensitive','showing'],'bounds':{'x':0,'y':0,'width':100,'height':50}}
         self.req={'op':'inspect','pid':42,'bounds':{'x':10,'y':20,'width':100,'height':50},'frame_bounds':{'x':5,'y':15,'width':110,'height':60}}

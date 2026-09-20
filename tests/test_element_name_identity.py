@@ -36,13 +36,15 @@ class Names(unittest.TestCase):
  def test_public_inspection_hides_digest_but_handle_retains_it(self):
   desktop=Desktop.__new__(Desktop);desktop.elements={}
   desktop.target_window=Mock(return_value={'pid':42,'start':'1','bounds':{},'frame_bounds':{},'title':'Fixture'})
-  node={'path':'/field','parent_path':None,'root_path':'/root','start':'1','name':'label','name_fingerprint':'private-digest'}
+  node={'path':'/field','parent_path':None,'root_path':'/root','start':'1','name':'label','name_fingerprint':'private-digest','root_provider':':1.42'}
   desktop.ax=Mock(return_value={'nodes':[node]})
   result=desktop.inspect('window');public=result['nodes'][0]
   self.assertNotIn('name_fingerprint',public)
+  self.assertNotIn('root_provider',public)
+  self.assertEqual(desktop.elements[public['element_id']]['node']['root_provider'],':1.42')
   self.assertEqual(desktop.elements[public['element_id']]['node']['name_fingerprint'],'private-digest')
  def test_unreadable_name_marks_inspection_incomplete(self):
-  node=Node('label');node.get_interfaces=lambda:['Component']
+  node=Node('label');node.app=types.SimpleNamespace(bus_name=':1.42');node.get_interfaces=lambda:['Component']
   node.get_component_iface=lambda:types.SimpleNamespace(get_extents=lambda _:types.SimpleNamespace(x=0,y=0,width=100,height=100))
   bounds={'x':0,'y':0,'width':100,'height':100}
   with patch.object(w.Atspi,'CoordType',types.SimpleNamespace(SCREEN=0),create=True),patch.object(w,'candidates',side_effect=[[(node,1)],[(node,0)]]),patch.object(w,'describe',side_effect=w.IdentityLimit('too large')):

@@ -4,6 +4,7 @@ import hashlib
 import sys
 import time
 import math
+import re
 from collections import deque
 
 import gi
@@ -95,7 +96,15 @@ def describe(node, pid):
     return r
 
 
-def candidates(pid, limit=1600, depth=30, root_path=None, stats=None):
+def provider_identity(node):
+    # Object paths are local to one D-Bus connection, not to an OS process.
+    name = node.app.bus_name
+    if not isinstance(name, str) or len(name) > 255 or not re.fullmatch(r":[0-9]+(?:\.[0-9]+)+", name):
+        raise ValueError("Accessible provider has no unique bus identity.")
+    return name
+
+
+def candidates(pid, limit=1600, depth=30, root_path=None, stats=None, root_provider=None):
     stats = stats if stats is not None else {}
     stats.setdefault("budget_pruned", False)
     stats.setdefault("depth_pruned", False)
@@ -104,7 +113,7 @@ def candidates(pid, limit=1600, depth=30, root_path=None, stats=None):
     q = deque()
     for i in range(desktop.get_child_count()):
         app = desktop.get_child_at_index(i)
-        if app and app.get_process_id() == pid:
+        if app and app.get_process_id() == pid and (not root_path or provider_identity(app) == root_provider):
             q.append((app, 0))
     if root_path:
         roots = []
@@ -118,6 +127,9 @@ def candidates(pid, limit=1600, depth=30, root_path=None, stats=None):
     while q and count < limit:
         node, level = q.popleft()
         count += 1
+        if root_path and provider_identity(node) != root_provider:
+            stats["unreadable_branches"] += 1
+            continue
         yield node, level
         try:
             children = node.get_child_count()
@@ -714,12 +726,12 @@ def main(req):
             rect = candidate.get_component_iface().get_extents(Atspi.CoordType.SCREEN)
             if any(all(abs(a-b)<=2 for a,b in zip((rect.x,rect.y,rect.width,rect.height),
                        (b["x"],b["y"],b["width"],b["height"]))) for b in (bounds,req["frame_bounds"])):
-                roots.append(candidate.path)
+                roots.append((provider_identity(candidate), candidate.path))
             if (req.get("window_title") and candidate.get_name() == req["window_title"]
                     and rect.width == bounds["width"] and rect.height == bounds["height"]):
-                title_size_matches.append(candidate.path)
+                title_size_matches.append((provider_identity(candidate), candidate.path))
                 if rect.x == 0 and rect.y == 0:
-                    fallback_roots.append(candidate.path)
+                    fallback_roots.append((provider_identity(candidate), candidate.path))
         if scope_stats.get("budget_pruned") or scope_stats.get("unreadable_branches"):
             return failure("AMBIGUOUS_ACCESSIBILITY_WINDOW", "Cannot prove uniqueness within the top-level traversal budget.")
         mapping = "screen_bounds"
@@ -730,7 +742,7 @@ def main(req):
             return failure("ACCESSIBILITY_UNAVAILABLE", "No accessible window matches this X11 target. The application may not be registered with the accessibility bus or expose usable window geometry; use screenshot controls.")
         if len(roots) != 1:
             return {"error":"AMBIGUOUS_ACCESSIBILITY_WINDOW", "message":"Multiple accessible windows may match this X11 target; use screenshot controls."}
-        root_path = roots[0]
+        root_provider, root_path = roots[0]
         nodes = []
         errors = 0
         began = time.monotonic()
@@ -743,7 +755,7 @@ def main(req):
             return failure("INVALID_ARGUMENT", "Filters accept name/role substring strings and a list of required states.")
         visited = 0
         traversal = {}
-        for node, depth in candidates(pid,root_path=root_path, depth=max_depth, stats=traversal):
+        for node, depth in candidates(pid,root_path=root_path, root_provider=root_provider, depth=max_depth, stats=traversal):
             visited += 1
             if len(nodes) >= req.get("limit", 150) or time.monotonic() - began > 3:
                 truncated = True
@@ -754,6 +766,7 @@ def main(req):
                 value["parent_path"] = parent.path if parent else None
                 value["depth"] = depth
                 value["root_path"] = root_path
+                value["root_provider"] = root_provider
                 value["bounds_coordinates"] = "unavailable" if mapping == "unique_title_and_size" else "screen"
                 if mapping == "unique_title_and_size":
                     value.pop("bounds", None)
@@ -768,7 +781,7 @@ def main(req):
                 "coverage": "selected accessible top-level window", "available": visited > 0,
                 "window_mapping": mapping, "bounds_coordinates": "unavailable" if mapping == "unique_title_and_size" else "screen"}
     target = req["target"]
-    for node, _ in candidates(pid,root_path=target["root_path"]):
+    for node, _ in candidates(pid,root_path=target["root_path"],root_provider=target.get("root_provider")):
         if node.path != target["path"]:
             continue
         current = describe(node, pid)
