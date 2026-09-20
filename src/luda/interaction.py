@@ -2,6 +2,7 @@
 import math
 import time
 import uuid
+from contextlib import contextmanager
 from .common import DesktopError, process_identity, run
 from .timing import elapsed_time
 from .window_history import WindowHistory, geometry, normal
@@ -21,6 +22,74 @@ def properties(xid, include_hints=False):
 
 class InteractionMixin:
     """Public operations use existing opaque window/screenshot identities."""
+    def agent_feedback(self, window_id, *, element_id=None, position=None, kind='action'):
+        """Best-effort visual feedback; never another input device or tool."""
+        if not getattr(self, 'environment', {}).get('DISPLAY'):
+            return
+        try:
+            if position is None:
+                node = getattr(self, 'elements', {}).get(element_id, {}).get('node', {})
+                bounds = node.get('bounds') or self.target_window(window_id, False)['bounds']
+                position = (bounds['x'] + bounds['width']//2, bounds['y'] + bounds['height']//2)
+            if getattr(self, 'cursor', None) is None:
+                from .cursor import Cursor
+                self.cursor = Cursor(environment=self.environment)
+            self.cursor.show(*position, kind=kind)
+        except Exception:
+            # Visual feedback must never turn a dispatched action into a retry.
+            pass
+
+    @contextmanager
+    def pointer_action(self, window_id, snapshot_id, points, popup_id=None):
+        """Activate only after validating observed points; recheck before input.
+
+        The original screenshot is never relabelled as a fresh observation. An
+        internal copy permits only this call's known focus/stacking transition.
+        Geometry, identity, workspace, topology and popup checks remain intact.
+        """
+        cursor = getattr(self, 'cursor', None)
+        if cursor is not None:
+            cursor.hide()  # Acknowledged unmap before occlusion checks.
+        window = self.target_window(window_id, False)
+        if window.get('active') is not False:
+            yield snapshot_id
+            return
+        for target, x, y in points:
+            if popup_id is not None:
+                self._popup_point(target, popup_id, snapshot_id, x, y, False)
+            else:
+                self._interaction_point(target, snapshot_id, x, y, False)
+        snap = self.snapshots[snapshot_id]
+        ready = check_pointer_ready()
+        if ready['server_generation'] != snap.get('topology', {}).get('server_generation'):
+            raise DesktopError('STALE_OBSERVATION', 'X server changed after observation; observe again.')
+        token = None
+        try:
+            self.activate(window_id)
+            current = self.list_windows()
+            # Order may change when the WM raises the target. Only focus and
+            # stacking may differ; client positions/identities must still match.
+            def layout(signature):
+                return {row[0]: (row[1], row[3]) for row in signature}
+            signature = self.signature(current)
+            if layout(signature) != layout(snap['signature']):
+                raise DesktopError('STALE_OBSERVATION', 'Window layout changed during activation; observe again.')
+            if self.display().topology() != snap.get('topology'):
+                raise DesktopError('STALE_OBSERVATION', 'Desktop changed during activation; observe again.')
+            if self.popup_signature(self.observe_popups(current)) != self.popup_signature(snap.get('popups', [])):
+                raise DesktopError('STALE_OBSERVATION', 'Popup layout changed during activation; observe again.')
+            token = uuid.uuid4().hex
+            self.snapshots[token] = {**snap, 'signature': signature}
+            yield token
+        except DesktopError as exc:
+            if exc.effect == 'none':
+                exc.effect = 'uncertain'
+                exc.details['prior_effects_possible'] = True
+            raise
+        finally:
+            if token is not None:
+                self.snapshots.pop(token, None)
+
     def pointer_readiness(self, snapshot_id, window):
         identity=window['window_id'].rsplit(':',1)[-1]
         ready=check_pointer_ready(window['xid'],target_generation=identity)
@@ -253,7 +322,7 @@ class InteractionMixin:
         for popup in reversed(snap.get('popups',[])):
             b = popup['bounds']
             if popup['owner_window_id']==window_id and b['x']<=px<b['x']+b['width'] and b['y']<=py<b['y']+b['height']:
-                return self._popup_point(window_id,popup['popup_id'],snapshot_id,x,y)
+                return self._popup_point(window_id,popup['popup_id'],snapshot_id,x,y,require_focus)
         if self.display().surface_at(px,py)!=self.display().root_surface(w['xid']):
             raise DesktopError('OCCLUDED_TARGET','Another surface covers this point; observe again.')
         b = w['bounds']
@@ -262,24 +331,29 @@ class InteractionMixin:
         return px,py
 
     def hover(self, window_id, snapshot_id, x, y):
-        px,py = self._interaction_point(window_id,snapshot_id,x,y)
-        window=self.target_window(window_id)
-        ready=self.pointer_readiness(snapshot_id,window)
-        move_pointer(px,py,ready['server_generation'],target=window['xid'],target_generation=ready['target_generation'])
+        with self.pointer_action(window_id,snapshot_id,[(window_id,x,y)]) as routed:
+            px,py = self._interaction_point(window_id,routed,x,y)
+            window=self.target_window(window_id)
+            ready=self.pointer_readiness(routed,window)
+            self.agent_feedback(window_id,position=(px,py),kind='move')
+            move_pointer(px,py,ready['server_generation'],target=window['xid'],target_generation=ready['target_generation'])
         return {'effect':'dispatched','verification':'Pointer motion sent; observe tooltips or hover state.'}
 
     def drag_between(self, source_window_id, target_window_id, snapshot_id, x, y, end_x, end_y, button='left'):
         buttons = {'left':'1','middle':'2','right':'3'}
         if button not in buttons: raise DesktopError('INVALID_ARGUMENT','Unknown mouse button.')
-        start = self._interaction_point(source_window_id,snapshot_id,x,y)
-        end = self._interaction_point(target_window_id,snapshot_id,end_x,end_y,False)
-        window=self.target_window(source_window_id)
-        ready=self.pointer_readiness(snapshot_id,window)
-        with held_button(buttons[button],target=window['xid'],position=start,server_generation=ready['server_generation'],target_generation=ready['target_generation']) as pointer:
-            for step in range(1,16):
-                p = [round(start[i]+(end[i]-start[i])*step/15) for i in (0,1)]
-                pointer.move(p[0],p[1])
-                time.sleep(.02)
+        with self.pointer_action(source_window_id,snapshot_id,[(source_window_id,x,y),(target_window_id,end_x,end_y)]) as routed:
+            start = self._interaction_point(source_window_id,routed,x,y)
+            end = self._interaction_point(target_window_id,routed,end_x,end_y,False)
+            window=self.target_window(source_window_id)
+            ready=self.pointer_readiness(routed,window)
+            self.agent_feedback(source_window_id,position=start,kind='drag')
+            with held_button(buttons[button],target=window['xid'],position=start,server_generation=ready['server_generation'],target_generation=ready['target_generation']) as pointer:
+                for step in range(1,16):
+                    p = [round(start[i]+(end[i]-start[i])*step/15) for i in (0,1)]
+                    pointer.move(p[0],p[1])
+                    self.agent_feedback(source_window_id,position=p,kind='drag')
+                    time.sleep(.02)
         return {'effect':'dispatched','verification':'Drag input sent and button released; inspect both applications to verify transfer.'}
 
     @staticmethod
@@ -317,7 +391,7 @@ class InteractionMixin:
             result.append({**popup,'bounds':dict(popup['bounds']),'start':start,'generation':generations[popup['xid']],'owner_window_id':owner['window_id'],'popup_id':uuid.uuid4().hex})
         return result
 
-    def _popup_point(self, owner_window_id, popup_id, snapshot_id, x, y):
+    def _popup_point(self, owner_window_id, popup_id, snapshot_id, x, y, require_focus=True):
         if any(isinstance(v,bool) or not isinstance(v,(int,float)) or not math.isfinite(v) for v in (x,y)):
             raise DesktopError('INVALID_ARGUMENT','Coordinates must be finite numbers.')
         snap=self.snapshots.get(snapshot_id)
@@ -325,7 +399,7 @@ class InteractionMixin:
             raise DesktopError('STALE_OBSERVATION','Screenshot expired; observe again.')
         observed=next((p for p in snap.get('popups',[]) if p['popup_id']==popup_id and p['owner_window_id']==owner_window_id),None)
         if observed is None:raise DesktopError('STALE_TARGET','Popup is not authorized by this screenshot and owner.')
-        self.target_window(owner_window_id)
+        self.target_window(owner_window_id,require_focus)
         if self.signature(list(self.windows.values()))!=snap['signature']:
             raise DesktopError('STALE_OBSERVATION','Window layout or focus changed; observe again.')
         current=self.observe_popups(list(self.windows.values()))
@@ -353,11 +427,13 @@ class InteractionMixin:
         integer(count,'count',1,20)
         if button not in buttons or direction not in directions:
             raise DesktopError('INVALID_ARGUMENT','Unknown pointer button or scroll direction.')
-        px,py=self._popup_point(owner_window_id,popup_id,snapshot_id,x,y)
-        window=self.target_window(owner_window_id)
-        ready=self.pointer_readiness(snapshot_id,window)
-        if kind!='hover':
-            click_button(buttons[button] if kind=='click' else directions[direction],count,target=window['xid'],position=(px,py),server_generation=ready['server_generation'],target_generation=ready['target_generation'])
-        else:
-            move_pointer(px,py,ready['server_generation'],target=window['xid'],target_generation=ready['target_generation'])
+        with self.pointer_action(owner_window_id,snapshot_id,[(owner_window_id,x,y)],popup_id) as routed:
+            px,py=self._popup_point(owner_window_id,popup_id,routed,x,y)
+            window=self.target_window(owner_window_id)
+            ready=self.pointer_readiness(routed,window)
+            self.agent_feedback(owner_window_id,position=(px,py),kind=kind)
+            if kind!='hover':
+                click_button(buttons[button] if kind=='click' else directions[direction],count,target=window['xid'],position=(px,py),server_generation=ready['server_generation'],target_generation=ready['target_generation'])
+            else:
+                move_pointer(px,py,ready['server_generation'],target=window['xid'],target_generation=ready['target_generation'])
         return {'effect':'dispatched','verification':'Popup input sent; observe the menu or resulting application state.'}

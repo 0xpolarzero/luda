@@ -386,26 +386,31 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         coordinates = (x, y, end_x, end_y) if kind == 'drag' else (x, y)
         if any(isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v) for v in coordinates):
             raise DesktopError('INVALID_ARGUMENT', 'Coordinates must be finite numbers.')
-        px,py = self.point(window_id,snapshot_id,x,y)
-        end = self.point(window_id,snapshot_id,end_x,end_y) if kind=='drag' else None
         buttons = {'left':'1','middle':'2','right':'3'}
         if button not in buttons or not 1 <= count <= 20:
             raise DesktopError('INVALID_ARGUMENT','Invalid button or count.')
-        window = self.target_window(window_id)
-        target = window['xid']
-        ready = self.pointer_readiness(snapshot_id,window)
-        if kind=='click':
-            click_button(buttons[button], count, target=target, position=(px,py), server_generation=ready['server_generation'],target_generation=ready['target_generation'])
-        elif kind=='scroll':
-            mapping={'up':'4','down':'5','left':'6','right':'7'}
-            if direction not in mapping:
-                raise DesktopError('INVALID_ARGUMENT','Invalid scroll direction.')
-            click_button(mapping[direction], count, target=target, position=(px,py), server_generation=ready['server_generation'],target_generation=ready['target_generation'])
-        elif kind=='drag':
-            with held_button(buttons[button],target=target,position=(px,py),server_generation=ready['server_generation'],target_generation=ready['target_generation']) as pointer:
-                for step in range(1,11):
-                    ax=round(px+(end[0]-px)*step/10);ay=round(py+(end[1]-py)*step/10)
-                    pointer.move(ax,ay);time.sleep(.02)
+        points = [(window_id,x,y)] + ([(window_id,end_x,end_y)] if kind=='drag' else [])
+        with self.pointer_action(window_id,snapshot_id,points) as routed:
+            px,py = self.point(window_id,routed,x,y)
+            end = self.point(window_id,routed,end_x,end_y) if kind=='drag' else None
+            window = self.target_window(window_id)
+            target = window['xid']
+            ready = self.pointer_readiness(routed,window)
+            self.agent_feedback(window_id,position=(px,py),kind=kind)
+            if kind=='click':
+                click_button(buttons[button], count, target=target, position=(px,py), server_generation=ready['server_generation'],target_generation=ready['target_generation'])
+            elif kind=='scroll':
+                mapping={'up':'4','down':'5','left':'6','right':'7'}
+                if direction not in mapping:
+                    raise DesktopError('INVALID_ARGUMENT','Invalid scroll direction.')
+                click_button(mapping[direction], count, target=target, position=(px,py), server_generation=ready['server_generation'],target_generation=ready['target_generation'])
+            elif kind=='drag':
+                with held_button(buttons[button],target=target,position=(px,py),server_generation=ready['server_generation'],target_generation=ready['target_generation']) as pointer:
+                    for step in range(1,11):
+                        ax=round(px+(end[0]-px)*step/10);ay=round(py+(end[1]-py)*step/10)
+                        pointer.move(ax,ay)
+                        self.agent_feedback(window_id,position=(ax,ay),kind='drag')
+                        time.sleep(.02)
         return {'effect':'dispatched','verification':'Observe the resulting application state.'}
 
     def key(self, window_id, chord, count=1):
@@ -687,7 +692,8 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
             return
         self.closed = True
         errors = []
-        for cleanup in (lambda: self.browser.close() if hasattr(self, 'browser') else None,
+        for cleanup in (lambda: self.cursor.close() if getattr(self, 'cursor', None) else None,
+                        lambda: self.browser.close() if hasattr(self, 'browser') else None,
                         lambda: self.recordings.close() if hasattr(self, 'recordings') else None,
                         lambda: stop_process(self.clipboard_owner) if self.clipboard_owner else None,
                         lambda: self.x.close() if self.x else None,
