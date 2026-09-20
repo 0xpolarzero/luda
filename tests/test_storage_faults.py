@@ -24,7 +24,8 @@ class StorageFaults(unittest.TestCase):
         d.x.topology.return_value={'root':d.x.geometry.return_value,'randr':{'version':[1,6],'monitors':[],'crtcs':[]}}
         d.list_windows = Mock(return_value=[])
         d.observe_popups = Mock(return_value=[])
-        d.target_window = Mock(return_value={'wm_class': [], 'window_id': 'fixture'})
+        d.target_window = Mock(return_value={'wm_class': [], 'window_id': 'fixture', 'xid':42})
+        self.enterContext(patch('luda.interaction.properties',return_value=''))
         d.key = Mock()
         d.input_scope=lambda: nullcontext()
         d.focus_input=Mock()
@@ -102,12 +103,14 @@ class StorageFaults(unittest.TestCase):
     def test_real_descriptor_exhaustion_in_private_child(self):
         code = r"""
 import os,resource,tempfile
+import luda.interaction
+luda.interaction.properties=lambda *args:''
 from contextlib import nullcontext
 from pathlib import Path
 from luda.desktop import Desktop
 from luda.common import DesktopError
 with tempfile.TemporaryDirectory() as directory:
- d=Desktop();d.runtime=Path(directory);d.target_window=lambda *args,**kwargs:{'wm_class':[]}
+ d=Desktop();d.runtime=Path(directory);d.target_window=lambda *args,**kwargs:{'wm_class':[], 'xid':42}
  d.input_scope=lambda:nullcontext()
  d.focus_input=lambda *args:None
  d.check_input_focus=lambda *args:None
