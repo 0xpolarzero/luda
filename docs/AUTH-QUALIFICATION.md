@@ -16,6 +16,10 @@ The matrix supplies private Xvfb, D-Bus and XDG state, records source hashes and
 cleans up owned processes. Results contain booleans, interface names and error
 codes, not the synthetic one-time value or complete tool responses.
 
+The [evidence audit proposal](AUTH-EVIDENCE-AUDIT.md) compares these probe outcomes
+with the exact catalog criteria. It proposes report separation for review; no
+record, exit status or qualification has been changed.
+
 ## Observed results
 
 On Linux ARM64, UID 1001 and Chromium 153.0.8010.12, the original full run recorded **7/11
