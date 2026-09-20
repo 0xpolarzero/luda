@@ -25,7 +25,7 @@ from .waits import ConditionWaitsMixin
 from types import MappingProxyType
 from .common import environment_scope, subprocess_environment
 from .input_guard import held_button
-from .keyboard import validate_chord, send_chord, keyboard_capabilities
+from .keyboard import validate_chord, send_chord, keyboard_capabilities, keyboard_recovery_checkpoint
 from .session_state import session_state
 from .ime import composition_capability
 from .diagnostics import capability_summary
@@ -67,6 +67,7 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         if self.closed:
             raise DesktopError('CLOSED', 'Server backend has been closed.')
         try:
+            keyboard_recovery_checkpoint()
             checkpoint()
         except DesktopError:
             self.admission.cancel()

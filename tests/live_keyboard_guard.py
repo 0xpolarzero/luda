@@ -149,6 +149,78 @@ def run_child():
             assert errors and errors[0].code=='CANCELLED' and errors[0].effect=='uncertain',errors
             wait(lambda:not oracle.pressed())
             rows.append('midchord-cancellation-releases-owned-keys')
+            # Stop both companion and injector after an independent real press.
+            # Hold the recovery SIGCONT briefly to prove the pending gate stays
+            # closed before the same companion is allowed to finish cleanup.
+            from unittest.mock import patch
+            from luda import keyboard
+            previous=(keyboard._retain_recovery,keyboard._release_recovery)
+            retained=[];released=threading.Event();resuming=threading.Event();allow_resume=threading.Event();pending_errors=[]
+            original_kill=os.kill
+            def controlled_resume(pid,operation):
+                if operation==signal.SIGCONT:
+                    resuming.set();allow_resume.wait(5)
+                return original_kill(pid,operation)
+            def pending_case():
+                try:
+                    with operation_scope(timeout=14):send_chord('ctrl+shift+alt+F12',window['xid'])
+                except DesktopError as exc:pending_errors.append(exc)
+            def release(token):released.set()
+            keyboard.set_recovery_hooks(retained.append,release)
+            try:
+                with patch('luda.keyboard.os.kill',side_effect=controlled_resume):
+                    pending_thread=threading.Thread(target=pending_case);pending_thread.start()
+                    wait(lambda:oracle.code('Control_L') in oracle.pressed())
+                    guards=[pid for pid in descendants(os.getpid()) if b'luda._keyboard_guard' in Path(f'/proc/{pid}/cmdline').read_bytes()]
+                    assert len(guards)==1,guards
+                    injectors=descendants(guards[0]);assert len(injectors)==1,injectors
+                    original_kill(injectors[0],signal.SIGSTOP);original_kill(guards[0],signal.SIGSTOP)
+                    pending_thread.join(13)
+                    assert not pending_thread.is_alive()
+                    assert pending_errors and pending_errors[0].code=='KEYBOARD_CLEANUP_PENDING',pending_errors
+                    assert pending_errors[0].effect=='uncertain' and len(retained)==1
+                    assert resuming.wait(1) and not released.is_set()
+                    try:send_chord('Return',window['xid']);raise AssertionError('new input passed pending cleanup')
+                    except DesktopError as exc:assert exc.code=='BUSY',exc.code
+                    assert oracle.code('Control_L') in oracle.pressed()
+                    allow_resume.set();assert released.wait(4)
+                    wait(lambda:not oracle.pressed())
+                    keyboard.keyboard_recovery_checkpoint()
+            finally:
+                allow_resume.set();keyboard.set_recovery_hooks(*previous)
+            rows.append('stopped-guardian-pending-gate-blocks-input-until-verified-recovery')
+            # Inject a guardian selector fault after the armed worker message,
+            # then independently prove that exception cleanup still releases.
+            fault_script="""import selectors,time
+original=selectors.DefaultSelector
+class FaultSelector(original):
+ def select(self,timeout=None):
+  if getattr(self,'seen_worker',False):
+   time.sleep(.1)
+   raise OSError('synthetic selector fault')
+  events=super().select(timeout)
+  if any(key.data=='worker' for key,mask in events):self.seen_worker=True
+  return events
+selectors.DefaultSelector=FaultSelector
+from luda._keyboard_guard import main
+main()
+"""
+            plan=subprocess.check_output([sys.executable,'-m','luda._keyboard_native','plan'],input=json.dumps({'chord':'ctrl+shift+alt+F12','target':window['xid']}).encode()+b'\n')
+            faulty=subprocess.Popen([sys.executable,'-c',fault_script],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL)
+            try:
+                faulty.stdin.write(plan);faulty.stdin.flush()
+                wait(lambda:oracle.code('Control_L') in oracle.pressed())
+                injectors=descendants(faulty.pid);assert len(injectors)==1,injectors
+                os.kill(injectors[0],signal.SIGSTOP)
+                wait(lambda:not oracle.pressed(),3)
+                assert select.select([faulty.stdout],[],[],3)[0]
+                response=json.loads(faulty.stdout.readline())
+                assert response['code']=='KEYBOARD_UNAVAILABLE' and response['cleanup_verified'],response
+                faulty.wait(timeout=3)
+            finally:
+                faulty.stdin.close();faulty.stdout.close()
+                if faulty.poll() is None:faulty.kill();faulty.wait(timeout=2)
+            rows.append('guardian-resource-fault-after-arming-cleans-owned-keys')
             assert not oracle.buttons()
         finally:
             if oracle:oracle.close()

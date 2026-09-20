@@ -12,6 +12,16 @@ def emit(value):
     except BrokenPipeError:pass
 
 
+def release_owned(request,client):
+    try:
+        cleanup=subprocess.run([sys.executable,'-m','luda._keyboard_native','release'],
+                               input=json.dumps({'keycodes':request['keycodes'],'client':client}).encode()+b'\n',
+                               stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,timeout=2)
+        return cleanup.returncode==0 and json.loads(cleanup.stdout).get('released') is True
+    except Exception:
+        return False
+
+
 def main():
     worker=None;armed=False;client=None;done=None;buffer=b'';partial=b'';request=None
     reason=None
@@ -67,10 +77,7 @@ def main():
             if len(buffer)>8192:break
         consume(b'',final=True)
         if armed and (reason or not done or not done.get('done')):
-            try:
-                cleanup=subprocess.run([sys.executable,'-m','luda._keyboard_native','release'],input=json.dumps({'keycodes':request['keycodes'],'client':client}).encode()+b'\n',stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,timeout=2)
-                cleaned=cleanup.returncode==0 and json.loads(cleanup.stdout).get('released') is True
-            except Exception:cleaned=False
+            cleaned=release_owned(request,client)
             result={'code':reason or 'KEYBOARD_INTERRUPTED','message':'Keyboard operation interrupted; owned key release was attempted. Inspect the application before retrying.','effect':'uncertain','cleanup_verified':cleaned}
         elif reason:
             result={'code':reason,'message':'Keyboard operation cancelled before key dispatch.','effect':'none'}
@@ -92,10 +99,9 @@ def main():
         # Protocol errors are private implementation failures. A valid armed
         # record precedes every possible native event; conservatively clean the
         # validated plan if worker output was lost or malformed.
-        if request and worker and armed:
-            try:subprocess.run([sys.executable,'-m','luda._keyboard_native','release'],input=json.dumps({'keycodes':request['keycodes'],'client':client}).encode()+b'\n',stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=2)
-            except Exception:pass
-        emit({'code':'KEYBOARD_UNAVAILABLE','message':'Keyboard companion failed; inspect state before retrying.','effect':'uncertain' if armed else 'none','armed':armed})
+        cleaned=release_owned(request,client) if request and worker and armed else False
+        emit({'code':'KEYBOARD_UNAVAILABLE','message':'Keyboard companion failed; inspect state before retrying.',
+              'effect':'uncertain' if worker else 'none','armed':bool(worker),'cleanup_verified':cleaned})
     finally:
         if worker and worker.stdout:worker.stdout.close()
 

@@ -140,6 +140,11 @@ class PendingKeyboardRecovery(unittest.TestCase):
             self.assertEqual(len(retained),1);self.assertEqual(released,[])
             with self.assertRaises(DesktopError) as error:keyboard.keyboard_recovery_checkpoint()
             self.assertEqual(error.exception.code,'BUSY')
+            desktop=Desktop()
+            try:
+                with self.assertRaises(DesktopError):
+                    with desktop.transaction():self.fail('Direct API passed unresolved keyboard recovery')
+            finally:desktop.close()
         finally:
             keyboard.set_recovery_hooks(*previous)
             with keyboard._recovery_lock:
