@@ -27,6 +27,7 @@ def suite(script, ids, *, wm=True, browser=None, electron=None, firefox=None, mo
 
 
 SUITES = {
+    'recycled-rows': suite('live_recycled_rows.py', 'DATA-01', artifacts=('recycled-rows',), gaps=('Four persistent GTK row slots across delayed pages; stable business identity is an app oracle, not a provider-path guarantee',)),
     'range-selection': suite('live_range_selection.py', 'DATA-03', artifacts=('range-selection',), gaps=('Observed visible same-inspection GTK ranges; no virtualized or implicit range inference',)),
     'restore-comparison': suite('live_restore_comparison.py', 'WM-03', wm=False, artifacts=('restore-comparison',), gaps=('Observed pre-maximize geometry comparison; unobserved external change-and-revert is not detectable',)),
     'window-geometry': suite('live_window_geometry.py', 'WM-02 WM-03', wm=False, artifacts=('window-geometry',), gaps=('Observed GTK/XFWM client/frame geometry; no automatic pre-maximize history tracking',)),

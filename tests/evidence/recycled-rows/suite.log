@@ -1,0 +1,11 @@
+dbus-daemon[11395]: [session uid=1001 pid=11395] Activating service name='org.a11y.Bus' requested by ':1.0' (uid=1001 pid=11400 comm="xfwm4 --compositor=off")
+dbus-daemon[11395]: [session uid=1001 pid=11395] Successfully activated service 'org.a11y.Bus'
+dbus-daemon[11414]: Activating service name='org.a11y.atspi.Registry' requested by ':1.0' (uid=1001 pid=11400 comm="xfwm4 --compositor=off")
+dbus-daemon[11395]: [session uid=1001 pid=11395] Activating service name='org.xfce.Xfconf' requested by ':1.2' (uid=1001 pid=11400 comm="xfwm4 --compositor=off")
+dbus-daemon[11414]: Successfully activated service 'org.a11y.atspi.Registry'
+SpiRegistry daemon is running with well-known name - org.a11y.atspi.Registry
+dbus-daemon[11395]: [session uid=1001 pid=11395] Successfully activated service 'org.xfce.Xfconf'
+
+(xfwm4:11400): xfwm4-WARNING **: 10:09:38.343: Failed to connect to session manager: Failed to connect to the session manager: SESSION_MANAGER environment variable not defined
+
+(xfconfd:11422): xfconfd-WARNING **: 10:09:47.984: Name org.xfce.Xfconf lost on the message dbus, exiting.
