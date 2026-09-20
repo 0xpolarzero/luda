@@ -110,6 +110,19 @@ class AdmissionTests(unittest.TestCase):
         lock.unlink();self.path.chmod(0o755)
         with self.assertRaises(DesktopError):self.clients[0].acquire(self.fds[0])
         self.path.chmod(0o700)
+    def test_crash_orphans_are_bounded_and_replaced_safely(self):
+        pending=self.path/'display.admission.json.pending'
+        for _ in range(5):
+            pending.write_bytes(b'partial crashed write');pending.chmod(0o600)
+            self.clients[0].acquire(self.fds[0]);self.clients[0].release(self.fds[0])
+            self.assertFalse(pending.exists())
+            self.assertEqual(len(list(self.path.glob('*.pending'))),0)
+        victim=self.path/'victim';victim.write_text('keep')
+        pending.symlink_to(victim)
+        with self.assertRaises(DesktopError):self.clients[0].acquire(self.fds[0])
+        self.assertTrue(pending.is_symlink())
+        self.assertEqual(victim.read_text(),'keep')
+
     def test_no_operation_arguments_are_stored(self):
         self.clients[0].acquire(self.fds[0]);self.busy(1)
         self.assertEqual(set(self.state()['queue'][0]),{'nonce','pid','start','expires'})

@@ -98,17 +98,28 @@ class Admission:
         encoded = json.dumps({'version':1, 'boot':self.boot, 'queue':queue}, separators=(',', ':')).encode()
         if len(encoded) > MAX_BYTES:
             raise self._unsafe()
-        name = '.admission-' + uuid.uuid4().hex
+        # One fixed pending name bounds crash orphans to one file per display.
+        # The arbitration lock proves no cooperating writer is still using it.
+        name = self.state_name + '.pending'
         fd = None
         try:
+            try:
+                pending = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=directory)
+            except FileNotFoundError:
+                pass
+            else:
+                try:self._check_file(pending)
+                finally:os.close(pending)
+                os.unlink(name, dir_fd=directory)
             fd = os.open(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600, dir_fd=directory)
             with os.fdopen(fd, 'wb', closefd=False) as stream:
                 stream.write(encoded)
             os.replace(name, self.state_name, src_dir_fd=directory, dst_dir_fd=directory)
         finally:
             if fd is not None:os.close(fd)
-            try:os.unlink(name, dir_fd=directory)
-            except FileNotFoundError:pass
+            if fd is not None:
+                try:os.unlink(name, dir_fd=directory)
+                except FileNotFoundError:pass
 
     def _live(self, ticket, now):
         if ticket['expires'] <= now or ticket['expires'] > now + LEASE_SECONDS + .1:
