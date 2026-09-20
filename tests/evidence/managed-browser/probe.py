@@ -30,7 +30,7 @@ async def main():
   await client.request('initialize',{'protocolVersion':'2025-03-26','capabilities':{},'clientInfo':{'name':'managed-browser-probe','version':'1'}});await client.send({'jsonrpc':'2.0','method':'notifications/initialized'})
   doctor=await client.call('desktop_doctor');cap=doctor['owned_browser']
   assert cap['available'] and cap['managed_selection_verified'] and cap['verified_executable_version']=='153.0.8010.12' and cap['playwright_version']=='1.63.0' and not cap['launch_verified'],cap
-  replacement_refused=False
+  replacement_refused=None
   if args.replace_owned_executable:
    executable=args.replace_owned_executable.resolve()
    selection=json.loads((args.prefix/'current/.venv/luda-browser.json').read_text())
