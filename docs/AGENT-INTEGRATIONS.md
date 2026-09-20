@@ -75,7 +75,32 @@ A same-machine agent running over SSH often lacks the desktop's environment. Rep
 /opt/luda/current/.venv/bin/luda-session --user YOUR_DESKTOP_ACCOUNT -- /opt/luda/current/.venv/bin/luda
 ```
 
-Use that executable and argument list in your client's registration. It attaches to an existing session; it does not start one. Run as the desktop account, or use an explicitly authorized root launcher that drops to that account. Other ordinary accounts cannot attach by naming someone else's account. XFCE discovery and explicit `--session-pid` attachment are explained in [installation](INSTALLATION.md).
+For an agent running on the Linux machine as the desktop account, choose one of these commands instead of the direct commands above:
+
+```sh
+codex mcp add luda -- /opt/luda/current/.venv/bin/luda-session --user "$(id -un)" -- /opt/luda/current/.venv/bin/luda
+claude mcp add --transport stdio --scope user luda -- /opt/luda/current/.venv/bin/luda-session --user "$(id -un)" -- /opt/luda/current/.venv/bin/luda
+gemini mcp add --transport stdio --scope user luda /opt/luda/current/.venv/bin/luda-session -- --user "$(id -un)" -- /opt/luda/current/.venv/bin/luda
+```
+
+Gemini's first `--` separates server arguments from its own options. These commands use your current Linux account; run them in the SSH session on that machine. Review an existing `luda` registration before updating it.
+
+For Cursor, merge this entry into `~/.cursor/mcp.json`, replacing `YOUR_DESKTOP_ACCOUNT` with that same account name:
+
+```json
+{
+  "mcpServers": {
+    "luda": {
+      "command": "/opt/luda/current/.venv/bin/luda-session",
+      "args": ["--user", "YOUR_DESKTOP_ACCOUNT", "--", "/opt/luda/current/.venv/bin/luda"]
+    }
+  }
+}
+```
+
+For OpenCode, the complete `command` array is `["/opt/luda/current/.venv/bin/luda-session", "--user", "YOUR_DESKTOP_ACCOUNT", "--", "/opt/luda/current/.venv/bin/luda"]`.
+
+ It attaches to an existing session; it does not start one. Run as the desktop account, or use an explicitly authorized root launcher that drops to that account. Other ordinary accounts cannot attach by naming someone else's account. XFCE discovery and explicit `--session-pid` attachment are explained in [installation](INSTALLATION.md).
 
 If the agent itself runs on another computer, its MCP command must establish SSH and launch Luda **on the Linux desktop machine**. Local `/opt/luda` paths do not magically refer to a remote machine. Use your existing SSH configuration, verified host keys, and stdio (`ssh -T`); the skill must be installed where that agent discovers skills. Cursor's local user skills are not automatically copied into remote or cloud workers. See [VM images](ENVIRONMENT-PACKAGING.md) for guest-side setup.
 

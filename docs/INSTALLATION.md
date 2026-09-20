@@ -48,6 +48,29 @@ The launcher drops root privileges, uses an allowlisted environment, and changes
 
 SSH transport must execute the server on the Linux machine that owns the desktop. Keep host keys verified and use stdio; no public MCP listener is needed. A configuration file alone does not create a transport.
 
+## Upgrade
+
+Check out the new reviewed release or commit in a clean source checkout, then rerun the same installation command from that checkout:
+
+```sh
+sudo bash scripts/install.sh /opt/luda --user "$(id -un)"
+```
+
+Use the same account, prefix and optional browser configuration as before; retain `--skip-system` when your deployment manages system dependencies. A successful install switches `current` to the new immutable release. Existing MCP processes still run their previous code: reconnect/restart clients after updating the runtime and skill.
+
+For a separately installed skill, preserve the existing copy outside its discovery directory, then copy the new selected release. Example for Codex, run as the agent account:
+
+```sh
+luda_skill_backup=$(mktemp -d "$HOME/luda-skill-backup.XXXXXX")
+mv "$HOME/.agents/skills/luda" "$luda_skill_backup/luda"
+python3 scripts/install_skill.py --agent codex --scope user \
+  --source /opt/luda/current/skills/luda
+```
+
+Use the [documented directory and agent name](AGENT-INTEGRATIONS.md#choose-your-agent) for other clients. Inspect and retain any personal changes in the backup. If no skill was installed, skip the backup and install it. The installer refuses to overwrite a different existing copy. A Codex plugin contains its own copied skill: use the [plugin update procedure](CODEX-PLUGIN.md#update) instead. Switching `current` does not update copied skills or plugin caches automatically.
+
+After restarting the client, repeat the [read-only readiness checks](AGENT-INTEGRATIONS.md#confirm-it-works).
+
 ## Rollback and removal
 
 ```sh
