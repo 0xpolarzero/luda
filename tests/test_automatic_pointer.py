@@ -1,4 +1,5 @@
 """Automatic activation must preserve screenshot identity and no-input guards."""
+from contextlib import nullcontext
 import copy
 import unittest
 from unittest.mock import Mock, patch
@@ -26,7 +27,9 @@ class AutomaticPointerTests(unittest.TestCase):
         def activate(*_):
             target['active'] = True
             human['active'] = False
-        d.activate = Mock(side_effect=activate)
+        d.focus_input = Mock(side_effect=activate)
+        d.activate = Mock()
+        d.input_scope = Mock(side_effect=nullcontext)
         d.cursor = Mock()
         return d, target, windows
 
@@ -42,7 +45,8 @@ class AutomaticPointerTests(unittest.TestCase):
         self.assertEqual(d.snapshots, {'original': before})
         d._interaction_point.assert_called_once_with('target', 'original', 1, 2, False)
         d.cursor.hide.assert_called_once()
-        d.activate.assert_called_once_with('target')
+        d.focus_input.assert_called_once_with(target)
+        d.activate.assert_not_called()
         ready.assert_called_once_with()
 
     @patch('luda.interaction.check_pointer_ready')
@@ -72,7 +76,7 @@ class AutomaticPointerTests(unittest.TestCase):
     def test_layout_popup_and_topology_change_never_reach_input(self, ready):
         for change in ('geometry', 'workspace', 'identity', 'popup', 'topology'):
             d, target, _ = self.driver()
-            activate = d.activate.side_effect
+            activate = d.focus_input.side_effect
             def changed(*args):
                 activate(*args)
                 if change == 'geometry': target['bounds']['x'] += 1
@@ -80,7 +84,7 @@ class AutomaticPointerTests(unittest.TestCase):
                 elif change == 'identity': target['window_id'] = 'replacement'
                 elif change == 'popup': d.observe_popups.side_effect = DesktopError('STALE_OBSERVATION', 'new popup')
                 elif change == 'topology': d.display().topology.return_value = {'server_generation': 'other'}
-            d.activate.side_effect = changed
+            d.focus_input.side_effect = changed
             # Signature captures bounds by reference in production; snapshot's
             # bounds are separate objects from subsequent metadata observations.
             d.snapshots = copy.deepcopy(d.snapshots)
@@ -99,16 +103,17 @@ class AutomaticPointerTests(unittest.TestCase):
                 raise DesktopError('TIMEOUT', 'input completion unknown', effect='uncertain')
         self.assertEqual(caught.exception.code, 'TIMEOUT')
         self.assertEqual(list(d.snapshots), ['original'])
-        d.activate.assert_called_once()
+        d.focus_input.assert_called_once()
 
-    @patch('luda.interaction.check_pointer_ready')
-    def test_active_target_does_not_activate(self, ready):
+    @patch('luda.interaction.check_pointer_ready', return_value={'server_generation': 'generation'})
+    def test_globally_active_target_still_uses_private_focus(self, ready):
         d, target, _ = self.driver()
         target['active'] = True
         with d.pointer_action('target', 'original', [('target', 1, 2)]) as token:
-            self.assertEqual(token, 'original')
+            self.assertNotEqual(token, 'original')
         d.activate.assert_not_called()
-        ready.assert_not_called()
+        d.focus_input.assert_called_once_with(target)
+        ready.assert_called_once()
 
     def test_invalid_pointer_options_do_not_activate(self):
         d, _, _ = self.driver()

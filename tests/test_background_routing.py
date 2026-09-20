@@ -1,4 +1,5 @@
 """Background semantics and foreground fallback without replaying uncertain input."""
+from contextlib import nullcontext
 import unittest
 from unittest.mock import Mock, patch
 from luda.common import DesktopError, elapsed_time
@@ -14,6 +15,8 @@ class BackgroundRouting(unittest.TestCase):
         d.target_window = Mock(return_value={'window_id': 'window:token', 'pid': 1,
                                             'start': 'start', 'xid': 2, 'active': False})
         d.activate = Mock()
+        d.input_scope = Mock(side_effect=nullcontext)
+        d.focus_input = Mock()
         d.agent_feedback = Mock()
         d.ax = Mock(return_value={'effect': 'verified', 'exact_match': True})
         return d
@@ -37,14 +40,16 @@ class BackgroundRouting(unittest.TestCase):
         d.activate.assert_not_called()
         self.assertEqual(d.ax.call_args.args[0]['op'], 'set')
 
-    def test_focus_and_key_activate_automatically(self):
+    def test_focus_and_key_use_private_focus_automatically(self):
         d = self.driver()
         d.element('field', 'focus')
-        d.activate.assert_called_once_with('window')
+        d.focus_input.assert_called_once_with(d.target_window.return_value)
+        d.activate.assert_not_called()
         d = self.driver()
         with patch('luda.desktop.send_chord', return_value={'effect': 'dispatched'}) as send:
             d.key('window', 'Return')
-        d.activate.assert_called_once_with('window')
+        d.focus_input.assert_called_once_with(d.target_window.return_value)
+        d.activate.assert_not_called()
         d.target_window.assert_called_with('window')
         send.assert_called_once_with('Return', 2, target_generation='token', count=1)
 
@@ -71,7 +76,7 @@ class BackgroundRouting(unittest.TestCase):
 
     def test_activation_failure_sends_no_key(self):
         d = self.driver()
-        d.activate.side_effect = DesktopError('ACTIVATION_FAILED', 'failed', effect='uncertain')
+        d.focus_input.side_effect = DesktopError('ACTIVATION_FAILED', 'failed', effect='uncertain')
         with patch('luda.desktop.send_chord') as send, self.assertRaises(DesktopError):
             d.key('window', 'Return')
         send.assert_not_called()
@@ -82,7 +87,7 @@ class BackgroundRouting(unittest.TestCase):
                                       DesktopError('FOCUS_CHANGED', 'lost focus')]
         with patch('luda.desktop.send_chord') as send, self.assertRaises(DesktopError):
             d.key('window', 'Return')
-        d.activate.assert_called_once()
+        d.focus_input.assert_called_once()
         send.assert_not_called()
 
     def test_paste_activates_before_clipboard_work_and_does_not_reacquire(self):
@@ -90,7 +95,7 @@ class BackgroundRouting(unittest.TestCase):
         d.runtime = None
         with patch('luda.desktop.staged_payload', side_effect=RuntimeError('staging reached')) as stage:
             with self.assertRaises(RuntimeError): d.paste('window', 'hello')
-        d.activate.assert_called_once_with('window')
+        d.focus_input.assert_called_once()
         stage.assert_called_once()
 
     def test_composed_input_does_not_activate_after_losing_focus(self):
@@ -147,12 +152,13 @@ class BackgroundRouting(unittest.TestCase):
                             if operation == 'key': d.key('window', 'Return')
                             else: d.element('field', 'focus')
                     self.assertEqual(caught.exception.effect, 'uncertain')
-                    d.activate.assert_called_once()
+                    d.focus_input.assert_called_once()
 
-    def test_held_input_before_activation_has_no_effect(self):
+    def test_private_input_preflight_failure_has_no_effect(self):
         for operation in ('key', 'focus', 'paste'):
             d = self.driver()
-            with patch('luda.desktop.keyboard_capabilities', return_value={'input_held': True}):
+            d.focus_input.side_effect = DesktopError('INPUT_HELD', 'private input held')
+            with patch('luda.desktop.send_chord'):
                 with self.assertRaises(DesktopError) as caught:
                     if operation == 'key': d.key('window', 'Return')
                     elif operation == 'focus': d.element('field', 'focus')
@@ -167,7 +173,7 @@ class BackgroundRouting(unittest.TestCase):
         with patch('luda.desktop.keyboard_capabilities', return_value={'input_held': False}), patch('luda.desktop.staged_payload', side_effect=DesktopError('STALE_TARGET', 'refused')):
             with self.assertRaises(DesktopError) as caught: d.paste('window', 'hello')
         self.assertEqual(caught.exception.effect, 'uncertain')
-        d.activate.assert_called_once()
+        d.focus_input.assert_called_once()
 
     def test_disabled_or_offscreen_refusal_does_not_activate(self):
         for reason in ('disabled', 'offscreen'):

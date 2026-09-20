@@ -1,7 +1,7 @@
 """An active reused XID is not verification of the original window generation."""
+from contextlib import nullcontext
 import unittest
 from unittest.mock import Mock,patch
-from contextlib import nullcontext
 from luda.common import DesktopError
 from luda.desktop import Desktop
 
@@ -14,6 +14,7 @@ class ActivationIdentity(unittest.TestCase):
         d.input_scope=Mock(side_effect=lambda:nullcontext())
         d._raise_window=Mock(return_value={'effect':'verified'})
         d.focus_input=Mock()
+        self.enterContext(patch('luda.interaction.properties',return_value=''))
         return d
     def test_reused_active_xid_does_not_verify_original_generation(self):
         d=self.driver([{'window_id':'replacement-generation','xid':99,'active':True}])
