@@ -169,6 +169,10 @@ class _NativeX11:
         finally:
             if data:x.XFree(data)
 
+    def map_without_focus(self, request):
+        from ._window_map import map_without_focus
+        return map_without_focus(self, request)
+
     def restack_above(self, pair):
         """Send an explicit-sibling configure request to the window manager.
 
@@ -354,9 +358,14 @@ def main():
         request = json.loads(sys.stdin.buffer.read(65536))
         method = request['method']
         argument = request.get('argument')
-        if method not in {'root','topology','selection_owner','restack_above','geometry','geometries','window_metadata','window_tokens','surface_at','root_surface','transient_for','children','popup_surfaces'}:
+        if method not in {'map_without_focus','root','topology','selection_owner','restack_above','geometry','geometries','window_metadata','window_tokens','surface_at','root_surface','transient_for','children','popup_surfaces'}:
             raise DesktopError('INVALID_ARGUMENT','Unknown X11 metadata operation.')
-        if method=='restack_above':
+        if method=='map_without_focus':
+            if (not isinstance(argument,list) or len(argument)!=2 or isinstance(argument[0],bool)
+                    or not isinstance(argument[0],int) or not 1<=argument[0]<=0xffffffff
+                    or not isinstance(argument[1],str) or not re.fullmatch('[0-9a-f]{32}',argument[1])):
+                raise DesktopError('INVALID_ARGUMENT','Restore requires a current window generation.')
+        elif method=='restack_above':
             if not isinstance(argument,list) or len(argument)!=2 or any(isinstance(v,bool) or not isinstance(v,int) or not 1<=v<=0xffffffff for v in argument) or argument[0]==argument[1]:
                 raise DesktopError('INVALID_ARGUMENT','Restacking requires distinct target and sibling XIDs.')
         elif method=='selection_owner':

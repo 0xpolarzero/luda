@@ -17,7 +17,7 @@ class X11:
         try:
             raw = run([sys.executable, '-m', 'luda._x11_helper'],
                       data=json.dumps({'method':method,'argument':argument}).encode(), timeout=2,
-                      effect='uncertain' if method=='restack_above' else 'none')
+                      effect='uncertain' if method in {'restack_above','map_without_focus'} else 'none')
         except DesktopError as exc:
             if exc.code == 'BACKEND_ERROR':
                 raise DesktopError('DISPLAY_UNAVAILABLE', 'X11 metadata helper exited unexpectedly; reconnect or run doctor.',
@@ -65,6 +65,13 @@ class X11:
             raise DesktopError('INVALID_ARGUMENT','Geometry batch must contain at most 512 XIDs.')
         result=self._read('geometries',[self._xid(window) for window in windows])
         return {int(xid):bounds for xid,bounds in result.items()}
+
+    def map_without_focus(self, window, generation):
+        try:
+            return self._read('map_without_focus', [self._xid(window), generation])
+        except DesktopError as exc:
+            exc.effect = 'uncertain'
+            raise
 
     def restack_above(self, window, sibling):
         pair=[self._xid(window),self._xid(sibling)]

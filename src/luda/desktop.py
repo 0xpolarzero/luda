@@ -282,6 +282,10 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         """Expose the target and focus only the agent's keyboard."""
         window = self.target_window(window_id, False)
         with self.input_scope():
+            from .interaction import properties
+            if '_NET_WM_STATE_HIDDEN' in properties(window['xid']):
+                self.display().map_without_focus(window['xid'], window_id.rsplit(':', 1)[-1])
+                window = self.target_window(window_id, False)
             raised = self._raise_window(window, window_id)
             if raised.get('effect') != 'verified':
                 return raised
@@ -598,6 +602,7 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
                         or not (exc.code == 'FOCUS_CHANGED' or
                                 (exc.code == 'NOT_INTERACTABLE' and exc.details.get('foreground_required') is True))):
                     raise
+                self.activate(target['window_id'])
                 with self.prepare_input_window(target['window_id']) as current:
                     result = dispatch(current)
         return native_text_readback(result) if op in ('read','set','insert') else result
