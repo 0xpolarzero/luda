@@ -112,6 +112,17 @@ class TextAccess:
         self.raw = raw
         app = raw.get_application() if hasattr(raw, "get_application") else None
         self.toolkit = (app.get_toolkit_name() or "") if app else ""
+        self.document = None
+        self.selection_source = "Text"
+        if self.toolkit.casefold() == "chromium" and hasattr(Atspi, "Document"):
+            parent = raw.get_parent()
+            for _ in range(30):
+                if parent is None:
+                    break
+                if "Document" in parent.get_interfaces():
+                    self.document = parent.get_document_iface()
+                    break
+                parent = parent.get_parent()
         self._refresh()
 
     def _refresh(self):
@@ -147,6 +158,27 @@ class TextAccess:
             raise ValueError("Provider position is outside verified text.")
         return len(encoded[:position * 2].decode("utf-16-le"))
 
+    def representation(self):
+        objects = []
+        truncated = False
+        if "\ufffc" in self.text and hasattr(self.raw, "get_interfaces") and "Hypertext" in self.raw.get_interfaces():
+            hypertext = self.raw.get_hypertext_iface()
+            count = Atspi.Hypertext.get_n_links(hypertext)
+            truncated = count > 100
+            for i in range(min(count, 100)):
+                link = Atspi.Hypertext.get_link(hypertext, i)
+                start = self.public_offset(link.get_start_index())
+                end = self.public_offset(link.get_end_index())
+                if "\ufffc" not in self.text[start:end]:
+                    continue
+                child = link.get_object(0)
+                objects.append({"start_offset": start, "end_offset": end,
+                                "role": child.get_role_name() if child else "unknown"})
+        embedded = bool(objects) or truncated
+        return {"text_representation": "hypertext" if embedded else "plain",
+                "plain_text_verification_supported": not embedded,
+                "embedded_objects": objects, "embedded_objects_truncated": truncated}
+
     def get_text(self, start, end):
         self._refresh()
         return self.text[start:None if end == -1 else end]
@@ -166,6 +198,17 @@ class TextAccess:
 
     def get_selection(self, index):
         from types import SimpleNamespace
+        if self.document is not None:
+            ranges = Atspi.Document.get_text_selections(self.document)
+            matching = [r for r in ranges if r.start_object.path == self.raw.path and r.end_object.path == self.raw.path]
+            if index >= len(matching):
+                raise ValueError("Document selection does not map to this exact text object.")
+            selected = matching[index]
+            self.selection_source = "Document.GetTextSelections"
+            return SimpleNamespace(start_offset=self.public_offset(selected.start_offset),
+                                   end_offset=self.public_offset(selected.end_offset))
+        if self.toolkit.casefold() == "chromium" and any(ord(c) > 0xFFFF for c in self.text):
+            raise ValueError("Chromium non-BMP selection requires the Document selection interface.")
         selection = Atspi.Text.get_selection(self.raw, index)
         return SimpleNamespace(start_offset=self.public_offset(selection.start_offset),
                                end_offset=self.public_offset(selection.end_offset))
@@ -552,11 +595,16 @@ def main(req):
             limit = req.get("limit", 16000)
             if type(limit) is not int or not 1 <= limit <= 1_000_000:
                 return failure("INVALID_ARGUMENT", "Text read limit must be 1..1000000.")
-            return {"text": t.get_text(0, min(n, limit)), "characters": n, "truncated": n > limit,
-                    "caret_offset": t.get_caret_offset(), "offset_units": "Unicode code points", "provider_offset_units": "UTF-16 code units" if t.utf16 else "Unicode code points",
-                    "selections": [{"start_offset": sel.start_offset, "end_offset": sel.end_offset}
-                                   for sel in (t.get_selection(i) for i in range(min(t.get_n_selections(), 100)))],
-                    "selections_truncated": t.get_n_selections() > 100}
+            content = t.get_text(0, min(n, limit))
+            selections = [{"start_offset": sel.start_offset, "end_offset": sel.end_offset}
+                          for sel in (t.get_selection(i) for i in range(min(t.get_n_selections(), 100)))]
+            representation = t.representation()
+            return {"text": content, "characters": n, "truncated": n > limit,
+                    "caret_offset": t.get_caret_offset(), "offset_units": "Unicode code points",
+                    "provider_offset_units": "UTF-16 code units" if t.utf16 else "Unicode code points",
+                    "selections": selections, "selection_source": t.selection_source,
+                    "selections_truncated": t.get_n_selections() > 100,
+                    **representation}
         if op == "set":
             if "EditableText" not in current["interfaces"] or "Text" not in current["interfaces"]:
                 return {"error": "UNSUPPORTED", "message": "Exact replacement requires EditableText and Text."}

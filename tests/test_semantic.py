@@ -250,4 +250,29 @@ class OptionSelection(unittest.TestCase):
         self.node.get_index_in_parent=lambda:0;self.assertEqual(self.call()['error'],'STALE_TARGET')
     def test_invalid_extend_refused(self):self.assertEqual(self.call(extend='yes')['error'],'INVALID_ARGUMENT')
 
+
+
+class ChromiumSelections(unittest.TestCase):
+    def setUp(self):
+        self.old=w.Atspi
+        self.raw=Text();self.raw.text='A👩🏽\u200d💻Z';self.raw.path='/field';self.raw.selections=[(1,3)]
+        self.raw.get_application=lambda:types.SimpleNamespace(get_toolkit_name=lambda:'Chromium')
+        self.document=types.SimpleNamespace(get_interfaces=lambda:['Document'])
+        self.document.get_document_iface=lambda:self.document
+        self.raw.get_parent=lambda:self.document
+        self.ranges=[types.SimpleNamespace(start_object=self.raw,end_object=self.raw,start_offset=1,end_offset=5)]
+        w.Atspi=types.SimpleNamespace(Text=Text,Document=types.SimpleNamespace(get_text_selections=lambda _:self.ranges))
+    def tearDown(self):w.Atspi=self.old
+    def test_document_range_replaces_double_converted_text_range(self):
+        t=w.TextAccess(self.raw);r=t.get_selection(0);self.assertEqual((r.start_offset,r.end_offset),(1,5));self.assertEqual(t.selection_source,'Document.GetTextSelections')
+    def test_foreign_document_endpoint_refused(self):
+        self.ranges[0].end_object=types.SimpleNamespace(path='/different')
+        with self.assertRaises(ValueError):w.TextAccess(self.raw).get_selection(0)
+    def test_missing_document_nonbmp_legacy_range_refused(self):
+        self.raw.get_parent=lambda:None
+        with self.assertRaises(ValueError):w.TextAccess(self.raw).get_selection(0)
+    def test_literal_object_character_not_automatically_opaque(self):
+        self.raw.text='literal \ufffc';t=w.TextAccess(self.raw)
+        self.assertTrue(t.representation()['plain_text_verification_supported'])
+
 if __name__=='__main__':unittest.main()
