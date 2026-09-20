@@ -55,6 +55,15 @@ async def main():
     record('mcp-error-contract',bad.isError and json.loads(bad.content[0].text)['code']=='OUT_OF_BOUNDS')
     bad=await s.call_tool('desktop_click',{'window_id':wid,'snapshot_id':shot['snapshot_id'],'x':10,'y':20,'count':10000})
     record('mcp-schema-validation',bad.isError)
+    for name,arguments in [
+     ('desktop_click',{'window_id':wid,'snapshot_id':shot['snapshot_id'],'x':True,'y':20}),
+     ('desktop_click',{'window_id':wid,'snapshot_id':shot['snapshot_id'],'x':10,'y':20,'count':True}),
+     ('desktop_type',{'element_id':eid,'text':'must not be inserted','mdoe':'replace'}),
+    ]:
+     rejected=await s.call_tool(name,arguments)
+     error=json.loads(rejected.content[0].text)
+     record('mcp-strict-input-'+name,rejected.isError and error['code']=='INVALID_ARGUMENT' and error['effect']=='none')
+    record('mcp-invalid-mutation-left-text-unchanged',json.loads((OUT/'state.json').read_text())['text']==payload)
     # Separate insertion from replacement through actual MCP calls.
     await call('desktop_type',element_id=eid,text='',mode='replace')
     await call('desktop_focus_element',element_id=eid)
