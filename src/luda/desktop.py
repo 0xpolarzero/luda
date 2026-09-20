@@ -92,7 +92,7 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         return self.x
 
     def doctor(self):
-        dependencies = {c: shutil.which(c) is not None for c in ('xdotool','wmctrl','scrot','xclip','xprop')}
+        dependencies = {c: shutil.which(c, path=self.environment.get('PATH', os.defpath)) is not None for c in ('xdotool','wmctrl','scrot','xclip','xprop')}
         result = {'version':'0.1.0','backend':'X11 + AT-SPI','dependencies':dependencies,
                   'display':self.environment.get('DISPLAY'),'session_bus':bool(self.environment.get('DBUS_SESSION_BUS_ADDRESS')),
                   'uid':os.getuid(),'transport':'stdio','support':'experimental X11; Wayland unsupported',
@@ -106,11 +106,16 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
             result.update(display_available=False,display_error=str(exc))
         try:
             check = run(['/usr/bin/python3','-c',"import gi;gi.require_version('Atspi','2.0');from gi.repository import Atspi;Atspi.set_timeout(600,1000);print(Atspi.get_desktop(0).get_child_count())"],timeout=4)
-            result['accessible_applications'] = int(check)
+            count = int(check)
+            if count < 0:raise ValueError()
+            result['accessible_applications'] = count
             result['accessibility_available'] = True
         except DesktopError as exc:
             result['accessibility_available'] = False
             result['accessibility_error'] = str(exc)
+        except ValueError:
+            result['accessibility_available'] = False
+            result['accessibility_error'] = 'Accessibility provider returned an invalid application count.'
         result['session_state'] = session_state()
         result['ready'] = result['session_state']['input_ready'] is not False and all(dependencies.values()) and result['display_available'] and result['session_bus'] and result['accessibility_available']
         return result
