@@ -10,7 +10,7 @@ index 0000000..3c88469
 +}
 diff --git a/app/SiloUI/src-tauri/guest/agent-tools.py b/app/SiloUI/src-tauri/guest/agent-tools.py
 new file mode 100644
-index 0000000..c8d504a
+index 0000000..e1c5ae3
 --- /dev/null
 +++ b/app/SiloUI/src-tauri/guest/agent-tools.py
 @@ -0,0 +1,313 @@
@@ -216,12 +216,12 @@ index 0000000..c8d504a
 +
 +def project(value):
 +    """Strict metadata only: no arbitrary diagnostic text, URL, paths or logs."""
-+    result = {'schema_version': 1, 'state': value.get('state') if value.get('state') in STATES else 'unconfirmed',
++    result = {'schema_version': 1, 'state': value.get('state') if isinstance(value.get('state'), str) and value['state'] in STATES else 'unconfirmed',
 +              'installation_completed': value.get('installation_completed') if type(value.get('installation_completed')) is bool else None,
 +              'configuration_generated': value.get('configuration_generated') is True,
 +              'last_ready': value.get('last_ready') if type(value.get('last_ready')) is bool else None,
 +              'automatic_retry_allowed': False}
-+    if value.get('reason') in REASONS:
++    if isinstance(value.get('reason'), str) and value['reason'] in REASONS:
 +        result['reason'] = value['reason']
 +    checked = value.get('checked_at')
 +    if type(checked) is int and 0 <= checked <= 9999999999:

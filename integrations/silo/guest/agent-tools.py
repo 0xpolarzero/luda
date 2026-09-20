@@ -200,12 +200,12 @@ def bootstrap(source, output):
 
 def project(value):
     """Strict metadata only: no arbitrary diagnostic text, URL, paths or logs."""
-    result = {'schema_version': 1, 'state': value.get('state') if value.get('state') in STATES else 'unconfirmed',
+    result = {'schema_version': 1, 'state': value.get('state') if isinstance(value.get('state'), str) and value['state'] in STATES else 'unconfirmed',
               'installation_completed': value.get('installation_completed') if type(value.get('installation_completed')) is bool else None,
               'configuration_generated': value.get('configuration_generated') is True,
               'last_ready': value.get('last_ready') if type(value.get('last_ready')) is bool else None,
               'automatic_retry_allowed': False}
-    if value.get('reason') in REASONS:
+    if isinstance(value.get('reason'), str) and value['reason'] in REASONS:
         result['reason'] = value['reason']
     checked = value.get('checked_at')
     if type(checked) is int and 0 <= checked <= 9999999999:

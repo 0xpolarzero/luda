@@ -264,6 +264,13 @@ class SiloIntegrationTests(unittest.TestCase):
         self.assertIsNone(value['last_ready'])
         self.assertNotIn('secret', json.dumps(value))
 
+    def test_projection_handles_nonstring_states_and_reasons(self):
+        for value in ([], {}, ['ready'], {'state': 'ready'}, 1, True):
+            with self.subTest(value=value):
+                projected = tools.project({'state': value, 'reason': value})
+                self.assertEqual(projected['state'], 'unconfirmed')
+                self.assertNotIn('reason', projected)
+
     def test_desktop_probe_only_uses_status_and_never_starts(self):
         def run(argv, **kwargs):
             self.assertEqual(argv, ['/usr/local/bin/silo-desktop', 'status'])
