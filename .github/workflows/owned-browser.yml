@@ -48,7 +48,7 @@ jobs:
       - name: Real sandboxed browser text, IME and cleanup qualification
         run: |
           browser=$(cat artifacts/owned-browser-provision/browser-path.txt)
-          .venv/bin/python scripts/qualification_matrix.py --suites owned-browser --executable "$browser"
+          .venv/bin/python scripts/qualification_matrix.py --suites owned-browser owned-rich --executable "$browser"
       - name: Remove the CI-only AppArmor attachment
         if: always()
         run: |

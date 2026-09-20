@@ -16,7 +16,8 @@ PATCHES = ('0001-guest-onboarding.patch', '0002-desktop-onboarding.patch',
            '0011-inspect-update-recovery.patch', '0012-refresh-matching-skill.patch',
            '0013-reconcile-registration-state.patch',
            '0014-refresh-browser-skill.patch',
-           '0015-registration-panel-layout.patch')
+           '0015-registration-panel-layout.patch',
+           '0016-refresh-rich-browser-skill.patch')
 
 
 def apply(checkout, mutate=False):
