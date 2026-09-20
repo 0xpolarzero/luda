@@ -35,7 +35,9 @@ fields, provider stdout and exception text are not copied into the JSON error.
 The response reports `stage`, `installation_completed`, `codex_settings_modified`,
 `configuration_generated`, projected desktop state and, after successful
 installation, the selected release. The fresh output directory is created with
-mode 0700 and existing output is never overwritten.
+mode 0700 and existing output is never overwritten. `installation_completed` is
+`false` before an installation attempt, `null` when its completion is unconfirmed,
+and `true` after the installer returns success; `null` never means no changes occurred.
 
 - A validation/preflight failure performs no installation and does not reserve
   the output directory.

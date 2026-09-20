@@ -94,7 +94,7 @@ class GuestBootstrap(unittest.TestCase):
         with patch.object(b, 'desktop_status', return_value=self.status()), patch.object(b, 'run_process', return_value=1), patch.object(b, 'doctor') as doctor, patch.object(b, 'config') as config:
             result = self.call()
         self.assertEqual(result['stage'], 'installation')
-        self.assertFalse(result['installation_completed'])
+        self.assertIsNone(result['installation_completed'])
         doctor.assert_not_called()
         config.assert_not_called()
 
@@ -169,6 +169,7 @@ class GuestBootstrap(unittest.TestCase):
         with patch.object(b,'desktop_status',return_value=self.status()),patch.object(b,'run_process',side_effect=b.InterruptedProcess(False)),patch.object(b,'doctor') as doctor:
             result=self.call()
         self.assertEqual(result['installation_outcome'],'unknown')
+        self.assertIsNone(result['installation_completed'])
         self.assertFalse(result['cleanup_verified'])
         self.assertFalse(result['automatic_retry_allowed'])
         doctor.assert_not_called()

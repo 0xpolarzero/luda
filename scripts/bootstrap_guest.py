@@ -152,6 +152,7 @@ def bootstrap(source, prefix, output, user, skip_system=False):
         output.mkdir(mode=0o700)
         result['output'] = str(output)
         result['stage'] = 'installation'
+        result['installation_completed'] = None
         command = ['bash', source / 'scripts/install.sh', prefix]
         if skip_system:
             command.append('--skip-system')
@@ -181,7 +182,7 @@ def bootstrap(source, prefix, output, user, skip_system=False):
         result['error'] = {
             'validation': 'Check absolute source/prefix/output paths, ownership, account and source files; no installation attempted.',
             'desktop_preflight': 'Require compatible Silo status for the selected account and an explicitly running desktop; no installation attempted.',
-            'installation': 'Installation did not complete; inspect installer stderr and selected release before retrying.',
+            'installation': 'Installation completion is unconfirmed; inspect installer stderr and selected release before retrying.',
             'release_validation': 'Installer completed, but selected release consistency could not be established; inspect selection before retrying with fresh output.',
             'readiness': 'Installation completed; selected release remains installed. Resolve session readiness, then retry with a fresh output directory.',
             'configuration': 'Installation completed; selected release remains installed. Resolve configuration output failure, then retry with a fresh output directory.',
