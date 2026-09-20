@@ -196,6 +196,15 @@ class SetupTests(unittest.TestCase):
             self.assertIn(name, output.getvalue())
         self.assertIn('--export', output.getvalue())
 
+    def test_project_opencode_preserves_existing_jsonc(self):
+        project = self.base / 'project'
+        project.mkdir()
+        existing = project / 'opencode.jsonc'
+        existing.write_text('{/* existing project */ "theme":"dark"}')
+        self.install(('opencode',), scope='project', project=project)
+        self.assertIn('/* existing project */', existing.read_text())
+        self.assertFalse((project / 'opencode.json').exists())
+
     def test_root_requires_explicit_account(self):
         with patch.object(os, 'getuid', return_value=0), self.assertRaisesRegex(ValueError, 'Root must specify'):
             setup.validate(setup.parser().parse_args(['--agent', 'codex']))

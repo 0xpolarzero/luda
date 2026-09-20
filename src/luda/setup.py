@@ -125,7 +125,10 @@ def client_paths(client, home, scope, project=None, environ=None):
     if scope == 'project':
         if not client.project_config or not client.project_skill:
             raise ValueError(f'{client.label} has no supported project setup; use --scope user or --export.')
-        return project / client.project_config, project / client.project_skill / 'luda'
+        config = project / client.project_config
+        if client.name == 'opencode':
+            config = opencode_config(config)
+        return regular_path(config), regular_path(project / client.project_skill / 'luda')
     config = home / client.config
     skill = home / client.skill / 'luda'
     if client.name == 'codex' and environ.get('CODEX_HOME'):
@@ -147,11 +150,17 @@ def client_paths(client, home, scope, project=None, environ=None):
             config = base / client.config.removeprefix('.config/')
         if client.skill.startswith('.config/'):
             skill = base / client.skill.removeprefix('.config/') / 'luda'
-    if client.name == 'opencode' and config.with_suffix('.jsonc').exists():
+    if client.name == 'opencode':
+        config = opencode_config(config)
+    return regular_path(config), regular_path(skill)
+
+
+def opencode_config(config):
+    if config.with_suffix('.jsonc').exists():
         if config.exists():
             raise ValueError('Both opencode.json and opencode.jsonc exist; use manual configuration to choose the active file.')
         config = config.with_suffix('.jsonc')
-    return regular_path(config), regular_path(skill)
+    return config
 
 
 def plan_setup(names, home, source, command, *, scope='user', project=None, environ=None):
@@ -292,7 +301,7 @@ def main(argv=None):
             os.setuid(account.pw_uid)
             os.environ.clear()
             os.environ.update(HOME=account.pw_dir, USER=account.pw_name, LOGNAME=account.pw_name,
-                              PATH='/usr/local/bin:/usr/bin:/bin', LANG='C.UTF-8')
+                              PATH=f'{account.pw_dir}/.local/bin:/usr/local/bin:/usr/bin:/bin', LANG='C.UTF-8')
             os.chdir(account.pw_dir)
         home = Path(account.pw_dir)
         runtime = args.prefix / 'current/.venv/bin/luda'

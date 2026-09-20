@@ -7,7 +7,7 @@ uv sync --frozen --extra test
 .venv/bin/python scripts/qualify.py
 ```
 
-Live GUI tests need the system packages listed in [installation](INSTALLATION.md). Run them on a private display:
+Live GUI tests need the system packages listed in [installation](INSTALLATION.md). Run them as an ordinary account (not root) on a private display:
 
 ```sh
 LUDA_ISOLATED_TEST_DISPLAY=1 xvfb-run -a \
