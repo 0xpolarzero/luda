@@ -146,7 +146,7 @@ Read accessible text and representation metadata, preserving whitespace. limit c
 desktop_type(element_id: str, text: str, mode: Literal['insert', 'replace']='insert', line_breaks: Literal['paragraph'] | None=None)
 ```
 
-Type into an editable element and verify exact readback. For a cooperating rich editor, LF requires line_breaks="paragraph"; only whole-field replace or append at the end is supported, and actual new formatting is reported. Default insert preserves surrounding text and replaces the selection; replace changes the entire field. Preserves Unicode/LF/tabs, never adds a submit key. Exact readback does not prove application commit or guarantee autocomplete events; inspect the result before an explicit commit or suggestion selection.
+Type into an editable element and verify exact readback. Owned browser-native insertion refuses positions inside a grapheme; offsets still count code points. For a cooperating rich editor, LF requires line_breaks="paragraph"; only whole-field replace or append at the end is supported, and actual new formatting is reported. Default insert preserves surrounding text and replaces the selection; replace changes the entire field. Preserves Unicode/LF/tabs, never adds a submit key. Exact readback does not prove application commit or guarantee autocomplete events; inspect the result before an explicit commit or suggestion selection.
 
 ## `desktop_type_secret`
 

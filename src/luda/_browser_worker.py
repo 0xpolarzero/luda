@@ -237,6 +237,25 @@ class Worker:
             raise Refused('SELECTION_UNVERIFIED')
         return {'effect':'verified','start_offset':start,'end_offset':end,'offset_units':'Unicode code points'}
 
+    def require_text_boundaries(self, text, start, end):
+        # Public offsets remain code points. Chromium's native text transport
+        # may normalize an intra-grapheme selection only during insertion.
+        # Whole-field edges need no segmenter and remain usable without it.
+        if start in (0,len(text)) and end in (0,len(text)):
+            return
+        valid=self.page.evaluate("""({text,start,end})=>{
+          if(typeof Intl==='undefined'||typeof Intl.Segmenter!=='function')return null;
+          const points=Array.from(text),a=points.slice(0,start).join('').length,b=points.slice(0,end).join('').length;
+          const wanted=new Set([a,b]);wanted.delete(0);wanted.delete(text.length);
+          for(const part of new Intl.Segmenter(undefined,{granularity:'grapheme'}).segment(text)){
+            wanted.delete(part.index);wanted.delete(part.index+part.segment.length);
+            if(!wanted.size)return true;
+          }
+          return wanted.size===0;
+        }""",{'text':text,'start':start,'end':end})
+        if valid is None:raise Refused('TEXT_BOUNDARY_UNAVAILABLE')
+        if valid is not True:raise Refused('UNSUPPORTED_TEXT_BOUNDARY')
+
     def type(self, token, text, mode, line_breaks=None):
         if not isinstance(text,str) or len(text)>MAX_TEXT or '\r' in text or '\x00' in text:
             raise Refused('UNSUPPORTED_TEXT')
@@ -247,6 +266,9 @@ class Worker:
         if line_breaks is not None:raise Refused('UNSUPPORTED_ACTION')
         if before['tag']=='INPUT' and any(c in text for c in ('\n','\t')):
             raise Refused('UNSUPPORTED_TEXT')
+        if text:
+            start,end=(0,len(before['text'])) if mode=='replace' else (before['start'],before['end'])
+            self.require_text_boundaries(before['text'],start,end)
         if not before['focused']:
             self.focus(token)
             _, focused = self.snapshot(token, mutation=True, focus=True)
@@ -263,6 +285,7 @@ class Worker:
         if current['text']!=before['text'] or (current['start'],current['end'])!=(start,end):
             raise Refused('TEXT_CHANGED')
         if text:
+            self.require_text_boundaries(current['text'],start,end)
             self.effect = 'uncertain'
             self.protocol.send('Input.insertText',{'text':text})
         elif start!=end:
@@ -293,6 +316,9 @@ class Worker:
         segments=text.split('\n')
         if len(segments)>27 or (len(before['paragraphs']) if mode=='insert' else 1)+len(segments)-1>128 or len(text)+(len(before['text']) if mode=='insert' else 0)>MAX_TEXT:
             raise Refused('VERIFICATION_LIMIT')
+        if text:
+            start,end=(0,len(before['text'])) if mode=='replace' else (before['start'],before['end'])
+            self.require_text_boundaries(before['text'],start,end)
         if not before['focused']:self.focus(token)
         _,current=self.snapshot(token,mutation=True,focus=True)
         if current['model']!=before['model'] or (current['start'],current['end'],current['stored_marks'])!=(before['start'],before['end'],before['stored_marks']):raise Refused('TEXT_CHANGED')
@@ -313,6 +339,7 @@ class Worker:
                 if action=='return':self.rich_key('Enter','Enter',13);expected+='\n'
                 elif action=='delete':self.rich_key('Backspace','Backspace',8)
                 else:
+                    self.require_text_boundaries(fresh['text'],fresh['start'],fresh['end'])
                     self.effect='uncertain';self.protocol.send('Input.insertText',{'text':payload});expected+=payload
                 _,after=self.snapshot(token,mutation=True,focus=True)
                 if after['text']!=expected or after['paragraphs']!=expected.split('\n'):

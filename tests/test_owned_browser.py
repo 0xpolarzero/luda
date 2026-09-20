@@ -12,7 +12,7 @@ def snapshot(text='',start=0,end=0):
 
 class OwnedBrowserTests(unittest.TestCase):
     def worker(self):
-        w=Worker('unused');w.protocol=Mock();w.page=Mock();return w
+        w=Worker('unused');w.protocol=Mock();w.page=Mock();w.page.evaluate.return_value=True;return w
 
     def test_exact_unicode_insert_uses_native_input_and_exact_value(self):
         w=self.worker();old=snapshot('A😀B',1,2);new=snapshot('A日本\nB',4,4)
@@ -84,3 +84,22 @@ class OwnedBrowserReconnectTests(unittest.TestCase):
             self.assertEqual(value['browser_cleanup'],'unconfirmed')
             self.assertIs(server.backend,new)
             old.close.assert_called_once()
+
+
+class BrowserGraphemeBoundaryTests(unittest.TestCase):
+    def test_boundary_refusal_precedes_focus_selection_and_input(self):
+        for available in (False,None):
+            w=Worker('unused');w.page=Mock();w.page.evaluate.return_value=available;w.protocol=Mock();w.focus=Mock();w.select=Mock()
+            before=snapshot('AéB',2,3);before['focused']=False;w.snapshot=Mock(return_value=({},before))
+            with self.assertRaises(Refused) as caught:w.type('t','x','insert')
+            self.assertEqual(caught.exception.code,'UNSUPPORTED_TEXT_BOUNDARY' if available is False else 'TEXT_BOUNDARY_UNAVAILABLE')
+            self.assertEqual(w.effect,'none');w.focus.assert_not_called();w.select.assert_not_called();w.protocol.send.assert_not_called()
+
+    def test_whole_field_edges_do_not_require_segmenter(self):
+        w=Worker('unused');w.page=Mock();w.require_text_boundaries('é',0,2);w.page.evaluate.assert_not_called()
+
+    def test_only_explicit_true_boundary_result_is_accepted(self):
+        w=Worker('unused');w.page=Mock()
+        for result in ('true',1,{},False):
+            w.page.evaluate.return_value=result
+            with self.assertRaises(Refused):w.require_text_boundaries('éx',1,2)

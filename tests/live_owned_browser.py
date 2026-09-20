@@ -25,8 +25,8 @@ HTML='''<!doctype html><meta charset="utf-8"><title>Luda owned browser contract<
 <button onclick="location.reload()">Reload document</button>
 <button onclick="let f=document.createElement('iframe');f.srcdoc='frame fixture';document.body.append(f);save()">Add frame</button>
 <script>
-const events=[];function save(){fetch('/oracle',{method:'POST',body:JSON.stringify({frames:document.querySelectorAll('iframe').length,text:document.querySelector('#text').value,single:document.querySelector('#single').value,selection:[document.querySelector('#text').selectionStart,document.querySelector('#text').selectionEnd],events:events.slice(-30)})})}
-function wire(){for(const n of document.querySelectorAll('textarea,input:not([type=password])'))for(const type of ['input','beforeinput','select','compositionstart','compositionupdate','compositionend','keydown','keyup'])n.addEventListener(type,e=>{events.push({type:e.type,inputType:e.inputType??null,trusted:e.isTrusted,isComposing:e.isComposing??null,key:e.key??null,code:e.code??null,data:e.data??null});queueMicrotask(save)})}wire();save();
+const events=[];function save(){fetch('/oracle',{method:'POST',body:JSON.stringify({active:document.activeElement?.id,frames:document.querySelectorAll('iframe').length,text:document.querySelector('#text').value,single:document.querySelector('#single').value,selection:[document.querySelector('#text').selectionStart,document.querySelector('#text').selectionEnd],events:events.slice(-30)})})}
+function wire(){for(const n of document.querySelectorAll('textarea,input:not([type=password])'))for(const type of ['input','beforeinput','select','compositionstart','compositionupdate','compositionend','keydown','keyup','focus','blur'])n.addEventListener(type,e=>{events.push({type:e.type,inputType:e.inputType??null,trusted:e.isTrusted,isComposing:e.isComposing??null,key:e.key??null,code:e.code??null,data:e.data??null});queueMicrotask(save)})}wire();save();
 </script>'''
 
 
@@ -96,6 +96,28 @@ async def main(executable):
                 await call('desktop_type',element_id=eid,text='X')
                 expected=payload[:1]+'X'+payload[5:];actual=await oracle(expected)
                 record('astral-selection-replacement',actual.get('text')==expected,actual)
+                graphemes='A👩🏽‍💻B éC'
+                for case,start,end in [('accent',8,9),('zwj',2,4),('accent-caret',8,8),('zwj-caret',2,2),('base-before-accent',7,8)]:
+                    await call('desktop_type',element_id=eid,text=graphemes,mode='replace')
+                    await call('desktop_select',element_id=eid,start_offset=start,end_offset=end)
+                    if case=='accent':
+                        alternate=await field('Single field');await call('desktop_focus_element',element_id=alternate)
+                    before_boundary=await call('desktop_read_text',element_id=eid)
+                    await oracle(graphemes)
+                    native_selection=[len(graphemes[:offset].encode('utf-16-le'))//2 for offset in (start,end)]
+                    deadline=time.monotonic()+1
+                    while (state.get('selection')!=native_selection or case=='accent' and state.get('active')!='single') and time.monotonic()<deadline:await asyncio.sleep(.02)
+                    with lock:oracle_before=json.loads(json.dumps(state))
+                    refused=await error('desktop_type','UNSUPPORTED_TEXT_BOUNDARY',element_id=eid,text='x')
+                    after_boundary=await call('desktop_read_text',element_id=eid)
+                    with lock:oracle_after=json.loads(json.dumps(state))
+                    record('intra-grapheme-'+case+'-unchanged',refused['effect']=='none' and all(after_boundary[key]==before_boundary[key] for key in ('text','characters','caret_offset','selections')) and oracle_before['selection']==native_selection and oracle_before['text']==oracle_after['text'] and oracle_before['selection']==oracle_after['selection'] and oracle_before['active']==oracle_after['active'] and (case!='accent' or oracle_after['active']=='single'),{'before':before_boundary,'after':after_boundary})
+                # Complete graphemes and public code-point offsets remain usable.
+                await call('desktop_type',element_id=eid,text=graphemes,mode='replace')
+                await call('desktop_select',element_id=eid,start_offset=7,end_offset=9)
+                await call('desktop_type',element_id=eid,text='E')
+                actual=await oracle(graphemes[:7]+'E'+graphemes[9:])
+                record('whole-combining-sequence-remains-supported',actual.get('text')==graphemes[:7]+'E'+graphemes[9:])
                 single=await field('Single field')
                 await call('desktop_type',element_id=single,text='leading 001😀',mode='replace')
                 cleared=await call('desktop_type',element_id=single,text='',mode='replace')

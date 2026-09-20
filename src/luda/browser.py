@@ -15,6 +15,8 @@ from .common import DesktopError, checkpoint, mark_effect, process_identity
 from .timing import elapsed_time
 
 MESSAGES = {
+    'UNSUPPORTED_TEXT_BOUNDARY':'Browser-native insertion cannot split a grapheme (such as a joined emoji or combining sequence); choose complete boundaries. Offsets remain Unicode code points.',
+    'TEXT_BOUNDARY_UNAVAILABLE':'Cannot verify native browser insertion boundaries; no insertion sent.',
     'BROWSER_TIMEOUT':'Owned browser operation exceeded its deadline; inspect before retrying.',
     'LINE_BREAK_SEMANTICS_REQUIRED':'This editor requires line_breaks=paragraph for LF; no input sent.',
     'FORMATTING_CHANGED':'Existing rich-text formatting changed after input; inspect before retrying.',
