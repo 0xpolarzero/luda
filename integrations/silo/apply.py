@@ -8,6 +8,9 @@ import tempfile
 
 BASE = '777e1090d5e998059758160912138228ba98378d'
 ASSETS = Path(__file__).resolve().parent
+PATCHES = ('0001-guest-onboarding.patch', '0002-desktop-onboarding.patch',
+           '0003-host-codex-registration.patch', '0004-preserve-registered-transport.patch',
+           '0005-refresh-agent-skill.patch')
 
 
 def apply(checkout, mutate=False):
@@ -18,7 +21,7 @@ def apply(checkout, mutate=False):
         raise ValueError('Require the exact pinned Silo base commit.')
     if git('diff', '--quiet', 'HEAD', '--').returncode:
         raise ValueError('Require a checkout with no tracked changes.')
-    patches = [str(ASSETS / name) for name in ('0001-guest-onboarding.patch', '0002-desktop-onboarding.patch', '0003-host-codex-registration.patch', '0004-preserve-registered-transport.patch')]
+    patches = [str(ASSETS / name) for name in PATCHES]
     # An ordered patch can modify a file added by an earlier patch. Build the
     # complete result in an isolated index before touching the user's checkout.
     with tempfile.TemporaryDirectory(prefix='luda-silo-index-') as temporary:
@@ -33,7 +36,7 @@ def apply(checkout, mutate=False):
             raise ValueError('Patch check failed; preserve existing files and inspect the checkout.')
         if mutate and git('apply', '-', input=combined.stdout).returncode:
             raise ValueError('Patch application failed; inspect the checkout before retrying.')
-    return 'Applied all four patches.' if mutate else 'All four patches apply cleanly; no files changed.'
+    return f'Applied {len(PATCHES)} integration patches.' if mutate else f'All {len(PATCHES)} integration patches apply cleanly; no files changed.'
 
 
 def main():

@@ -208,3 +208,7 @@ provisioning mechanism; this is not a claim of zero side effects across Silo's
 identity store. Six native tests passed including the actual CLI test and the
 new regression for all four preservation cases. Apply all four patches in order;
 the first three remain byte-identical to their previously tested versions.
+
+## Bundled skill alignment
+
+`0005-refresh-agent-skill.patch` updates the native registration bundle with the optional OCR guidance. Earlier patches remain immutable; the applied series must embed the exact current reviewed skill. The integration test applies every ordered patch to the skill path and compares final bytes. Native registration still refuses a guest with a different installed skill instead of pairing mismatched guidance silently.

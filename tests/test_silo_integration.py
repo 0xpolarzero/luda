@@ -308,8 +308,11 @@ class SiloIntegrationTests(unittest.TestCase):
         checkout = self.state / 'native';checkout.mkdir()
         subprocess.run(['git', 'init', '-q', str(checkout)], check=True)
         target = 'app/SiloUI/src-tauri/guest/luda-codex-skill.md'
-        subprocess.run(['git', '-C', str(checkout), 'apply', '--include=' + target,
-                        str(ASSETS / '0003-host-codex-registration.patch')], check=True)
+        spec = importlib.util.spec_from_file_location('silo_skill_apply', ASSETS / 'apply.py')
+        module = importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+        for name in module.PATCHES:
+            subprocess.run(['git', '-C', str(checkout), 'apply', '--allow-empty', '--include=' + target,
+                            str(ASSETS / name)], check=True)
         self.assertEqual((checkout / target).read_bytes(), (ROOT / 'skills/luda/SKILL.md').read_bytes())
 
     def test_ordered_patch_check_isolated_from_checkout_and_index(self):
@@ -320,8 +323,7 @@ class SiloIntegrationTests(unittest.TestCase):
             return subprocess.run(['git', '-C', str(checkout), *args], check=True, capture_output=True, text=True).stdout
         git('init', '-q');git('-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', 'commit', '--allow-empty', '-qm', 'base')
         assets = self.state / 'patches';assets.mkdir()
-        names = ('0001-guest-onboarding.patch', '0002-desktop-onboarding.patch',
-                 '0003-host-codex-registration.patch', '0004-preserve-registered-transport.patch')
+        names = module.PATCHES
         previous = ''
         for index, name in enumerate(names):
             content = previous + str(index) + '\n'
@@ -330,7 +332,7 @@ class SiloIntegrationTests(unittest.TestCase):
             (assets / name).write_text(git('diff', '--cached', '--binary'))
             git('-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', 'commit', '-qm', 'patch')
             previous = content
-        git('reset', '--hard', 'HEAD~4')
+        git('reset', '--hard', f'HEAD~{len(names)}')
         before = git('write-tree')
         with patch.object(module, 'BASE', git('rev-parse', 'HEAD').strip()), patch.object(module, 'ASSETS', assets):
             module.apply(checkout)
