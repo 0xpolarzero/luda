@@ -50,7 +50,7 @@ class Matrix(unittest.TestCase):
             self.assertTrue((m.ROOT/'tests'/suite['script']).is_file())
             self.assertNotIn('agent',suite['script'])
     def test_owned_window_managers_are_not_started_twice(self):
-        for name in ('ime','ime-browser','accessibility-lifecycle','mcp-reconnect','x11-isolation','window-tokens','window-metadata-capacity'):
+        for name in ('firefox','ime','ime-browser','accessibility-lifecycle','mcp-reconnect','x11-isolation','window-tokens','window-metadata-capacity'):
             self.assertFalse(m.SUITES[name]['runner_window_manager'])
     def test_missing_browser_is_explicit(self):
         with patch.object(m.shutil,'which',return_value='/bin/true'),patch.object(m.subprocess,'run',return_value=type('R',(),{'returncode':0})()):
@@ -61,4 +61,13 @@ class Matrix(unittest.TestCase):
             self.assertFalse(checks['electron_executable'])
             self.assertNotIn('browser_executable',checks)
             self.assertTrue(m.dependencies(m.SUITES['electron'],None,'/bin/true')['electron_executable'])
+    def test_firefox_dependency_is_separate_and_flag_reaches_fixture(self):
+        with patch.object(m.shutil,'which',return_value='/bin/true'),patch.object(m.subprocess,'run',return_value=type('R',(),{'returncode':0})()):
+            checks=m.dependencies(m.SUITES['firefox'],'/bin/true','/bin/true')
+            self.assertFalse(checks['firefox_executable']);self.assertNotIn('browser_executable',checks)
+            self.assertTrue(m.dependencies(m.SUITES['firefox'],None,None,'/bin/true')['firefox_executable'])
+        with patch.object(m.subprocess,'call',return_value=1) as run,patch.object(m.subprocess,'Popen') as wm:
+            self.assertEqual(m.inside('firefox',None,None,'/test/firefox'),1)
+            self.assertEqual(run.call_args.args[0][-2:],['--executable','/test/firefox'])
+            wm.assert_not_called()
 if __name__=='__main__':unittest.main()

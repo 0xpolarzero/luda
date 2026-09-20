@@ -57,3 +57,12 @@ LUDA_ISOLATED_TEST_DISPLAY=1 xvfb-run -a -s '-screen 0 1440x1000x24 -nolisten tc
 ```
 
 The fixture starts XFWM itself; do not start a second window manager. A nonzero exit currently preserves the unsupported protected-input capability.
+
+The broad matrix accepts `--firefox-executable` (or `LUDA_FIREFOX_EXECUTABLE`) separately from Chromium and Electron:
+
+```sh
+.venv/bin/python scripts/qualification_matrix.py --suites firefox \
+  --firefox-executable /absolute/new/firefox-test-directory/firefox/firefox
+```
+
+It checks the dependency, creates the private display/bus environment, preserves the fixture's sole window manager, archives its artifacts, and cleans tagged descendants. The integration run on 2026-09-20 completed in 11.209 seconds, preserved the unsupported-secret failure (exit 1), kept source hash `0408894e5d51309a916c11ad7d099f4ce6afa6b7f039c315b47b88183ef383fb` unchanged, and left no cleanup survivors. A missing Firefox executable is a dependency failure, never a substitute-browser run.
