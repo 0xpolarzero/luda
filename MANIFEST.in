@@ -6,6 +6,8 @@ recursive-include tests *.py *.sh *.html *.js *.json *.md
 recursive-include tests/evidence/browser-download-cleanup *.log
 recursive-include tests/evidence/browser-clipboard-guardian *.log
 recursive-include tests/evidence/agent-rich-first-attempt *.gz
+recursive-include tests/evidence/matrix-xvfb-startup *.log
+recursive-include tests/evidence/browser-permission *.log *.png
 prune tests/tools/codex-cli/node_modules
 prune tests/fixtures/rich-editor/node_modules
 prune tests/fixtures/owned-rich-editor/node_modules
