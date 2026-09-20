@@ -1,0 +1,227 @@
+{
+  "scope": "WEB-07 real geolocation denial only, Chromium temporary profile, ordinary UID private desktop",
+  "environment": {
+    "uid": 1001,
+    "python": "3.12.3",
+    "architecture": "aarch64",
+    "distribution": {
+      "NAME": "Ubuntu",
+      "ID": "ubuntu",
+      "PRETTY_NAME": "Ubuntu 24.04.4 LTS",
+      "VERSION_ID": "24.04",
+      "VERSION": "24.04.4 LTS (Noble Numbat)",
+      "VERSION_CODENAME": "noble",
+      "ID_LIKE": "debian",
+      "HOME_URL": "https://www.ubuntu.com/",
+      "SUPPORT_URL": "https://help.ubuntu.com/",
+      "BUG_REPORT_URL": "https://bugs.launchpad.net/ubuntu/",
+      "PRIVACY_POLICY_URL": "https://www.ubuntu.com/legal/terms-and-policies/privacy-policy",
+      "UBUNTU_CODENAME": "noble",
+      "LOGO": "ubuntu-logo"
+    },
+    "packages": [
+      "at-spi2-core\t2.52.0-1build1",
+      "gir1.2-gtk-4.0:arm64\t4.14.5+ds-0ubuntu0.10",
+      "python3-gi\t3.48.2-1",
+      "python3-pyqt5\t5.15.10+dfsg-1build6",
+      "xfce4-session\t4.18.3-1build2",
+      "xfwm4\t4.18.0-1build3",
+      "xvfb\t2:21.1.12-1ubuntu1.6"
+    ],
+    "browser": {
+      "executable": "/workspace/silo-desktop-research/browsers/chromium-1243/chrome-linux-arm64/chrome",
+      "version": "Google Chrome for Testing 153.0.8010.12"
+    }
+  },
+  "attempts": [
+    {
+      "run": "run-1789893925676357487",
+      "attempt": "harness-keyword-collision",
+      "source_sha256": "0a4a97559a5473b9257512f4ea550ed18ee678b9ca2a2e25875f6888770d5030",
+      "source_unchanged": true,
+      "result": {
+        "status": "failed",
+        "returncode": 1,
+        "seconds": 2.304,
+        "cleanup": {
+          "tagged_processes_found": 0,
+          "survivors": []
+        }
+      },
+      "suite_log_sha256": "772748ae71cb0a975c1b559b809d804f51a74f60b68d59b284bb2858a15ffb63"
+    },
+    {
+      "run": "run-1789893946664802872",
+      "attempt": "harness-explicit-action-required",
+      "source_sha256": "a899d2233cdf4107bdbef6d9176362aedca27116aebb3e982bda1d5cb68178c2",
+      "source_unchanged": true,
+      "result": {
+        "status": "failed",
+        "returncode": 1,
+        "seconds": 2.668,
+        "cleanup": {
+          "tagged_processes_found": 0,
+          "survivors": []
+        }
+      },
+      "suite_log_sha256": "0edddae01c4ed114062366f9713eef98aaafe97c8cd497848052604c16d68904"
+    },
+    {
+      "run": "run-1789893973239982427",
+      "attempt": "harness-response-line-limit",
+      "source_sha256": "f7c9bb9586921ff6bba3a513cae8ccebec145f3c23a836c1eebeb12d8f10a1f7",
+      "source_unchanged": true,
+      "result": {
+        "status": "failed",
+        "returncode": 1,
+        "seconds": 17.456,
+        "cleanup": {
+          "tagged_processes_found": 0,
+          "survivors": []
+        }
+      },
+      "suite_log_sha256": "c672bbee521d9f9385ccbcd32ce4e177e95fb5f0f84d7c8962212a4e17fc077f"
+    },
+    {
+      "run": "run-1789894032291521080",
+      "attempt": "initial-complete",
+      "source_sha256": "2fec79b6a212c2b527f2b08b04234c7d0172facde740639a98a16f93f111d0eb",
+      "source_unchanged": true,
+      "result": {
+        "status": "passed",
+        "returncode": 0,
+        "seconds": 4.562,
+        "cleanup": {
+          "tagged_processes_found": 0,
+          "survivors": []
+        }
+      },
+      "suite_log_sha256": "55ac53de84b50f4cda352df12f7ac7e30255c74d276513c872d2b7d1593b4b05"
+    },
+    {
+      "run": "run-1789894073958825308",
+      "attempt": "origin-bound-complete",
+      "source_sha256": "1175ed0e9a721c05e0ef0589f91f372b50dbfbc6ea26369265742a8cbc7bf112",
+      "source_unchanged": true,
+      "result": {
+        "status": "passed",
+        "returncode": 0,
+        "seconds": 4.042,
+        "cleanup": {
+          "tagged_processes_found": 0,
+          "survivors": []
+        }
+      },
+      "suite_log_sha256": "5ab03af6d17db17454c9bd00982807bb75aea73bd0416f4db04a8d373ecc6ca9"
+    }
+  ],
+  "source_files": {
+    "tests/live_browser_permission.py": "3de81d3860571793f3c905f027dc24738d0ea976f9e5f7cf44c1c67e10faa652",
+    "tests/fixtures/browser-permission/index.html": "b8adbc554ee41726cd7e5ad0a932c07d797593a47ed16c842d50fabdcd8bd72a",
+    "scripts/qualification_matrix.py": "66e56cb02108a9de3cd03aa5ccafd3b9e8cf566148473cb599198d136e623f19"
+  },
+  "checks": [
+    {
+      "case": "fresh-origin-permission-prompt",
+      "passed": true,
+      "oracle": {
+        "permission": "prompt",
+        "requests": 0,
+        "successes": 0,
+        "error": null,
+        "trustedRequest": false
+      }
+    },
+    {
+      "case": "observed-request-button",
+      "passed": true
+    },
+    {
+      "case": "observed-request-action",
+      "passed": true,
+      "actions": [
+        "press",
+        "showContextMenu"
+      ]
+    },
+    {
+      "case": "trusted-request-without-autoaccept",
+      "passed": true,
+      "oracle": {
+        "permission": "prompt",
+        "requests": 1,
+        "successes": 0,
+        "error": null,
+        "trustedRequest": true
+      }
+    },
+    {
+      "case": "real-browser-denial-control-observed",
+      "passed": true,
+      "choices": [
+        {
+          "name": "Never allow",
+          "role": "push button"
+        }
+      ],
+      "oracle": {
+        "permission": "prompt",
+        "requests": 1,
+        "successes": 0,
+        "error": null,
+        "trustedRequest": true
+      }
+    },
+    {
+      "case": "denial-belongs-to-origin-location-alert",
+      "passed": true,
+      "alert_name": "http://127.0.0.1:33489 wants to: Know your location"
+    },
+    {
+      "case": "still-awaiting-explicit-denial",
+      "passed": true,
+      "oracle": {
+        "permission": "prompt",
+        "requests": 1,
+        "successes": 0,
+        "error": null,
+        "trustedRequest": true
+      }
+    },
+    {
+      "case": "observed-denial-action",
+      "passed": true,
+      "actions": [
+        "press",
+        "showContextMenu"
+      ]
+    },
+    {
+      "case": "denied-independent-permission-and-callback",
+      "passed": true,
+      "response": {
+        "ok": true,
+        "operation_id": "ea949d24b5c34554af87affefecbe100",
+        "elapsed_ms": 129,
+        "effect": "dispatched",
+        "accepted": true,
+        "verification": "Application outcome not verified; observe next."
+      },
+      "oracle": {
+        "permission": "denied",
+        "requests": 1,
+        "successes": 0,
+        "error": 1,
+        "trustedRequest": true
+      }
+    },
+    {
+      "case": "denied-status-publicly-observed",
+      "passed": true
+    },
+    {
+      "case": "owned-mcp-clean-exit",
+      "passed": true
+    }
+  ]
+}

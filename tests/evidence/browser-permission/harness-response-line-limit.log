@@ -1,0 +1,67 @@
+dbus-daemon[3856]: [session uid=1001 pid=3856] Activating service name='org.a11y.Bus' requested by ':1.0' (uid=1001 pid=3859 comm="xfwm4 --compositor=off")
+dbus-daemon[3856]: [session uid=1001 pid=3856] Successfully activated service 'org.a11y.Bus'
+dbus-daemon[3869]: Activating service name='org.a11y.atspi.Registry' requested by ':1.0' (uid=1001 pid=3859 comm="xfwm4 --compositor=off")
+dbus-daemon[3856]: [session uid=1001 pid=3856] Activating service name='org.xfce.Xfconf' requested by ':1.2' (uid=1001 pid=3859 comm="xfwm4 --compositor=off")
+dbus-daemon[3869]: Successfully activated service 'org.a11y.atspi.Registry'
+SpiRegistry daemon is running with well-known name - org.a11y.atspi.Registry
+dbus-daemon[3856]: [session uid=1001 pid=3856] Successfully activated service 'org.xfce.Xfconf'
+
+(xfwm4:3859): xfwm4-WARNING **: 08:46:13.789: Failed to connect to session manager: Failed to connect to the session manager: SESSION_MANAGER environment variable not defined
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/asyncio/tasks.py", line 520, in wait_for
+    return await fut
+           ^^^^^^^^^
+asyncio.exceptions.CancelledError
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/workspace/luda-browser-permission-denial/tests/live_browser_permission.py", line 63, in main
+    tree=await call('desktop_inspect',window_id=wid,limit=500)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/luda-browser-permission-denial/tests/live_browser_permission.py", line 47, in call
+    result=(await client.request('tools/call',{'name':tool,'arguments':arguments}))['result']
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/luda-browser-permission-denial/tests/live_mcp_disconnect.py", line 24, in request
+    async def request(self,method,params):return await asyncio.wait_for(await self.begin(method,params),15)
+                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/tasks.py", line 519, in wait_for
+    async with timeouts.timeout(timeout):
+  File "/usr/lib/python3.12/asyncio/timeouts.py", line 115, in __aexit__
+    raise TimeoutError from exc_val
+TimeoutError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/workspace/luda-browser-permission-denial/tests/live_browser_permission.py", line 89, in <module>
+    raise SystemExit(asyncio.run(main(parser.parse_args().executable)))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/base_events.py", line 687, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/workspace/luda-browser-permission-denial/tests/live_browser_permission.py", line 82, in main
+    await client.close()
+  File "/workspace/luda-browser-permission-denial/tests/live_mcp_disconnect.py", line 42, in close
+    try:await self.exited()
+        ^^^^^^^^^^^^^^^^^^^
+  File "/workspace/luda-browser-permission-denial/tests/live_mcp_disconnect.py", line 38, in exited
+    code=await asyncio.wait_for(self.process.wait(),timeout);await asyncio.wait_for(self.task,2);return code
+                                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/tasks.py", line 520, in wait_for
+    return await fut
+           ^^^^^^^^^
+  File "/workspace/luda-browser-permission-denial/tests/live_mcp_disconnect.py", line 26, in read
+    while line:=await self.process.stdout.readline():
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/streams.py", line 577, in readline
+    raise ValueError(e.args[0])
+ValueError: Separator is found, but chunk is longer than limit
+
+(xfconfd:3877): xfconfd-WARNING **: 08:46:30.715: Name org.xfce.Xfconf lost on the message dbus, exiting.

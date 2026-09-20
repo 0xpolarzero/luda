@@ -27,6 +27,7 @@ def suite(script, ids, *, wm=True, browser=None, electron=None, firefox=None, mo
 
 
 SUITES = {
+    'browser-permission': suite('live_browser_permission.py', 'WEB-07', browser='--executable', artifacts=('browser-permission',), gaps=('Real geolocation denial in a fresh owned Chromium; not every browser permission type',)),
     'password-manager': suite('live_password_manager.py', 'AUTH-03', wm=False, artifacts=('password-manager',), gaps=('Actual native KeePassXC entry menu through Desktop methods; no GUI unlock or browser extension qualification',)),
     'dead-compose': suite('live_dead_compose.py', 'KEY-10', wm=False, artifacts=('dead-compose',), gaps=('Explicit no-input refusal of named dead-key and Compose requests; not composition support',)),
     'cpu-pressure': suite('live_cpu_pressure.py', 'PERF-10', wm=False, artifacts=('cpu-pressure',), gaps=('One CPU, nice15 desktop and two bounded nice0 load workers; no system-wide CPU/OOM qualification',)),

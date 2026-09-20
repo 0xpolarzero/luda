@@ -1,0 +1,28 @@
+dbus-daemon[3144]: [session uid=1001 pid=3144] Activating service name='org.a11y.Bus' requested by ':1.0' (uid=1001 pid=3147 comm="xfwm4 --compositor=off")
+dbus-daemon[3144]: [session uid=1001 pid=3144] Successfully activated service 'org.a11y.Bus'
+dbus-daemon[3157]: Activating service name='org.a11y.atspi.Registry' requested by ':1.0' (uid=1001 pid=3147 comm="xfwm4 --compositor=off")
+dbus-daemon[3144]: [session uid=1001 pid=3144] Activating service name='org.xfce.Xfconf' requested by ':1.2' (uid=1001 pid=3147 comm="xfwm4 --compositor=off")
+dbus-daemon[3157]: Successfully activated service 'org.a11y.atspi.Registry'
+SpiRegistry daemon is running with well-known name - org.a11y.atspi.Registry
+dbus-daemon[3144]: [session uid=1001 pid=3144] Successfully activated service 'org.xfce.Xfconf'
+
+(xfwm4:3147): xfwm4-WARNING **: 08:45:26.243: Failed to connect to session manager: Failed to connect to the session manager: SESSION_MANAGER environment variable not defined
+Traceback (most recent call last):
+  File "/workspace/luda-browser-permission-denial/tests/live_browser_permission.py", line 83, in <module>
+    raise SystemExit(asyncio.run(main(parser.parse_args().executable)))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/base_events.py", line 687, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/workspace/luda-browser-permission-denial/tests/live_browser_permission.py", line 50, in main
+    tree=await call('desktop_inspect',window_id=wid,name='Request location')
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: main.<locals>.call() got multiple values for argument 'name'
+
+(xfconfd:3165): xfconfd-WARNING **: 08:45:27.982: Name org.xfce.Xfconf lost on the message dbus, exiting.

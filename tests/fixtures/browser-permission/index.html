@@ -1,0 +1,15 @@
+<!doctype html><meta charset="utf-8"><title>Luda permission refusal fixture</title>
+<h1>Location permission fixture</h1>
+<p>Explicitly deny the browser's location request. No coordinates are retained.</p>
+<button id="request">Request location</button><p id="status">Loading permission status</p>
+<script>
+const state={permission:null,requests:0,successes:0,error:null,trustedRequest:false};
+const report=()=>{document.querySelector('#status').textContent=JSON.stringify(state);fetch('/oracle',{method:'POST',body:JSON.stringify(state)});};
+navigator.permissions.query({name:'geolocation'}).then(permission=>{
+ state.permission=permission.state;report();permission.onchange=()=>{state.permission=permission.state;report();};
+ document.querySelector('#request').onclick=event=>{
+  state.requests++;state.trustedRequest=event.isTrusted;report();
+  navigator.geolocation.getCurrentPosition(()=>{state.successes++;report();},error=>{state.error=error.code;report();},{timeout:15000});
+ };
+});
+</script>
