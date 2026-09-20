@@ -155,8 +155,8 @@ def install(prefix, source, runner=invoke):
             metadata['releases'] = [r for r in metadata['releases'] if r != identity]
             atomic_json(prefix / MARKER, metadata)
         release.mkdir()
-        atomic_json(release / '.luda-release-owner.json', {'product': 'luda', 'release': identity})
         try:
+            atomic_json(release / '.luda-release-owner.json', {'product': 'luda', 'release': identity})
             # Build at the final path: moving a venv breaks absolute shebangs.
             runner([sys.executable, '-m', 'venv', release / '.venv'])
             python = release / '.venv/bin/python'
