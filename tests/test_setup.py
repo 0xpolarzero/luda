@@ -207,6 +207,41 @@ class SetupTests(unittest.TestCase):
         with patch.object(pwd, 'getpwnam', side_effect=KeyError), self.assertRaisesRegex(ValueError, 'does not exist'):
             setup.validate(setup.parser().parse_args(['--user', 'missing']))
 
+    def cli_fixture(self):
+        import shutil
+        prefix = self.base / 'runtime'
+        bindir = prefix / 'current/.venv/bin'
+        bindir.mkdir(parents=True)
+        for name in ('luda', 'luda-session'):
+            path = bindir / name
+            path.write_text('#!/bin/sh\nexit 0\n')
+            path.chmod(0o755)
+        shutil.copytree(self.source, prefix / 'current/skills/luda')
+        account = pwd.struct_passwd(('example', '', os.getuid(), os.getgid(), '', str(self.home), '/bin/sh'))
+        return account, ['--prefix', str(prefix), '--user', 'example', '--agent', 'codex', '--yes']
+
+    def test_runtime_timeout_does_not_configure_agent(self):
+        account, args = self.cli_fixture()
+        with patch.object(pwd, 'getpwnam', return_value=account), patch.dict(os.environ, {}, clear=True), \
+             patch.object(subprocess, 'run', side_effect=subprocess.TimeoutExpired('version', 20)), \
+             contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as caught:
+            setup.main(args)
+        self.assertEqual(caught.exception.code, 1)
+        self.assertFalse((self.home / '.codex').exists())
+
+    def test_desktop_timeout_reports_failure_but_retains_completed_configuration(self):
+        account, args = self.cli_fixture()
+        effects = [subprocess.CompletedProcess('version', 0), subprocess.TimeoutExpired('doctor', 35)]
+        with patch.object(pwd, 'getpwnam', return_value=account), patch.dict(os.environ, {}, clear=True), \
+             patch.object(subprocess, 'run', side_effect=effects) as runner, \
+             contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()), \
+             self.assertRaises(SystemExit) as caught:
+            setup.main([*args, '--check-desktop'])
+        self.assertEqual(caught.exception.code, 1)
+        self.assertTrue((self.home / '.codex/config.toml').is_file())
+        self.assertTrue((self.home / '.agents/skills/luda/SKILL.md').is_file())
+        self.assertEqual(runner.call_args.kwargs['timeout'], 35)
+
     @unittest.skipUnless(os.getuid() == 0, 'root required for real UID drop test')
     def test_root_writes_as_selected_account_in_subprocess(self):
         accounts = [p for p in pwd.getpwall() if 1000 <= p.pw_uid < 60000]
