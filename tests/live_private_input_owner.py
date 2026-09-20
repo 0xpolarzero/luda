@@ -3,6 +3,7 @@ import ctypes as C
 import json
 import os
 import select
+import signal
 import subprocess
 import sys
 import time
@@ -91,9 +92,25 @@ def run():
         abandoned = json.loads(parent.stdout)
         wait_absent(devices, abandoned['name'])
         assert devices.devices() == baseline
+        # Group-wide termination must not kill owner and cleanup guardian together.
+        parent = subprocess.Popen([sys.executable, '-c',
+            'import json,time; from luda.private_input import PrivateInput; '
+            'from luda._private_input import TOKEN_ENV; owner=PrivateInput(); '
+            'print(owner.environment()[TOKEN_ENV], flush=True); time.sleep(30)'],
+            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, start_new_session=True)
+        try:
+            assert select.select([parent.stdout], [], [], 3)[0]
+            grouped = json.loads(parent.stdout.readline())
+            os.killpg(parent.pid, signal.SIGKILL)
+            parent.wait(timeout=3)
+            wait_absent(devices, grouped['name'])
+            assert devices.devices() == baseline
+        finally:
+            if parent.poll() is None:parent.kill();parent.wait(timeout=3)
+            parent.stdout.close()
         test.XTestFakeKeyEvent(human.display, 38, False, 0)
         human.lib.XSync(human.display, False)
-        print(json.dumps({'passed': True, 'checks': ['private pointer', 'private keyboard', 'same-key release isolation', 'normal cleanup', 'owner SIGKILL cleanup', 'parent crash EOF cleanup', 'unchanged human devices']}))
+        print(json.dumps({'passed': True, 'checks': ['private pointer', 'private keyboard', 'same-key release isolation', 'normal cleanup', 'owner SIGKILL cleanup', 'parent crash EOF cleanup', 'parent process-group SIGKILL cleanup', 'unchanged human devices']}))
     finally:
         if owner: owner.close()
         if agent: agent.close()

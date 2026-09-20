@@ -53,6 +53,18 @@ class PrivateIdentityTest(unittest.TestCase):
         self.assertTrue(api.remove(token()))
         api.xi.XIChangeHierarchy.assert_called_once()
 
+    def test_generation_validation_is_read_only_and_never_ungrabs(self):
+        api = object.__new__(Devices)
+        api.x = Mock(root=1)
+        api.x._property.return_value = (31, 8, b'b' * 32, 0)
+        self.assertEqual(api.generation(), 'b' * 32)
+        api.x.window_tokens.assert_not_called()
+        api.x.lib.XGrabServer.assert_not_called()
+        api.x.lib.XUngrabServer.assert_not_called()
+        api.x._property.return_value = None
+        with self.assertRaises(DesktopError):api.generation()
+        api.x.window_tokens.assert_not_called()
+
     def test_remove_holds_server_lock_through_validation(self):
         api = self.device_api()
         order = []

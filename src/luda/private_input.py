@@ -27,7 +27,7 @@ class PrivateInput:
                 try:
                     self._process = subprocess.Popen([sys.executable, '-m', 'luda._private_input'],
                         stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
-                        env=self._environment)
+                        env=self._environment, start_new_session=True)
                     if not select.select([self._process.stdout], [], [], 2)[0]:
                         raise TimeoutError()
                     self._token = decode_token(os.read(self._process.stdout.fileno(), 2048))

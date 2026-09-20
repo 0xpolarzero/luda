@@ -9,7 +9,7 @@ import subprocess
 import sys
 
 from .common import DesktopError
-from ._x11_helper import _NativeX11
+from ._x11_helper import _NativeX11, _decode_window_token
 
 TOKEN_ENV = 'LUDA_PRIVATE_INPUT'
 
@@ -76,7 +76,13 @@ class Devices:
             self.xi.XIFreeDeviceInfo(raw)
 
     def generation(self):
-        return self.x.window_tokens([self.x.root])[self.x.root]
+        # Validation runs inside an outer server grab. window_tokens() would
+        # grab/ungrab internally, releasing that outer protection prematurely.
+        prop = self.x._property(self.x.root, '_LUDA_WINDOW_TOKEN', 9)
+        value = _decode_window_token(*prop) if prop else None
+        if value is None:
+            raise DesktopError('SESSION_CHANGED', 'Private input server identity is missing.')
+        return value
 
     def validate(self, token):
         if self.generation() != token['generation']:
@@ -184,9 +190,11 @@ def main():
                     token = {**reservation, 'pointer': pointer['id'], 'keyboard': keyboard['id']}
         else:
             name = 'luda-' + secrets.token_hex(16)
+            native.window_tokens([native.root])  # Initialize before any guarded validation.
             reservation = dict(name=name, generation=devices.generation())
             watchdog = subprocess.Popen([sys.executable, '-m', 'luda._private_input', 'watchdog'],
-                                        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+                                        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                                        start_new_session=True)
             watchdog.stdin.write(json.dumps(reservation).encode() + b'\n')
             watchdog.stdin.flush()
             if (not select.select([watchdog.stdout], [], [], 1)[0]
