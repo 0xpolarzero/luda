@@ -106,6 +106,10 @@ class VerificationLimit(ValueError):
     """Exact text normalization cannot fit the documented worker budget."""
 
 
+class SelectionUnavailable(ValueError):
+    """Provider cannot expose exact, unambiguous selection offsets."""
+
+
 class TextAccess:
     """Normalize providers that use UTF-16 offsets (Qt) to Unicode code points.
 
@@ -247,12 +251,16 @@ class TextAccess:
                 except (ValueError, AttributeError):
                     continue
                 matching.append(SimpleNamespace(start_offset=start, end_offset=end))
-            if index >= len(matching):
-                raise ValueError("Document selection does not map to this exact text object.")
-            self.selection_source = "Document.GetTextSelections"
-            return matching[index]
+            if index < len(matching):
+                self.selection_source = "Document.GetTextSelections"
+                return matching[index]
+            # Older Chromium advertises Document but returns no ranges. Its
+            # legacy Text selection double-converts UTF-16 offsets; it is exact
+            # only when the complete field contains no non-BMP characters.
+            if ranges or any(ord(c) > 0xFFFF for c in self.text):
+                raise SelectionUnavailable("Document selection does not map to this exact text object.")
         if self.toolkit.casefold() == "chromium" and any(ord(c) > 0xFFFF for c in self.text):
-            raise ValueError("Chromium non-BMP selection requires the Document selection interface.")
+            raise SelectionUnavailable("Chromium non-BMP selection requires the Document selection interface.")
         selection = Atspi.Text.get_selection(self.raw, index)
         return SimpleNamespace(start_offset=self.public_offset(selection.start_offset),
                                end_offset=self.public_offset(selection.end_offset))
@@ -699,6 +707,10 @@ def dispatch(request):
     request.pop("_mutation_started", None)
     try:
         return main(request)
+    except SelectionUnavailable:
+        return {"error": "SELECTION_UNVERIFIABLE",
+                "message": "The accessibility provider cannot expose exact selection offsets. Use deliberate screenshot/clipboard controls and independently verify the application result before retrying.",
+                "effect": "uncertain" if request.get("_mutation_started") else "none"}
     except VerificationLimit:
         return {"error": "VERIFICATION_LIMIT",
                 "message": "Exact text verification exceeds the one-million-code-point or two-million-provider-unit budget.",
