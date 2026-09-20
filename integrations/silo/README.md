@@ -289,3 +289,33 @@ changes only embedded bytes. Evidence is in `artifacts/silo-native-registration/
 The actual native key-derivation/SSH path was not run in this VM, which lacks
 `/usr/bin/ssh-keygen` and `/usr/bin/ssh`; native compilation, pure transport checks
 and real temporary-profile Codex behavior are distinct from macOS/real-VM acceptance.
+
+### Actual native SSH helper qualification (eighth patch)
+
+`0008-native-ssh-qualification.patch` closes the unexecuted native SSH/key-derivation
+path noted above. Eight editor/helper tests passed using official Ubuntu OpenSSH
+9.6p1-3ubuntu13.19 ARM64 and OpenSSL 3.0.13. The real-VM editor test remains explicitly
+ignored. Previously extracted distro binaries were temporarily exposed at the
+otherwise absent `/usr/bin/ssh` and `/usr/bin/ssh-keygen`; those exact test-owned
+symlinks were removed afterward. No package post-install script, SSH server,
+service, global SSH configuration or existing credentials were involved.
+
+The new actual test generates disposable client/host keys, renders private pinned
+config under paths containing spaces, both quote characters, percent signs and
+literal `$(touch INJECTED)`, and checks `ssh -G` HostName, root user, identity and
+known-host paths plus strict pinning/forwarding settings. A deliberately failing
+owned proxy records exact argv/environment through a real SSH invocation; the
+metacharacters stay literal and no injection marker appears. This does not launch
+microsandbox or establish a remote session. Public-key derivation and read-only
+verification preserve config/pin/key bytes and modification times. Replacing the
+owned host key under the same alias is refused without rewriting the old pins.
+
+A private dependency seam tests key-derivation timeout and output overflow without
+adding a production executable override. Production remains the fixed system
+ssh-keygen with a five-second deadline; output is capped at 4096 bytes, and timeout
+or overflow terminates the owned process group before returning. The timeout test
+proves a delayed child marker is never written. Existing SSH config preservation,
+public-key parsing, quoting and file-mode/symlink tests also pass. Exact logs,
+binary versions/hashes and cleanup evidence are in
+`artifacts/silo-native-registration/native-ssh.json`. This closes Linux native
+helper execution, not real Silo routing or macOS application acceptance.

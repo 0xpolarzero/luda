@@ -1,0 +1,93 @@
+diff --git a/app/SiloUI/src-tauri/src/editor.rs b/app/SiloUI/src-tauri/src/editor.rs
+index 9c23926..6e04c90 100644
+--- a/app/SiloUI/src-tauri/src/editor.rs
++++ b/app/SiloUI/src-tauri/src/editor.rs
+@@ -7,7 +7,7 @@ use crate::{
+ use std::{
+     fs,
+     io::Write,
+-    os::unix::fs::PermissionsExt,
++    os::unix::{fs::PermissionsExt, process::CommandExt},
+     path::{Path, PathBuf},
+     process::{Command, Stdio},
+     sync::Mutex,
+@@ -174,18 +174,28 @@ pub(crate) fn key(path: &Path) -> Result<(), String> {
+ }
+ 
+ pub(crate) fn public_key(path: &Path) -> Result<String, String> {
++    public_key_with(path,Path::new("/usr/bin/ssh-keygen"),Duration::from_secs(5))
++}
++// Private dependency seam for timeout/output tests; production always uses the
++// fixed system executable and deadline above, never a guest-provided command.
++fn public_key_with(path: &Path, executable: &Path, timeout: Duration) -> Result<String,String> {
+     let output = tempfile::NamedTempFile::new().map_err(|_| FAILED)?;
+-    let mut child = Command::new("/usr/bin/ssh-keygen")
+-        .args(["-y", "-f"]).arg(path).stdin(Stdio::null()).stderr(Stdio::null())
++    let mut child = Command::new(executable)
++        .process_group(0).args(["-y", "-f"]).arg(path).stdin(Stdio::null()).stderr(Stdio::null())
+         .stdout(output.as_file().try_clone().map_err(|_|FAILED)?).spawn().map_err(|_|FAILED)?;
+-    let deadline=Instant::now()+Duration::from_secs(5);
++    let deadline=Instant::now()+timeout;
+     loop {
++        if output.as_file().metadata().map(|m|m.len()>4096).unwrap_or(true) {
++            unsafe {libc::kill(-(child.id() as i32),libc::SIGKILL);}
++            let _=child.wait();return Err(FAILED.into());
++        }
+         match child.try_wait() {
+             Ok(Some(status)) if status.success()=>break,
+             Ok(None) if Instant::now()<deadline=>std::thread::sleep(Duration::from_millis(20)),
+-            _=>{let _=child.kill();let _=child.wait();return Err(FAILED.into());}
++            _=>{unsafe{libc::kill(-(child.id() as i32),libc::SIGKILL);}let _=child.wait();return Err(FAILED.into());}
+         }
+     }
++    if output.as_file().metadata().map_err(|_|FAILED)?.len()>4096{return Err(FAILED.into())}
+     let text=String::from_utf8(read_regular(output.path())?).map_err(|_|FAILED)?;
+     let mut fields = text.split_whitespace();
+     let kind = fields.next().ok_or(FAILED)?;
+@@ -445,6 +455,46 @@ pub(crate) fn prepare_remote(app: &AppHandle, host: &str, vm: &str, path: &str)
+ mod tests {
+     use super::*;
+     #[test]
++    fn key_derivation_deadline_and_output_limit_stop_owned_children() {
++        let directory=tempfile::tempdir().unwrap();let executable=directory.path().join("test-keygen");let marker=directory.path().join("late");
++        fs::write(&executable,format!("#!/bin/sh\n(sleep 0.2; touch {}) &\nwait\n",quote(marker.to_str().unwrap()))).unwrap();
++        fs::set_permissions(&executable,fs::Permissions::from_mode(0o700)).unwrap();
++        let began=Instant::now();assert!(public_key_with(Path::new("unused"),&executable,Duration::from_millis(40)).is_err());assert!(began.elapsed()<Duration::from_secs(1));
++        std::thread::sleep(Duration::from_millis(300));assert!(!marker.exists());
++        fs::write(&executable,b"#!/bin/sh\nhead -c 8192 /dev/zero\n").unwrap();
++        assert!(public_key_with(Path::new("unused"),&executable,Duration::from_secs(1)).is_err());
++    }
++    #[test]
++    fn actual_private_ssh_paths_and_read_only_host_pin_verification() {
++        let directory=tempfile::tempdir().unwrap();
++        let literal=directory.path().join("space 'quote\" % $(touch INJECTED)");fs::create_dir(&literal).unwrap();
++        let executable=literal.join("msb helper");
++        fs::write(&executable,b"#!/bin/sh\nprintf '%s\\n' \"$MSB_HOME\" \"$MSB_PATH\" \"$MSB_LIBKRUNFW_PATH\" \"$@\" > \"$PROXY_ORACLE\"\nexit 1\n").unwrap();
++        fs::set_permissions(&executable,fs::Permissions::from_mode(0o700)).unwrap();
++        let paths=RuntimePaths{guest_image:literal.join("guest"),executable:executable.clone(),home:literal.join("runtime"),storage_home:None,library:literal.join("library path"),metadata:literal.join("machines.json"),volumes:literal.join("volumes")};
++        let transport=literal.join("private transport");
++        let (alias,config)=prepare_private_transport(&paths,"owned-vm",&transport).unwrap();
++        let output=Command::new("/usr/bin/ssh").args(["-G","-F"]).arg(&config).arg(&alias).output().unwrap();
++        assert!(output.status.success(),"{}",String::from_utf8_lossy(&output.stderr));
++        let text=String::from_utf8(output.stdout).unwrap();
++        assert!(text.lines().any(|line|line==format!("hostname {alias}")));assert!(text.lines().any(|line|line=="user root"));
++        assert!(text.contains("stricthostkeychecking true\n"));assert!(text.contains("forwardagent no\n"));
++        assert!(text.lines().any(|line|line==format!("identityfile {}",paths.home.join("ssh/silo_ed25519").display().to_string().replace('%',"%%"))));
++        assert!(text.lines().any(|line|line==format!("userknownhostsfile {}",transport.join("known_hosts").display())));assert!(text.contains("proxycommand "));
++        let files=[config.clone(),transport.join("known_hosts"),paths.home.join("ssh/silo_ed25519"),paths.home.join("ssh/silo_ed25519.pub"),paths.home.join("sandboxes/owned-vm/ssh/host_ed25519"),paths.home.join("sandboxes/owned-vm/ssh/host_ed25519.pub")];
++        let snapshot:Vec<_>=files.iter().map(|path|(fs::read(path).unwrap(),fs::metadata(path).unwrap().modified().unwrap())).collect();
++        assert_eq!(verify_private_transport(&paths,"owned-vm",&transport).unwrap(),alias);
++        for (path,before) in files.iter().zip(&snapshot){assert_eq!(fs::read(path).unwrap(),before.0);assert_eq!(fs::metadata(path).unwrap().modified().unwrap(),before.1);}
++        let oracle=directory.path().join("proxy-argv");
++        let connection=Command::new("/usr/bin/ssh").args(["-T","-F"]).arg(&config).args(["-o","ConnectTimeout=2"]).arg(&alias).env("PROXY_ORACLE",&oracle).current_dir(directory.path()).output().unwrap();
++        assert!(!connection.status.success());
++        let expected=[paths.home.to_str().unwrap(),executable.to_str().unwrap(),paths.library.to_str().unwrap(),"ssh","serve","owned-vm","--stdio","--no-start","--no-inactivity-timeout"].join("\n")+"\n";
++        assert_eq!(fs::read_to_string(&oracle).unwrap(),expected);assert!(!directory.path().join("INJECTED").exists());
++        let host=&files[4];fs::remove_file(host).unwrap();fs::remove_file(&files[5]).unwrap();key(host).unwrap();
++        assert!(verify_private_transport(&paths,"owned-vm",&transport).is_err());
++        assert_eq!(fs::read(&config).unwrap(),snapshot[0].0);assert_eq!(fs::read(transport.join("known_hosts")).unwrap(),snapshot[1].0);
++    }
++    #[test]
+     fn update_transport_verification_is_read_only_and_rejects_changed_pins() {
+         let directory=tempfile::tempdir().unwrap();
+         fs::write(directory.path().join("ssh_config"),b"reviewed config").unwrap();
