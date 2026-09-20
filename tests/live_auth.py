@@ -167,11 +167,20 @@ async def main(executable):
                                             failed,outcome=await raw('desktop_invoke',element_id=chosen['element_id'],action=action)
                                             setting.update(action=action,action_error=failed,effect=outcome.get('effect'),code=outcome.get('code'))
                                     elif not choices:
-                                        # The retained screenshot of this pinned Chrome fixture
-                                        # shows Always show full URLs as the final menu item.
-                                        await call('desktop_press_keys',window_id=popupid,chord='End')
+                                        # Home selects the visually disabled Undo row in Chrome.
+                                        # The retained screenshot then shows
+                                        # Cut, Copy, Paste, Paste/search, Delete, Select all,
+                                        # Manage search engines, and Always show full URLs.
+                                        # Appended AI Mode makes End unstable. The selected
+                                        # address and test clipboard fix the enabled rows.
+                                        # This pinned visual route still requires origin readback.
+                                        await call('desktop_press_keys',window_id=popupid,chord='Home')
+                                        await call('desktop_press_keys',window_id=popupid,chord='Down',count=8)
+                                        selected_menu=await session.call_tool('desktop_observe',{})
+                                        for content in selected_menu.content:
+                                            if content.type=='image':(OUT/'selected-menu-row.png').write_bytes(base64.b64decode(content.data))
                                         await call('desktop_press_keys',window_id=popupid,chord='Return')
-                                        setting.update(action='End then Return',method='observed_last_menu_item')
+                                        setting.update(action='Home then eight Down then Return',method='pinned_fixture_observed_menu_rows')
                                     else:
                                         await call('desktop_press_keys',window_id=popupid,chord='Escape')
                                     fresh_chrome=await call('desktop_inspect',window_id=popupid,limit=500)

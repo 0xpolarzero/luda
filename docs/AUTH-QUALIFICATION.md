@@ -123,7 +123,7 @@ preference was set, and no user browser profile was changed. The fixture records
 this screenshot-dependent menu path and setting/readback result. Menu order in
 another browser/version is not qualified by this pinned fixture.
 
-The final run has **4/4 scoped required workflows passing, 12/16 total probes
+The first successful run has **4/4 scoped required workflows passing, 12/16 total probes
 passing, and four failed diagnostics preserved**. AUTH-04 covers only the
 explicit visible-digit workflow and measured storage boundary; AUTH-10 covers
 only the synthetic exposed human-presence step. AUTH-07 remains explicitly
@@ -143,7 +143,7 @@ limitations. This is why the final run exits zero; it does **not** mean all auth
 requirements, routes or providers are qualified. Six deterministic report tests
 ensure failures or omitted diagnostics cannot be hidden by classification.
 
-The final 16.410-second ordinary-UID run used unchanged source fingerprint
+The first successful 16.410-second ordinary-UID run used unchanged source fingerprint
 `af362f65e7d2229da7a2f74b5f926aed9b56058d7f5fe1896dc3eb55e87b2370`, with no owned
 process survivors. Evidence is retained in
 `artifacts/qualification-matrix/run-1789873145058039909/`. Earlier failed/blocked
@@ -157,3 +157,35 @@ an independent test clipboard sentinel to isolate this separate workflow. This
 fixture setup is not a production clipboard-restore policy or a claim that the
 original clipboard route avoids retention. Final popup screenshots show the
 sentinel; the latest captured text records do not contain the complete OTP.
+
+## Integrated repetition and menu correction
+
+A fresh main-branch repeat at `5ef173b` failed the origin workflow in 14.982s
+(`run-1789873457753122350`): Chrome appended **Always show AI Mode** below
+**Always show full URLs**, so End/Return selected the wrong preference. Approval
+was withheld; 3/4 workflows passed, with 9/16 probes passing. The earlier pass is
+not evidence that menu order is stable.
+
+A screenshot-derived pointer attempt was refused with `OCCLUDED_TARGET` because
+this Chrome context menu lacks usable ownership metadata. Two keyboard probes
+using Home and seven Down presses selected **Manage search engines**; their
+failures and selected-row screenshot remain in the run artifacts. These were
+separate fresh disposable profiles, not mutation retries within an auth workflow.
+
+The corrected pinned-fixture route uses Home, eight Down presses, and Return.
+Chrome includes the visually disabled Undo row in this keyboard traversal. The
+fixture retains a screenshot of the selected row before Return; reviewed images
+show **Always show full URLs**. Appending AI Mode does not shift this row from the
+top. Full scheme/host/port readback still gates approval, and menu layout in other
+browser/font configurations remains outside this test's claim. No production
+menu-discovery or coordinate safety rule was weakened.
+
+Two consecutive fresh runs of the corrected script passed all four scoped
+workflows (12/16 probes, four preserved diagnostics):
+`run-1789873648402977441` in 16.183s and `run-1789873674414366495` in 16.403s.
+Both ran as UID1001 on ARM64 Chromium153 with unchanged source fingerprint
+`c3d8f97bb8064c17d2c8e048fc44718bcfbfe4091570c804248a36ecce503301` and
+no owned survivors. Intermediate failures remain under
+`run-1789873555842873355`, `run-1789873595527134124`, and
+`run-1789873623771968054`. This is two repetitions of one fixed desktop configuration,
+not a general browser-menu reliability claim.
