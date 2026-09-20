@@ -56,7 +56,7 @@ def source_fingerprint(root):
              for p in (root / folder).rglob('*')
              if p.is_file() and 'node_modules' not in p.parts and '__pycache__' not in p.parts and p.suffix not in ('.pyc', '.pyo')
              and not any(part.endswith('.egg-info') for part in p.parts)]
-    paths += [root / name for name in ('pyproject.toml', 'requirements.lock', 'uv.lock',
+    paths += [root / name for name in ('pyproject.toml', 'requirements.lock', 'requirements-browser.lock', 'uv.lock',
                                       'README.md', 'MANIFEST.in', '.mcp.json', 'AGENTS.md',
                                       'build-requirements.in', 'build-requirements.lock')]
     files = {str(p.relative_to(root)): hashlib.sha256(p.read_bytes()).hexdigest()

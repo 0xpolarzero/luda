@@ -28,7 +28,7 @@ class QualificationContracts(unittest.TestCase):
     def test_fingerprint_includes_fixture_skill_and_plugin_changes(self):
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory)
-            cases=['tests/fixtures/browser.html','skills/luda/SKILL.md',
+            cases=['requirements-browser.lock','tests/fixtures/browser.html','skills/luda/SKILL.md',
                    '.mcp.json','.codex-plugin/plugin.json','.github/workflows/tests.yml',
                    'integrations/silo/guest/agent-tools.py']
             prior=qualify.source_fingerprint(root)
