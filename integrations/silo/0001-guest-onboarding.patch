@@ -10,10 +10,10 @@ index 0000000..3c88469
 +}
 diff --git a/app/SiloUI/src-tauri/guest/agent-tools.py b/app/SiloUI/src-tauri/guest/agent-tools.py
 new file mode 100644
-index 0000000..e1c5ae3
+index 0000000..54ae7ed
 --- /dev/null
 +++ b/app/SiloUI/src-tauri/guest/agent-tools.py
-@@ -0,0 +1,313 @@
+@@ -0,0 +1,316 @@
 +#!/usr/bin/env python3
 +"""Optional Silo guest onboarding. No viewer/SSH credentials or host registration."""
 +import argparse
@@ -221,6 +221,9 @@ index 0000000..e1c5ae3
 +              'configuration_generated': value.get('configuration_generated') is True,
 +              'last_ready': value.get('last_ready') if type(value.get('last_ready')) is bool else None,
 +              'automatic_retry_allowed': False}
++    if result['state'] == 'ready' and any(result[key] is not True for key in
++            ('installation_completed', 'configuration_generated', 'last_ready')):
++        result['state'] = 'unconfirmed'
 +    if isinstance(value.get('reason'), str) and value['reason'] in REASONS:
 +        result['reason'] = value['reason']
 +    checked = value.get('checked_at')

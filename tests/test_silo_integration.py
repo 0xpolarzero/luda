@@ -169,7 +169,12 @@ class SiloIntegrationTests(unittest.TestCase):
         lock = (self.state / 'operation.lock').open('w')
         self.addCleanup(lock.close)
         fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-        with patch.object(tools, 'STATE', self.state), patch.object(tools.os, 'geteuid', return_value=0), patch.object(tools, 'manifest', return_value=RELEASE), patch.object(tools, 'ensure') as ensure, patch.object(tools.sys, 'argv', ['agent-tools.py', 'ensure']), contextlib.redirect_stdout(io.StringIO()) as output:
+        original_stat = Path.stat
+        def pretend_root_owned(path, *args, **kwargs):
+            from types import SimpleNamespace
+            result = original_stat(path, *args, **kwargs)
+            return SimpleNamespace(st_uid=0, st_mode=result.st_mode) if path == self.state else result
+        with patch.object(Path, 'stat', pretend_root_owned), patch.object(tools, 'STATE', self.state), patch.object(tools.os, 'geteuid', return_value=0), patch.object(tools, 'manifest', return_value=RELEASE), patch.object(tools, 'ensure') as ensure, patch.object(tools.sys, 'argv', ['agent-tools.py', 'ensure']), contextlib.redirect_stdout(io.StringIO()) as output:
             tools.main()
         ensure.assert_not_called()
         self.assertEqual(json.loads(output.getvalue())['state'], 'unconfirmed')
@@ -263,6 +268,17 @@ class SiloIntegrationTests(unittest.TestCase):
         self.assertIsNone(value['installation_completed'])
         self.assertIsNone(value['last_ready'])
         self.assertNotIn('secret', json.dumps(value))
+
+    def test_ready_projection_requires_consistent_success_fields(self):
+        valid = {'state': 'ready', 'installation_completed': True,
+                 'configuration_generated': True, 'last_ready': True}
+        self.assertEqual(tools.project(valid)['state'], 'ready')
+        for key in ('installation_completed', 'configuration_generated', 'last_ready'):
+            for value in (None, False, 1, 'true', [], {}):
+                with self.subTest(key=key, value=value):
+                    self.assertEqual(tools.project({**valid, key: value})['state'], 'unconfirmed')
+            missing = dict(valid);missing.pop(key)
+            self.assertEqual(tools.project(missing)['state'], 'unconfirmed')
 
     def test_projection_handles_nonstring_states_and_reasons(self):
         for value in ([], {}, ['ready'], {'state': 'ready'}, 1, True):

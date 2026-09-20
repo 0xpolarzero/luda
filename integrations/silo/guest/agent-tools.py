@@ -205,6 +205,9 @@ def project(value):
               'configuration_generated': value.get('configuration_generated') is True,
               'last_ready': value.get('last_ready') if type(value.get('last_ready')) is bool else None,
               'automatic_retry_allowed': False}
+    if result['state'] == 'ready' and any(result[key] is not True for key in
+            ('installation_completed', 'configuration_generated', 'last_ready')):
+        result['state'] = 'unconfirmed'
     if isinstance(value.get('reason'), str) and value['reason'] in REASONS:
         result['reason'] = value['reason']
     checked = value.get('checked_at')
