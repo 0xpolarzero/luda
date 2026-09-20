@@ -10,10 +10,10 @@ source-bound findings.
 
 ## Evidence now available
 
-The [current unit record](UNIT-COVERAGE-CURRENT.md) now contains 679 passing root
-tests and the matching ordinary-account run (671 passed, eight unavailable Codex
-CLI tests skipped). Its map names 136 requirements and 298 distinct unit methods.
-These subsequent results retain their own source revision and fingerprint. The [live inventory](LIVE-COVERAGE.md) registers 73 fixtures and
+The [current unit record](UNIT-COVERAGE-CURRENT.md) now contains 688 passing root
+tests and the matching ordinary-account run (680 passed, eight unavailable Codex
+CLI tests skipped). Its map names 137 requirements and 307 distinct unit methods.
+These subsequent results retain their own source revision and fingerprint. The [live inventory](LIVE-COVERAGE.md) registers 75 fixtures and
 160 distinct requirement associations. These overlap and are not a reliability
 percentage or evidence that all associated requirements passed.
 
@@ -113,4 +113,4 @@ No priorities or acceptance criteria are downgraded here. A requirement that
 explicitly permits unsupported behavior still needs evidence for that refusal;
 its requested application effect must not be described as successful.
 
-[Optional local OCR](OCR.md) is now implemented, with bounded historical screenshot storage, uncertain word candidates and real GTK/MCP geometry evidence. Audio/video capture and other richer media capabilities remain separate work.
+[Optional local OCR](OCR.md) is now implemented, with bounded historical screenshot storage, uncertain word candidates and real GTK/MCP geometry evidence. [Temporary silent screen recording](RECORDING.md) is implemented with bounded storage and lifecycle/fault evidence. Audio, camera input and other richer media capabilities remain separate work.

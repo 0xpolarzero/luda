@@ -1,20 +1,16 @@
-# Unit mapping coverage: 679-test snapshot
+# Unit mapping coverage: 688-test snapshot
 
-Source `0217541` passed 679 root unit tests. The matching ordinary-account run passed 671 and explicitly skipped eight Codex CLI tests because the CLI was unavailable to that account. Both retained unchanged full source fingerprint `0684d83d005067881ba36143aa367179064a332c00a243b9cb75b22e5b77922c`.
+Source `ed4edcb` passed 688 root unit tests. The matching ordinary-account run passed 680 and explicitly skipped eight Codex CLI tests unavailable to that account. Both retained unchanged full source fingerprint `1735e8dc9c35c5b9e6e10e00ede1bff50a7fd656c177257c7594f9ef454e9bd2`. The ordinary account could not read Git revision metadata; its matching file fingerprint establishes the source identity.
 
 - Catalog: 346 cases; all remain release-unqualified.
-- Mapping: 136 requirements and 298 distinct exact unit methods.
-- Evidence: 136 local-tests-passed; 210 cases without mapped unit assertions.
-- Records: `artifacts/qualification/backend-host/root-ocr-final.json` and `ordinary-ocr-final.json`.
+- Mapping: 137 requirements and 307 distinct exact unit methods.
+- Evidence: 137 local-tests-passed; 209 cases without mapped unit assertions.
+- Records: `artifacts/qualification/backend-host/root-recording.json` and `ordinary-recording.json`.
 
-The [661-test snapshot](UNIT-COVERAGE-44F53EA.md) preserves earlier results and the headless fixture-permission failures. An intermediate ordinary-account run (`ordinary-ocr-integrated.json`) encountered an unresolved generated-inventory merge conflict and failed that freshness check. It remains retained; regenerating the inventory and completing the merge preceded both passing final runs. No failure was converted into a pass.
+The [679-test snapshot](UNIT-COVERAGE-0217541.md) preserves earlier OCR, host registration, hosted results and retained failures. The subsequent root run at `fb100ec` also passed 679 tests (`root-native-eight.json`).
 
-New evidence includes the optional screenshot OCR parser, limits, actual child cancellation, cache bounds and read-only protocol; complete effective host transport validation; malformed bundle JSON refusal; source-dependency filtering; and ordered Silo patch/skill checks. The browser prototypes are separate live evidence, with their actual failures preserved, rather than production support inferred from asset tests.
+Nine new tests cover temporary recording bounds, storage and startup failures, safe artifact deletion, parent-death setup, malformed metadata cleanup and cleanup availability while ordinary input is blocked. The embedded Silo skill now matches through patch ten; the agent branch's earlier mismatch remains recorded in [recording evidence](RECORDING.md).
 
-At source `9bf509b`, the integrated OCR matrix run `run-1789883951540941145` passed in 2.425 seconds with unchanged fingerprint `f9b3ef0cbd883698fd42aa918f08d4f9d176d2cb228ce40405a2dc9686af9932` and no surviving owned processes. Actual KasmVNC MCP passed 23 checks while holding the shared desktop lease. After giving each MCP fixture a fresh oracle directory, another 23-check run passed at `9e366e7`, retained under `artifacts/mcp/run-1789884289739842557/`.
-
-Hosted [Codex registration](https://github.com/0xpolarzero/luda/actions/runs/35492837259), [desktop contracts](https://github.com/0xpolarzero/luda/actions/runs/35492837266) and [native application workflows](https://github.com/0xpolarzero/luda/actions/runs/35492837275) passed on AMD64 at `f7a8720`. The new Codex job installs the integrity-locked 0.155.1 CLI and fails on skipped tests. These hosted results precede OCR. The earlier native run at `2c7e362` failed waiting for Mousepad's automatic focus; its artifact is retained. Explicitly activating the sole owned window fixed the fixture assumption; the local affected workflow and subsequent hosted native run passed.
+At the same `ed4edcb` fingerprint, private ordinary-account recording and recording-faults suites passed in 4.288 and 10.088 seconds (`artifacts/qualification-matrix/run-1789885682806247265/`). They verify nine scoped live assertions, including independently decoded rendered frames and owner-death cleanup. The initial integrated run `run-1789885638299969327` failed before starting because the root-owned artifact parent lacked ordinary-writable recording subdirectories. That fixture failure is retained; creating only those new output directories preceded the passing rerun.
 
 Run `.venv/bin/python scripts/qualify.py --output /absolute/evidence.json` for a new exact-source record. Unit assertions, live fixture association, application qualification and fresh product integration remain separate claims.
-
-The subsequent pushed revision `0dbb8fb` passed hosted [Codex registration](https://github.com/0xpolarzero/luda/actions/runs/35493704802), [desktop contracts](https://github.com/0xpolarzero/luda/actions/runs/35493704898) and [native application workflows](https://github.com/0xpolarzero/luda/actions/runs/35493704831). This revision includes OCR and the first seven Silo patches. At `937402d`, the eight-patch application check and actual application to a fresh pinned Silo checkout both passed, along with 23 integration unit tests. These checks do not execute the Silo GUI on macOS.

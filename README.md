@@ -6,7 +6,7 @@ Local Linux desktop control for agents. Luda attaches to the XFCE/X11 desktop al
 
 ## Use it
 
-For an existing running Silo desktop, the [guest bootstrap](docs/GUEST-BOOTSTRAP.md) composes installation, readiness checks and a remote Codex configuration/skill bundle in one command. For host Codex, the [VM-specific SSH plugin builder and explicit profile registration](docs/HOST-REGISTRATION.md) package the tools and skill together. Each VM has its own resolved MCP server name. The [native Silo integration patch](integrations/silo/README.md) adds discovery, path pickers, registration and explicit disconnect/reconnect; it has not been shipped in Silo or accepted on macOS.
+For an existing running Silo desktop, the [guest bootstrap](docs/GUEST-BOOTSTRAP.md) composes installation, readiness checks and a remote Codex configuration/skill bundle in one command. For host Codex, the [VM-specific SSH plugin builder and explicit profile registration](docs/HOST-REGISTRATION.md) package the tools and skill together. Each VM has its own resolved MCP server name. The [native Silo integration patch](integrations/silo/README.md) adds discovery, path pickers, registration, explicit disconnect/reconnect and reviewed version updates; it has not been shipped in Silo or accepted on macOS.
 
 For manual installation on an existing Ubuntu 24.04 XFCE/X11 desktop:
 
@@ -28,7 +28,7 @@ The installer creates versioned releases and switches `current` atomically. The 
 3. When accessibility is unavailable, observe the screenshot and use its coordinates. The same click/hover tools handle owned context menus and submenus.
 4. Read back or wait for the intended state. After an uncertain result, inspect before repeating input.
 
-The [tool reference](docs/TOOLS.md) is generated from actual MCP declarations. The [skill](skills/luda/SKILL.md) explains targeting, text and recovery. Other capabilities include [optional local OCR](docs/OCR.md) over a selected screenshot, window/workspace management, cross-window drag, table-row selection, clipboard paste, shared pause/resume and explicit input cleanup recovery. Pointer and key dispatch still require application-specific verification.
+The [tool reference](docs/TOOLS.md) is generated from actual MCP declarations. The [skill](skills/luda/SKILL.md) explains targeting, text and recovery. Other capabilities include [optional local OCR](docs/OCR.md) over a selected screenshot, [temporary screen recording](docs/RECORDING.md), window/workspace management, cross-window drag, table-row selection, clipboard paste, shared pause/resume and explicit input cleanup recovery. Pointer and key dispatch still require application-specific verification.
 
 ## Develop and test
 
