@@ -66,7 +66,8 @@ async def main():
     raw=base64.b64decode(image.data);(OUT/'screen.png').write_bytes(raw)
     with Image.open(io.BytesIO(raw)) as im:record('mcp-image-metadata',im.size==(shot['image_size']['width'],shot['image_size']['height']))
     bad=await s.call_tool('desktop_click',{'window_id':wid,'snapshot_id':shot['snapshot_id'],'x':-1,'y':20})
-    record('mcp-error-contract',bad.isError and json.loads(bad.content[0].text)['code']=='OUT_OF_BOUNDS')
+    error=json.loads(bad.content[0].text)
+    record('mcp-error-contract',bad.isError and error['code']=='OUT_OF_BOUNDS' and type(error.get('elapsed_ms')) is int and error['elapsed_ms']>=0)
     bad=await s.call_tool('desktop_click',{'window_id':wid,'snapshot_id':shot['snapshot_id'],'x':10,'y':20,'count':10000})
     record('mcp-schema-validation',bad.isError)
     for name,arguments in [

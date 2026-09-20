@@ -115,12 +115,12 @@ def execute(method, *args, _cancelled=None, **kwargs):
         return CallToolResult(content=content,isError=False)
     except DesktopError as exc:
         event.update(ok=False, code=exc.code, effect=exc.effect)
-        return result_error(exc.code,str(exc),exc.effect,details=exc.details,operation_id=operation_id)
+        return result_error(exc.code,str(exc),exc.effect,details=exc.details,operation_id=operation_id,elapsed_ms=round((time.monotonic()-started)*1000))
     except Exception:
         # Exception text/repr can contain protected input or provider contents.
         # Correlate with metadata-only history rather than returning that text.
         event.update(ok=False, code='INTERNAL_ERROR', effect='uncertain')
-        return result_error('INTERNAL_ERROR', 'Unexpected backend failure. Inspect desktop_status and current application state before retrying; input may already have occurred.', 'uncertain', operation_id=operation_id)
+        return result_error('INTERNAL_ERROR', 'Unexpected backend failure. Inspect desktop_status and current application state before retrying; input may already have occurred.', 'uncertain', operation_id=operation_id, elapsed_ms=round((time.monotonic()-started)*1000))
     finally:
         if acquired:
             _operation_gate.release()
