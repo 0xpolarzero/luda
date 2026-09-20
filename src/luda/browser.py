@@ -223,6 +223,11 @@ class OwnedBrowser:
             raise DesktopError('BROWSER_SCOPE_UNSUPPORTED',self.messages['BROWSER_SCOPE_UNSUPPORTED'])
         return window
 
+    def prepare_native_input(self, window_id):
+        if window_id == self.window_id:
+            self.scoped(window_id)
+            return self.request('native_focus')
+
     def inspect(self, window_id, limit, name, role, states):
         self.scoped(window_id)
         value=self.request('inspect',limit=limit,name=name,role=role,states=states)

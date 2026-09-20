@@ -182,6 +182,16 @@ class Worker:
                 'composition':value['composition']}
         return result
 
+    def native_focus(self):
+        if not self.page or self.page.is_closed():
+            raise Refused('BROWSER_CLOSED')
+        # Native keyboard shortcuts need Chromium's real widget focus, not
+        # merely the background page focus used for addressed CDP operations.
+        self.effect='uncertain'
+        self.protocol.send('Emulation.setFocusEmulationEnabled', {'enabled':False})
+        self.page.bring_to_front()
+        return {'effect':'dispatched'}
+
     def focus(self, token):
         item, _ = self.snapshot(token, mutation=True)
         self.effect = 'uncertain'
@@ -280,6 +290,7 @@ class Worker:
         op=request.get('op')
         if op=='open':return self.open(request)
         if op=='inspect':return self.inspect(request)
+        if op=='native_focus':return self.native_focus()
         token=request.get('token')
         if op=='read':return self.read(token,request.get('limit',16000))
         if op=='focus':return self.focus(token)

@@ -164,9 +164,13 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
             raise DesktopError(state.get('reason','KEYBOARD_UNAVAILABLE'), 'Foreground input is unavailable.')
         if state.get('input_held') is True:
             raise DesktopError('INPUT_HELD', 'Release held keys or mouse buttons before foreground input.')
+        browser = getattr(self, 'browser', None)
+        prepared = None
+        if browser is not None and window_id == browser.window_id:
+            prepared = browser.prepare_native_input(window_id)
         try:
             self.check_input_focus(window)
-            return {'effect':'none', 'window_id':window_id}
+            return {'effect':'dispatched' if prepared else 'none', 'window_id':window_id}
         except DesktopError as exc:
             if exc.code != 'FOCUS_CHANGED':
                 raise
