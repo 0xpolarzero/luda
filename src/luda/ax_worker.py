@@ -534,7 +534,7 @@ def semantic(node, current, req):
         if matches():
             return {"effect": "verified", "accepted": True, "changed": False, key: desired}
         actions = current.get("actions", [])
-        eligible = ("toggle", "click", "activate") if op == "check" else ("expand or contract", "expand or collapse", "toggle", "activate")
+        eligible = (("check" if desired else "uncheck"), "toggle", "click", "activate") if op == "check" else ("expand or contract", "expand or collapse", "toggle", "activate")
         action = next((actual for a in eligible for actual in actions if actual.casefold() == a), None)
         if action is None:
             return failure("UNSUPPORTED_ACTION", "No recognized semantic state-changing action is available.")
