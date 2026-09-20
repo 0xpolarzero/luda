@@ -95,6 +95,13 @@ class BrowserGraphemeBoundaryTests(unittest.TestCase):
             self.assertEqual(caught.exception.code,'UNSUPPORTED_TEXT_BOUNDARY' if available is False else 'TEXT_BOUNDARY_UNAVAILABLE')
             self.assertEqual(w.effect,'none');w.focus.assert_not_called();w.select.assert_not_called();w.protocol.send.assert_not_called()
 
+    def test_selected_deletion_refuses_before_focus_or_input(self):
+        w=Worker('unused');w.page=Mock();w.page.evaluate.return_value=False;w.protocol=Mock();w.focus=Mock()
+        before=snapshot('A👩🏽‍💻B',2,4);before['focused']=False;w.snapshot=Mock(return_value=({},before))
+        with self.assertRaises(Refused) as caught:w.type('t','','insert')
+        self.assertEqual(caught.exception.code,'UNSUPPORTED_TEXT_BOUNDARY')
+        self.assertEqual(w.effect,'none');w.focus.assert_not_called();w.protocol.send.assert_not_called()
+
     def test_whole_field_edges_do_not_require_segmenter(self):
         w=Worker('unused');w.page=Mock();w.require_text_boundaries('é',0,2);w.page.evaluate.assert_not_called()
 

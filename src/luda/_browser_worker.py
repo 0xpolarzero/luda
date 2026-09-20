@@ -266,8 +266,8 @@ class Worker:
         if line_breaks is not None:raise Refused('UNSUPPORTED_ACTION')
         if before['tag']=='INPUT' and any(c in text for c in ('\n','\t')):
             raise Refused('UNSUPPORTED_TEXT')
-        if text:
-            start,end=(0,len(before['text'])) if mode=='replace' else (before['start'],before['end'])
+        start,end=(0,len(before['text'])) if mode=='replace' else (before['start'],before['end'])
+        if text or start!=end:
             self.require_text_boundaries(before['text'],start,end)
         if not before['focused']:
             self.focus(token)
@@ -289,6 +289,7 @@ class Worker:
             self.effect = 'uncertain'
             self.protocol.send('Input.insertText',{'text':text})
         elif start!=end:
+            self.require_text_boundaries(current['text'],start,end)
             self.effect = 'uncertain'
             # Browser-native deletion; never a DOM value setter.
             self.protocol.send('Input.dispatchKeyEvent',{'type':'keyDown','key':'Backspace','code':'Backspace','windowsVirtualKeyCode':8})
