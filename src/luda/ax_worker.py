@@ -1013,9 +1013,14 @@ def semantic(node, current, req):
         if not v.get_minimum_value() <= value <= v.get_maximum_value():
             return failure("OUT_OF_BOUNDS", "Value is outside the reported range.")
         accepted = bool(v.set_current_value(value))
-        matched = verify(lambda: v.get_current_value() == value)
+        observed_value = None
+        def value_matches():
+            nonlocal observed_value
+            observed_value = v.get_current_value()
+            return observed_value == value
+        matched = verify(value_matches)
         return {"effect": "verified" if matched else "uncertain", "accepted": accepted,
-                "exact_match": matched, "actual_value": v.get_current_value()}
+                "exact_match": matched, "actual_value": observed_value}
     if op in ("check", "expand"):
         key, state = ("checked", "checked") if op == "check" else ("expanded", "expanded")
         desired = req.get(key)
@@ -1025,9 +1030,11 @@ def semantic(node, current, req):
             return failure("UNSUPPORTED", "Element is not a checkable control.")
         if op == "expand" and "expandable" not in current["states"]:
             return failure("UNSUPPORTED", "Element is not expandable.")
+        observed_states = set()
         def matches():
-            current_states = states_of(node)
-            return (state in current_states) == desired and "indeterminate" not in current_states
+            nonlocal observed_states
+            observed_states = states_of(node)
+            return (state in observed_states) == desired and "indeterminate" not in observed_states
         if matches():
             return {"effect": "verified", "accepted": True, "changed": False, key: desired}
         actions = current.get("actions", [])
@@ -1038,7 +1045,7 @@ def semantic(node, current, req):
         accepted = bool(node.get_action_iface().do_action(actions.index(action)))
         matched = verify(matches)
         return {"effect": "verified" if matched else "uncertain", "accepted": accepted,
-                "changed": matched, key: state in states_of(node)}
+                "changed": matched, key: state in observed_states}
     return None
 
 

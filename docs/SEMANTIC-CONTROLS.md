@@ -207,3 +207,5 @@ these counts. Inspect after partial failure before deciding the next action.
 Provider path/name reuse with identical exposed meaning has no stable application
 record-generation proof; rechecks are not atomic against application changes.
 See [real GTK range evidence](RANGE-SELECTION.md) for the exercised scope.
+
+Numeric value and check/expand receipts now report the exact provider observation used by their verification predicate. Previously a second read could produce a contradictory receipt (`exact_match: true` for requested 5 alongside `actual_value: 9`, or verified checked=true alongside `checked: false`). Deterministic provider-change regressions cover those cases, unchanged-state no-ops, and failed actions. The receipt describes an observed postcondition; it does not promise that an application cannot change immediately afterward. No mutation is retried. Selection receipts already return the requested offsets paired with `exact_match`, without this additional post-verification provider read; their behavior is unchanged.
