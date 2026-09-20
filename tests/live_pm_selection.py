@@ -18,6 +18,7 @@ CASES=[
  ('empty-paragraph-caret','paragraphs',6,6,'EMPTY',False),('empty-paragraph-remove','paragraphs',5,7,'',False),
  ('empty-paragraph-replace','paragraphs',5,7,'\n\n\n',True),('empty-document','empty',0,0,'\n\n',False),
  ('styled-middle','marks',5,11,'new',False),('styled-multiline','marks',5,11,'first\nsecond\n',False),
+ ('styled-spacing','marks',5,11,'\t x\u00a0  \n  y\t',False),
  ('inside-bold','marks',1,3,'X',False),('across-marks','marks',2,15,'\nnew\n',True),
 ]
 
@@ -47,13 +48,13 @@ def main(executable):
             while not windows and time.monotonic()<end:windows=[w for w in desktop.list_windows() if w['pid']==opened['pid']];time.sleep(.02)
             if len(windows)!=1:raise RuntimeError('No exact native browser window')
             wid=windows[0]['window_id'];desktop.activate(wid)
-            for name,seed,start,end,text,backward in CASES+[(name+'-delete-first',seed,start,end,text,backward) for name,seed,start,end,text,backward in CASES]:
+            for name,seed,start,end,text,backward in CASES+[(name+'-delete-first',seed,start,end,text,backward) for name,seed,start,end,text,backward in CASES]+[(name+'-clipboard',seed,start,end,text,backward) for name,seed,start,end,text,backward in CASES]:
                 worker.page.goto(root+'?seed='+seed);worker.page.wait_for_function('window.ludaSelectionProbe!==undefined')
                 field=worker.inspect({'limit':10,'name':'Observed rich editor'})['fields'][0];token=field['token'];worker.focus(token)
                 probe=SelectionProbe(worker,token,desktop,wid);before=probe.read();selected=None
                 try:
                     selected=probe.select(start,end,backward)
-                    result=probe.replace(text,delete_first=name.endswith('-delete-first'))
+                    result=probe.replace(text,delete_first=name.endswith('-delete-first'),clipboard=name.endswith('-clipboard'))
                     until=time.monotonic()+1
                     while oracle.get('model')!=result['model'] and time.monotonic()<until:worker.page.wait_for_timeout(10)
                     record(name,oracle.get('model')==result['model'] and oracle.get('modelText')==result['expected'],seed=seed,range=[start,end],inserted=text,before=before['model'],selection=selected,result=result,oracle=dict(oracle))
@@ -61,6 +62,10 @@ def main(executable):
                     try:after=probe.read()
                     except Refused:after=None
                     record(name,False,error=exc.code,seed=seed,range=[start,end],inserted=text,before=before['model'],after=after,trace=getattr(probe,'trace',[]),selection=selected,oracle=dict(oracle))
+            from luda.common import run
+            clipboard_contents=run(['xclip','-selection','clipboard','-o']).decode()
+            record('clipboard-route-explicit-side-effect',clipboard_contents=='new',clipboard_value=clipboard_contents,restored=False)
+
             for name,start,end in [('html-combining',8,9),('html-inside-zwj',2,4),('html-caret-combining',8,8)]:
                 worker.page.goto(root+'?seed=plain');worker.page.wait_for_function('window.ludaSelectionProbe!==undefined')
                 token=worker.inspect({'limit':10,'name':'HTML comparison'})['fields'][0]['token'];worker.focus(token)

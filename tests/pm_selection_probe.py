@@ -41,7 +41,7 @@ class SelectionProbe:
             return {'mapping':result,'polls':polls,'selection':after['selection']}
         finally:
             if owned:held.dispose()
-    def replace(self,text,delete_first=False):
+    def replace(self,text,delete_first=False,clipboard=False):
         before=self.read();start,end=before['start'],before['end']
         if start is None or end is None:raise Refused('UNSUPPORTED_SELECTION')
         prefix,suffix=before['text'][:start],before['text'][end:]
@@ -65,10 +65,17 @@ class SelectionProbe:
                 self.trace.append({'action':action,'dom_before':dom,'model_selection':fresh['selection'],'grapheme_boundaries':boundaries,'endpoints_are_grapheme_boundaries':fresh['start'] in boundaries and fresh['end'] in boundaries})
                 if action=='return':self.worker.rich_key('Enter','Enter',13);inserted+='\n'
                 elif action=='delete':self.worker.rich_key('Backspace','Backspace',8)
-                else:self.worker.protocol.send('Input.insertText',{'text':payload});inserted+=payload
+                else:
+                    if clipboard:self.desktop.paste(self.window,payload)
+                    else:self.worker.protocol.send('Input.insertText',{'text':payload})
+                    inserted+=payload
                 after=self.read();intended=prefix+inserted+suffix
+                if clipboard:
+                    endtime=time.monotonic()+.75
+                    while after['text']!=intended and time.monotonic()<endtime:
+                        self.worker.page.wait_for_timeout(10);after=self.read()
                 if after['text']!=intended or after['paragraphs']!=intended.split('\n'):raise Refused('TEXT_MISMATCH')
                 if after['styled'][:start]!=styles_before or after['styled'][start+len(inserted):]!=styles_after:raise Refused('FORMATTING_CHANGED')
                 if (after['start'],after['end'])!=(start+len(inserted),start+len(inserted)):raise Refused('SELECTION_UNVERIFIED')
                 steps.append({'action':action,'selection':after['selection'],'model':after['model']});current=after
-        return {'expected':expected,'actual':current['text'],'model':current['model'],'steps':steps,'trace':self.trace,'unaffected_marks':True}
+        return {'expected':expected,'actual':current['text'],'model':current['model'],'steps':steps,'trace':self.trace,'unaffected_marks':True,'transport':'clipboard-per-segment' if clipboard else 'native-insert-text','clipboard_replaced':clipboard}
