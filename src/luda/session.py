@@ -48,12 +48,18 @@ def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--user', default='silo-desktop')
     p.add_argument('--session-pid', type=int)
+    p.add_argument('--cwd', help='Absolute working directory for the command; default is the desktop account home, or / if unavailable.')
     p.add_argument('--wait', type=float, default=5, help='Wait up to this many seconds for the selected session (0–30; default 5).')
     p.add_argument('command', nargs=argparse.REMAINDER)
     args = p.parse_args()
     command = args.command[1:] if args.command[:1] == ['--'] else args.command
     if not command:
         p.error('Supply an executable after --')
+    if args.cwd is not None and not os.path.isabs(args.cwd):
+        p.error('--cwd must be an absolute path')
+    # Resolve a relative executable before moving away from the SSH caller's cwd.
+    if '/' in command[0] and not os.path.isabs(command[0]):
+        command[0] = os.path.abspath(command[0])
     if not math.isfinite(args.wait) or not 0 <= args.wait <= 30:
         p.error('--wait must be 0–30 seconds')
     if args.session_pid is not None and args.session_pid<=0:
@@ -78,6 +84,15 @@ def main():
         os.initgroups(account.pw_name, account.pw_gid)
         os.setgid(account.pw_gid)
         os.setuid(account.pw_uid)
+    # An SSH root session often starts in /root, which becomes inaccessible
+    # after setuid. Libraries may inspect cwd before serving even one request.
+    # Check access as the selected account, never as the privileged caller.
+    try:
+        os.chdir(args.cwd if args.cwd is not None else account.pw_dir)
+    except OSError:
+        if args.cwd is not None:
+            raise SystemExit('The selected working directory is inaccessible to the desktop account.') from None
+        os.chdir('/')
     os.execvpe(command[0], command, env)
 
 

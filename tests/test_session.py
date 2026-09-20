@@ -63,18 +63,36 @@ class SessionLaunchTests(unittest.TestCase):
                 'XDG_RUNTIME_DIR':'/run/user/1001','LD_PRELOAD':'untrusted','TOKEN':'private'}
         patches=[patch('sys.argv',['luda-session','--user','desktop','--','/opt/luda','--flag']),
                  patch('luda.session.pwd.getpwnam',return_value=account),patch('luda.session.discover',return_value=values),
-                 patch('luda.session.os.getuid',return_value=uid),patch('luda.session.Path.is_file',return_value=True)]
+                 patch('luda.session.os.getuid',return_value=uid),patch('luda.session.Path.is_file',return_value=True),patch('luda.session.os.chdir')]
         for p in patches:p.start();self.addCleanup(p.stop)
     def test_privilege_drop_precedes_exec_and_environment_is_allowlisted(self):
         self.setup_launch();events=[]
         def capture(name):return lambda *args:events.append((name,args))
-        with patch('luda.session.os.initgroups',side_effect=capture('groups')),patch('luda.session.os.setgid',side_effect=capture('gid')),patch('luda.session.os.setuid',side_effect=capture('uid')),patch('luda.session.os.execvpe',side_effect=capture('exec')):
+        with patch('luda.session.os.initgroups',side_effect=capture('groups')),patch('luda.session.os.setgid',side_effect=capture('gid')),patch('luda.session.os.setuid',side_effect=capture('uid')),patch('luda.session.os.chdir',side_effect=capture('cwd')),patch('luda.session.os.execvpe',side_effect=capture('exec')):
             session.main()
-        self.assertEqual([e[0] for e in events],['groups','gid','uid','exec'])
+        self.assertEqual([e[0] for e in events],['groups','gid','uid','cwd','exec'])
         argv,env=events[-1][1][1:]
         self.assertEqual(argv,['/opt/luda','--flag']);self.assertEqual(env['DISPLAY'],':7')
         self.assertNotIn('TOKEN',env);self.assertNotIn('LD_PRELOAD',env)
         self.assertEqual(env['HOME'],'/home/desktop')
+    def test_inaccessible_home_uses_accessible_root_before_exec(self):
+        self.setup_launch(1001)
+        with patch('luda.session.os.chdir',side_effect=[PermissionError(),None]) as cwd,patch('luda.session.os.execvpe') as execute:
+            session.main()
+        self.assertEqual([call.args for call in cwd.call_args_list],[('/home/desktop',),('/',)])
+        execute.assert_called_once()
+    def test_explicit_working_directory_failure_does_not_fallback_or_execute(self):
+        self.setup_launch(1001)
+        with patch('sys.argv',['luda-session','--cwd','/private','--','/opt/luda']),patch('luda.session.os.chdir',side_effect=PermissionError()) as cwd,patch('luda.session.os.execvpe') as execute,self.assertRaises(SystemExit):
+            session.main()
+        cwd.assert_called_once_with('/private');execute.assert_not_called()
+    def test_relative_executable_is_resolved_before_changing_directory(self):
+        self.setup_launch(1001)
+        expected=os.path.abspath('./bin/luda')
+        with patch('sys.argv',['luda-session','--cwd','/workspace','--','./bin/luda','relative-argument']),patch('luda.session.os.chdir') as cwd,patch('luda.session.os.execvpe') as execute:
+            session.main()
+        cwd.assert_called_once_with('/workspace')
+        self.assertEqual(execute.call_args.args[:2],(expected,[expected,'relative-argument']))
     def test_unrelated_account_cannot_attach(self):
         self.setup_launch(1003)
         with patch('luda.session.os.execvpe') as execute,self.assertRaises(SystemExit):session.main()
