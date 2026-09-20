@@ -1,5 +1,8 @@
 """Run as desktop user. Mutates only its own fixture, and terminates it afterward."""
 import json
+import argparse
+import asyncio
+from fixture_oracle import wait_text
 from pathlib import Path
 import subprocess
 import os
@@ -11,7 +14,9 @@ from luda.common import DesktopError
 
 ROOT=Path(__file__).resolve().parents[1]
 output=Path(os.environ.get('LUDA_TEST_ARTIFACT_ROOT', ROOT/'artifacts'))/'native'/f'run-{time.time_ns()}';output.mkdir(parents=True)
-p=subprocess.Popen(['/usr/bin/python3',str(ROOT/'tests'/'fixture.py'),str(output)])
+parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--paste-delay-ms',type=int,default=0);args=parser.parse_args()
+if not 0<=args.paste_delay_ms<=2000:parser.error('paste delay must be 0..2000 ms')
+p=subprocess.Popen(['/usr/bin/python3',str(ROOT/'tests'/'fixture.py'),str(output)],env=dict(os.environ,LUDA_TEST_PASTE_DELAY_MS=str(args.paste_delay_ms)))
 d=Desktop();results=[]
 def record(name,condition,details=None):
  results.append({'case':name,'passed':bool(condition),'details':details})
@@ -37,11 +42,33 @@ try:
  samples=['alpha\nbeta\n','ASCII _ {} [] @!\ncafé — 日本語 ✓\n','tabs\there\n','\n\n leading and trailing  \n','emoji 👩🏽\u200d💻 e\u0301 العربية עברית\n','', 'long '+('行\n'*4000)]
  for i,text in enumerate(samples):
   r=d.element(eid,'set',text=text)
-  record('text-replacement-'+str(i),r['exact_match'] and state()['text']==text)
- d.element(eid,'set',text='');d.element(eid,'focus')
+  observed=asyncio.run(wait_text(output/'state.json',text))
+  record('text-replacement-'+str(i),r['exact_match'] and observed['matched'],observed)
  for i,text in enumerate(samples[:5]):
-  d.element(eid,'set',text='');d.element(eid,'focus');d.paste(wid,text,'ctrl_v')
-  record('literal-paste-'+str(i),state()['text']==text)
+  d.element(eid,'set',text='')
+  baseline=asyncio.run(wait_text(output/'state.json',''))
+  receipt={'baseline':baseline,'delay_ms':args.paste_delay_ms}
+  path=output/('paste-'+str(i)+'.json')
+  path.write_text(json.dumps(receipt,ensure_ascii=False,indent=2))
+  record('literal-paste-empty-baseline-'+str(i),baseline['matched'],baseline)
+  d.element(eid,'focus')
+  began=time.monotonic()
+  try:
+   receipt['response']=d.paste(wid,text,'ctrl_v')
+  except DesktopError as exc:
+   receipt['error']={'code':exc.code,'effect':exc.effect}
+   raise
+  finally:
+   receipt['call_seconds']=time.monotonic()-began
+   path.write_text(json.dumps(receipt,ensure_ascii=False,indent=2))
+  observed=asyncio.run(wait_text(output/'state.json',text))
+  receipt.update(observation=observed,total_seconds=time.monotonic()-began)
+  path.write_text(json.dumps(receipt,ensure_ascii=False,indent=2))
+  record('literal-paste-'+str(i),observed['matched'] and receipt['response']['effect']=='dispatched',receipt)
+  if args.paste_delay_ms:
+   actual=observed['last_state']
+   record('literal-paste-exactly-once-'+str(i),actual.get('paste_requests')==i+1 and
+          actual.get('paste_delivered_at',0)-actual.get('paste_requested_at',0)>=args.paste_delay_ms/1000,actual)
  before=state()['text']
  expected_error('reject-NUL','UNSUPPORTED_TEXT',lambda:d.paste(wid,'a\0b','ctrl_v'))
  expected_error('reject-CRLF','UNSUPPORTED_TEXT',lambda:d.element(eid,'set',text='a\r\nb'))

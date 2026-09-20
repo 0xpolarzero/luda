@@ -75,7 +75,7 @@ def main():
                         raise RuntimeError('Isolated window manager failed to become ready')
                     time.sleep(.1)
                 suites = [('launch-observation', [str(ROOT / 'tests/live_launch_observation.py')]),
-                          ('native', [str(ROOT / 'tests/live_backend.py')]),
+                          ('native', [str(ROOT / 'tests/live_backend.py'), '--paste-delay-ms', '450']),
                           ('mcp', [str(ROOT / 'tests/live_mcp.py'), '--paste-delay-ms', '450', '--server', str(Path(sys.executable).parent / 'luda')]),
                           ('cancellation', [str(ROOT / 'tests/live_cancellation.py'), '--server', str(Path(sys.executable).parent / 'luda')]),
                           ('control', [str(ROOT / 'tests/live_control.py')]),
