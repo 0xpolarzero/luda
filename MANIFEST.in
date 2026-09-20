@@ -17,3 +17,5 @@ prune tests/fixtures/agent-rich-clipboard/node_modules
 include .mcp.json
 recursive-include .codex-plugin *.json
 recursive-include integrations *.py *.json *.md *.patch *.mjs
+recursive-include tests/evidence/hosted-rich-selection *.log
+recursive-include tests/evidence/rich-cancellation-barrier *.gz
