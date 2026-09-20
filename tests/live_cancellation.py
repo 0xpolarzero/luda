@@ -14,7 +14,7 @@ from mcp.shared.exceptions import McpError
 from mcp.client.stdio import stdio_client
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / 'artifacts/cancellation'
+OUT = Path(os.environ.get('LUDA_TEST_ARTIFACT_ROOT', ROOT/'artifacts'))/'cancellation'/f'run-{time.time_ns()}'
 
 
 async def main(server):

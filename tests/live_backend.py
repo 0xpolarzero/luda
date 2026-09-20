@@ -10,7 +10,7 @@ from luda.desktop import Desktop
 from luda.common import DesktopError
 
 ROOT=Path(__file__).resolve().parents[1]
-output=ROOT/'artifacts'/'native';output.mkdir(exist_ok=True)
+output=Path(os.environ.get('LUDA_TEST_ARTIFACT_ROOT', ROOT/'artifacts'))/'native'/f'run-{time.time_ns()}';output.mkdir(parents=True)
 p=subprocess.Popen(['/usr/bin/python3',str(ROOT/'tests'/'fixture.py'),str(output)])
 d=Desktop();results=[]
 def record(name,condition,details=None):

@@ -1,5 +1,6 @@
 """Wait predicates against owned GTK state, with no fixed delay as the success oracle."""
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -11,7 +12,7 @@ from luda.desktop import Desktop
 from luda.waits import ConditionWaitsMixin
 
 ROOT=Path(__file__).resolve().parents[1]
-OUT=ROOT/'artifacts/waits';OUT.mkdir(parents=True,exist_ok=True)
+OUT=Path(os.environ.get('LUDA_TEST_ARTIFACT_ROOT', ROOT/'artifacts'))/'waits'/f'run-{time.time_ns()}';OUT.mkdir(parents=True)
 (OUT/'command.json').unlink(missing_ok=True)
 (OUT/'state.json').unlink(missing_ok=True)
 Driver=Desktop if hasattr(Desktop,'wait_condition') else type('WaitDriver',(ConditionWaitsMixin,Desktop),{})

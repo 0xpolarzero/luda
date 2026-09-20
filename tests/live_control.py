@@ -11,7 +11,7 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
 ROOT=Path(__file__).resolve().parents[1]
-OUT=ROOT/'artifacts/control'
+OUT=Path(os.environ.get('LUDA_TEST_ARTIFACT_ROOT', ROOT/'artifacts'))/'control'/f'run-{time.time_ns()}'
 
 async def main():
     if os.environ.get('LUDA_ISOLATED_TEST_DISPLAY')!='1':

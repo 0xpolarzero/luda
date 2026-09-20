@@ -3,6 +3,7 @@
 
 Usage: xvfb-run -a -s '-screen 0 1440x900x24 -nolisten tcp' dbus-run-session -- .venv/bin/python scripts/headless_tests.py
 """
+import argparse
 import json
 import os
 from pathlib import Path
@@ -36,14 +37,18 @@ def stop(child):
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--suite", action="append", help="Run only this named suite; repeat for several.")
+    args = parser.parse_args()
     if not os.environ.get('DISPLAY') or not os.environ.get('DBUS_SESSION_BUS_ADDRESS'):
         raise SystemExit('Use xvfb-run and dbus-run-session as documented.')
     # An explicit opt-in prevents accidentally taking over an ordinary desktop.
     if os.environ.get('LUDA_ISOLATED_TEST_DISPLAY') != '1':
         raise SystemExit('Set LUDA_ISOLATED_TEST_DISPLAY=1 only for the fresh test X server.')
     env = dict(os.environ, NO_AT_BRIDGE='0', GTK_MODULES='gail:atk-bridge', GSETTINGS_BACKEND='memory')
-    output = ROOT / 'artifacts/headless'
+    output = ROOT / 'artifacts/headless' / f'run-{time.time_ns()}'
     output.mkdir(parents=True, exist_ok=True)
+    env["LUDA_TEST_ARTIFACT_ROOT"] = str(output / "fixtures")
     results = []
     source_before = source_fingerprint(ROOT)
     with tempfile.TemporaryDirectory(prefix='luda-test-session-') as runtime:
@@ -85,7 +90,12 @@ def main():
                           ('pointer-guard', [str(ROOT / 'tests/live_pointer_guard.py')]),
                           ('input-generation', [str(ROOT / 'tests/live_input_generation.py')]),
                           ('session-state', [str(ROOT / 'tests/live_session_state.py')])]
-                for suite, arguments in suites:
+                selected = set(args.suite or [name for name, _ in suites])
+                unknown = selected - {name for name, _ in suites}
+                if unknown:
+                    raise ValueError(f"Unknown suites: {sorted(unknown)}")
+                selected_suites = [(name, arguments) for name, arguments in suites if name in selected]
+                for suite, arguments in selected_suites:
                     began = time.monotonic()
                     with (output / f'{suite}.log').open('wb') as suite_log:
                         child = subprocess.Popen([sys.executable, *arguments], cwd=ROOT, env=env,
@@ -110,7 +120,8 @@ def main():
                                     'backend': 'isolated Xvfb + XFWM4 + session D-Bus',
                                     'uid': os.getuid()}}, indent=2) + '\n')
     print(json.dumps(results, indent=2))
-    return 0 if source_unchanged and len(results) == len(suites) and all(r['status'] == 'passed' for r in results) else 1
+    print(f"Evidence: {output}")
+    return 0 if source_unchanged and len(results) == len(selected_suites) and all(r['status'] == 'passed' for r in results) else 1
 
 
 if __name__ == '__main__':
