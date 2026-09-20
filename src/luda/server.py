@@ -47,7 +47,7 @@ def execute(method, *args, _cancelled=None, **kwargs):
         if _quarantined.is_set():
             raise DesktopError('BUSY', 'Previous cancelled operation is still cleaning up; no new input sent.')
         d = get_backend()
-        observation = method in ('list_applications','doctor','list_windows','observe','inspect','workspaces','wait_for','wait_condition') or (method=='element' and len(args)>1 and args[1]=='read')
+        observation = method in ('list_applications','doctor','list_windows','window_overview','observe','inspect','workspaces','wait_for','wait_condition') or (method=='element' and len(args)>1 and args[1]=='read')
         guard = None if observation else d.control.require_active
         with operation_scope(timeout=12, cancelled=_cancelled, guard=guard) as operation:
             try:
@@ -139,9 +139,9 @@ async def desktop_launch(application_id: str, files_or_uris: list[str] | None = 
 
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
-async def desktop_windows() -> CallToolResult:
-    """List window identities, titles, process identity, focus and native client bounds."""
-    return await execute_async('list_windows')
+async def desktop_windows(query: str | None = None, limit: int = 50, offset: int = 0) -> CallToolResult:
+    """List window identities, titles, focus and client bounds, optionally filtering title/class. Returns counts, unavailable rows and next_offset when paginated. Each call is a fresh enumeration."""
+    return await execute_async('window_overview',query,limit,offset)
 
 
 @mcp.tool()

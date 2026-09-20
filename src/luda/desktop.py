@@ -104,6 +104,7 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
             return None
 
     def list_windows(self):
+        self.identity_epoch=getattr(self,'identity_epoch',None) or uuid.uuid4().hex
         for attempt in range(3):
             try:
                 rows = run(['wmctrl','-lp']).decode(errors='replace').splitlines()
@@ -111,6 +112,7 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
             except DesktopError as exc:
                 if exc.code == 'BACKEND_ERROR' and 'Cannot get client list properties' in str(exc):
                     self.windows = {}
+                    self.window_diagnostics={'enumerated_count':0,'unavailable_count':0,'unavailable':[],'unavailable_truncated':False}
                     return []
                 if exc.code == 'BACKEND_ERROR' and 'BadWindow' in str(exc) and 'X_GetProperty' in str(exc) and attempt<2:
                     # A dialog can disappear during wmctrl's read-only walk.
@@ -119,43 +121,61 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
                     continue
                 raise
         active = self.active()
-        parsed = [line.split(None, 4) for line in rows]
-        xids = [int(fields[0],16) for fields in parsed if len(fields)>=4 and int(fields[2])>0]
-        bounds_by_id, generations = {}, {}
-        for offset in range(0,len(xids),512):
-            batch = xids[offset:offset+512]
-            bounds_by_id.update(self.display().geometries(batch))
-            generations.update(self.display().window_tokens(batch))
-        result = []
-        for line in rows:
-            fields = line.split(None, 4)
-            if len(fields) < 4:
-                continue
-            xid, workspace, pid = int(fields[0],16), int(fields[1]), int(fields[2])
-            if pid <= 0:
-                continue
+        parsed=[];unavailable=[]
+        for row in rows:
+            fields=row.split(None,4)
             try:
-                start = process_identity(pid)
-                bounds = bounds_by_id[xid]
-                generation = generations[xid]
-            except (DesktopError, KeyError):
+                if len(fields)<4:raise ValueError()
+                xid,workspace,pid=int(fields[0],16),int(fields[1]),int(fields[2])
+                if not 1<=xid<=0xffffffff or pid<=0:raise ValueError()
+                parsed.append((xid,workspace,pid,fields[4][:512] if len(fields)>4 else ''))
+            except ValueError:
+                unavailable.append({'code':'UNAVAILABLE_WINDOW_OWNER'})
+        metadata={}
+        for offset in range(0,len(parsed),512):
+            batch=self.display().window_metadata([row[0] for row in parsed[offset:offset+512]])
+            metadata.update(batch['windows']);unavailable.extend(batch['unavailable'])
+        result=[]
+        for xid,workspace,pid,title in parsed:
+            meta=metadata.get(xid)
+            if meta is None:continue
+            if meta['pid']!=pid:
+                unavailable.append({'xid':xid,'code':'WINDOW_OWNER_CHANGED'})
                 continue
-            frame = dict(bounds)
-            prop = run(['xprop','-id',str(xid),'_NET_FRAME_EXTENTS','WM_CLASS']).decode()
-            frame_prop = prop.splitlines()[0]
-            wm_class = re.findall(r'"([^"]*)"', prop.partition('WM_CLASS')[2])
-            if '=' in frame_prop:
-                values = [int(v) for v in re.findall(r'\d+',frame_prop.split('=',1)[1])]
-                if len(values)==4:
-                    left,right,top,bottom=values
-                    frame={'x':bounds['x']-left,'y':bounds['y']-top,'width':bounds['width']+left+right,'height':bounds['height']+top+bottom}
-            token = f'{xid:x}:{pid}:{start}:{generation}'
-            item = {'window_id':token,'xid':xid,'pid':pid,'start':start,
-                    'title':fields[4][:512] if len(fields)>4 else '', 'workspace':workspace,
-                    'bounds':bounds,'frame_bounds':frame,'active':xid==active,'wm_class':wm_class}
-            result.append(item)
-        self.windows = {w['window_id']:w for w in result}
+            try:start=process_identity(pid)
+            except DesktopError:
+                unavailable.append({'xid':xid,'code':'STALE_TARGET'})
+                continue
+            bounds=meta['bounds'];frame=dict(bounds)
+            extents=meta['frame_extents']
+            if extents:
+                frame={'x':bounds['x']-extents['left'],'y':bounds['y']-extents['top'],
+                       'width':bounds['width']+extents['left']+extents['right'],
+                       'height':bounds['height']+extents['top']+extents['bottom']}
+            token=f"{self.identity_epoch}:{xid:x}:{pid}:{start}:{meta['generation']}"
+            result.append({'window_id':token,'xid':xid,'pid':pid,'start':start,
+                           'title':title,'workspace':workspace,'bounds':bounds,'frame_bounds':frame,
+                           'active':xid==active,'wm_class':meta['wm_class'],
+                           'unavailable_properties':meta['unavailable_properties']})
+        self.windows={w['window_id']:w for w in result}
+        self.window_diagnostics={'enumerated_count':len(rows),'unavailable_count':len(unavailable),
+                                 'unavailable':unavailable[:100],'unavailable_truncated':len(unavailable)>100}
         return result
+
+    def window_overview(self, query=None, limit=50, offset=0):
+        if query is not None and (not isinstance(query,str) or len(query)>512):
+            raise DesktopError('INVALID_ARGUMENT','query must be a string of at most 512 characters.')
+        if type(limit) is not int or not 1<=limit<=200 or type(offset) is not int or not 0<=offset<=100000:
+            raise DesktopError('INVALID_ARGUMENT','limit must be 1–200 and offset 0–100000.')
+        windows=self.list_windows()
+        if query is not None:
+            needle=query.casefold()
+            windows=[w for w in windows if needle in ' '.join([w['title'],*w['wm_class']]).casefold()]
+        page=windows[offset:offset+limit];next_offset=offset+len(page)
+        return {'windows':page,'total_matches':len(windows),'returned_count':len(page),
+                'offset':offset,'truncated':next_offset<len(windows),
+                'next_offset':next_offset if next_offset<len(windows) else None,
+                **getattr(self,'window_diagnostics',{})}
 
     def target_window(self, window_id, require_focus=True):
         windows = self.list_windows()
