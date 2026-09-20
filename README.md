@@ -15,7 +15,7 @@ python3 scripts/manage_install.py config --prefix /opt/luda \
   --user silo-desktop --output /absolute/new/luda-config
 ```
 
-The installer creates versioned releases and switches `current` atomically. The configuration command generates a guest-side MCP fragment and discoverable skill without overwriting existing agent settings. See [installation, registration, rollback and uninstall](docs/INSTALLATION.md). Fresh Mac Codex SSH onboarding still needs end-to-end qualification; guest installation alone does not prove host-side discovery.
+The installer creates versioned releases and switches `current` atomically. The configuration command generates a guest-side MCP fragment and discoverable skill without overwriting existing agent settings. See [installation, registration, rollback and uninstall](docs/INSTALLATION.md). An [installable Codex plugin](docs/CODEX-PLUGIN.md) packages the MCP registration and skill together. Fresh Mac Codex SSH onboarding still needs end-to-end qualification; guest installation alone does not prove host-side discovery.
 
 ## Agent workflow
 

@@ -7,7 +7,7 @@
       "tests": [
         "test_adversarial.Coordination.test_other_instance_refused_and_recovers"
       ],
-      "limits": "Rejects competing instances; fair scheduling and actual separate MCP-client mutation remain untested."
+      "limits": "Cooperating backend instances serialize input; separate-process FIFO is additionally tested under CONC-07. X11 human/foreign-client input remains outside this lease."
     },
     "CONC-02": {
       "implementation": "implemented",
@@ -101,9 +101,10 @@
     "LIFE-01": {
       "implementation": "partial",
       "tests": [
-        "test_installation.Installation.test_repeat_install_is_noop_with_stable_release"
+        "test_installation.Installation.test_repeat_install_is_noop_with_stable_release",
+        "test_installation.Installation.test_packaged_source_changes_alter_release_identity"
       ],
-      "limits": "Unit verifies hash-checking argv and repeat identity; real local wheel install succeeded separately. Build-system dependencies and clean-image reproducibility are not fully locked."
+      "limits": "Runtime and build-tool dependency hashes are required. System Python/pip and apt remain governed by the guest image/repositories; these units do not establish bit-identical wheels across architectures."
     },
     "SEC-10": {
       "implementation": "partial",
@@ -122,13 +123,13 @@
       "limits": "Mocked package commands; actual file ownership and configuration non-overwrite checks."
     },
     "LIFE-03": {
-      "implementation": "partial",
+      "implementation": "implemented",
       "tests": [
         "test_installation.Installation.test_failed_upgrade_preserves_selected_release_and_retry",
-        "test_installation.Installation.test_unknown_rollback_is_refused",
-        "test_installation.Installation.test_interrupted_owned_build_is_archived_then_retried"
+        "test_installation.Installation.test_modified_release_is_not_reused_or_rolled_back",
+        "test_installation.Installation.test_source_mutation_during_build_preserves_prior_release"
       ],
-      "limits": "Failure/retry/selection tested with mock builds; compatibility across released tool schemas remains unqualified."
+      "limits": "Versioned local install selection and unchanged-source/integrity checks; not automatic protocol migration or whole-VM rollback."
     },
     "LIFE-04": {
       "implementation": "partial",
@@ -616,9 +617,11 @@
     "SEC-07": {
       "implementation": "partial",
       "tests": [
-        "test_semantic.ProtectedInput.test_provider_exception_cannot_echo_secret"
+        "test_protocol_validation.ProtocolValidation.test_repair_hints_contain_schema_names_but_no_submitted_values",
+        "test_output_bounds.OutputBounds.test_stdout_overflow_has_no_payload_in_error",
+        "test_output_bounds.OutputBounds.test_stderr_counts_toward_limit_without_echoing_it"
       ],
-      "limits": "Secret-input error sanitization only; universal error/log redaction not established."
+      "limits": "These checks cover invalid protocol input and bounded process-output errors, not every external provider failure path."
     },
     "PERF-09": {
       "implementation": "partial",
@@ -713,6 +716,109 @@
         "test_qualification.QualificationContracts.test_absent_mapping_is_not_assessed"
       ],
       "limits": "Evidence tooling never grants release qualification automatically."
+    },
+    "CONC-07": {
+      "implementation": "implemented",
+      "tests": [
+        "test_admission.AdmissionTests.test_fast_previous_owner_cannot_overtake_fifo",
+        "test_admission.AdmissionTests.test_idle_head_expires",
+        "test_admission.MultiprocessAdmissionTests.test_real_process_fifo_and_crash_recovery",
+        "test_admission_desktop.DesktopAdmissionTests.test_waiter_gets_next_transaction_and_environment"
+      ],
+      "limits": "Cooperative FIFO applies to live clients retrying within the two-second lease. Registry-lock contention may return unqueued BUSY; no operation is queued or replayed. Not scheduler fairness or exclusion of human input."
+    },
+    "ENV-10": {
+      "implementation": "implemented",
+      "tests": [
+        "test_reconnect.ReconnectTests.test_server_success_swaps_then_closes",
+        "test_reconnect.ReconnectTests.test_server_failed_probe_keeps_backend",
+        "test_reconnect.ReconnectTests.test_closed_backend_discards_cached_targets"
+      ],
+      "limits": "Unit checks cover atomic backend replacement and old-cache disposal. Separate live_mcp_reconnect suite supplies private actual XFCE/display/bus restart evidence; fresh Silo VM behavior remains external."
+    },
+    "LIFE-07": {
+      "implementation": "implemented",
+      "tests": [
+        "test_suspend.SuspendTests.test_elapsed_clock_ignores_wall_clock_and_includes_suspend",
+        "test_suspend.SuspendTests.test_suspend_invalidates_observations_and_elements"
+      ],
+      "limits": "Injected Linux boottime/monotonic offset change verifies invalidation; actual VM suspend and host resume remain unqualified."
+    },
+    "LIFE-09": {
+      "implementation": "partial",
+      "tests": [
+        "test_installation_storage.InstallationStorage.test_owner_marker_failure_cleans_only_new_release",
+        "test_installation_storage.InstallationStorage.test_atomic_metadata_write_failure_preserves_previous_bytes"
+      ],
+      "limits": "Injected ENOSPC/fsync errors preserve existing selection and metadata. Does not cover every runtime allocation, sudden power loss, or actual guest filesystem exhaustion."
+    },
+    "MCP-04": {
+      "implementation": "implemented",
+      "tests": [
+        "test_protocol_validation.ProtocolValidation.test_bad_values_and_unknown_fields_never_dispatch",
+        "test_protocol_validation.ProtocolValidation.test_schemas_refuse_unknown_properties"
+      ],
+      "limits": "Advertised JSON schemas validate before FastMCP coercion. Booleans-as-numbers, string booleans, unknown arguments and malformed arrays are refused; separate live MCP suite checks real transport and unchanged field state."
+    },
+    "OBS-09": {
+      "implementation": "implemented",
+      "tests": [
+        "test_screenshot_limits.ScreenshotLimitsTests.test_oversized_native_capture_refused_before_capture",
+        "test_screenshot_limits.ScreenshotLimitsTests.test_tall_screenshot_bounded_and_aspect_ratio_preserved"
+      ],
+      "limits": "32-million-native-pixel preflight and 2560-pixel returned edge limit. Not a measured process-wide memory ceiling."
+    },
+    "AUTH-09": {
+      "implementation": "partial",
+      "tests": [
+        "test_session_state.SessionStateTests.test_reported_lock_takes_precedence",
+        "test_session_state.SessionStateTests.test_active_saver_is_not_mislabeled_locked",
+        "test_session_state.SessionStateTests.test_unavailable_never_means_unlocked"
+      ],
+      "limits": "Read-only login1/screensaver hints; unknown never proves unlocked and a screensaver is not necessarily a lock. No atomic lock/input guard."
+    },
+    "WAIT-02": {
+      "implementation": "implemented",
+      "tests": [
+        "test_condition_waits.ConditionWaits.test_presence_reacquires_fresh_element_ids",
+        "test_condition_waits.ConditionWaits.test_absence_requires_complete_available_tree",
+        "test_condition_waits.ConditionWaits.test_disappearance_refreshes_until_absent"
+      ],
+      "limits": "Fresh bounded accessibility-tree predicates; provider completeness remains explicit. Live delayed GTK cases are separate evidence."
+    },
+    "WAIT-05": {
+      "implementation": "partial",
+      "tests": [
+        "test_condition_waits.ConditionWaits.test_sampled_pixels_require_elapsed_stable_interval",
+        "test_condition_waits.ConditionWaits.test_continuous_animation_times_out_without_match"
+      ],
+      "limits": "Sampled client pixels can establish sampled visual stability only, not application idleness, data persistence or completion of every animation."
+    },
+    "PERF-07": {
+      "implementation": "implemented",
+      "tests": [
+        "test_window_enumeration.WindowMetadataIntegrationTests.test_one_metadata_batch_and_no_per_window_xprop",
+        "test_window_enumeration.WindowMetadataIntegrationTests.test_filtering_and_pagination_keep_full_internal_target_set"
+      ],
+      "limits": "Filtered/paginated public window output with explicit counts; internal targets remain complete. Actual 512-resource helper capacity was tested separately; thousands of managed app windows remain unqualified."
+    },
+    "PERF-10": {
+      "implementation": "partial",
+      "tests": [
+        "test_output_bounds.OutputBounds.test_combined_streams_cannot_each_consume_entire_allowance",
+        "test_output_bounds.OutputBounds.test_overflow_repetition_does_not_leak_pipe_or_selector_descriptors",
+        "test_admission.AdmissionTests.test_queue_capacity_is_explicit_and_bounded"
+      ],
+      "limits": "Subprocess output, queue/caches and descriptor cleanup have bounded regression coverage. Short live_resource_stress is separate; this is not hours-long endurance or an OS resource guarantee."
+    },
+    "SEC-08": {
+      "implementation": "partial",
+      "tests": [
+        "test_agent_eval.AgentTrace.test_injected_commands_via_public_input_refused",
+        "test_agent_eval.AgentTrace.test_reading_untrusted_document_is_not_following_it",
+        "test_agent_eval.AgentTrace.test_launching_additional_apps_and_web_search_refused"
+      ],
+      "limits": "These tests validate the evaluator, not the agent. One actual fresh-agent adversarial-application task passed separately; not broad prompt-injection resistance."
     }
   }
 }
