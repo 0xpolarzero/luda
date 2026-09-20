@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "policy": "Mappings are narrow local evidence, never release qualification. Read limits for scope.",
+  "policy": "Exact named tests are narrow evidence. Implementation remains independently reviewed; live suites and external onboarding cannot be inferred from unit outcomes. See GAP-AUDIT.md.",
   "requirements": {
     "CONC-01": {
       "implementation": "partial",
@@ -18,11 +18,11 @@
       "limits": "Controlled thread contention; no randomized stress test."
     },
     "CONC-03": {
-      "implementation": "implemented",
+      "implementation": "partial",
       "tests": [
-        "test_adversarial.Coordination.test_independent_displays_do_not_contend"
+        "test_waits.Waits.test_display_aliases_share_input_identity"
       ],
-      "limits": "Distinct DISPLAY strings; aliases for one X server are not qualified."
+      "limits": "Known DISPLAY aliases canonicalized; all transport hostname aliases not qualified."
     },
     "CONC-04": {
       "implementation": "implemented",
@@ -97,6 +97,622 @@
         "test_process_cleanup.ProcessCleanup.test_timeout_kills_descendant_before_delayed_effect"
       ],
       "limits": "Independent delayed-file oracle for process group cleanup; not yet a desktop-provider delayed-effect test."
+    },
+    "LIFE-01": {
+      "implementation": "partial",
+      "tests": [
+        "test_installation.Installation.test_repeat_install_is_noop_with_stable_release"
+      ],
+      "limits": "Unit verifies hash-checking argv and repeat identity; real local wheel install succeeded separately. Build-system dependencies and clean-image reproducibility are not fully locked."
+    },
+    "SEC-10": {
+      "implementation": "partial",
+      "tests": [
+        "test_installation.Installation.test_repeat_install_is_noop_with_stable_release"
+      ],
+      "limits": "Unit verifies hash-checking argv and repeat identity; real local wheel install succeeded separately. Build-system dependencies and clean-image reproducibility are not fully locked."
+    },
+    "LIFE-02": {
+      "implementation": "partial",
+      "tests": [
+        "test_installation.Installation.test_repeat_install_is_noop_with_stable_release",
+        "test_installation.Installation.test_configuration_quotes_paths_and_never_overwrites",
+        "test_installation.Installation.test_unknown_current_path_is_preserved"
+      ],
+      "limits": "Mocked package commands; actual file ownership and configuration non-overwrite checks."
+    },
+    "LIFE-03": {
+      "implementation": "partial",
+      "tests": [
+        "test_installation.Installation.test_failed_upgrade_preserves_selected_release_and_retry",
+        "test_installation.Installation.test_unknown_rollback_is_refused",
+        "test_installation.Installation.test_interrupted_owned_build_is_archived_then_retried"
+      ],
+      "limits": "Failure/retry/selection tested with mock builds; compatibility across released tool schemas remains unqualified."
+    },
+    "LIFE-04": {
+      "implementation": "partial",
+      "tests": [
+        "test_installation.Installation.test_uninstall_preserves_user_files_and_modified_installed_files",
+        "test_installation.Installation.test_clean_uninstall_and_reinstall",
+        "test_installation.Installation.test_manifest_traversal_does_not_delete_external_file"
+      ],
+      "limits": "Real temporary-file deletion/preservation with mock package contents; system apt packages and external config deliberately retained."
+    },
+    "LIFE-05": {
+      "implementation": "partial",
+      "tests": [
+        "test_process_cleanup.ProcessCleanup.test_timeout_kills_descendant_before_delayed_effect",
+        "test_process_cleanup.ProcessCleanup.test_repeated_timeouts_do_not_leak_pipe_descriptors"
+      ],
+      "limits": "Real helper process timeout cleanup; abrupt death of the top-level server is a separate gap."
+    },
+    "LIFE-10": {
+      "implementation": "partial",
+      "tests": [
+        "test_installation.Installation.test_missing_dependency_is_actionable"
+      ],
+      "limits": "Installer dependency diagnostics tested; full doctor capability matrix requires live fault injection."
+    },
+    "DIAG-04": {
+      "implementation": "partial",
+      "tests": [
+        "test_installation.Installation.test_missing_dependency_is_actionable"
+      ],
+      "limits": "Installer dependency diagnostics tested; full doctor capability matrix requires live fault injection."
+    },
+    "MCP-09": {
+      "implementation": "partial",
+      "tests": [
+        "test_mcp_cancellation.MCPCancellation.test_cancelled_worker_stops_and_server_recovers"
+      ],
+      "limits": "Async worker cancellation unit test; real protocol cancellation additionally lives in live_cancellation.py and is not imported as a unit pass."
+    },
+    "WAIT-09": {
+      "implementation": "partial",
+      "tests": [
+        "test_mcp_cancellation.MCPCancellation.test_cancelled_worker_stops_and_server_recovers"
+      ],
+      "limits": "Async worker cancellation unit test; real protocol cancellation additionally lives in live_cancellation.py and is not imported as a unit pass."
+    },
+    "OBS-02": {
+      "implementation": "partial",
+      "tests": [
+        "test_interaction.PointTests.test_scales_image_to_root_and_rejects_half_open_edges"
+      ],
+      "limits": "Mathematical coordinate boundaries with fake display geometry; physical monitor scaling remains unqualified."
+    },
+    "GEO-09": {
+      "implementation": "partial",
+      "tests": [
+        "test_interaction.PointTests.test_scales_image_to_root_and_rejects_half_open_edges"
+      ],
+      "limits": "Mathematical coordinate boundaries with fake display geometry; physical monitor scaling remains unqualified."
+    },
+    "OBS-04": {
+      "implementation": "partial",
+      "tests": [
+        "test_interaction.PointTests.test_expired_missing_and_changed_layout_rejected"
+      ],
+      "limits": "No-input unit paths for changed/missing observations; visual effects have separate live evidence."
+    },
+    "OBS-07": {
+      "implementation": "partial",
+      "tests": [
+        "test_interaction.PointTests.test_expired_missing_and_changed_layout_rejected"
+      ],
+      "limits": "No-input unit paths for changed/missing observations; visual effects have separate live evidence."
+    },
+    "OBS-05": {
+      "implementation": "partial",
+      "tests": [
+        "test_interaction.PointTests.test_changed_resolution_rejected"
+      ],
+      "limits": "Changed root dimensions simulated before input; real hotplug and mid-delivery changes unqualified."
+    },
+    "GEO-10": {
+      "implementation": "partial",
+      "tests": [
+        "test_interaction.PointTests.test_changed_resolution_rejected"
+      ],
+      "limits": "Changed root dimensions simulated before input; real hotplug and mid-delivery changes unqualified."
+    },
+    "FAULT-07": {
+      "implementation": "partial",
+      "tests": [
+        "test_interaction.PointTests.test_changed_resolution_rejected"
+      ],
+      "limits": "Changed root dimensions simulated before input; real hotplug and mid-delivery changes unqualified."
+    },
+    "WIN-04": {
+      "implementation": "partial",
+      "tests": [
+        "test_window_tokens.WindowTokenTests.test_missing_and_valid_property",
+        "test_window_tokens.WindowTokenTests.test_malformed_property_types_lengths_and_bytes"
+      ],
+      "limits": "Property/token parser and forged values covered; real XID reuse exercised by live_window_tokens.py separately."
+    },
+    "WIN-05": {
+      "implementation": "partial",
+      "tests": [
+        "test_verified_typing.VerifiedTyping.test_selection_change_prevents_paste",
+        "test_verified_typing.VerifiedTyping.test_missing_focus_prevents_paste"
+      ],
+      "limits": "No-paste unit guards. Browser focus theft has independent DOM oracles in live_browser.py."
+    },
+    "WM-06": {
+      "implementation": "partial",
+      "tests": [
+        "test_interaction.InteractionTests.test_close_verifies_disappearance"
+      ],
+      "limits": "Simulated window disappearance only; Save/Discard/Cancel documents require application workflow evidence."
+    },
+    "WM-08": {
+      "implementation": "partial",
+      "tests": [
+        "test_interaction.InteractionTests.test_workspace_names"
+      ],
+      "limits": "Parsing contract only; switching is independently exercised by live_interaction.py."
+    },
+    "AX-10": {
+      "implementation": "partial",
+      "tests": [
+        "test_semantic.ScopeAndState.test_fallback_requires_exact_title",
+        "test_semantic.ScopeAndState.test_duplicate_fallback_refused",
+        "test_semantic.ScopeAndState.test_fallback_removes_unreliable_bounds"
+      ],
+      "limits": "Mock accessibility identity fallback; real GTK4 and Qt coverage is in live_toolkits.py."
+    },
+    "SEM-02": {
+      "implementation": "partial",
+      "tests": [
+        "test_semantic.ScopeAndState.test_sensitive_showing_is_interactable_but_disabled_is_not"
+      ],
+      "limits": "Provider state semantics only; hidden/disabled native fixture checks are separate live evidence."
+    },
+    "SEM-03": {
+      "implementation": "partial",
+      "tests": [
+        "test_semantic.ScopeAndState.test_sensitive_showing_is_interactable_but_disabled_is_not"
+      ],
+      "limits": "Provider state semantics only; hidden/disabled native fixture checks are separate live evidence."
+    },
+    "SEM-05": {
+      "implementation": "partial",
+      "tests": [
+        "test_semantic.OptionSelection.test_single_choice_is_exclusive_without_multiselectable_flag",
+        "test_semantic.OptionSelection.test_extend_preserves_other_choices",
+        "test_semantic.OptionSelection.test_already_selected_is_idempotent",
+        "test_semantic.OptionSelection.test_false_deselection_success_not_verified",
+        "test_semantic.OptionSelection.test_stale_child_index_refused"
+      ],
+      "limits": "Mock selection providers; toolkit combos/list fixtures are live_semantic.py/live_combo.py. Virtualized rows/range selection not fully qualified."
+    },
+    "DATA-03": {
+      "implementation": "partial",
+      "tests": [
+        "test_semantic.OptionSelection.test_single_choice_is_exclusive_without_multiselectable_flag",
+        "test_semantic.OptionSelection.test_extend_preserves_other_choices",
+        "test_semantic.OptionSelection.test_already_selected_is_idempotent",
+        "test_semantic.OptionSelection.test_false_deselection_success_not_verified",
+        "test_semantic.OptionSelection.test_stale_child_index_refused"
+      ],
+      "limits": "Mock selection providers; toolkit combos/list fixtures are live_semantic.py/live_combo.py. Virtualized rows/range selection not fully qualified."
+    },
+    "SEM-06": {
+      "implementation": "partial",
+      "tests": [
+        "test_semantic.Semantics.test_nonfinite_numeric_refused"
+      ],
+      "limits": "Only malformed/nonfinite rejection; live range/step widgets and locale handling require more evidence."
+    },
+    "DATA-06": {
+      "implementation": "partial",
+      "tests": [
+        "test_semantic.Semantics.test_nonfinite_numeric_refused"
+      ],
+      "limits": "Only malformed/nonfinite rejection; live range/step widgets and locale handling require more evidence."
+    },
+    "SEM-08": {
+      "implementation": "partial",
+      "tests": [
+        "test_verified_typing.VerifiedTyping.test_missing_focus_prevents_paste"
+      ],
+      "limits": "Refuses fallback without verified focus; no universal platform focus guarantee."
+    },
+    "SEM-10": {
+      "implementation": "partial",
+      "tests": [
+        "test_interaction.MoreInteractionTests.test_unobserved_effect_not_reported_verified"
+      ],
+      "limits": "Unit result classification; real no-op application actions remain separately qualified."
+    },
+    "ERR-02": {
+      "implementation": "partial",
+      "tests": [
+        "test_interaction.MoreInteractionTests.test_unobserved_effect_not_reported_verified"
+      ],
+      "limits": "Unit result classification; real no-op application actions remain separately qualified."
+    },
+    "TXT-01": {
+      "implementation": "partial",
+      "tests": [
+        "test_contracts.Contracts.test_exact_unicode_whitespace_accepted"
+      ],
+      "limits": "Validates accepted strings without normalization; actual insertion variants are in live suites. Acceptance alone is not delivery evidence."
+    },
+    "TXT-02": {
+      "implementation": "partial",
+      "tests": [
+        "test_contracts.Contracts.test_exact_unicode_whitespace_accepted"
+      ],
+      "limits": "Validates accepted strings without normalization; actual insertion variants are in live suites. Acceptance alone is not delivery evidence."
+    },
+    "TXT-03": {
+      "implementation": "partial",
+      "tests": [
+        "test_contracts.Contracts.test_exact_unicode_whitespace_accepted"
+      ],
+      "limits": "Validates accepted strings without normalization; actual insertion variants are in live suites. Acceptance alone is not delivery evidence."
+    },
+    "TXT-04": {
+      "implementation": "partial",
+      "tests": [
+        "test_contracts.Contracts.test_exact_unicode_whitespace_accepted"
+      ],
+      "limits": "Validates accepted strings without normalization; actual insertion variants are in live suites. Acceptance alone is not delivery evidence."
+    },
+    "TXT-05": {
+      "implementation": "partial",
+      "tests": [
+        "test_contracts.Contracts.test_exact_unicode_whitespace_accepted"
+      ],
+      "limits": "Validates accepted strings without normalization; actual insertion variants are in live suites. Acceptance alone is not delivery evidence."
+    },
+    "TXT-06": {
+      "implementation": "partial",
+      "tests": [
+        "test_contracts.Contracts.test_exact_unicode_whitespace_accepted"
+      ],
+      "limits": "Validates accepted strings without normalization; actual insertion variants are in live suites. Acceptance alone is not delivery evidence."
+    },
+    "TXT-07": {
+      "implementation": "partial",
+      "tests": [
+        "test_contracts.Contracts.test_exact_unicode_whitespace_accepted"
+      ],
+      "limits": "Validates accepted strings without normalization; actual insertion variants are in live suites. Acceptance alone is not delivery evidence."
+    },
+    "TXT-08": {
+      "implementation": "partial",
+      "tests": [
+        "test_contracts.Contracts.test_exact_unicode_whitespace_accepted"
+      ],
+      "limits": "Validates accepted strings without normalization; actual insertion variants are in live suites. Acceptance alone is not delivery evidence."
+    },
+    "TXT-15": {
+      "implementation": "partial",
+      "tests": [
+        "test_contracts.Contracts.test_exact_unicode_whitespace_accepted"
+      ],
+      "limits": "Validates accepted strings without normalization; actual insertion variants are in live suites. Acceptance alone is not delivery evidence."
+    },
+    "TXT-09": {
+      "implementation": "partial",
+      "tests": [
+        "test_semantic.Semantics.test_empty_insert_collapses_selection"
+      ],
+      "limits": "Mock editable-provider selection deletion; empty browser replacement additionally tested live."
+    },
+    "TXT-10": {
+      "implementation": "partial",
+      "tests": [
+        "test_contracts.Contracts.test_utf8_byte_limit"
+      ],
+      "limits": "UTF-8 size boundary tested; near-limit actual app insertion and memory pressure not qualified."
+    },
+    "TXT-11": {
+      "implementation": "partial",
+      "tests": [
+        "test_contracts.Contracts.test_utf8_byte_limit"
+      ],
+      "limits": "UTF-8 size boundary tested; near-limit actual app insertion and memory pressure not qualified."
+    },
+    "TXT-12": {
+      "implementation": "partial",
+      "tests": [
+        "test_contracts.Contracts.test_control_and_invalid_unicode_rejected_before_input"
+      ],
+      "limits": "Control/CR/surrogate refusal before dispatch; policy deliberately rejects CR instead of normalizing."
+    },
+    "TXT-13": {
+      "implementation": "partial",
+      "tests": [
+        "test_contracts.Contracts.test_control_and_invalid_unicode_rejected_before_input"
+      ],
+      "limits": "Control/CR/surrogate refusal before dispatch; policy deliberately rejects CR instead of normalizing."
+    },
+    "TXT-14": {
+      "implementation": "partial",
+      "tests": [
+        "test_contracts.Contracts.test_shell_metacharacters_remain_arguments"
+      ],
+      "limits": "Real subprocess argv roundtrip and independent sentinel oracle."
+    },
+    "EDIT-02": {
+      "implementation": "partial",
+      "tests": [
+        "test_semantic.Semantics.test_insert_preserves_surroundings",
+        "test_semantic.Semantics.test_concurrent_text_edit_refused",
+        "test_semantic.Semantics.test_concurrent_caret_change_refused"
+      ],
+      "limits": "Mock EditableText provider; browser clipboard fallback and toolkit providers have separate live evidence."
+    },
+    "EDIT-03": {
+      "implementation": "partial",
+      "tests": [
+        "test_semantic.Semantics.test_replace_selected_range",
+        "test_semantic.Semantics.test_multiple_selection_rejected"
+      ],
+      "limits": "Mock selection semantics; known Chromium selection readback discrepancy tracked in browser evidence until fixed."
+    },
+    "EDIT-04": {
+      "implementation": "partial",
+      "tests": [
+        "test_semantic.Semantics.test_read_only_refused",
+        "test_semantic.Semantics.test_missing_text_interface_refused"
+      ],
+      "limits": "No provider mutation on readonly/missing interface. Live browser readonly/disabled cases also exist."
+    },
+    "EDIT-07": {
+      "implementation": "partial",
+      "tests": [
+        "test_semantic.Semantics.test_false_successful_insert_not_verified",
+        "test_semantic.Semantics.test_false_successful_delete_never_inserts"
+      ],
+      "limits": "False provider acknowledgments never verify; browser transformed/rejected-paste behavior tested separately live."
+    },
+    "EDIT-09": {
+      "implementation": "partial",
+      "tests": [
+        "test_semantic.Utf16Semantics.test_insert_astral_into_ascii_normalizes_new_caret",
+        "test_semantic.Utf16Semantics.test_select_after_astral_and_replace",
+        "test_semantic.Utf16Semantics.test_read_normalizes_count_and_caret",
+        "test_semantic.Utf16Semantics.test_split_surrogate_provider_offset_refused"
+      ],
+      "limits": "Unit Qt UTF-16 normalization; does not erase the Chromium selection/hypertext discrepancies found live."
+    },
+    "PTR-07": {
+      "implementation": "partial",
+      "tests": [
+        "test_interaction.InteractionTests.test_drag_releases_after_motion_failure"
+      ],
+      "limits": "Mock motion failure proves release attempted; real drag interruption separately covered by live_control.py."
+    },
+    "PTR-08": {
+      "implementation": "partial",
+      "tests": [
+        "test_interaction.InteractionTests.test_destination_validated_before_input"
+      ],
+      "limits": "Destination validation unit assertion, not complete cross-application drag semantics."
+    },
+    "PTR-10": {
+      "implementation": "partial",
+      "tests": [
+        "test_interaction.PointTests.test_covered_client_refused_before_pointer_input"
+      ],
+      "limits": "Known stacked window coverage unit check; invisible/input-only overlay classes need live qualification."
+    },
+    "WAIT-01": {
+      "implementation": "partial",
+      "tests": [
+        "test_waits.Waits.test_window_wait_observes_transition_without_input"
+      ],
+      "limits": "Fake window transition verifies bounded polling semantics."
+    },
+    "WAIT-03": {
+      "implementation": "partial",
+      "tests": [
+        "test_waits.Waits.test_text_wait_requires_complete_readback"
+      ],
+      "limits": "Rejects truncated evidence; real provider strings require separate coverage."
+    },
+    "WAIT-04": {
+      "implementation": "partial",
+      "tests": [
+        "test_operation_runtime.OperationRuntime.test_overall_deadline_bounds_multiple_commands"
+      ],
+      "limits": "Real subprocess compound deadlines use monotonic clock; suspend/resume behavior remains separate."
+    },
+    "WAIT-10": {
+      "implementation": "partial",
+      "tests": [
+        "test_operation_runtime.OperationRuntime.test_overall_deadline_bounds_multiple_commands"
+      ],
+      "limits": "Real subprocess compound deadlines use monotonic clock; suspend/resume behavior remains separate."
+    },
+    "ERR-01": {
+      "implementation": "partial",
+      "tests": [
+        "test_mcp_cancellation.MCPCancellation.test_later_failure_preserves_prior_effect"
+      ],
+      "limits": "Unit accumulated-effect classification; completed substeps are not comprehensively enumerated."
+    },
+    "ERR-05": {
+      "implementation": "partial",
+      "tests": [
+        "test_mcp_cancellation.MCPCancellation.test_later_failure_preserves_prior_effect"
+      ],
+      "limits": "Unit accumulated-effect classification; completed substeps are not comprehensively enumerated."
+    },
+    "ERR-06": {
+      "implementation": "partial",
+      "tests": [
+        "test_x11.X11Tests.test_crashed_helper_is_display_error",
+        "test_x11.X11Tests.test_malformed_response_rejected",
+        "test_x11.X11Tests.test_native_error_retains_code"
+      ],
+      "limits": "X11 helper exception/response contracts only; all backends not thereby qualified."
+    },
+    "ERR-09": {
+      "implementation": "partial",
+      "tests": [
+        "test_interaction.MoreInteractionTests.test_cleanup_failure_retains_original_error"
+      ],
+      "limits": "Retains original failure and failed cleanup information; forced server-death key release remains unqualified."
+    },
+    "CONC-05": {
+      "implementation": "partial",
+      "tests": [
+        "test_control.PauseControl.test_pause_shared_and_resume_persist",
+        "test_control.PauseControl.test_pause_interrupts_running_operation_with_cleanup_available"
+      ],
+      "limits": "Cooperative explicit pause mechanism tested. No automatic human input detection or integrated Silo viewer button claim."
+    },
+    "CONC-06": {
+      "implementation": "partial",
+      "tests": [
+        "test_control.PauseControl.test_pause_shared_and_resume_persist",
+        "test_control.PauseControl.test_pause_interrupts_running_operation_with_cleanup_available"
+      ],
+      "limits": "Cooperative explicit pause mechanism tested. No automatic human input detection or integrated Silo viewer button claim."
+    },
+    "SEC-09": {
+      "implementation": "partial",
+      "tests": [
+        "test_semantic.Semantics.test_protected_operations_no_provider_calls"
+      ],
+      "limits": "Ordinary protected-field operations refuse before provider text calls."
+    },
+    "AUTH-02": {
+      "implementation": "partial",
+      "tests": [
+        "test_semantic.Semantics.test_protected_operations_no_provider_calls"
+      ],
+      "limits": "Ordinary protected-field operations refuse before provider text calls."
+    },
+    "AUTH-01": {
+      "implementation": "partial",
+      "tests": [
+        "test_semantic.ProtectedInput.test_acceptance_never_claims_verified_value",
+        "test_semantic.ProtectedInput.test_provider_exception_cannot_echo_secret",
+        "test_semantic.ProtectedInput.test_nonprotected_refused",
+        "test_semantic.ProtectedInput.test_missing_editable_interface_refused",
+        "test_semantic.ProtectedInput.test_invalid_secret_never_reaches_provider"
+      ],
+      "limits": "Mock protected-input provider; live GTK protected field local coverage exists, authentication workflows and browser protected input remain unqualified."
+    },
+    "AUTH-07": {
+      "implementation": "partial",
+      "tests": [
+        "test_semantic.ProtectedInput.test_acceptance_never_claims_verified_value",
+        "test_semantic.ProtectedInput.test_provider_exception_cannot_echo_secret",
+        "test_semantic.ProtectedInput.test_nonprotected_refused",
+        "test_semantic.ProtectedInput.test_missing_editable_interface_refused",
+        "test_semantic.ProtectedInput.test_invalid_secret_never_reaches_provider"
+      ],
+      "limits": "Mock protected-input provider; live GTK protected field local coverage exists, authentication workflows and browser protected input remain unqualified."
+    },
+    "SEC-07": {
+      "implementation": "partial",
+      "tests": [
+        "test_semantic.ProtectedInput.test_provider_exception_cannot_echo_secret"
+      ],
+      "limits": "Secret-input error sanitization only; universal error/log redaction not established."
+    },
+    "PERF-09": {
+      "implementation": "partial",
+      "tests": [
+        "test_process_cleanup.ProcessCleanup.test_repeated_timeouts_do_not_leak_pipe_descriptors",
+        "test_process_cleanup.ProcessCleanup.test_detached_descendant_cannot_hold_timeout_open_forever"
+      ],
+      "limits": "Short process resource tests, not hours-long application/server soak."
+    },
+    "FAULT-05": {
+      "implementation": "partial",
+      "tests": [
+        "test_x11.X11Tests.test_timeout_is_preserved",
+        "test_x11.X11Tests.test_cancellation_is_preserved",
+        "test_x11.X11Tests.test_crashed_helper_is_display_error"
+      ],
+      "limits": "Helper-level failure only; live_x11_isolation.py adds disposable X server failure evidence."
+    },
+    "SHIP-04": {
+      "implementation": "partial",
+      "tests": [
+        "test_installation.Installation.test_configuration_quotes_paths_and_never_overwrites"
+      ],
+      "limits": "Generated paths and skill files validated; fresh Codex discovery remains external onboarding qualification."
+    },
+    "STATE-04": {
+      "implementation": "partial",
+      "tests": [
+        "test_waits.Waits.test_text_wait_requires_complete_readback"
+      ],
+      "limits": "Truncation cannot qualify equality; full provider text mapping remains toolkit-specific."
+    },
+    "MENU-03": {
+      "implementation": "partial",
+      "tests": [
+        "test_popups.PopupTests.test_owner_chain_matches_pid_and_process_start",
+        "test_popups.PopupTests.test_target_outside_owner_inside_popup_is_valid",
+        "test_popups.PopupTests.test_ambiguous_unowned_cross_process_and_cycle_rejected"
+      ],
+      "limits": "Owner/transient validation with fakes; live menus/popups supply separate evidence."
+    },
+    "MENU-04": {
+      "implementation": "partial",
+      "tests": [
+        "test_popups.PopupTests.test_owner_chain_matches_pid_and_process_start",
+        "test_popups.PopupTests.test_target_outside_owner_inside_popup_is_valid",
+        "test_popups.PopupTests.test_ambiguous_unowned_cross_process_and_cycle_rejected"
+      ],
+      "limits": "Owner/transient validation with fakes; live menus/popups supply separate evidence."
+    },
+    "MENU-05": {
+      "implementation": "partial",
+      "tests": [
+        "test_popups.PopupTests.test_overlap_rejected_before_mousemove",
+        "test_popups.PopupTests.test_vanished_moved_or_new_popup_rejected",
+        "test_popups.PopupTests.test_snapshot_expiry_rejected"
+      ],
+      "limits": "No dispatch on changed popup context; all tooltip/menu implementations not qualified."
+    },
+    "MENU-09": {
+      "implementation": "partial",
+      "tests": [
+        "test_popups.PopupTests.test_overlap_rejected_before_mousemove",
+        "test_popups.PopupTests.test_vanished_moved_or_new_popup_rejected",
+        "test_popups.PopupTests.test_snapshot_expiry_rejected"
+      ],
+      "limits": "No dispatch on changed popup context; all tooltip/menu implementations not qualified."
+    },
+    "EVAL-06": {
+      "implementation": "partial",
+      "tests": [
+        "test_operation_runtime.OperationRuntime.test_invalid_pointer_request_has_no_input"
+      ],
+      "limits": "Negative unit oracle; individual live suites retain app-state oracles separately."
+    },
+    "EVAL-10": {
+      "implementation": "partial",
+      "tests": [
+        "test_qualification.QualificationContracts.test_passing_tests_never_qualify_release",
+        "test_qualification.QualificationContracts.test_missing_skipped_and_expected_failures_are_not_passes",
+        "test_qualification.QualificationContracts.test_failure_dominates_partial_evidence",
+        "test_qualification.QualificationContracts.test_absent_mapping_is_not_assessed"
+      ],
+      "limits": "Evidence tooling never grants release qualification automatically."
+    },
+    "SHIP-10": {
+      "implementation": "partial",
+      "tests": [
+        "test_qualification.QualificationContracts.test_passing_tests_never_qualify_release",
+        "test_qualification.QualificationContracts.test_missing_skipped_and_expected_failures_are_not_passes",
+        "test_qualification.QualificationContracts.test_failure_dominates_partial_evidence",
+        "test_qualification.QualificationContracts.test_absent_mapping_is_not_assessed"
+      ],
+      "limits": "Evidence tooling never grants release qualification automatically."
     }
   }
 }
