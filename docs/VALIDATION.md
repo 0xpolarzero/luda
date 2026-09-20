@@ -31,6 +31,21 @@ The [345-case catalog](REQUIREMENTS.md) defines acceptance targets. [Qualificati
 
 Generated artifacts are ignored by Git because they can contain synthetic screenshots/text. Unit, headless and native runners reject changing source trees. Re-run affected checks after source changes; historical evidence must not silently become a pass for a newer revision.
 
+### Installed Silo guest smoke, 2026-09-20
+
+Source `c25165c` was installed through the versioned installer into a separate
+prefix, producing release `0.1.0-fba39156bb2e560c` and wheel SHA-256
+`fed6a3b75e436af96aa18f945ea9dfc4f0ee7e7a126c45f7c7e29898d6e86815`.
+The installed launcher dropped privileges to `silo-desktop` (UID 1001) and
+attached to the actual Silo XFCE/KasmVNC `:1` desktop at 1440×900. Doctor
+reported available XKB, XTest and XI2; screen-lock state remained unknown.
+Using that installed interpreter and package, the native fixture passed all
+31 assertions and actual stdio MCP passed all 13 assertions, including exact
+paste readback. Both runs held the shared desktop test lock and used only
+their own synthetic fixture. This establishes a working installed guest build
+at that revision; it does not establish fresh Mac provisioning, SSH plugin
+discovery or compatibility of later changes.
+
 ## Confirmed unresolved issues
 
 1. **Active IME composition:** real GTK and Chromium probes show inaccessible or ambiguously exposed preedit, lost pending input, and later commits changing an otherwise verified value. Diagnostics explicitly report unknown composition state. A reliable guard requires a cooperating application-aware adapter; daemon absence is insufficient. [Evidence and API research](IME-COMPOSITION.md).
