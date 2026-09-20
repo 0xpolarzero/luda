@@ -27,6 +27,8 @@ USER = 'silo-desktop'
 MAX_ARCHIVE = 32 * 1024 * 1024
 MAX_EXPANDED = 128 * 1024 * 1024
 STATES = {'unconfigured', 'pending', 'ready', 'attention', 'unconfirmed', 'update_available'}
+REASONS = {'desktop_status_unavailable', 'source_preparation_failed', 'bootstrap_failed',
+           'bootstrap_unconfirmed', 'metadata_unavailable', 'operation_busy'}
 
 
 class OnboardingError(Exception):
@@ -203,6 +205,8 @@ def project(value):
               'configuration_generated': value.get('configuration_generated') is True,
               'last_ready': value.get('last_ready') if type(value.get('last_ready')) is bool else None,
               'automatic_retry_allowed': False}
+    if value.get('reason') in REASONS:
+        result['reason'] = value['reason']
     checked = value.get('checked_at')
     if type(checked) is int and 0 <= checked <= 9999999999:
         result['checked_at'] = checked
@@ -233,7 +237,14 @@ def ensure(release, state, *, running=desktop_running, fetch=download, install=b
     if previous and previous.get('state') not in ('pending', 'unconfigured') and not reviewed:
         return status(release, state)
     identity = {key: release[key] for key in ('source_commit', 'source_sha256')}
-    if not running():
+    try:
+        ready = running()
+    except Exception:
+        value = project({**identity, 'state': 'attention', 'installation_completed': False,
+                         'reason': 'desktop_status_unavailable'})
+        atomic(state / 'status.json', value)
+        return value
+    if not ready:
         value = project({**previous, **identity, 'state': 'pending'})
         atomic(state / 'status.json', value)
         return value
@@ -259,8 +270,11 @@ def ensure(release, state, *, running=desktop_running, fetch=download, install=b
         if type(value['last_ready']) is bool:
             value['checked_at'] = int(time.time())
         value['state'] = 'ready' if result.get('ok') is True and value['installation_completed'] is True and value['configuration_generated'] and value['last_ready'] is True else 'attention' if value['installation_completed'] is not None else 'unconfirmed'
+        if value['state'] != 'ready':
+            value['reason'] = 'bootstrap_unconfirmed' if value['installation_completed'] is None else 'bootstrap_failed'
     except Exception:
         value['state'] = 'attention' if value['installation_completed'] is False else 'unconfirmed'
+        value['reason'] = 'source_preparation_failed' if value['installation_completed'] is False else 'bootstrap_unconfirmed'
     value = project(value)
     atomic(state / 'status.json', value)
     return value
@@ -270,7 +284,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('action', choices=('status', 'ensure', 'retry-after-review'))
     args = parser.parse_args()
-    value = {'state': 'attention'}
+    value = {'state': 'attention', 'reason': 'metadata_unavailable'}
     try:
         if os.geteuid() != 0:
             raise OnboardingError('root_required')
@@ -287,6 +301,8 @@ def main():
                 value = ensure(release, STATE, reviewed=args.action == 'retry-after-review')
             finally:
                 os.close(fd)
+    except BlockingIOError:
+        value = {'state': 'unconfirmed', 'reason': 'operation_busy'}
     except Exception:
         pass
     # Onboarding failure is independent of desktop setup/viewer availability.

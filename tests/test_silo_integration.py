@@ -81,6 +81,17 @@ class SiloIntegrationTests(unittest.TestCase):
         self.install.assert_called_once()
         self.assertNotIn('source_url', result)
 
+    def test_preflight_failure_is_durable_and_never_reverts_to_pending(self):
+        probe = Mock(side_effect=FileNotFoundError('sensitive helper path'))
+        result = tools.ensure(RELEASE, self.state, running=probe, install=self.install)
+        self.assertEqual(result['state'], 'attention')
+        self.assertIs(result['installation_completed'], False)
+        self.assertEqual(result['reason'], 'desktop_status_unavailable')
+        self.assertEqual(tools.status(RELEASE, self.state), result)
+        self.assertNotIn('sensitive', json.dumps(result))
+        self.ensure()
+        self.install.assert_not_called()
+
     def test_install_observes_durable_uncertain_marker_and_fresh_output(self):
         original = self.install.return_value
         def inspect(source, output):
@@ -161,7 +172,8 @@ class SiloIntegrationTests(unittest.TestCase):
         with patch.object(tools, 'STATE', self.state), patch.object(tools.os, 'geteuid', return_value=0), patch.object(tools, 'manifest', return_value=RELEASE), patch.object(tools, 'ensure') as ensure, patch.object(tools.sys, 'argv', ['agent-tools.py', 'ensure']), contextlib.redirect_stdout(io.StringIO()) as output:
             tools.main()
         ensure.assert_not_called()
-        self.assertEqual(json.loads(output.getvalue())['state'], 'attention')
+        self.assertEqual(json.loads(output.getvalue())['state'], 'unconfirmed')
+        self.assertEqual(json.loads(output.getvalue())['reason'], 'operation_busy')
 
     def test_download_checksum_and_https_redirect(self):
         data = b'archive bytes'
