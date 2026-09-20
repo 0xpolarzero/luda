@@ -17,8 +17,8 @@
       "limits": "A single native fixture; not every text provider or desktop backend."
     },
     "live_mcp.py": {
-      "scope": "Actual stdio initialization, discovery, input validation, actions, text and image metadata.",
-      "limits": "Successful stream exchange and explicit assertions only; not fresh Mac/SSH discovery or protocol migration."
+      "scope": "Actual stdio initialization, discovery, input validation, actions, text and image metadata; sanitized report privacy, prior-operation correlation, unchanged widget oracle and public doctor declaration/bundled-artifact identities.",
+      "limits": "Successful stream exchange and explicit assertions only; declarations record intended evidence scope, not a current passing run. Bundled skill identity is not agent-loaded skill identity. No fresh Mac/SSH discovery, automatic plugin refresh or protocol migration qualification."
     },
     "live_cancellation.py": {
       "requirements": [

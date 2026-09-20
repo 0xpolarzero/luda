@@ -1200,6 +1200,17 @@
         "test_report.ReportPrivacy.test_cli_fresh_history_and_stdout_json_without_desktop_environment"
       ],
       "limits": "Read-only MCP and actual fresh-process CLI sanitized JSON export: strict health/version/history whitelist, injected and malformed diagnostic privacy, exception suppression, bounded prior-operation snapshot and no report-file creation. Free-text reproduction steps are supplied separately, never retained; no replay, upload, earlier-process CLI history, fresh Mac/SSH or all-provider qualification. Actual guest MCP application invariance is separate live evidence."
+    },
+    "SHIP-08": {
+      "implementation": "implemented",
+      "tests": [
+        "test_version_identity.VersionIdentity.test_public_doctor_identifies_actual_discovery_and_preserves_health",
+        "test_version_identity.VersionIdentity.test_installed_and_editable_skill_bytes_and_unavailable_are_honest",
+        "test_version_identity.CLIVersionIdentity.test_cli_and_public_doctor_share_identity_path_and_exit_contract",
+        "test_version_identity.CLIVersionIdentity.test_real_distribution_record_locates_installed_skill",
+        "test_version_identity.CLIVersionIdentity.test_malformed_distribution_does_not_remove_ready_doctor"
+      ],
+      "limits": "Driver version, canonical actual tools/list identity, editable and installed bundled-skill bytes, malformed or unavailable artifacts, and shared CLI/public doctor identity path. The bundled artifact hash does not identify the skill loaded by an agent; no automatic plugin cache invalidation, schema migration or fresh Mac/SSH compatibility qualification."
     }
   }
 }
