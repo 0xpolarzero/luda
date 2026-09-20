@@ -83,7 +83,9 @@ def state(prefix):
 
 def invoke(argv, timeout=300):
     try:
-        child = subprocess.Popen([str(a) for a in argv], start_new_session=True)
+        # Python backend children must not reintroduce caller startup paths.
+        environment = {key: value for key, value in os.environ.items() if not key.startswith('PYTHON')}
+        child = subprocess.Popen([str(a) for a in argv], start_new_session=True, env=environment)
     except FileNotFoundError as exc:
         raise InstallError(f'Missing dependency: {argv[0]}') from exc
     try:
@@ -192,17 +194,17 @@ def install(prefix, source, runner=invoke, browser_config=None, user="silo-deskt
         try:
             atomic_json(release / '.luda-release-owner.json', {'product': 'luda', 'release': identity})
             # Build at the final path: moving a venv breaks absolute shebangs.
-            runner([sys.executable, '-m', 'venv', release / '.venv'])
+            runner([sys.executable, '-I', '-m', 'venv', release / '.venv'])
             python = release / '.venv/bin/python'
-            runner([python, '-m', 'pip', 'install', '--require-hashes', '-r', source / ('requirements-browser.lock' if browser else 'requirements.lock')])
-            runner([python, '-m', 'pip', 'install', '--require-hashes', '-r', source / 'build-requirements.lock'])
+            runner([python, '-I', '-m', 'pip', '--isolated', 'install', '--require-hashes', '-r', source / ('requirements-browser.lock' if browser else 'requirements.lock')])
+            runner([python, '-I', '-m', 'pip', '--isolated', 'install', '--require-hashes', '-r', source / 'build-requirements.lock'])
             with build_source(source, release, identity, browser) as staged:
-                runner([python, '-m', 'pip', 'wheel', '--no-build-isolation', '--no-deps', '--wheel-dir', release / 'wheels', staged])
+                runner([python, '-I', '-m', 'pip', '--isolated', 'wheel', '--no-build-isolation', '--no-deps', '--wheel-dir', release / 'wheels', staged])
             wheels = list((release / 'wheels').glob('luda-*.whl'))
             if len(wheels) != 1:
                 raise InstallError('Build did not produce exactly one Luda wheel.')
-            runner([python, '-m', 'pip', 'install', '--no-deps', wheels[0]])
-            runner([python, '-c', 'import luda.server; from importlib.metadata import version; print("Installed Luda", version("luda"))'])
+            runner([python, '-I', '-m', 'pip', '--isolated', 'install', '--no-deps', wheels[0]])
+            runner([python, '-I', '-c', 'import luda.server; from importlib.metadata import version; print("Installed Luda", version("luda"))'])
             shutil.copytree(source / 'skills/luda', release / 'skills/luda')
             if browser is not None:
                 verify_browser(browser, user)

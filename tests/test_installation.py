@@ -32,8 +32,8 @@ class Installation(unittest.TestCase):
     def runner(self, command):
         args = list(map(str, command))
         self.commands.append(args)
-        if args[1:3] == ['-m', 'venv']:
-            path = Path(args[3]) / 'bin'
+        if args[1:4] == ['-I', '-m', 'venv']:
+            path = Path(args[4]) / 'bin'
             path.mkdir(parents=True)
             (path / 'python').write_text('fixture interpreter')
         elif 'wheel' in args:
