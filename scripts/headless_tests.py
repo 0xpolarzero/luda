@@ -66,6 +66,7 @@ def main():
                           ('mcp-controls', [str(ROOT / 'tests/live_mcp_controls.py')]),
                           ('menus', [str(ROOT / 'tests/live_menu.py')]),
                           ('geometry', [str(ROOT / 'tests/live_geometry.py')]),
+                          ('resources', [str(ROOT / 'tests/live_resource_stress.py')]),
                           ('waits', [str(ROOT / 'tests/live_waits.py')]),
                           ('input-guard', [str(ROOT / 'tests/live_input_guard.py')]),
                           ('session-state', [str(ROOT / 'tests/live_session_state.py')])]
