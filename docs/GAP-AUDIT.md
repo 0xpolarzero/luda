@@ -65,15 +65,17 @@ The following are concrete evidence gaps, not proposals to add redundant APIs:
   now establishes nine scoped refusal/recovery assertions through actual MCP,
   independent widget/key-state oracles and exact private layout restoration.
   It qualifies the named refusal route, not composition support.
-- **AUTH-03:** qualify an actual native password-manager popup with a disposable
-  synthetic vault. Existing ordinary password fields and OAuth fixtures do not
-  establish that application workflow or browser-extension compatibility.
-- **PERF-10:** complement [actual child memory/descriptor exhaustion](RESOURCE-LIMIT-QUALIFICATION.md)
-  with bounded CPU-pressure evidence. Do not infer system-wide OOM, swapping or
-  every low-resource interleaving from these separate experiments.
+- **AUTH-03:** the subsequent [KeePassXC run](PASSWORD-MANAGER-QUALIFICATION.md)
+  establishes seven native entry-menu checks with two synthetic entries, a decoy
+  window, clipboard and vault-file oracles. GUI unlocking, auto-type and browser
+  extensions remain outside that result.
+- **PERF-10:** the subsequent [CPU-pressure run](CPU-PRESSURE-QUALIFICATION.md)
+  adds eight assertions under measured one-CPU contention to the existing
+  [memory/descriptor evidence](RESOURCE-LIMIT-QUALIFICATION.md). No system-wide
+  OOM, swapping or arbitrary low-resource interleaving is inferred.
 
 These investigations were started after this audit snapshot; only the explicitly
-linked completed result above is reported as a pass. Broader provider/application combinations and unseen
+linked completed results above are reported as passes. Broader provider/application combinations and unseen
 agent tasks also remain unqualified. Additional work should name the missing
 assertion and independent oracle, rather than simply repeat existing passes.
 

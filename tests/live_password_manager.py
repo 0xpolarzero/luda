@@ -70,7 +70,7 @@ def child(out):
             d.pointer_popup(other['window_id'],popup['popup_id'],snap['snapshot_id'],b['x']+5,b['y']+5)
         except DesktopError as exc:
             evidence['wrong_owner_error']={'code':exc.code,'effect':exc.effect}
-            record('wrong-owner-popup-refused',exc.effect=='none')
+            record('wrong-owner-popup-refused',exc.code=='STALE_TARGET' and exc.effect=='none')
         else:record('wrong-owner-popup-refused',False)
         d.key(wid,'Escape')
         wait(lambda:not d.observe()['popups'])
@@ -78,7 +78,7 @@ def child(out):
         try:d.element(item['element_id'],'invoke',action='Press')
         except DesktopError as exc:
             evidence['dismissed_menu_error']={'code':exc.code,'effect':exc.effect}
-            record('dismissed-menu-action-refused',exc.effect=='none')
+            record('dismissed-menu-action-refused',exc.code=='NOT_INTERACTABLE' and exc.effect=='none')
         else:record('dismissed-menu-action-refused',False)
         record('refusals-have-no-copy-or-decoy-input',clipboard()==sentinel.read_bytes() and json.loads((decoydir/'state.json').read_text())['text']=='')
         fresh=menu();snapshot('explicit-copy-menu')
