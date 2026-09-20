@@ -11,11 +11,11 @@ class PointerRouting(unittest.TestCase):
         desktop.point=Mock(return_value=(12,34))
         desktop.target_window=Mock(return_value={'xid':42})
         for kind,kwargs,button in [('click',{},'1'),('click',{'button':'right'},'3'),('scroll',{'direction':'left'},'6')]:
-            with patch('luda.desktop.run') as run,patch('luda.desktop.click_button') as click,patch('luda.desktop.check_pointer_ready') as ready:
+            with patch('luda.desktop.run') as run,patch('luda.desktop.click_button') as click,patch('luda.desktop.check_pointer_ready',return_value={'server_generation':'generation'}) as ready:
                 result=desktop.pointer('w','s',1,2,kind=kind,count=2,**kwargs)
                 self.assertEqual(result['effect'],'dispatched')
-                run.assert_called_once_with(['xdotool','mousemove','12','34'],effect='uncertain')
-                click.assert_called_once_with(button,2,target=42)
+                run.assert_not_called()
+                click.assert_called_once_with(button,2,target=42,position=(12,34),server_generation='generation')
                 ready.assert_called_once_with(42)
 
     def test_popup_click_and_wheel_use_owner_focus(self):
@@ -23,11 +23,11 @@ class PointerRouting(unittest.TestCase):
         driver._popup_point.return_value=(12,34)
         driver.target_window.return_value={'xid':42}
         for kind,button in [('click','1'),('scroll','5')]:
-            with patch('luda.interaction.run') as run,patch('luda.interaction.click_button') as click,patch('luda.interaction.check_pointer_ready') as ready:
+            with patch('luda.interaction.run') as run,patch('luda.interaction.click_button') as click,patch('luda.interaction.check_pointer_ready',return_value={'server_generation':'generation'}) as ready:
                 result=InteractionMixin.pointer_popup(driver,'w','p','s',1,2,kind=kind,count=2)
                 self.assertEqual(result['effect'],'dispatched')
-                run.assert_called_once_with(['xdotool','mousemove','12','34'],effect='uncertain')
-                click.assert_called_once_with(button,2,target=42)
+                run.assert_not_called()
+                click.assert_called_once_with(button,2,target=42,position=(12,34),server_generation='generation')
                 ready.assert_called_once_with(42)
 
     def test_held_input_refused_before_any_initial_movement(self):
