@@ -83,6 +83,7 @@ SUITES = {
     'rich-editor-ime': suite('live_rich_ime.py', 'WEB-03 DATA-07', browser='--executable', artifacts=('rich-editor-ime',), gaps=('Owned ProseMirror native GTK simple IME only; no production adapter',)),
     'rich-editor-prototype': suite('live_rich_editor.py', 'WEB-03 DATA-07', browser='--executable', artifacts=('rich-editor',), gaps=('Test-only cooperating ProseMirror readback; no production adapter; exact serialization failures retained',)),
     'rich-copy': suite('live_rich_copy.py', 'WEB-03 CLIP-09', browser='--executable', artifacts=('rich-copy',), gaps=('Rich clipboard serialization and caret restoration lose information',)),
+    'ime-state-audit': suite('probe_native_ime_state.py', 'EDIT-10', artifacts=('native-ime-state',), gaps=('Observation-only feasibility probe; no native conflicting-input guard',)),
     'ime': suite('live_ime.py', 'EDIT-10', wm=False, artifacts=('ime',), gaps=('Generic backend cannot detect pending composition',)),
     'ime-browser': suite('live_ime_browser.py', 'EDIT-10', wm=False, browser='--executable', artifacts=('ime-browser',), gaps=('Browser preedit conflicts are not guarded',)),
     'accessibility-lifecycle': suite('live_accessibility_lifecycle.py', 'ENV-08 ENV-10 AX-01 FAULT-04', wm=False, artifacts=('accessibility-lifecycle',), gaps=('Existing GTK bridge does not reconnect after its bus is replaced',)),

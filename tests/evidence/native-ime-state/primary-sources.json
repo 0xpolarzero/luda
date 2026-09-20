@@ -1,0 +1,20 @@
+{
+  "downloaded": {
+    "gtktext.c": {
+      "url": "https://raw.githubusercontent.com/GNOME/gtk/4.14.5/gtk/gtktext.c",
+      "sha256": "454cb90e4bb35a91bbb2fe6ccd5b2ff7cc2222e97cdc54739f241d5479990d12"
+    },
+    "gtktextview.c": {
+      "url": "https://raw.githubusercontent.com/GNOME/gtk/4.14.5/gtk/gtktextview.c",
+      "sha256": "1cd6fdeab1c7d56973c8dca05c7e8405d06722aab29b6491bc38966589f902ad"
+    },
+    "gtkimcontextsimple.c": {
+      "url": "https://raw.githubusercontent.com/GNOME/gtk/4.14.5/gtk/gtkimcontextsimple.c",
+      "sha256": "51f38ffa8c02043583ccf996a8e241fbc57a2e87d3c74dd3cd47e4d08aa20e70"
+    }
+  },
+  "gtk_atspi_exporter": {
+    "url": "https://raw.githubusercontent.com/GNOME/gtk/4.14.5/gtk/a11y/gtkatspicontext.c",
+    "sha256": "a1716773ce31032f95888be10d819e0ff37530c3d861f97a904bb02fe6951a79"
+  }
+}
