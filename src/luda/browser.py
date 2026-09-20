@@ -11,7 +11,7 @@ import sys
 import time
 from urllib.parse import urlsplit
 import uuid
-from .common import DesktopError, checkpoint, mark_effect, process_identity
+from .common import DesktopError, checkpoint, mark_effect, process_identity, subprocess_environment
 from .timing import elapsed_time
 
 MESSAGES = {
@@ -168,21 +168,20 @@ class OwnedBrowser:
             raise DesktopError('BROWSER_ALREADY_OPEN',self.messages['BROWSER_ALREADY_OPEN'])
         if not capability(self.desktop.environment)['available']:
             raise DesktopError('BROWSER_ADAPTER_UNAVAILABLE','Install the optional locked browser dependencies and configure LUDA_CHROMIUM_EXECUTABLE; Luda never downloads a browser automatically.')
-        if getattr(self.desktop,'private_input',None) is None:
-            from .private_input import PrivateInput
-            self.desktop.private_input=PrivateInput(self.desktop.environment)
         from .managed_browser import verify_environment
         try:
             verify_environment(self.desktop.environment, checkpoint)
         except ValueError:
             raise DesktopError('BROWSER_SELECTION_CHANGED','Managed browser selection is unavailable or changed; review provisioning before opening it.',effect='none') from None
         self.topology=self.desktop.display().topology()
+        with self.desktop.input_scope():
+            input_environment=dict(subprocess_environment() or self.desktop.environment)
         proof_read, proof_write = os.pipe2(os.O_CLOEXEC | os.O_NONBLOCK)
         self.cleanup_proof = proof_read
         try:
             self.process=subprocess.Popen([sys.executable,'-m',self.guard_module,str(self.desktop.runtime),str(proof_write)],
                                       stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,
-                                      env=self.desktop.private_input.environment(),start_new_session=True,pass_fds=(proof_write,))
+                                      env=input_environment,start_new_session=True,pass_fds=(proof_write,))
         except BaseException:
             os.close(proof_read); self.cleanup_proof=None
             raise
