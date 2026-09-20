@@ -70,7 +70,7 @@ The optional browser provider opens a temporary Chromium session for ordinary we
 
 ## Package it into an environment
 
-You can preinstall Luda in a workstation, container with a graphical session, or VM image. Your integration owns desktop provisioning, account setup, and agent registration. Luda supplies the runtime, skill files, and explicit setup commands.
+You can preinstall Luda in a workstation, container with a graphical session, or VM image. Your integration provisions the desktop and accounts, then runs Luda's installer to configure the chosen agents.
 
 Use the [environment packaging guide](docs/ENVIRONMENT-PACKAGING.md) to make tools and skills available across folders for each agent account. There is no universal installation directory that every agent automatically discovers.
 
