@@ -118,3 +118,7 @@ All failures remain distinct from the first workflow's success:
 
 The initial Git failures were preserved in evaluator tool transcripts and their
 run directories; no full console capture was active for those two startup runs.
+
+## Subsequent improvements
+
+The wait description now spells out required arguments for every condition and directs title discovery to `desktop_windows(query=...)`. Owned-browser inspection now presents `text_fields` and their coverage before the potentially large native browser tree. These changes respond to the recorded evaluation; they do not rewrite its original source or outcomes.

@@ -446,9 +446,10 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
                 raise
             result = {'nodes':[], 'accessibility_error':exc.code}
         if browser_fields is not None:
-            result['text_fields'] = browser_fields['fields']
-            result['text_fields_truncated'] = browser_fields['truncated']
-            result['owned_browser_limits'] = browser_fields['unsupported']
+            # Put page fields before a potentially large browser-chrome tree.
+            result = {'text_fields': browser_fields['fields'],
+                      'text_fields_truncated': browser_fields['truncated'],
+                      'owned_browser_limits': browser_fields['unsupported'], **result}
         now=elapsed_time()
         self.elements={k:v for k,v in self.elements.items() if now-v['time']<60}
         tokens = {node['path']:uuid.uuid4().hex for node in result['nodes']}
