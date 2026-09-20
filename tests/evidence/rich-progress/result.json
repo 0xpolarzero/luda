@@ -1,0 +1,213 @@
+{
+  "environment": {
+    "uid": 1001,
+    "python": "3.12.3",
+    "architecture": "aarch64",
+    "distribution": {
+      "NAME": "Ubuntu",
+      "ID": "ubuntu",
+      "PRETTY_NAME": "Ubuntu 24.04.4 LTS",
+      "VERSION_ID": "24.04",
+      "VERSION": "24.04.4 LTS (Noble Numbat)",
+      "VERSION_CODENAME": "noble",
+      "ID_LIKE": "debian",
+      "HOME_URL": "https://www.ubuntu.com/",
+      "SUPPORT_URL": "https://help.ubuntu.com/",
+      "BUG_REPORT_URL": "https://bugs.launchpad.net/ubuntu/",
+      "PRIVACY_POLICY_URL": "https://www.ubuntu.com/legal/terms-and-policies/privacy-policy",
+      "UBUNTU_CODENAME": "noble",
+      "LOGO": "ubuntu-logo"
+    },
+    "packages": [
+      "at-spi2-core\t2.52.0-1build1",
+      "gir1.2-gtk-4.0:arm64\t4.14.5+ds-0ubuntu0.10",
+      "python3-gi\t3.48.2-1",
+      "python3-pyqt5\t5.15.10+dfsg-1build6",
+      "xfce4-session\t4.18.3-1build2",
+      "xfwm4\t4.18.0-1build3",
+      "xvfb\t2:21.1.12-1ubuntu1.6"
+    ],
+    "browser": {
+      "executable": "/workspace/silo-desktop-research/browsers/chromium-1243/chrome-linux-arm64/chrome",
+      "version": "Google Chrome for Testing 153.0.8010.12"
+    }
+  },
+  "runs": [
+    {
+      "run": "run-1789895214406525518",
+      "source_sha256": "e652f5bfbee39315c1701fef961ecdd50283741297e31234b4b139000995b29a",
+      "source_unchanged": true,
+      "result": {
+        "status": "failed",
+        "returncode": 1,
+        "seconds": 2.506,
+        "cleanup": {
+          "tagged_processes_found": 0,
+          "survivors": []
+        }
+      }
+    },
+    {
+      "run": "run-1789895300224880018",
+      "source_sha256": "77082f2713d261d80e7eaf6af5bc4167d8d504f7f517ddcdf4844b0a5efc0c81",
+      "source_unchanged": true,
+      "result": {
+        "status": "passed",
+        "returncode": 0,
+        "seconds": 5.563,
+        "cleanup": {
+          "tagged_processes_found": 0,
+          "survivors": []
+        }
+      }
+    },
+    {
+      "run": "run-1789895351522655125",
+      "source_sha256": "f6dc87cb89ed6b98d508f071de43589dc9bca4f71ebc30643381563601cc9918",
+      "source_unchanged": true,
+      "result": {
+        "status": "passed",
+        "returncode": 0,
+        "seconds": 5.378,
+        "cleanup": {
+          "tagged_processes_found": 0,
+          "survivors": []
+        }
+      }
+    }
+  ],
+  "source_files": {
+    "src/luda/_browser_worker.py": "796b848cc438bb97cb1c13157dfdbf10721bb23d7acbc5c12e91c43128f40855",
+    "src/luda/browser.py": "4e21ec0d15d1fe152941534f7e2552a61c549df7a57d009a3ff3ca43863fe74c",
+    "src/luda/progress.py": "292fc9d2deebbeb2b71032aa7394124a7514dd24e0745ec829147d6e0871b83c",
+    "src/luda/server.py": "95a05f942ba7a6123e6e5a53a6fd4cbf8417e720a74983af350fe73110b9d62f",
+    "src/luda/reporting.py": "1bde6c31305a5e63535c1ee82db1ee09d5c62cfcbf6d76cca1afe8d05e93f17f",
+    "tests/live_rich_progress.py": "0c125386afde362e35927413e4810ca026d5d4489978dfe62651d7d29f736ed4"
+  },
+  "checks": [
+    {
+      "case": "native-partial-progress",
+      "passed": true,
+      "error": {
+        "ok": false,
+        "code": "TEXT_MISMATCH",
+        "message": "Exact browser value did not match after input; inspect before retrying.",
+        "effect": "uncertain",
+        "details": {
+          "clipboard_may_have_changed": false,
+          "progress": {
+            "unit": "rich_text_segment",
+            "requested": 3,
+            "verified_completed": 1,
+            "current_uncertain": 1,
+            "not_started": 1,
+            "application_commit_verified": false
+          }
+        },
+        "operation_id": "1d6751f9c62a40599424f30ccfe4e468",
+        "elapsed_ms": 142
+      }
+    },
+    {
+      "case": "native-independent-application-state",
+      "passed": true,
+      "model": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "FIRST_PRIVATE"
+              }
+            ]
+          }
+        ]
+      },
+      "blocked": 1
+    },
+    {
+      "case": "native-payload-free-2",
+      "passed": true
+    },
+    {
+      "case": "native-payload-free-3",
+      "passed": true
+    },
+    {
+      "case": "native-payload-free-4",
+      "passed": true
+    },
+    {
+      "case": "native-history-progress",
+      "passed": true
+    },
+    {
+      "case": "native-clean-exit",
+      "passed": true
+    },
+    {
+      "case": "clipboard-partial-progress",
+      "passed": true,
+      "error": {
+        "ok": false,
+        "code": "TEXT_MISMATCH",
+        "message": "Exact browser value did not match after input; inspect before retrying.",
+        "effect": "uncertain",
+        "details": {
+          "clipboard_may_have_changed": true,
+          "progress": {
+            "unit": "rich_text_segment",
+            "requested": 3,
+            "verified_completed": 1,
+            "current_uncertain": 1,
+            "not_started": 1,
+            "application_commit_verified": false
+          }
+        },
+        "operation_id": "5bd83684e902466d9f45caece355e714",
+        "elapsed_ms": 1019
+      }
+    },
+    {
+      "case": "clipboard-independent-application-state",
+      "passed": true,
+      "model": {
+        "type": "doc",
+        "content": [
+          {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "FIRST_PRIVATE"
+              }
+            ]
+          }
+        ]
+      },
+      "blocked": 1
+    },
+    {
+      "case": "clipboard-payload-free-9",
+      "passed": true
+    },
+    {
+      "case": "clipboard-payload-free-10",
+      "passed": true
+    },
+    {
+      "case": "clipboard-payload-free-11",
+      "passed": true
+    },
+    {
+      "case": "clipboard-history-progress",
+      "passed": true
+    },
+    {
+      "case": "clipboard-clean-exit",
+      "passed": true
+    }
+  ]
+}

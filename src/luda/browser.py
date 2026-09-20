@@ -13,6 +13,7 @@ from urllib.parse import urlsplit
 import uuid
 from .common import DesktopError, checkpoint, mark_effect, process_identity
 from .timing import elapsed_time
+from .progress import rich_text_progress
 
 MESSAGES = {
     'STORAGE_UNAVAILABLE':'Cannot stage clipboard input; check temporary storage space and permissions.',
@@ -119,10 +120,14 @@ class OwnedBrowser:
                         if not isinstance(value,dict):raise ValueError('shape')
                         effect=value.get('effect','uncertain' if mutation else 'none')
                         if effect not in ('none','verified','dispatched','uncertain'):raise ValueError('effect')
+                        raw_progress=value.pop('progress',None)
+                        progress=rich_text_progress(raw_progress,len(args['text'].split('\n'))) if op=='type' and isinstance(args.get('text'),str) else None
+                        if progress is not None:value['progress']=progress
                         mark_effect(effect)
                         if 'error' in value:
                             code=value['error']
                             details={'clipboard_may_have_changed':value.get('clipboard_may_have_changed') is True}
+                            if progress is not None:details['progress']=progress
                             if value.get('provider_stage') in ('selection_sync','caret_readback'):details['provider_stage']=value['provider_stage']
                             raise DesktopError(code if code in MESSAGES else 'BROWSER_OPERATION_FAILED',MESSAGES.get(code,MESSAGES['BROWSER_OPERATION_FAILED']),effect=effect,details=details)
                         return value

@@ -6,6 +6,7 @@ import time
 import uuid
 from ._browser_rich import decode as decode_rich, RichInvalid, unchanged_prefix
 from urllib.parse import urlsplit
+from .progress import RichProgress, MAX_RICH_SEGMENTS, rich_text_progress
 
 MAX_TEXT = 64000
 MONITOR = """(() => {
@@ -47,6 +48,7 @@ class Worker:
         self.pw = self.context = self.page = self.protocol = None
         self.elements = {}
         self.effect = 'none'
+        self.progress = None
         from ._browser_clipboard import Clipboard
         self.clipboard=Clipboard(profile)
         self.clipboard_changed=False
@@ -351,8 +353,9 @@ class Worker:
         if mode=='insert' and (before['start'],before['end'])!=(len(before['text']),len(before['text'])):
             raise Refused('UNSUPPORTED_SELECTION')
         segments=text.split('\n')
-        if len(segments)>27 or (len(before['paragraphs']) if mode=='insert' else 1)+len(segments)-1>128 or len(text)+(len(before['text']) if mode=='insert' else 0)>MAX_TEXT:
+        if len(segments)>MAX_RICH_SEGMENTS or (len(before['paragraphs']) if mode=='insert' else 1)+len(segments)-1>128 or len(text)+(len(before['text']) if mode=='insert' else 0)>MAX_TEXT:
             raise Refused('VERIFICATION_LIMIT')
+        self.progress=RichProgress(len(segments))
         if text:
             start,end=(0,len(before['text'])) if mode=='replace' else (before['start'],before['end'])
             self.require_text_boundaries(before['text'],start,end)
@@ -373,17 +376,18 @@ class Worker:
                 if time.monotonic()>=deadline:raise Refused('BROWSER_TIMEOUT')
                 _,fresh=self.snapshot(token,mutation=True,focus=True)
                 if (fresh['model'],fresh['selection'],fresh['stored_marks'])!=(current['model'],current['selection'],current['stored_marks']):raise Refused('TEXT_CHANGED')
-                if action=='return':self.rich_key('Enter','Enter',13);expected+='\n'
-                elif action=='delete':self.rich_key('Backspace','Backspace',8)
+                if action=='return':self.progress.begin();self.rich_key('Enter','Enter',13);expected+='\n'
+                elif action=='delete':self.progress.begin();self.rich_key('Backspace','Backspace',8)
                 else:
                     self.require_text_boundaries(fresh['text'],fresh['start'],fresh['end'])
-                    self.effect='uncertain';self.protocol.send('Input.insertText',{'text':payload});expected+=payload
+                    self.progress.begin();self.effect='uncertain';self.protocol.send('Input.insertText',{'text':payload});expected+=payload
                 _,after=self.snapshot(token,mutation=True,focus=True)
                 if after['text']!=expected or after['paragraphs']!=expected.split('\n'):
                     raise Refused('TEXT_MISMATCH')
                 if original and not unchanged_prefix(original,after):raise Refused('FORMATTING_CHANGED')
                 if after['start']!=after['end'] or after['end']!=len(expected):raise Refused('SELECTION_UNVERIFIED','caret_readback')
                 current=after
+            self.progress.complete()
         return {'effect':'verified' if self.effect!='none' else 'none','exact_match':True,'expected_characters':len(expected),'actual_characters':len(current['text']),
                 'caret_verified':current['start']==current['end']==len(expected),'text_representation':'paragraphs','line_breaks':'paragraph',
                 'model':current['model'],'stored_marks':current['stored_marks'],'existing_formatting':'preserved' if mode=='insert' else 'replaced_with_field',
@@ -397,7 +401,8 @@ class Worker:
         if start is None or end is None:raise Refused('UNSUPPORTED_SELECTION')
         prefix,suffix=before['text'][:start],before['text'][end:]
         expected=prefix+text+suffix
-        if len(expected)>MAX_TEXT or len(expected.split('\n'))>128 or len(text.split('\n'))>27:raise Refused('VERIFICATION_LIMIT')
+        if len(expected)>MAX_TEXT or len(expected.split('\n'))>128 or len(text.split('\n'))>MAX_RICH_SEGMENTS:raise Refused('VERIFICATION_LIMIT')
+        self.progress=RichProgress(len(text.split('\n')))
         if not self.native_target:raise Refused('BROWSER_SCOPE_UNSUPPORTED')
         try:self.clipboard.preflight()
         except DesktopError as exc:raise Refused(exc.code) from None
@@ -420,7 +425,7 @@ class Worker:
                     self.clipboard.preflight()
                     if action=='paste':
                         def publishing():
-                            self.effect='uncertain';self.clipboard_changed=True
+                            self.progress.begin();self.effect='uncertain';self.clipboard_changed=True
                         self.clipboard.stage(payload,publishing)
                         _,staged=self.snapshot(token,mutation=True,focus=True)
                         if (staged['model'],staged['selection'],staged['stored_marks'])!=(fresh['model'],fresh['selection'],fresh['stored_marks']):raise Refused('TEXT_CHANGED')
@@ -429,11 +434,12 @@ class Worker:
                         self.clipboard.verify(payload)
                         _,ready=self.snapshot(token,mutation=True,focus=True)
                         if (ready['model'],ready['selection'],ready['stored_marks'])!=(fresh['model'],fresh['selection'],fresh['stored_marks']):raise Refused('TEXT_CHANGED')
-                        self.rich_key('v','KeyV',86,2);inserted+=payload
+                        self.progress.begin();self.rich_key('v','KeyV',86,2);inserted+=payload
                     else:
                         self.clipboard.prepare_key(self.native_target,'Return' if action=='return' else 'BackSpace')
                         _,ready=self.snapshot(token,mutation=True,focus=True)
                         if (ready['model'],ready['selection'],ready['stored_marks'])!=(fresh['model'],fresh['selection'],fresh['stored_marks']):raise Refused('TEXT_CHANGED')
+                        self.progress.begin()
                         self.rich_key('Enter','Enter',13) if action=='return' else self.rich_key('Backspace','Backspace',8)
                         if action=='return':inserted+='\n'
                 except DesktopError as exc:raise Refused(exc.code) from None
@@ -448,6 +454,7 @@ class Worker:
                 if after['styled'][:start]!=prefix_marks or after['styled'][start+len(inserted):]!=suffix_marks:raise Refused('FORMATTING_CHANGED')
                 if (after['start'],after['end'])!=(start+len(inserted),start+len(inserted)):raise Refused('SELECTION_UNVERIFIED')
                 current=after
+            self.progress.complete()
         return {'effect':'verified' if self.effect!='none' else 'none','exact_match':True,'transport':'clipboard',
                 'clipboard_changed':self.clipboard_changed,'clipboard':'Final nonempty segment remains until another owner replaces it or the temporary browser session closes; PRIMARY unchanged.' if self.clipboard_changed else 'CLIPBOARD and PRIMARY unchanged by this request.',
                 'expected_characters':len(expected),'actual_characters':len(current['text']),'caret_verified':True,
@@ -456,6 +463,7 @@ class Worker:
 
     def dispatch(self, request):
         self.effect = 'none'
+        self.progress = None
         self.clipboard_changed=False
         self.native_target=request.get('native_target')
         op=request.get('op')
@@ -474,6 +482,7 @@ def main():
     try:
         for raw in sys.stdin.buffer:
             if len(raw)>1024*1024:break
+            worker.progress=None
             try:
                 result=worker.dispatch(json.loads(raw))
             except Refused as exc:
@@ -481,9 +490,11 @@ def main():
                 if exc.stage in ('selection_sync','caret_readback'):result['provider_stage']=exc.stage
             except Exception:
                 result={'error':'BROWSER_OPERATION_FAILED','effect':worker.effect,'clipboard_may_have_changed':worker.clipboard_changed}
+            progress=rich_text_progress(worker.progress.value) if worker.progress is not None else None
+            if progress is not None:result['progress']=progress
             data=json.dumps(result,ensure_ascii=False,separators=(',',':'))
             if len(data.encode())>1024*1024:
-                data=json.dumps({'error':'VERIFICATION_LIMIT','effect':worker.effect})
+                data=json.dumps({'error':'VERIFICATION_LIMIT','effect':worker.effect,**({'progress':progress} if progress is not None else {})})
             print(data,flush=True)
     finally:
         worker.clipboard.close()

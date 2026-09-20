@@ -17,7 +17,8 @@ from mcp.types import CallToolResult, ImageContent, TextContent, ToolAnnotations
 
 from .common import DesktopError, operation_scope, checkpoint, environment_scope
 from .session_reconnect import prepare_reconnect
-from .keyboard import set_recovery_hooks, recover_keyboard_input, key_dispatch_progress
+from .keyboard import set_recovery_hooks, recover_keyboard_input
+from .progress import operation_progress
 from .desktop import Desktop
 from .apps import list_applications, launch_application
 from .session_state import require_session_input
@@ -136,17 +137,22 @@ def execute(method, *args, _cancelled=None, **kwargs):
         image = result.pop('image_base64',None)
         result={'ok':True,'operation_id':operation_id,'elapsed_ms':round((time.monotonic()-started)*1000),**result}
         event.update(ok=True, effect=result.get('effect','none'))
-        progress=key_dispatch_progress(result.get('progress'))
-        if progress is not None:event['progress']=progress
+        progress=operation_progress(result.pop('progress',None))
+        if progress is not None:
+            event['progress']=progress
+            result['progress']=progress
         content=[TextContent(type='text',text=json.dumps(result,ensure_ascii=False,separators=(',',':')))]
         if image:
             content.append(ImageContent(type='image',data=image,mimeType='image/png'))
         return CallToolResult(content=content,isError=False)
     except DesktopError as exc:
         event.update(ok=False, code=exc.code, effect=exc.effect)
-        progress=key_dispatch_progress(exc.details.get('progress'))
+        progress=operation_progress(exc.details.get('progress'))
         if progress is not None:event['progress']=progress
-        return result_error(exc.code,str(exc),exc.effect,details=exc.details,operation_id=operation_id,elapsed_ms=round((time.monotonic()-started)*1000))
+        details=dict(exc.details)
+        details.pop('progress',None)
+        if progress is not None:details['progress']=progress
+        return result_error(exc.code,str(exc),exc.effect,details=details,operation_id=operation_id,elapsed_ms=round((time.monotonic()-started)*1000))
     except Exception:
         # Exception text/repr can contain protected input or provider contents.
         # Correlate with metadata-only history rather than returning that text.
@@ -315,7 +321,7 @@ async def desktop_read_text(element_id: str, limit: int = 16000) -> CallToolResu
 
 @mcp.tool()
 async def desktop_type(element_id: str, text: str, mode: Literal["insert", "replace"] = "insert", line_breaks: Literal["paragraph"] | None = None, transport: Literal["native", "clipboard"] = "native") -> CallToolResult:
-    """Type into an editable element and verify exact readback. Owned browser-native insertion refuses positions inside a grapheme; offsets still count code points. For a cooperating rich editor, LF requires line_breaks="paragraph"; native input supports whole-field replace or append at the end. Explicit transport="clipboard" supports selected code-point ranges and leaves the final nonempty segment in CLIPBOARD until another owner replaces it or the temporary session closes. Empty text deletes the selection without replacing CLIPBOARD; actual new formatting is reported. Default insert preserves surrounding text and replaces the selection; replace changes the entire field. Preserves Unicode/LF/tabs, never adds a submit key. Exact readback does not prove application commit or guarantee autocomplete events; inspect the result before an explicit commit or suggestion selection."""
+    """Type into an editable element and verify exact readback. Owned browser-native insertion refuses positions inside a grapheme; offsets still count code points. For a cooperating rich editor, LF requires line_breaks="paragraph"; native input supports whole-field replace or append at the end. Explicit transport="clipboard" supports selected code-point ranges and leaves the final nonempty segment in CLIPBOARD until another owner replaces it or the temporary session closes. Empty text deletes the selection without replacing CLIPBOARD; actual new formatting is reported. Default insert preserves surrounding text and replaces the selection; replace changes the entire field. Preserves Unicode/LF/tabs, never adds a submit key. Exact readback does not prove application commit or guarantee autocomplete events; inspect the result before an explicit commit or suggestion selection. Rich-editor final receipts may report verified, uncertain and not-started segment counts; these are not save confirmation or instructions to replay the remainder."""
     return await execute_async('type_text',element_id,text,mode,line_breaks=line_breaks,transport=transport)
 
 
