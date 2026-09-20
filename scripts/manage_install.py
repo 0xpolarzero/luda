@@ -143,6 +143,7 @@ def install(prefix, source, runner=invoke):
         release = releases / identity
         if release.exists() or release.is_symlink():
             if identity in metadata['releases'] and not release.is_symlink() and (release / 'release.json').is_file():
+                verify_release(release, identity)
                 select(prefix, identity)
                 return {'status': 'already_installed', 'release': identity, 'prefix': str(prefix)}
             pending = release / '.luda-release-owner.json'
@@ -189,8 +190,36 @@ def rollback(prefix, release):
         metadata = state(prefix)
         if release not in metadata['releases'] or (prefix / 'releases').is_symlink() or (prefix / 'releases' / release).is_symlink() or not (prefix / 'releases' / release / 'release.json').is_file():
             raise InstallError('Requested release is not a completed managed installation.')
+        verify_release(prefix / 'releases' / release, release)
         select(prefix, release)
         return {'status': 'selected', 'release': release}
+
+
+def verify_release(directory, identity):
+    """Verify owned payloads before reusing a completed release; preserve edits."""
+    manifest = directory / 'release.json'
+    try:
+        if manifest.is_symlink():
+            raise InstallError('Release manifest became a symlink; refusing selection.')
+        value = json.loads(manifest.read_text())
+        files = value.get('files')
+        if value.get('product') != 'luda' or value.get('release') != identity or not isinstance(files, dict) or not files:
+            raise InstallError('Invalid completed release manifest; refusing selection.')
+        for name, expected in files.items():
+            relative = Path(name)
+            if relative.is_absolute() or '..' in relative.parts or not relative.parts:
+                raise InstallError('Invalid completed release file path.')
+            # CPython may refresh bytecode after installation; source files remain verified.
+            if '__pycache__' in relative.parts or relative.suffix in ('.pyc', '.pyo'):
+                continue
+            path = directory / relative
+            if any(parent.is_symlink() for parent in path.parents if parent != directory and directory in parent.parents):
+                raise InstallError('Installed payload parent became a symlink; refusing selection.')
+            actual = {'link': str(path.readlink())} if path.is_symlink() else {'sha256': hashlib.sha256(path.read_bytes()).hexdigest()} if path.is_file() else None
+            if actual != expected:
+                raise InstallError('Installed release files changed or disappeared; refusing selection and preserving those files.')
+    except (OSError, ValueError, TypeError, AttributeError) as exc:
+        raise InstallError('Completed release is unreadable; refusing selection.') from exc
 
 
 def inventory(directory):

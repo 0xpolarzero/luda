@@ -198,6 +198,28 @@ class Installation(unittest.TestCase):
         time.sleep(.35)
         self.assertFalse(sentinel.exists())
 
+    def test_modified_release_is_not_reused_or_rolled_back(self):
+        first=installer.install(self.prefix,self.source,self.runner)
+        (self.source/'src/file.py').write_text('upgrade')
+        second=installer.install(self.prefix,self.source,self.runner)
+        old=self.prefix/'releases'/first['release']
+        (old/'skills/luda/SKILL.md').write_text('user modification')
+        with self.assertRaisesRegex(installer.InstallError,'files changed'):
+            installer.rollback(self.prefix,first['release'])
+        self.assertEqual((self.prefix/'current').readlink().name,second['release'])
+        (self.prefix/'current/skills/luda/SKILL.md').unlink()
+        with self.assertRaisesRegex(installer.InstallError,'disappeared'):
+            installer.install(self.prefix,self.source,self.runner)
+        self.assertEqual((old/'skills/luda/SKILL.md').read_text(),'user modification')
+
+    def test_payload_parent_symlink_refuses_selection(self):
+        first=installer.install(self.prefix,self.source,self.runner)
+        release=self.prefix/'releases'/first['release']
+        skill=release/'skills/luda';skill.rename(release/'retained-skill');skill.symlink_to(release/'retained-skill')
+        with self.assertRaisesRegex(installer.InstallError,'parent became a symlink'):
+            installer.rollback(self.prefix,first['release'])
+        self.assertTrue(skill.is_symlink())
+
     def test_unknown_rollback_is_refused(self):
         installer.install(self.prefix, self.source, self.runner)
         with self.assertRaises(installer.InstallError):
