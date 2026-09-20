@@ -13,9 +13,9 @@ import anyio
 from .protocol import DesktopMCP
 from mcp.types import CallToolResult, ImageContent, TextContent, ToolAnnotations
 
-from .common import DesktopError, operation_scope, checkpoint
+from .common import DesktopError, operation_scope, checkpoint, environment_scope
 from .session_reconnect import prepare_reconnect
-from .keyboard import set_recovery_hooks
+from .keyboard import set_recovery_hooks, recover_keyboard_input
 from .desktop import Desktop
 from .apps import list_applications, launch_application
 
@@ -66,17 +66,24 @@ def execute(method, *args, _cancelled=None, **kwargs):
     operation_id = uuid.uuid4().hex
     event = {'operation_id':operation_id, 'method':method}
     try:
-        if _quarantined.is_set():
+        if _quarantined.is_set() and method != 'recover_input':
             raise DesktopError('BUSY', 'Previous cancelled operation is still cleaning up; no new input sent.')
         acquired = _operation_gate.acquire(blocking=False)
         if not acquired:
             raise DesktopError('BUSY', 'Another operation is in progress; reconnect does not cancel it.')
         d = get_backend()
         observation = method in ('reconnect','list_applications','doctor','list_windows','window_overview','observe','inspect','workspaces','wait_for','wait_condition') or (method=='element' and len(args)>1 and args[1]=='read')
-        guard = None if observation else d.control.require_active
+        guard = None if observation or method == 'recover_input' else d.control.require_active
         with operation_scope(timeout=12, cancelled=_cancelled, guard=guard) as operation:
             try:
-                if method == 'reconnect':
+                if method == 'recover_input':
+                    # Recovery releases only recorded ownership. It must work
+                    # while paused/quarantined, without entering the ordinary
+                    # transaction that intentionally refuses pending cleanup.
+                    with environment_scope(d.environment):
+                        result = recover_keyboard_input()
+                    result['recovering'] = _quarantined.is_set()
+                elif method == 'reconnect':
                     with prepare_reconnect(d, args[0] if args else None, Desktop) as (candidate, result):
                         checkpoint()
                         with _backend_lock:
@@ -158,6 +165,12 @@ async def desktop_status() -> CallToolResult:
     with _history_lock:
         history = list(_history)
     return CallToolResult(content=[TextContent(type='text',text=json.dumps({'ok':True,'recovering':_quarantined.is_set(),'operations':history}))])
+
+
+@mcp.tool()
+async def desktop_recover_input() -> CallToolResult:
+    """Retry cleanup of this server's interrupted keyboard input, without replaying a chord or resuming a paused desktop. Uses each operation's original session; a replaced X server is left untouched. Unproven cleanup stays blocked. Returns pending_count and recovery proofs; observe again before acting. Returns BUSY if another operation is still running."""
+    return await execute_async('recover_input')
 
 
 @mcp.tool()
