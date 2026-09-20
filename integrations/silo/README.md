@@ -522,3 +522,5 @@ browser completion as unknown. It cannot produce the UI's “Last completed setu
 enabled browser tools” claim. This remains historical setup evidence, not a current
 browser launch check. The contradictory-result regression and full guest integration
 suite pass (27 tests); the patch applies cleanly after0018.
+
+Patch 0020 refreshes the embedded agent skill for explicitly selected cooperating-editor clipboard transport, including clipboard effects and unsupported generic-editor boundaries.

@@ -48,7 +48,7 @@ jobs:
       - name: Real sandboxed browser text, IME and cleanup qualification
         run: |
           browser=$(cat artifacts/owned-browser-provision/browser-path.txt)
-          .venv/bin/python scripts/qualification_matrix.py --suites owned-browser owned-rich --executable "$browser"
+          .venv/bin/python scripts/qualification_matrix.py --suites owned-browser owned-rich owned-rich-clipboard --executable "$browser"
       - name: Qualify the installed managed wheel and launcher
         run: |
           browser=$(cat artifacts/owned-browser-provision/browser-path.txt)
