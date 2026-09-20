@@ -81,6 +81,7 @@ def main():
                           ('input-guard', [str(ROOT / 'tests/live_input_guard.py')]),
                           ('keyboard-guard', [str(ROOT / 'tests/live_keyboard_guard.py')]),
                           ('keyboard-identity', [str(ROOT / 'tests/live_keyboard_identity.py')]),
+                          ('mcp-keyboard', [str(ROOT / 'tests/live_mcp_keyboard.py')]),
                           ('pointer-guard', [str(ROOT / 'tests/live_pointer_guard.py')]),
                           ('input-generation', [str(ROOT / 'tests/live_input_generation.py')]),
                           ('session-state', [str(ROOT / 'tests/live_session_state.py')])]
