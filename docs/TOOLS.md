@@ -106,7 +106,7 @@ Read exact accessible text, preserving whitespace. Protected fields are unsuppor
 desktop_type(element_id: str, text: str, mode: Literal['insert', 'replace']='insert')
 ```
 
-Type into an editable element and verify exact readback. Default insert preserves surrounding text and replaces the selection; replace changes the entire field. Preserves Unicode/LF/tabs, never adds a submit key.
+Type into an editable element and verify exact readback. Default insert preserves surrounding text and replaces the selection; replace changes the entire field. Preserves Unicode/LF/tabs, never adds a submit key. Exact readback does not prove application commit or guarantee autocomplete events; inspect the result before an explicit commit or suggestion selection.
 
 ## `desktop_type_secret`
 
@@ -194,7 +194,7 @@ Select a text range using Unicode code-point offsets, or place caret when equal;
 desktop_set_value(element_id: str, value: float)
 ```
 
-Set a numeric control to a value within its inspected range and verify the actual value.
+Set a numeric control within its inspected range and verify its accessibility numeric value. Displayed formatting and application commit may differ; inspect/read both, then explicitly commit only when intended.
 
 ## `desktop_set_checked`
 
