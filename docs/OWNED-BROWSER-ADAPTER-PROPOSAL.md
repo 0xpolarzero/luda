@@ -73,7 +73,7 @@ Add only the following operations, retaining the existing desktop workflow:
   composition already ended. It is never called implicitly to unblock typing.
 
 Reuse `desktop_inspect`, `desktop_read_text`, `desktop_focus_element`,
-`desktop_select`, `desktop_type`, `desktop_key`, screenshots and existing
+`desktop_select`, `desktop_type`, `desktop_press_keys`, screenshots and existing
 window close. Inspection adds bounded `text_fields` records with ordinary
 `element_id` tokens and capabilities next to the accessibility tree. Do not
 merge DOM and AT-SPI fields by similar names or rectangles. Private handle
@@ -145,7 +145,7 @@ through inherited private IPC, with no public debugging port. A launch failure
 must clean only its own process identities and must not close user browsers.
 
 The smallest coherent lifetime is explicitly **temporary for this MCP session**.
-Existing `desktop_close(window_id)` requests normal window closure and retains
+Existing `desktop_window(action="close", window_id=...)` requests normal window closure and retains
 any visible unsaved-change prompt; after confirmed closure the owner reaps its
 own processes. Server shutdown/disconnect terminates this temporary owned
 browser with a bounded cleanup deadline, so unsaved documents may be lost.
