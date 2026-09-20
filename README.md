@@ -15,28 +15,41 @@ Luda has two parts:
 
 The agent can read accessible controls directly or work from screenshots. Actions report whether their result was verified, merely sent, or uncertain. Clicking “Save,” for example, is not itself proof that a file was saved.
 
-## Get started
+## Install: tools and skill together
 
-You need an existing **Linux X11 desktop** and **Python 3.12 or newer**. Ubuntu 24.04 with XFCE is the tested starting point. Wayland and Xwayland are not supported.
-
-On that Linux machine, from your desktop account:
+Run these commands **on the Linux machine whose desktop the agent will control**. You need an existing **Linux X11 desktop**, Python 3.12+, and Git. Ubuntu 24.04 with XFCE is the tested starting point. Wayland and Xwayland are not supported.
 
 ```sh
-git clone https://github.com/0xpolarzero/luda.git
+git clone --branch v0.2.0 --depth 1 https://github.com/0xpolarzero/luda.git
 cd luda
-sudo bash scripts/install.sh /opt/luda --user "$(id -un)"
-/opt/luda/current/.venv/bin/luda doctor
+sudo bash scripts/install.sh --user "$(id -un)"
 ```
 
-Run the diagnostic from your graphical session. If you connect over SSH, follow [session attachment](docs/INSTALLATION.md#ssh-and-explicit-session-attachment).
+The installer installs the runtime and Linux dependencies, shows detected and supported agents, and lets you select one or several. It then **registers the computer-use tools and installs their skill for your account**. Restart/reconnect your agent and ask: **“Use Luda to inspect my desktop.”** The skill is discoverable by the agent; the client decides when to load it.
 
-**Next: [connect your agent](docs/AGENT-INTEGRATIONS.md).** The guide covers Codex, Claude Code, Cursor, Gemini CLI, and OpenCode, with account-wide and project installation options. Installing the runtime alone does not register the tools or skill with your agent.
+Already know your agent? Use `--agent codex --yes`, for example:
 
-You can also ask an agent with terminal access:
+```sh
+sudo bash scripts/install.sh --user "$(id -un)" --agent codex --yes
+```
 
-> Read Luda's installation and agent-integration guides. Install it for this Linux desktop and make its tools and skill available to your agent account. Preserve unrelated configuration.
+Use `bash scripts/install.sh --list-agents` for all supported identifiers. Other agents can use a [portable tools-and-skill export](docs/INSTALLATION.md#other-agents-and-custom-profiles). The installer preserves unrelated settings and does not install or authenticate the agent itself.
 
-For other Linux distributions, existing dependencies, updates, and removal, see [installation](docs/INSTALLATION.md). Downloadable packages are listed under [releases](https://github.com/0xpolarzero/luda/releases).
+**Codex connected to a VM through its built-in SSH connection?** Run installation **inside the VM**, selecting the Linux account used by that connection. Codex's backend there loads the skill and tool registration. Running an ordinary `ssh` command from a local agent does not automatically load the VM's configuration.
+
+**Building a VM or machine image?** Run the same installer as root with an explicit account and agent:
+
+```sh
+bash scripts/install.sh --user YOUR_ACCOUNT --agent codex --yes
+```
+
+The account must already exist. No running desktop or agent credentials are needed during the build. Start the desktop before using the tools. See the [image recipe and first-boot checks](docs/ENVIRONMENT-PACKAGING.md).
+
+You can also ask your agent:
+
+> Read Luda's README and installation guide. Install the released version on the Linux desktop machine, register its MCP tools and complete skill for my agent account, preserve unrelated configuration, and verify readiness. If this is an image build, configure everything without requiring a running desktop.
+
+[Installation, upgrades and custom agents](docs/INSTALLATION.md) · [Agent connection details](docs/AGENT-INTEGRATIONS.md) · [Release downloads](https://github.com/0xpolarzero/luda/releases)
 
 ## What can it do?
 

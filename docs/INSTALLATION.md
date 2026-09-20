@@ -12,34 +12,97 @@ Luda attaches to an existing graphical session. It does not install a desktop, s
 
 Wayland and Xwayland are unsupported. Other native X11 window managers must meet the same contracts but are not universally qualified. Accessibility depends on application providers; screenshots and pointer/keyboard tools remain the fallback where appropriate. OCR, recording and owned-browser tools have separately documented optional dependencies.
 
-## Managed installation
+## Install everything for your agent
 
-From a trusted source checkout, run as your desktop account:
-
-```sh
-sudo bash scripts/install.sh /opt/luda --user "$(id -un)"
-```
-
-The installer uses Ubuntu/Debian `apt-get` for system prerequisites. On other distributions, install equivalent dependencies yourself, then use `--skip-system`. A writable user prefix can be installed without root using `--skip-system`. Account selection defaults to the invoking account; when using sudo, specify the intended desktop account explicitly. The selected account must be able to traverse the prefix. No desktop account is created or assumed.
-
-Runtime and build dependencies are hash-locked. Installation creates an immutable versioned release, checks selected-account access, and switches `current` atomically. Existing unrelated directories are not made public. Source builds execute trusted checkout code.
-
-In the graphical session:
+From a released checkout or extracted core source archive, run as your desktop/agent account:
 
 ```sh
-/opt/luda/current/.venv/bin/luda doctor
-/opt/luda/current/.venv/bin/luda
+sudo bash scripts/install.sh --user "$(id -un)"
 ```
 
-The second command serves MCP over stdio. Follow [Connect your agent](AGENT-INTEGRATIONS.md) to register this executable and install the skill for Codex, Claude Code, Cursor, Gemini CLI or OpenCode. The repository plugin invokes `luda` on PATH; the bundle builder writes the selected absolute installation path.
+The installer installs Linux dependencies and Luda, then asks which agents to configure. Select one or several comma-separated IDs. Confirm the displayed destinations. Both MCP tools and the complete skill are installed. Restart/reconnect the selected clients, then ask **“Use Luda to inspect my desktop.”** User scope is the default, so the setup applies across projects for that account.
+
+For unattended installs, specify the account, agent(s) and `--yes`:
+
+```sh
+sudo bash scripts/install.sh --user "$(id -un)" --agent codex --yes
+sudo bash scripts/install.sh --user "$(id -un)" --agent claude-code --agent cursor --yes
+```
+
+From an existing root shell or image builder, replace `"$(id -un)"` with the actual account name. The account and its home must exist. Luda writes agent configuration as that account, not as root. It does not create accounts, install agents, authenticate them, provision a desktop, or configure SSH.
+
+```sh
+bash scripts/install.sh --list-agents
+bash scripts/install.sh --help
+```
+
+Automatic adapters currently cover Codex, Claude Code, Cursor, Gemini CLI, OpenCode, VS Code's default local Linux profile, and GitHub Copilot CLI. `--agent auto` selects clients detected by their executable or existing configuration; it cannot detect every custom installation. Explicit `--agent` works before the client is installed, which is useful for images. These are documented configuration adapters, not a claim that every client/version has been tested end to end.
+
+The installer uses Ubuntu/Debian `apt-get` for system prerequisites and needs Python 3.12+ already available. On other distributions, provision equivalent dependencies, then pass `--skip-system`. To use a writable user prefix without root:
+
+```sh
+bash scripts/install.sh --prefix "$HOME/.local/share/luda" --skip-system --agent codex --yes
+```
+
+Runtime and build dependencies are hash-locked. Installation creates an immutable versioned release and switches `current` atomically. Keep that installation at the original absolute path. A runtime failure preserves the previous release. Agent setup happens afterward: if it fails, the installed runtime remains available and setup can be retried without rebuilding it. Setup validates all selected configurations before writing them and rolls back its own file changes on ordinary write errors; it is not a crash-atomic transaction across client files.
+
+By default, tools launch through `luda-session`, which discovers the selected account's XFCE desktop even when the agent starts through SSH. No display number or session secret is baked into configuration. For an agent already running in a non-XFCE graphical session, use `--session direct` to inherit its environment; see [session attachment](#ssh-and-explicit-session-attachment).
+
+## Configure an already installed runtime
+
+Run as the agent account (or as root with `--user ACCOUNT`):
+
+```sh
+/opt/luda/current/.venv/bin/luda setup --agent codex --yes
+```
+
+For a custom prefix, also pass `--prefix /absolute/prefix`. For one project only:
+
+```sh
+/opt/luda/current/.venv/bin/luda setup --agent codex \
+  --scope project --project /absolute/project --yes
+```
+
+The project must exist and be writable by that account. Client project-trust rules still apply. For VS Code remote projects, use project scope or configure the remote profile explicitly; the user adapter targets the default local Linux profile.
+
+`CODEX_HOME`, `COPILOT_HOME`, and applicable `XDG_CONFIG_HOME` overrides are respected when setup runs as the account. Root-to-user setup uses that account's standard home locations, not root's environment overrides. Other custom profiles should use the export below.
+
+## Other agents and custom profiles
+
+Export the complete skill and MCP launch configuration instead of selecting a built-in adapter:
+
+```sh
+/opt/luda/current/.venv/bin/luda setup --export "$HOME/luda-plugin" --yes
+```
+
+Choose a new directory. It contains `plugin.json`, `mcp.json`, and `skills/luda/` following the [Agent Plugins format](https://agent-plugins.org/specification). Import it using a compatible client's plugin mechanism, or use `mcp.json` and the skill directory in a custom agent. Exporting does not register or activate the plugin. The configured executable is on this Linux machine: another host needs an explicit transport such as SSH, not that local path alone. Native client plugins and direct setup are alternatives; avoid registering both.
+
+## Verify after starting the desktop
+
+Installation and configuration do not prove that the live desktop or the client is ready. Image builds intentionally skip live checks. For an existing desktop, add `--check-desktop` to install/setup, or run:
+
+```sh
+/opt/luda/current/.venv/bin/luda-session --user "$(id -un)" -- \
+  /opt/luda/current/.venv/bin/luda doctor
+```
+
+A failed live check returns a nonzero exit status but leaves the installed runtime and configuration available. Start/fix the session, then rerun the check. Finally restart the agent, check that the skill is discoverable and tools are connected, and ask it to run `desktop_doctor`, `desktop_windows`, and `desktop_observe`. See [Confirm it works](AGENT-INTEGRATIONS.md#confirm-it-works).
+
+## Runtime only
+
+```sh
+sudo bash scripts/install.sh --user "$(id -un)" --runtime-only --yes
+```
+
+Use this when the eventual agent account is not yet chosen. It installs the runtime without registering clients. The legacy positional form `scripts/install.sh /opt/luda --user ACCOUNT` remains runtime-only for compatibility.
 
 ## Install a downloaded wheel
 
-For an environment that already provides the system prerequisites, download the core `luda-0.1.0-py3-none-any.whl` from [GitHub releases](https://github.com/0xpolarzero/luda/releases). Install it in its own environment:
+For an environment that already provides the system prerequisites, download the core `luda-0.2.0-py3-none-any.whl` from [GitHub releases](https://github.com/0xpolarzero/luda/releases). Install it in its own environment:
 
 ```sh
 python3 -m venv ~/.local/share/luda/venv
-~/.local/share/luda/venv/bin/pip install /absolute/download/path/luda-0.1.0-py3-none-any.whl
+~/.local/share/luda/venv/bin/pip install /absolute/download/path/luda-0.2.0-py3-none-any.whl
 ~/.local/share/luda/venv/bin/luda doctor
 ```
 
@@ -64,26 +127,17 @@ SSH transport must execute the server on the Linux machine that owns the desktop
 
 ## Upgrade
 
-Check out the new reviewed release or commit in a clean source checkout, then rerun the same installation command from that checkout:
+Download/check out the new reviewed release, then rerun the same installer command with the same prefix, account, selected agents, session mode and optional browser configuration:
 
 ```sh
-sudo bash scripts/install.sh /opt/luda --user "$(id -un)"
+sudo bash scripts/install.sh --user "$(id -un)" --agent codex --yes
 ```
 
-Use the same account, prefix and optional browser configuration as before; retain `--skip-system` when your deployment manages system dependencies. A successful install switches `current` to the new immutable release. Existing MCP processes still run their previous code: reconnect/restart clients after updating the runtime and skill.
+The runtime switches to the new immutable release. Setup refreshes skills previously managed by this installer only when their files remain unmodified. Identical repeated runs are a no-op for agent files. Unrelated settings and other skills are preserved.
 
-For a separately installed skill, preserve the existing copy outside its discovery directory, then copy the new selected release. Example for Codex, run as the agent account:
+If a `luda` tool registration already differs, or a skill was edited or installed separately with different contents, setup stops before changing selected clients. Back up the existing skill outside its discovery directory, review/remove only the conflicting Luda MCP entry, and rerun `luda setup`. Do not remove other servers or client settings. Native plugins have their own update procedure; see [Codex plugin updates](CODEX-PLUGIN.md#update).
 
-```sh
-luda_skill_backup=$(mktemp -d "$HOME/luda-skill-backup.XXXXXX")
-mv "$HOME/.agents/skills/luda" "$luda_skill_backup/luda"
-python3 scripts/install_skill.py --agent codex --scope user \
-  --source /opt/luda/current/skills/luda
-```
-
-Use the [documented directory and agent name](AGENT-INTEGRATIONS.md#choose-your-agent) for other clients. Inspect and retain any personal changes in the backup. If no skill was installed, skip the backup and install it. The installer refuses to overwrite a different existing copy. A Codex plugin contains its own copied skill: use the [plugin update procedure](CODEX-PLUGIN.md#update) instead. Switching `current` does not update copied skills or plugin caches automatically.
-
-After restarting the client, repeat the [read-only readiness checks](AGENT-INTEGRATIONS.md#confirm-it-works).
+Restart/reconnect clients after updating: running MCP processes still use their previous code. Repeat the read-only readiness checks. A runtime-only upgrade does not refresh account skills; run setup for each configured account.
 
 ## Rollback and removal
 

@@ -4,6 +4,30 @@ Luda has two parts: **MCP tools** operate the desktop; the **skill** teaches the
 
 First [install the Linux runtime](INSTALLATION.md). The examples below assume `/opt/luda` and an agent running inside the graphical session. If it runs over SSH or without the desktop environment, use the [session launcher](#agents-without-a-graphical-environment).
 
+## Automatic setup (recommended)
+
+The [full installer](INSTALLATION.md#install-everything-for-your-agent) registers the tools and installs the skill together. To connect a previously installed runtime, run as the agent account:
+
+```sh
+/opt/luda/current/.venv/bin/luda setup --agent codex --yes
+```
+
+Repeat `--agent` for multiple clients. Use `setup --list-agents` for the supported identifiers, or `setup --export /absolute/new/plugin` for another client. Root must pass `--user ACCOUNT`. No agent executable or login is required to preconfigure an image. Account-wide setup is the default; project scope is available explicitly.
+
+Automatic setup supports the seven standard Linux profiles listed below. Client-specific approval, project trust, remote-profile selection and skill loading remain controlled by each client. Settings are preserved, but an existing different Luda entry requires review. These adapters have configuration tests; they are not universal client-version acceptance claims.
+
+| ID | Official tool/skill documentation |
+| --- | --- |
+| `codex` | [MCP](https://learn.chatgpt.com/docs/extend/mcp?surface=cli) · [Skills](https://learn.chatgpt.com/docs/build-skills) |
+| `claude-code` | [MCP](https://code.claude.com/docs/en/mcp) · [Skills](https://code.claude.com/docs/en/skills) |
+| `cursor` | [MCP](https://prod.cursor.com/help/customization/mcp) · [Skills](https://prod.cursor.com/docs/skills) |
+| `gemini-cli` | [MCP](https://geminicli.com/docs/tools/mcp-server/) · [Skills](https://geminicli.com/docs/cli/skills/) |
+| `opencode` | [MCP](https://opencode.ai/docs/mcp-servers/) · [Skills](https://opencode.ai/docs/skills/) |
+| `vscode` | [MCP](https://code.visualstudio.com/docs/agent-customization/mcp-servers) · [Skills](https://code.visualstudio.com/docs/agent-customization/agent-skills) |
+| `copilot-cli` | [MCP](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-mcp-servers) · [Profile](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-config-dir-reference) |
+
+The remaining instructions are **manual alternatives** for custom setups. Do not install both a native Luda plugin and a direct MCP/skill registration.
+
 ## Choose your agent
 
 Run the skill command from this repository as the agent account, without sudo:
