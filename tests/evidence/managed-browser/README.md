@@ -51,3 +51,21 @@ separate prefix, compares every installed runtime module to source, runs the
 ordinary-account launcher fixture, and records unchanged qualification inputs.
 The digest is calculated from the CI-provisioned executable; it is not independent
 artifact authenticity evidence. That job does not exercise executable replacement.
+
+CI stage watchdogs now use `scripts/ci_stage.py`, an isolated Linux subreaper for
+each installer, import, regression and live-probe stage. Detached process groups
+remain descendants (or are adopted by that stage owner); ownership is never inferred
+from a shared UID or executable name. PID/start identity plus pidfd signalling
+avoids signalling a recycled PID. A stage timeout or caller disappearance starts
+bounded cleanup; successful stage exit also cleans leftover descendants. Stopped
+children are resumed, then terminated, with escalation to SIGKILL after one second.
+Cleanup waits up to five seconds and writes a separate `*-cleanup.json` receipt.
+A failed stage, missing proof or surviving descendant fails the CI wrapper before
+another stage starts. Existing logs and installation evidence remain available.
+
+The actual no-network regression creates a detached stopped writer for both a
+successful parent and a timed-out parent. It verifies reaping, absence of the late
+marker and survival of an unrelated same-UID peer. It passes under root and the
+ordinary UID1001 test account. This is CI fixture containment; it does not promise
+cleanup if the supervisor itself is SIGKILLed, the kernel cannot complete signals,
+or the entire job/VM disappears. It does not undo effects dispatched before cleanup.

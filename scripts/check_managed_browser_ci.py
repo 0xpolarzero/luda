@@ -15,6 +15,15 @@ from qualify import source_fingerprint
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def stage(command, output, name, timeout, **kwargs):
+    receipt=output/(name+'-cleanup.json')
+    supervisor=[sys.executable,str(ROOT/'scripts/ci_stage.py'),'--timeout',str(timeout),'--evidence',str(receipt),'--',*map(str,command)]
+    result=subprocess.run(supervisor,**kwargs)
+    proof=json.loads(receipt.read_text()) if receipt.is_file() else {}
+    if result.returncode or proof.get('cleanup_confirmed') is not True:
+        raise RuntimeError('Managed CI stage failed or cleanup is unconfirmed: '+name)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--prefix', type=Path, required=True)
@@ -35,14 +44,15 @@ def main():
     # This digest binds the already-provisioned CI file. It is not an independent
     # authenticity check or a promise about adjacent browser distribution files.
     with (output / 'install.log').open('w') as log:
-        subprocess.run([sys.executable, str(ROOT / 'scripts/manage_install.py'), 'install',
+        stage([sys.executable, str(ROOT / 'scripts/manage_install.py'), 'install',
             '--prefix', str(args.prefix.resolve()), '--browser-config', str(config),
-            '--user', pwd.getpwuid(os.getuid()).pw_name], check=True, stdout=log,
-            stderr=subprocess.STDOUT, timeout=600)
+            '--user', pwd.getpwuid(os.getuid()).pw_name], output, 'install', 600, stdout=log,
+            stderr=subprocess.STDOUT)
     release = (args.prefix / 'current').resolve(strict=True)
     installed_python = release / '.venv/bin/python'
-    package = Path(subprocess.check_output([str(installed_python), '-I', '-c',
-        'import pathlib,luda;print(pathlib.Path(luda.__file__).parent)'], text=True).strip()).resolve(strict=True)
+    with (output/'package-path.log').open('w') as log:
+        stage([str(installed_python), '-I', '-c', 'import pathlib,luda;print(pathlib.Path(luda.__file__).parent)'],output,'package-path',15,stdout=log)
+    package = Path((output/'package-path.log').read_text().strip()).resolve(strict=True)
     assert package.is_relative_to((release / '.venv').resolve()), 'Imported package is outside selected release'
     hashes = {}
     source_files = sorted((ROOT / 'src/luda').rglob('*.py'))
@@ -53,12 +63,12 @@ def main():
         hashes[str(relative)] = hashlib.sha256(source.read_bytes()).hexdigest()
     (output / 'runtime-hashes.json').write_text(json.dumps(hashes, indent=2) + '\n')
     with (output / 'build-regression.log').open('w') as log:
-        subprocess.run([str(installed_python), '-I', '-m', 'unittest', 'discover',
-            '-s', str(ROOT / 'tests'), '-p', 'test_install_build_source.py'],
-            cwd=ROOT, stdout=log, stderr=subprocess.STDOUT, check=True, timeout=90)
-    subprocess.run([sys.executable, str(ROOT / 'tests/evidence/managed-browser/run.py'),
+        stage([str(installed_python), '-I', '-m', 'unittest', 'discover',
+            '-s', str(ROOT / 'tests'), '-p', 'test_install_build_source.py'], output, 'build-regression', 90,
+            cwd=ROOT, stdout=log, stderr=subprocess.STDOUT)
+    stage([sys.executable, str(ROOT / 'tests/evidence/managed-browser/run.py'),
         '--repo', str(ROOT), '--prefix', str(args.prefix.resolve()),
-        '--output', str(output / 'live')], check=True, timeout=120)
+        '--output', str(output / 'live')], output, 'live', 120)
     after = source_fingerprint(ROOT)
     assert before == after, 'Source changed during installed qualification'
     (output / 'source.json').write_text(json.dumps({'before': before, 'after': after,
