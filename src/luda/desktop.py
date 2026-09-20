@@ -25,7 +25,7 @@ from .waits import ConditionWaitsMixin
 from types import MappingProxyType
 from .common import environment_scope, subprocess_environment
 from .input_guard import held_button
-from .keyboard import validate_chord, send_chord
+from .keyboard import validate_chord, send_chord, keyboard_capabilities
 from .session_state import session_state
 from .ime import composition_capability
 from .storage import storage_errors, staged_payload
@@ -118,7 +118,8 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
             result['accessibility_available'] = False
             result['accessibility_error'] = 'Accessibility provider returned an invalid application count.'
         result['session_state'] = session_state()
-        result['ready'] = result['session_state']['input_ready'] is not False and all(dependencies.values()) and result['display_available'] and result['session_bus'] and result['accessibility_available']
+        result['keyboard'] = keyboard_capabilities()
+        result['ready'] = result['session_state']['input_ready'] is not False and all(dependencies.values()) and result['display_available'] and result['session_bus'] and result['accessibility_available'] and result['keyboard']['available']
         return result
 
     def active(self):

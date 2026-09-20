@@ -20,6 +20,21 @@ def validate_chord(chord):
     return parts
 
 
+def keyboard_capabilities():
+    try:
+        result=json.loads(run([sys.executable,'-m','luda._keyboard_native','probe'],data=b'{}\n',timeout=2,max_output_bytes=4096))
+        if result.get('code'):
+            return {'available':False,'reason':result['code']}
+        if result.get('available') is not True:
+            return {'available':False,'reason':'invalid_response'}
+        return result
+    except DesktopError as exc:
+        if exc.code in ('TIMEOUT','CANCELLED'):raise
+        return {'available':False,'reason':exc.code}
+    except (ValueError,TypeError):
+        return {'available':False,'reason':'invalid_response'}
+
+
 def send_chord(chord,target):
     validate_chord(chord)
     if type(target) is not int or not 0<target<=0xffffffff:

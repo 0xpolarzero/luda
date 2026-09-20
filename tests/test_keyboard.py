@@ -6,7 +6,7 @@ from unittest.mock import Mock,patch
 from luda._keyboard_native import Keyboard,State
 from luda.common import DesktopError,operation_scope
 from luda.desktop import Desktop
-from luda.keyboard import send_chord,validate_chord
+from luda.keyboard import send_chord,validate_chord,keyboard_capabilities
 
 
 class FakeKeyboard(Keyboard):
@@ -87,6 +87,14 @@ class KeyboardContract(unittest.TestCase):
         keyboard.x=SimpleNamespace(lib=Mock(),display=1,_property=Mock(side_effect=DesktopError('STALE_TARGET','gone')))
         keyboard.disconnect_injector({'xid':99,'generation':'a'*32})
         keyboard.x.lib.XKillClient.assert_not_called()
+    def test_capability_probe_is_read_only_and_honest(self):
+        with patch('luda.keyboard.run',return_value=b'{"available":true,"input_held":true}') as command:
+            self.assertTrue(keyboard_capabilities()['input_held'])
+            self.assertEqual(command.call_args.args[0][-1],'probe')
+        with patch('luda.keyboard.run',return_value=b'{"code":"KEYBOARD_UNAVAILABLE"}'):
+            self.assertFalse(keyboard_capabilities()['available'])
+        with patch('luda.keyboard.run',side_effect=DesktopError('CANCELLED','test')),self.assertRaises(DesktopError):keyboard_capabilities()
+
     def test_state_layout_matches_xorg_header(self):
         self.assertEqual(State.locked_mods.offset,9)
         self.assertEqual(State.ptr_buttons.offset,16)

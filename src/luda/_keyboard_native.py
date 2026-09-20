@@ -32,7 +32,15 @@ class Keyboard:
         x.XKillClient.argtypes=[C.c_void_p,C.c_ulong]
         self.test=C.CDLL('libXtst.so.6')
         self.test.XTestFakeKeyEvent.argtypes=[C.c_void_p,C.c_uint,C.c_int,C.c_ulong]
+        self.test.XTestQueryExtension.argtypes=[C.c_void_p]+[C.POINTER(C.c_int)]*4
+        extension=[C.c_int() for _ in range(4)]
+        if not self.test.XTestQueryExtension(self.x.display,*[C.byref(value) for value in extension]):
+            raise DesktopError('KEYBOARD_UNAVAILABLE','XTest extension is unavailable.')
         self.xi=C.CDLL('libXi.so.6')
+        self.xi.XIQueryVersion.argtypes=[C.c_void_p,C.POINTER(C.c_int),C.POINTER(C.c_int)]
+        major,minor=C.c_int(2),C.c_int(0)
+        if self.xi.XIQueryVersion(self.x.display,C.byref(major),C.byref(minor))!=0:
+            raise DesktopError('KEYBOARD_UNAVAILABLE','XInput 2 extension is unavailable.')
         self.xi.XIGetClientPointer.argtypes=[C.c_void_p,C.c_ulong,C.POINTER(C.c_int)]
         self.xi.XIQueryPointer.argtypes=[C.c_void_p,C.c_int,C.c_ulong,C.POINTER(C.c_ulong),C.POINTER(C.c_ulong)]+[C.POINTER(C.c_double)]*4+[C.POINTER(Buttons),C.POINTER(Modifiers),C.POINTER(Modifiers)]
     def state(self):
@@ -138,7 +146,14 @@ def main():
     try:
         request=json.loads(sys.stdin.buffer.readline(4097))
         keyboard=Keyboard()
-        if sys.argv[1]=='plan':emit(keyboard.plan(request['chord'],request['target']))
+        if sys.argv[1]=='probe':
+            state=keyboard.state()
+            emit({'available':True,'backend':'XKB + XTest + XI2','group':state.group,'locked_mods':state.locked_mods,
+                  'input_held':bool(keyboard.pressed() or keyboard.buttons() or state.base_mods),
+                  'latched_input':bool(state.latched_mods or state.latched_group),
+                  'mapping':'Current group, named keys with ordinary Shift; unsupported symbols are refused.',
+                  'cleanup':'Owned injector termination and planned-key release; concurrent same-key human input remains indistinguishable.'})
+        elif sys.argv[1]=='plan':emit(keyboard.plan(request['chord'],request['target']))
         elif sys.argv[1]=='release':
             codes=request['keycodes']
             if not isinstance(codes,list) or not 1<=len(codes)<=5 or any(type(c) is not int or not 8<=c<=255 for c in codes):raise ValueError()
