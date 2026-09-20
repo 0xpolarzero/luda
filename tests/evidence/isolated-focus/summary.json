@@ -1,0 +1,33 @@
+{
+  "runtime_revision": "6cdfdda77b627de6af84c3a7c97af0fdda1602bd",
+  "files_sha256": {
+    "src/luda/_window_map.py": "f9c2088dc05c4190ff2abc1587698ca2243ceb5b3a216dbedb8caa5f50803b15",
+    "src/luda/_x11_helper.py": "152d18b24310f7ae808106716dca3bf0aa8763b94cf312c84378e837ae75cd98",
+    "src/luda/x11.py": "635fd691f01dbd0c47cac8e48ac696c0bb11678791184a03faa2c5a6a76deae5",
+    "tests/prototypes/isolated_focus.py": "f562b5ab092ba816c71ba772bd28241cf74e6fe68062e710368def3175110f71",
+    "tests/prototypes/isolated_focus_ax.py": "60ed008ac98d186e4ad743b05058a39c0ec426519de07f187120e55859baaf3c",
+    "tests/prototypes/isolated_focus.c": "bf047026e76933464bea207b83f24c5d1882b11d8db44ebd3d06b7f2a022ec53"
+  },
+  "results": [
+    {
+      "case": "restore",
+      "sent": 58,
+      "received": 58
+    },
+    {
+      "case": "shift",
+      "sent": 43,
+      "received": 43
+    },
+    {
+      "case": "control",
+      "sent": 44,
+      "received": 1
+    },
+    {
+      "case": "ax",
+      "sent": 18,
+      "received": 1
+    }
+  ]
+}

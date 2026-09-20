@@ -1,0 +1,101 @@
+{
+  "case": "ax_focus",
+  "uid": 0,
+  "send_core": false,
+  "human_shift": false,
+  "sent": 18,
+  "human_text": "b",
+  "initial_focus": "8388611",
+  "rows": [
+    {
+      "action": "ax_focus",
+      "before_focus": "8388611",
+      "after_focus": "6291459",
+      "agent": {
+        "clicks": 0,
+        "menu": 0,
+        "text": "bbbbbbbb",
+        "menu_visible": false,
+        "bounds": {
+          "button": [
+            205,
+            169
+          ],
+          "entry": [
+            205,
+            249
+          ],
+          "menu_button": [
+            205,
+            329
+          ]
+        }
+      },
+      "human": {
+        "clicks": 0,
+        "menu": 0,
+        "text": "b",
+        "menu_visible": false,
+        "bounds": {
+          "button": [
+            655,
+            169
+          ],
+          "entry": [
+            655,
+            249
+          ],
+          "menu_button": [
+            655,
+            329
+          ]
+        }
+      }
+    },
+    {
+      "action": "type",
+      "before_focus": "6291459",
+      "after_focus": "6291459",
+      "agent": {
+        "clicks": 0,
+        "menu": 0,
+        "text": "bbbbbbbbbabbbbbbbb",
+        "menu_visible": false,
+        "bounds": {
+          "button": [
+            205,
+            169
+          ],
+          "entry": [
+            205,
+            249
+          ],
+          "menu_button": [
+            205,
+            329
+          ]
+        }
+      },
+      "human": {
+        "clicks": 0,
+        "menu": 0,
+        "text": "b",
+        "menu_visible": false,
+        "bounds": {
+          "button": [
+            655,
+            169
+          ],
+          "entry": [
+            655,
+            249
+          ],
+          "menu_button": [
+            655,
+            329
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,326 @@
+{
+  "case": "restore",
+  "uid": 0,
+  "send_core": false,
+  "human_shift": false,
+  "sent": 58,
+  "human_text": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "initial_focus": "8388611",
+  "rows": [
+    {
+      "action": "minimize",
+      "before_focus": "8388611",
+      "after_focus": "8388611",
+      "agent": {
+        "clicks": 0,
+        "menu": 0,
+        "text": "",
+        "menu_visible": false,
+        "bounds": {
+          "button": [
+            205,
+            169
+          ],
+          "entry": [
+            205,
+            249
+          ],
+          "menu_button": [
+            205,
+            329
+          ]
+        }
+      },
+      "human": {
+        "clicks": 0,
+        "menu": 0,
+        "text": "bbbbbbbb",
+        "menu_visible": false,
+        "bounds": {
+          "button": [
+            655,
+            169
+          ],
+          "entry": [
+            655,
+            249
+          ],
+          "menu_button": [
+            655,
+            329
+          ]
+        }
+      }
+    },
+    {
+      "action": "restore",
+      "before_focus": "8388611",
+      "after_focus": "8388611",
+      "agent": {
+        "clicks": 0,
+        "menu": 0,
+        "text": "",
+        "menu_visible": false,
+        "bounds": {
+          "button": [
+            205,
+            169
+          ],
+          "entry": [
+            205,
+            249
+          ],
+          "menu_button": [
+            205,
+            329
+          ]
+        }
+      },
+      "human": {
+        "clicks": 0,
+        "menu": 0,
+        "text": "bbbbbbbbbbbbbbbbbb",
+        "menu_visible": false,
+        "bounds": {
+          "button": [
+            655,
+            169
+          ],
+          "entry": [
+            655,
+            249
+          ],
+          "menu_button": [
+            655,
+            329
+          ]
+        }
+      }
+    },
+    {
+      "action": "click",
+      "before_focus": "8388611",
+      "after_focus": "8388611",
+      "agent": {
+        "clicks": 1,
+        "menu": 0,
+        "text": "",
+        "menu_visible": false,
+        "bounds": {
+          "button": [
+            205,
+            169
+          ],
+          "entry": [
+            205,
+            249
+          ],
+          "menu_button": [
+            205,
+            329
+          ]
+        }
+      },
+      "human": {
+        "clicks": 0,
+        "menu": 0,
+        "text": "bbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "menu_visible": false,
+        "bounds": {
+          "button": [
+            655,
+            169
+          ],
+          "entry": [
+            655,
+            249
+          ],
+          "menu_button": [
+            655,
+            329
+          ]
+        }
+      }
+    },
+    {
+      "action": "entry",
+      "before_focus": "8388611",
+      "after_focus": "8388611",
+      "agent": {
+        "clicks": 1,
+        "menu": 0,
+        "text": "",
+        "menu_visible": false,
+        "bounds": {
+          "button": [
+            205,
+            169
+          ],
+          "entry": [
+            205,
+            249
+          ],
+          "menu_button": [
+            205,
+            329
+          ]
+        }
+      },
+      "human": {
+        "clicks": 0,
+        "menu": 0,
+        "text": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "menu_visible": false,
+        "bounds": {
+          "button": [
+            655,
+            169
+          ],
+          "entry": [
+            655,
+            249
+          ],
+          "menu_button": [
+            655,
+            329
+          ]
+        }
+      }
+    },
+    {
+      "action": "type",
+      "before_focus": "8388611",
+      "after_focus": "8388611",
+      "agent": {
+        "clicks": 1,
+        "menu": 0,
+        "text": "a",
+        "menu_visible": false,
+        "bounds": {
+          "button": [
+            205,
+            169
+          ],
+          "entry": [
+            205,
+            249
+          ],
+          "menu_button": [
+            205,
+            329
+          ]
+        }
+      },
+      "human": {
+        "clicks": 0,
+        "menu": 0,
+        "text": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "menu_visible": false,
+        "bounds": {
+          "button": [
+            655,
+            169
+          ],
+          "entry": [
+            655,
+            249
+          ],
+          "menu_button": [
+            655,
+            329
+          ]
+        }
+      }
+    },
+    {
+      "action": "popup",
+      "before_focus": "8388611",
+      "after_focus": "8388611",
+      "agent": {
+        "clicks": 1,
+        "menu": 0,
+        "text": "a",
+        "menu_visible": true,
+        "bounds": {
+          "button": [
+            205,
+            169
+          ],
+          "entry": [
+            205,
+            249
+          ],
+          "menu_button": [
+            205,
+            329
+          ]
+        }
+      },
+      "human": {
+        "clicks": 0,
+        "menu": 0,
+        "text": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "menu_visible": false,
+        "bounds": {
+          "button": [
+            655,
+            169
+          ],
+          "entry": [
+            655,
+            249
+          ],
+          "menu_button": [
+            655,
+            329
+          ]
+        }
+      }
+    },
+    {
+      "action": "close",
+      "before_focus": "8388611",
+      "after_focus": "8388611",
+      "agent": {
+        "clicks": 1,
+        "menu": 0,
+        "text": "a",
+        "menu_visible": false,
+        "bounds": {
+          "button": [
+            205,
+            169
+          ],
+          "entry": [
+            205,
+            249
+          ],
+          "menu_button": [
+            205,
+            329
+          ]
+        }
+      },
+      "human": {
+        "clicks": 0,
+        "menu": 0,
+        "text": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "menu_visible": false,
+        "bounds": {
+          "button": [
+            655,
+            169
+          ],
+          "entry": [
+            655,
+            249
+          ],
+          "menu_button": [
+            655,
+            329
+          ]
+        }
+      }
+    }
+  ]
+}
