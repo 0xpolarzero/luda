@@ -43,6 +43,19 @@ class SessionDiscoveryTests(unittest.TestCase):
         (self.root/'10').mkdir();self.fixture(11)
         self.assertEqual(self.discover()['DISPLAY'],':7')
 
+class SessionWaitTests(unittest.TestCase):
+    def test_missing_session_retried_until_ready(self):
+        with patch('luda.session.discover',side_effect=[session.SessionDiscoveryError(0),{'DISPLAY':':7'}]) as discover,patch('luda.session.time.sleep'):
+            self.assertEqual(session.wait_for_session(1001,123,1),{'DISPLAY':':7'})
+        self.assertEqual(discover.call_count,2)
+        discover.assert_called_with(1001,123)
+    def test_ambiguous_session_is_not_retried(self):
+        with patch('luda.session.discover',side_effect=session.SessionDiscoveryError(2)),patch('luda.session.time.sleep') as sleep,self.assertRaises(SystemExit):session.wait_for_session(1001,timeout=1)
+        sleep.assert_not_called()
+    def test_deadline_and_zero_timeout_are_bounded(self):
+        for times,timeout in (([0,0,0,2],1),([0,0],0)):
+            with patch('luda.session.discover',side_effect=session.SessionDiscoveryError(0)),patch('luda.session.elapsed_time',side_effect=times),patch('luda.session.time.sleep'),self.assertRaises(SystemExit):session.wait_for_session(1001,timeout=timeout)
+
 class SessionLaunchTests(unittest.TestCase):
     def setup_launch(self,uid=0):
         account=SimpleNamespace(pw_uid=1001,pw_gid=1002,pw_name='desktop',pw_dir='/home/desktop')

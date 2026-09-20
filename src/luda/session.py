@@ -1,9 +1,18 @@
 """Explicit root-to-desktop launcher; no guessed display or arbitrary shell."""
 import argparse
 import os
+import math
+import time
+from .timing import elapsed_time
 from pathlib import Path
 import pwd
 import sys
+
+
+class SessionDiscoveryError(SystemExit):
+    def __init__(self, count):
+        self.count = count
+        super().__init__(f'Expected one ready XFCE session for this account, found {count}. Start its desktop or specify --session-pid; DISPLAY and session D-Bus must be available.')
 
 
 def discover(uid, session_pid=None):
@@ -20,23 +29,42 @@ def discover(uid, session_pid=None):
         except (OSError, UnicodeError):
             continue
     if len(matches) != 1:
-        raise SystemExit(f'Expected one XFCE session for this account, found {len(matches)}. Specify --session-pid if needed.')
+        raise SessionDiscoveryError(len(matches))
     return matches[0]
+
+
+def wait_for_session(uid, session_pid=None, timeout=5):
+    deadline = elapsed_time() + timeout
+    while True:
+        try:
+            return discover(uid, session_pid)
+        except SessionDiscoveryError as exc:
+            if exc.count != 0 or elapsed_time() >= deadline:
+                raise
+            time.sleep(min(.1,max(0,deadline-elapsed_time())))
 
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--user', default='silo-desktop')
     p.add_argument('--session-pid', type=int)
+    p.add_argument('--wait', type=float, default=5, help='Wait up to this many seconds for the selected session (0–30; default 5).')
     p.add_argument('command', nargs=argparse.REMAINDER)
     args = p.parse_args()
     command = args.command[1:] if args.command[:1] == ['--'] else args.command
     if not command:
         p.error('Supply an executable after --')
-    account = pwd.getpwnam(args.user)
+    if not math.isfinite(args.wait) or not 0 <= args.wait <= 30:
+        p.error('--wait must be 0–30 seconds')
+    if args.session_pid is not None and args.session_pid<=0:
+        p.error('--session-pid must be positive')
+    try:
+        account = pwd.getpwnam(args.user)
+    except KeyError:
+        p.error('The selected desktop account does not exist')
     if os.getuid() not in (0, account.pw_uid):
         raise SystemExit('Run as the desktop account or root; no automatic privilege escalation.')
-    session = discover(account.pw_uid, args.session_pid)
+    session = wait_for_session(account.pw_uid, args.session_pid, args.wait)
     env = {'PATH': '/usr/local/bin:/usr/bin:/bin', 'HOME': account.pw_dir,
            'USER': account.pw_name, 'LOGNAME': account.pw_name, 'LANG': 'C.UTF-8',
            'PYTHONUNBUFFERED': '1', 'NO_AT_BRIDGE': '0'}
