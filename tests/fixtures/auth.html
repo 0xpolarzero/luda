@@ -8,7 +8,8 @@
 <button id="old">Existing session action</button></main><p id="status" role="status">Awaiting synthetic code</p>
 <button onclick="location.reload()">Reset synthetic fixture</button>
 <script>
-window.audit={submissions:0,verified:false,authorized:false,oldActions:0,unexpectedLoginActions:0,humanRequired:false};
+window.audit={submissions:0,verified:false,authorized:false,oldActions:0,unexpectedLoginActions:0,humanRequired:false,blockedPastes:0};
+masked.addEventListener('paste',e=>{e.preventDefault();audit.blockedPastes++;statusText('Protected field blocks clipboard; use a supported input method.');});
 verify.onclick=()=>{audit.submissions++;audit.verified=otp.value==='001204';otp.value='';statusText('Synthetic code accepted');};
 function statusText(s){document.getElementById('status').textContent=s;}
 old.onclick=()=>audit.oldActions++;

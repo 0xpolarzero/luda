@@ -189,3 +189,27 @@ no owned survivors. Intermediate failures remain under
 `run-1789873555842873355`, `run-1789873595527134124`, and
 `run-1789873623771968054`. This is two repetitions of one fixed desktop configuration,
 not a general browser-menu reliability claim.
+
+## Clipboard-blocking credential field (AUTH-07)
+
+A later fixture revision adds an actual `paste` event handler to its browser
+password field. The handler prevents default insertion, counts the event and
+shows a visible explanation. A deliberate synthetic public paste reaches that
+handler exactly once; the field stays empty and no form is submitted. Luda's
+response says `dispatched`, not that credential entry succeeded.
+
+A subsequent explicit `desktop_type_secret` request returns `UNSUPPORTED` with
+`effect: none` because this provider lacks protected EditableText. The independent
+DOM oracle remains empty. This establishes the catalog's **explicit limitation**
+option for an actual clipboard-blocking credential field. It does not establish
+an alternate secret-entry mechanism or recommend bypassing the refusal with raw
+keys. The paste is a deliberate fixture probe, not an automatic secret fallback;
+its synthetic string may remain in CLIPBOARD until separate fixture setup replaces
+it. No real credential is used or retained in reported results.
+
+The first expanded ordinary-UID ARM64 Chromium153 run passed five scoped workflows:
+13/17 probes passed and the original four diagnostics remained false, in 17.057s.
+Evidence: `artifacts/qualification-matrix/run-1789873787622843049`, with unchanged
+source fingerprint `1cbbc132518bb43a6c131c4c51db269fa3b739f4d4f36e67e2898c01d07b922a` and no owned survivors.
+The source-bound earlier statements that AUTH-07 was unexercised remain historical;
+this explicit-refusal result is not successful browser password-entry support.

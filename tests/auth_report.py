@@ -6,6 +6,7 @@ WORKFLOWS={
  'AUTH-04':(['digit-key-otp-us','digit-key-otp-fr'],'Visible digit-only OTP on US/French layouts; no added clipboard copy or complete value in captured responses/artifacts, not universal retention erasure.'),
  'AUTH-05':(['expiry-recovery-observes-before-new-input'],'Old semantic target refusal, then fresh login-transition inspection with no unintended action/submission; stale screenshot route remains unsafe.'),
  'AUTH-06':(['popup-origin-session-identified-before-approval','local-popup-return-to-intended-window','returned-app-session-visible'],'Synthetic loopback browser-chrome origin and visible session identification before approval, then intended app/session readback; no real OAuth protocol qualification.'),
+ 'AUTH-07':(['blocked-credential-explicit-limitation'],'Real password-field paste prevention observed independently; raw paste reports dispatch only and explicit protected input refuses unsupported provider without mutation.'),
  'AUTH-10':(['human-presence-exposed-not-completed'],'Synthetic human-presence notice exposed with app still waiting; not generic CAPTCHA detection.'),
 }
 DIAGNOSTICS={
@@ -40,6 +41,6 @@ def report(records):
  okay=not missing_records and not duplicates and not unexpected_failures and all(row['outcome']=='passed' for row in workflows)
  return dict(cases=records,required_workflows=workflows,route_diagnostics=diagnostics,
              probe_summary=dict(total=len(records),passed=sum(bool(r['passed']) for r in records),failed=sum(not r['passed'] for r in records)),
-             scope_limits={'AUTH-07':'Not exercised: no credential fixture blocks clipboard. No remapping from missing EditableText.','retention':'Caller transcripts, per-key arguments, destination memory and external listeners are not erased or qualified.','OAuth':'GUI identification only; no cryptographic attestation or real-provider protocol qualification.'},
+             scope_limits={'AUTH-07':'Synthetic browser password field with a real paste-event blocker; supported result is an explicit provider limitation, not successful credential entry.','retention':'Caller transcripts, per-key arguments, destination memory and external listeners are not erased or qualified.','OAuth':'GUI identification only; no cryptographic attestation or real-provider protocol qualification.'},
              required_workflows_passed=okay,missing_probe_records=missing_records,duplicate_probe_names=duplicates,unexpected_failed_probes=unexpected_failures,
              exit_policy='Nonzero for missing/failed required workflow, unexpected failed probe, duplicate/missing probe record or harness failure. Classified diagnostics retain original passed values and do not become supported capabilities.')

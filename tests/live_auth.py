@@ -127,6 +127,17 @@ async def main(executable):
                         if len(protected)!=1:raise RuntimeError('Protected fixture not unique')
                         err,result=await raw('desktop_type_secret',element_id=protected[0]['element_id'],text='001204')
                         record('browser-protected-otp-support',not err and await page.locator('#masked').input_value()=='001204',code=result.get('code'),response_contains_value='001204' in json.dumps(result))
+                        # Deliberate synthetic blocked-paste probe, not a secret fallback.
+                        await call('desktop_focus_element',element_id=protected[0]['element_id'])
+                        paste_result=await call('desktop_paste',window_id=wid,text='luda-synthetic-blocked-credential',shortcut='ctrl_v')
+                        until=time.monotonic()+2
+                        while not await page.evaluate('audit.blockedPastes===1') and time.monotonic()<until:
+                            await asyncio.sleep(.02)
+                        blocked=await page.evaluate('audit.blockedPastes===1 && masked.value.length===0 && audit.submissions===0')
+                        fresh_protected=[n for n in (await call('desktop_inspect',window_id=wid,limit=500))['nodes'] if n.get('protected')]
+                        if len(fresh_protected)!=1:raise RuntimeError('Protected fixture not unique after blocked paste')
+                        err,limitation=await raw('desktop_type_secret',element_id=fresh_protected[0]['element_id'],text='luda-synthetic-blocked-credential')
+                        record('blocked-credential-explicit-limitation',blocked and paste_result.get('effect')=='dispatched' and err and limitation.get('code')=='UNSUPPORTED' and limitation.get('effect')=='none' and await page.locator('#masked').input_value()=='',paste_blocked_by_application=blocked,paste_effect=paste_result.get('effect'),secret_code=limitation.get('code'),secret_effect=limitation.get('effect'),limitation='This protected provider lacks EditableText; no alternate secret route is supported. No automatic retry or submission.')
                         await click('Verify synthetic code')
                         record('explicit-otp-submit-clears-fixture',await page.evaluate('audit.verified') and await page.locator('#otp').input_value()=='')
                         # Separate popup observation from the preceding intentional clipboard-retention probe.
