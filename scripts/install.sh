@@ -113,7 +113,7 @@ if [[ "$skip_system" != true ]]; then
   [[ $(id -u) == 0 ]] || fail 'Run with sudo --user ACCOUNT, or use --skip-system after provisioning dependencies'
   command -v apt-get >/dev/null || fail 'Automatic system dependencies require apt-get; provision them manually and use --skip-system'
   apt-get update
-  apt-get install -y python3 python3-venv python3-gi gir1.2-atspi-2.0 gir1.2-pango-1.0 libx11-6 libxi6 libxtst6 libxrandr2 fonts-noto-core fonts-noto-cjk fonts-noto-color-emoji xdotool wmctrl xclip scrot x11-utils
+  apt-get install -y python3 python3-venv python3-gi at-spi2-core dbus-x11 gir1.2-atspi-2.0 gir1.2-pango-1.0 libx11-6 libxi6 libxtst6 libxrandr2 fonts-noto-core fonts-noto-cjk fonts-noto-color-emoji xdotool wmctrl xclip scrot x11-utils
 fi
 python3 "$source_dir/scripts/manage_install.py" install --prefix "$prefix" "${optional[@]}"
 if [[ "$runtime_only" == true ]]; then

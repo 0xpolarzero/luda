@@ -69,6 +69,9 @@ if '--validate-only' in sys.argv and os.environ.get('REJECT_SETUP'):
         install = next(i for i,c in enumerate(calls) if 'install' in c)
         self.assertLess(validation, apt)
         self.assertLess(apt, install)
+        packages = next(c for c in calls if c[:2] == ['apt-get', 'install'])
+        self.assertIn('at-spi2-core', packages)
+        self.assertIn('dbus-x11', packages)
         self.assertEqual(calls[-1], ['python', '-m', 'luda.setup', '--prefix', str(self.prefix),
                                     '--user', 'alice', '--agent', 'codex', '--yes'])
 
