@@ -3,11 +3,11 @@ name: luda
 description: Operate native applications and desktop dialogs inside a Silo Linux X11 sandbox using the Luda tools. Use for visible desktop interaction; browser DOM tasks can use an available browser tool attached to the same guest.
 ---
 
-Use `desktop_doctor` when attaching or recovering a session. If it fails, the guest launcher/dependencies need repair; do not guess DISPLAY or attach to a different user's session.
+Use `desktop_doctor` when attaching or recovering a session. If the desktop restarted, use `desktop_reconnect` to attach the existing connection to a validated same-account session, then observe again; all old handles expire. If several sessions exist, select the intended reported session PID. Reconnect never resumes a paused display. Do not guess DISPLAY or attach to a different user's session.
 
 For an installed application, find its application_id with `desktop_applications`, then use `desktop_launch`. A launch may be handled by an existing window; observe windows before launching again.
 
-List windows and activate the intended window. `desktop_observe` supplies the screenshot, window IDs and snapshot ID. Pointer coordinates refer to that returned image, not the native screen resolution. Snapshots expire after 15 seconds and are invalid after window layout/focus changes. Observe again on `STALE_OBSERVATION`. Owned menus and submenus use the same window ID and pointer tools; covered targets are refused.
+`desktop_windows` supports title/class filtering with `query` and pagination with `limit`/`offset`; follow `next_offset` when `truncated` is true. List windows and activate the intended window. `desktop_observe` supplies the screenshot, window IDs and snapshot ID. Pointer coordinates refer to that returned image, not the native screen resolution. Snapshots expire after 15 seconds and are invalid after window layout/focus changes. Observe again on `STALE_OBSERVATION`. Owned menus and submenus use the same window ID and pointer tools; covered targets are refused.
 
 Prefer `desktop_inspect` and semantic element actions when available. Element IDs expire after 60 seconds and belong to one server. Reinspect on `STALE_TARGET`; never substitute a similar-looking element without checking its identity. A partial or empty accessibility tree is not proof that the app has no UI; use the screenshot.
 

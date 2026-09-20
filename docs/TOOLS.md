@@ -20,6 +20,14 @@ desktop_status()
 
 Return recent operation outcomes after timeout/cancellation. No input text or screenshots are retained.
 
+## `desktop_reconnect`
+
+```python
+desktop_reconnect(session_pid: int | None=None)
+```
+
+Reconnect this MCP connection to a running XFCE session owned by this account after a desktop restart. Omit PID only when exactly one session exists. Validates display and bus before replacing the backend; failed validation preserves it. Returns BUSY during other operations, never restarts apps or replays input. All prior window, element and screenshot IDs expire; observe again. The selected display's pause state remains in force.
+
 ## `desktop_doctor`
 
 ```python
@@ -47,10 +55,10 @@ Launch an installed application by its desktop_applications ID, optionally openi
 ## `desktop_windows`
 
 ```python
-desktop_windows()
+desktop_windows(query: str | None=None, limit: int=50, offset: int=0)
 ```
 
-List window identities, titles, process identity, focus and native client bounds.
+List window identities, titles, focus and client bounds, optionally filtering title/class. Returns counts, unavailable rows and next_offset when paginated. Each call is a fresh enumeration.
 
 ## `desktop_activate`
 
