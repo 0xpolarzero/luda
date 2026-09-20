@@ -58,3 +58,5 @@ Matrix source hash `597b44a40ccb233ac466a971f399d229d9a7d60dca7f56b5d1822d99c22b
 ```
 
 `tests/data_collection_probe.py` is a diagnostic for the owned synthetic fixture; it is not a runtime capability or a means of mutating the UI.
+
+A final guard regression also requires the table container to be sensitive and showing, and refuses viewport-based row choice when inspection declared its coordinates unavailable. An identity-budget failure discovered after row mutation preserves `effect=uncertain`. The final full unit suite passed 456 tests; the guarded live matrix repeated all 16 workflow passes in 36.895 seconds, retaining its three provider diagnostics and no cleanup survivors. Source hash `c02e00c91f9ee8bbd430ee78842f8221f5163ead3570d13a2d3e134d85fea619` stayed unchanged.

@@ -13,8 +13,9 @@ class Cell:
  def get_component_iface(self):return types.SimpleNamespace(get_extents=lambda _:self.bounds)
 class Table:
  path='/table'
- def __init__(self,cell):self.cell=cell;self.rows=set();self.calls=[];self.ignore=False;self.recycle=False
+ def __init__(self,cell):self.cell=cell;self.rows=set();self.calls=[];self.ignore=False;self.recycle=False;self.states={'sensitive','showing'}
  def get_interfaces(self):return ['Table','Component']
+ def get_state_set(self):return types.SimpleNamespace(get_states=lambda:[types.SimpleNamespace(value_nick=s) for s in self.states])
  def get_component_iface(self):return types.SimpleNamespace(get_extents=lambda _:rect(0,0,100,100))
  def get_table_iface(self):return self
  def get_accessible_at(self,row,col):return self.cell
@@ -46,4 +47,19 @@ class Rows(unittest.TestCase):
   self.table.recycle=True;self.assertEqual(self.call()['effect'],'uncertain')
  def test_position_changed_before_action_refused(self):
   self.cell.position=(True,-1,0);self.assertEqual(self.call()['error'],'STALE_TARGET');self.assertEqual(self.table.calls,[])
+ def test_disabled_or_hidden_table_refused_before_selection(self):
+  for states in ({'showing'},{'sensitive'},set()):
+   self.table.states=states;self.assertEqual(self.call()['error'],'NOT_INTERACTABLE')
+  self.assertEqual(self.table.calls,[])
+ def test_unreliable_coordinates_refuse_viewport_claim(self):
+  result=w.choose_table_row(self.cell,self.current,False,{'target':{'bounds_coordinates':'unavailable'}})
+  self.assertEqual(result['error'],'UNSUPPORTED');self.assertEqual(self.table.calls,[])
+ def test_name_budget_failure_after_selection_retains_uncertainty(self):
+  original=self.table.add_row_selection
+  def add(row):
+   result=original(row);self.cell.name='x'*1_048_577;return result
+  self.table.add_row_selection=add
+  with patch.object(w,'main',side_effect=lambda req:w.choose_table_row(self.cell,self.current,False,request=req)):
+   result=w.dispatch({'op':'choose'})
+  self.assertEqual(result['error'],'TARGET_IDENTITY_UNAVAILABLE');self.assertEqual(result['effect'],'uncertain')
 if __name__=='__main__':unittest.main()

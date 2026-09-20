@@ -349,6 +349,11 @@ def choose_table_row(node, current, extend, request=None):
     table_node = Atspi.TableCell.get_table(cell)
     if table_node is None or "Table" not in table_node.get_interfaces():
         return failure("UNSUPPORTED", "Cell has no accessible Table container.")
+    container_states = states_of(table_node)
+    if "showing" not in container_states or not {"enabled", "sensitive"}.intersection(container_states):
+        return failure("NOT_INTERACTABLE", "Table container must be sensitive and showing.")
+    if request and request.get("target", {}).get("bounds_coordinates") == "unavailable":
+        return failure("UNSUPPORTED", "Table viewport visibility requires reliable accessible coordinates.")
     if "Component" not in current["interfaces"] or "Component" not in table_node.get_interfaces():
         return failure("UNSUPPORTED", "Cannot establish the table cell's visible viewport.")
     bounds = node.get_component_iface().get_extents(Atspi.CoordType.SCREEN)
