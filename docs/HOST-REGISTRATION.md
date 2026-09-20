@@ -105,3 +105,5 @@ CLI commands and failure-state tests rather than assuming a host Python runtime.
 Host CLI discovery/profile selection, persistent path management, native UI,
 Mac application integration and fresh-thread discovery remain deliverables or
 acceptance work; this utility alone does not qualify those cases.
+
+[Real private SSH qualification](HOST-PLUGIN-SSH-QUALIFICATION.md) now exercises both generated VM commands through MCP initialization, doctor, windows and screenshots against distinct owned desktops. It exposed and verified the launcher working-directory fix. The test uses one loopback SSH daemon and two local sessions; it does not replace actual Mac/Silo acceptance.
