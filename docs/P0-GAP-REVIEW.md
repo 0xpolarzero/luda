@@ -71,3 +71,5 @@ in parallel with these tests; fresh Mac acceptance cannot be replaced by them.
   invented here. Priorities, catalog acceptance and qualification status are unchanged.
 
 Follow-up: repeated native key chords now report bounded dispatch progress when a final companion receipt is available. Exact counters distinguish acknowledged dispatches, one possibly partial chord and not-started chords; application effects remain unverified. Tests are mapped narrowly to ERR-05; rich-editor segment progress and other compound actions remain outside that increment. See [keyboard contract](KEYBOARD.md).
+
+Two local evidence follow-ups are now complete within their recorded scopes: [installed offline startup](OFFLINE-STARTUP-QUALIFICATION.md) verifies native MCP in a private network namespace against a pinned installed runtime; [browser permission refusal](BROWSER-PERMISSION-QUALIFICATION.md) denies an actual location prompt using public GUI tools and independent permission-state readback. These do not qualify every network condition, permission type or release environment.
