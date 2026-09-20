@@ -101,6 +101,30 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         finally:
             self.local_lock.release()
 
+    @contextmanager
+    def input_scope(self):
+        """Provide session-owned input only to helpers that need it."""
+        if getattr(self,'private_input',None) is None:
+            from .private_input import PrivateInput
+            self.private_input=PrivateInput(self.environment)
+        with environment_scope(self.private_input.environment()):
+            yield
+
+    def check_input_focus(self,window):
+        return self._input_focus(window,'check_focus')
+
+    def focus_input(self,window):
+        return self._input_focus(window,'focus')
+
+    def _input_focus(self,window,operation):
+        import sys
+        request={'target':window['xid'],'target_generation':window['window_id'].rsplit(':',1)[-1]}
+        result=json.loads(run([sys.executable,'-m','luda._keyboard_native',operation],
+                             data=json.dumps(request).encode()+b'\n',timeout=2,max_output_bytes=4096,effect='uncertain' if operation=='focus' else 'none'))
+        if result.get('code'):
+            raise DesktopError(result['code'],result['message'],effect=result.get('effect','none'))
+        return result
+
     def display(self):
         if self.x is None:
             self.x = X11()
@@ -151,7 +175,10 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         result['recording'] = {'available': all(shutil.which(name,path=self.environment.get('PATH',os.defpath)) for name in ('ffmpeg','ffprobe')),
                                'scope':'Optional executables only; start validates capture support. No audio.'}
         result['session_state'] = session_state()
-        result['keyboard'] = keyboard_capabilities()
+        try:
+            with self.input_scope():result['keyboard'] = keyboard_capabilities()
+        except DesktopError as exc:
+            result['keyboard'] = {'available':False,'reason':exc.code}
         try:
             result['control'] = {'available':True, **self.control.status()}
         except DesktopError as exc:
@@ -744,6 +771,7 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         for cleanup in (lambda: self.cursor.close() if getattr(self, 'cursor', None) else None,
                         lambda: self.browser.close() if hasattr(self, 'browser') else None,
                         lambda: self.recordings.close() if hasattr(self, 'recordings') else None,
+                        lambda: self.private_input.close() if getattr(self, 'private_input', None) else None,
                         lambda: stop_process(self.clipboard_owner) if self.clipboard_owner else None,
                         lambda: self.x.close() if self.x else None,
                         lambda: self.admission.cancel() if getattr(self, 'admission', None) else None,

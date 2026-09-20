@@ -11,28 +11,24 @@ from .input_validation import validate_position,validate_generation,validate_tar
 
 
 def motion(native,position):
-    x,y=validate_position(position)
-    bounds=native.x.geometry(native.x.root)
-    if x>=bounds['width'] or y>=bounds['height']:
-        raise DesktopError('OUT_OF_BOUNDS','Pointer position is outside the current desktop.')
-    native.test.XTestFakeMotionEvent.argtypes=[C.c_void_p,C.c_int,C.c_int,C.c_int,C.c_ulong]
-    if not native.test.XTestFakeMotionEvent(native.x.display,-1,x,y,0):
-        raise DesktopError('INPUT_UNAVAILABLE','Pointer movement failed.',effect='uncertain')
-    native.x.lib.XSync(native.x.display,False)
+    with native.guard():
+        x,y=validate_position(position)
+        bounds=native.x.geometry(native.x.root)
+        if x>=bounds['width'] or y>=bounds['height']:
+            raise DesktopError('OUT_OF_BOUNDS','Pointer position is outside the current desktop.')
+        native.test.XTestFakeMotionEvent.argtypes=[C.c_void_p,C.c_int,C.c_int,C.c_int,C.c_ulong]
+        if not native.test.XTestFakeMotionEvent(native.x.display,-1,x,y,0):
+            raise DesktopError('INPUT_UNAVAILABLE','Pointer movement failed.',effect='uncertain')
+        native.x.lib.XSync(native.x.display,False)
 
 
 @contextmanager
 def target_guard(native,target,target_generation):
-    native.x.lib.XGrabServer(native.x.display)
-    try:
+    with native.guard():
         if target is not None:
             native.target_token(target,target_generation)
-            active=native.x._property(native.x.root,'_NET_ACTIVE_WINDOW',1)
-            if not active or active[2]!=[target]:raise DesktopError('FOCUS_CHANGED','Target lost focus before pointer input.')
+            native.require_focus(target)
         yield
-    finally:
-        native.x.lib.XUngrabServer(native.x.display)
-        native.x.lib.XSync(native.x.display,False)
 
 
 def check_held(native,owned=None):
@@ -81,16 +77,16 @@ def plan_pointer(native,request):
     if state.latched_mods or state.latched_group:
         raise DesktopError('UNSUPPORTED_INPUT_STATE','Latched keyboard state is active; no click or scroll sent.')
     if target is not None:
-        active=native.x._property(native.x.root,'_NET_ACTIVE_WINDOW',1)
-        if not active or active[2]!=[target]:raise DesktopError('FOCUS_CHANGED','Target lost focus before pointer input.')
+        native.require_focus(target)
     return {'kind':'pointer','button':request['button'],'count':request['count'],'target':target,'server_generation':current_generation,**({'target_generation':token} if token is not None else {}),**({'position':position} if position is not None else {}),**({'hold':True} if request.get('hold') is True else {})}
 
 
 def event(native,button,pressed):
-    native.test.XTestFakeButtonEvent.argtypes=[C.c_void_p,C.c_uint,C.c_int,C.c_ulong]
-    if not native.test.XTestFakeButtonEvent(native.x.display,int(button),pressed,0):
-        raise DesktopError('INPUT_UNAVAILABLE','Pointer dispatch failed.',effect='uncertain')
-    native.x.lib.XSync(native.x.display,False)
+    with native.guard():
+        native.test.XTestFakeButtonEvent.argtypes=[C.c_void_p,C.c_uint,C.c_int,C.c_ulong]
+        if not native.test.XTestFakeButtonEvent(native.x.display,int(button),pressed,0):
+            raise DesktopError('INPUT_UNAVAILABLE','Pointer dispatch failed.',effect='uncertain')
+        native.x.lib.XSync(native.x.display,False)
 
 
 def main():

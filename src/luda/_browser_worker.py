@@ -181,7 +181,7 @@ class Worker:
     def focus(self, token):
         item, _ = self.snapshot(token, mutation=True)
         self.effect = 'uncertain'
-        self.page.bring_to_front()
+        self.input.focus(self.native_target)
         item['node'].focus()
         self.snapshot(token, mutation=True, focus=True)
         return {'effect':'verified','focused':True}

@@ -168,6 +168,9 @@ class OwnedBrowser:
             raise DesktopError('BROWSER_ALREADY_OPEN',self.messages['BROWSER_ALREADY_OPEN'])
         if not capability(self.desktop.environment)['available']:
             raise DesktopError('BROWSER_ADAPTER_UNAVAILABLE','Install the optional locked browser dependencies and configure LUDA_CHROMIUM_EXECUTABLE; Luda never downloads a browser automatically.')
+        if getattr(self.desktop,'private_input',None) is None:
+            from .private_input import PrivateInput
+            self.desktop.private_input=PrivateInput(self.desktop.environment)
         from .managed_browser import verify_environment
         try:
             verify_environment(self.desktop.environment, checkpoint)
@@ -179,7 +182,7 @@ class OwnedBrowser:
         try:
             self.process=subprocess.Popen([sys.executable,'-m',self.guard_module,str(self.desktop.runtime),str(proof_write)],
                                       stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,
-                                      env=dict(self.desktop.environment),start_new_session=True,pass_fds=(proof_write,))
+                                      env=self.desktop.private_input.environment(),start_new_session=True,pass_fds=(proof_write,))
         except BaseException:
             os.close(proof_read); self.cleanup_proof=None
             raise

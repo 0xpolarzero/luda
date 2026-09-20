@@ -26,6 +26,9 @@ def main():
                 if request['operation']=='press':raise DesktopError('SESSION_CHANGED','X server changed before input; no input sent.')
                 result={'released':False,'session_changed':True,'cleanup_skipped':True}
             else:
+                from ._private_input import bind_private_input
+                binding=bind_private_input(native)
+                binding.validate()
                 test=C.CDLL('libXtst.so.6');test.XTestFakeButtonEvent.argtypes=[C.c_void_p,C.c_uint,C.c_int,C.c_ulong]
                 native.lib.XSync.argtypes=[C.c_void_p,C.c_int]
                 if not test.XTestFakeButtonEvent(native.display,int(request['button']),request['operation']=='press',0):

@@ -1,4 +1,5 @@
 """Private isolated XKB/XTest helper. Never imported by the MCP server."""
+from contextlib import contextmanager
 import ctypes as C
 import json
 import sys
@@ -22,6 +23,9 @@ class Modifiers(C.Structure):
 class Keyboard:
     def __init__(self):
         self.x=_NativeX11();x=self.x.lib
+        from ._private_input import bind_private_input
+        self.private=bind_private_input(self.x)
+        self._grab_depth=0
         x.XQueryKeymap.argtypes=[C.c_void_p,C.c_void_p]
         x.XkbGetState.argtypes=[C.c_void_p,C.c_uint,C.POINTER(State)]
         x.XStringToKeysym.argtypes=[C.c_char_p];x.XStringToKeysym.restype=C.c_ulong
@@ -105,9 +109,7 @@ class Keyboard:
             raise DesktopError('INPUT_HELD','Keys or pointer buttons are already held; release them before requesting a chord. No input changed.')
         if state.latched_mods or state.latched_group:
             raise DesktopError('UNSUPPORTED_INPUT_STATE','Latched keyboard state is active; no input changed.')
-        active=self.x._property(self.x.root,'_NET_ACTIVE_WINDOW',1)
-        if not active or active[2]!=[target]:
-            raise DesktopError('FOCUS_CHANGED','Target no longer has active-window focus; no input sent.')
+        self.require_focus(target)
         names={'ctrl':'Control_L','shift':'Shift_L','alt':'Alt_L','super':'Super_L'}
         codes=[self.modifier(names[name])[0] for name in parts[:-1]]
         shift,mask=self.modifier('Shift_L')
@@ -134,16 +136,10 @@ class Keyboard:
         # The server cannot destroy/reuse a target between this identity check
         # and its key-down. Never keep the grab across sleeps or application
         # work; disconnecting this isolated helper also releases the grab.
-        self.x.lib.XGrabServer(self.x.display)
-        try:
+        with self.guard():
             self.target_token(target,target_generation)
-            active=self.x._property(self.x.root,'_NET_ACTIVE_WINDOW',1)
-            if not active or active[2]!=[target]:
-                raise DesktopError('FOCUS_CHANGED','Target lost focus before key-down.',effect='uncertain')
+            self.require_focus(target)
             self.event(code,True)
-        finally:
-            self.x.lib.XUngrabServer(self.x.display)
-            self.x.lib.XSync(self.x.display,False)
 
     def client_resource(self):
         resource=self.x.lib.XCreateSimpleWindow(self.x.display,self.x.root,0,0,1,1,0,0,0)
@@ -176,10 +172,53 @@ class Keyboard:
             x.XUngrabServer(self.x.display)
             x.XSync(self.x.display,False)
 
+    def require_focus(self,target):
+        self.private.validate()
+        window=self.private.focus_window()
+        # Toolkits may focus a child input window. Keep that focus rather than
+        # forcing the top-level between each key of an IME or popup interaction.
+        x=self.x.lib
+        x.XQueryTree.argtypes=[C.c_void_p,C.c_ulong,C.POINTER(C.c_ulong),C.POINTER(C.c_ulong),C.POINTER(C.POINTER(C.c_ulong)),C.POINTER(C.c_uint)]
+        for _ in range(64):
+            if window==target:return
+            if window in (0,1,self.x.root):break
+            root,parent=C.c_ulong(),C.c_ulong();children=C.POINTER(C.c_ulong)();count=C.c_uint()
+            okay=x.XQueryTree(self.x.display,window,C.byref(root),C.byref(parent),C.byref(children),C.byref(count))
+            if children:x.XFree(children)
+            if not okay or parent.value==window:break
+            window=parent.value
+        raise DesktopError('FOCUS_CHANGED','The agent keyboard no longer targets this window; no input sent.')
+
+    @contextmanager
+    def guard(self):
+        # Device removal may reset a connection's ClientPointer to the human
+        # pair. Serialize identity validation and dispatch against that race.
+        first=self._grab_depth==0
+        if first:self.x.lib.XGrabServer(self.x.display)
+        self._grab_depth+=1
+        try:
+            self.private.validate()
+            yield
+        finally:
+            self._grab_depth-=1
+            if first:
+                self.x.lib.XUngrabServer(self.x.display)
+                self.x.lib.XSync(self.x.display,False)
+
+    def focus_target(self,target,token):
+        with self.guard():
+            self.target_token(target,token)
+            try:self.require_focus(target)
+            except DesktopError as exc:
+                if exc.code!='FOCUS_CHANGED':raise
+                self.private.focus(target)
+            self.require_focus(target)
+
     def event(self,code,down):
-        if not self.test.XTestFakeKeyEvent(self.x.display,code,down,0):
-            raise DesktopError('KEYBOARD_UNAVAILABLE','XTest key dispatch failed.',effect='uncertain')
-        self.x.lib.XSync(self.x.display,False)
+        with self.guard():
+            if not self.test.XTestFakeKeyEvent(self.x.display,code,down,0):
+                raise DesktopError('KEYBOARD_UNAVAILABLE','XTest key dispatch failed.',effect='uncertain')
+            self.x.lib.XSync(self.x.display,False)
     def close(self):self.x.close()
 
 
@@ -193,11 +232,18 @@ def main():
         keyboard=Keyboard()
         if sys.argv[1]=='probe':
             state=keyboard.state()
-            emit({'available':True,'backend':'XKB + XTest + XI2','group':state.group,'locked_mods':state.locked_mods,
+            emit({'available':True,'backend':'private XI2 + XKB + XTest','group':state.group,'locked_mods':state.locked_mods,
                   'input_held':bool(keyboard.pressed() or keyboard.buttons() or state.base_mods),
                   'latched_input':bool(state.latched_mods or state.latched_group),
                   'mapping':'Current group, named keys with ordinary Shift; unsupported symbols are refused.',
-                  'cleanup':'Owned injector termination and planned-key release; concurrent same-key human input remains indistinguishable.'})
+                  'cleanup':'Owned injector termination and release on the private agent devices only.'})
+        elif sys.argv[1]=='check_focus':
+            keyboard.target_token(request['target'],request['target_generation'])
+            keyboard.require_focus(request['target'])
+            emit({'effect':'none','agent_focus':True})
+        elif sys.argv[1]=='focus':
+            keyboard.focus_target(request['target'],request['target_generation'])
+            emit({'effect':'verified','agent_focus':True})
         elif sys.argv[1]=='plan':emit(keyboard.plan(request['chord'],request['target'],request.get('target_generation'),request.get('count',1)))
         elif sys.argv[1]=='release':
             codes=request['keycodes']

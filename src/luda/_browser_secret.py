@@ -37,7 +37,7 @@ def replace(worker, token, text, Refused):
         raise Refused('UNSUPPORTED_TEXT')
     if not before['focused']:
         worker.effect='uncertain'
-        worker.page.bring_to_front()
+        worker.input.focus(worker.native_target)
         item['node'].focus()
         worker.snapshot(token,mutation=True,focus=True,secret=True)
     def plan(chord):
