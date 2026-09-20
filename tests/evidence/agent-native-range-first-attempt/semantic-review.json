@@ -1,0 +1,22 @@
+{
+  "run": "run-1789899315424105807",
+  "events_sha256": "b44bf555810df94e47b831481d7d6856f20d3dc7a5420b8c9a74b3a4ebbe1981",
+  "review": "Independent parsing of original public tool results; no rerun. Original image-only grader report unchanged.",
+  "current_parser": {
+    "range_calls": [
+      {
+        "extend": true,
+        "same_observed_group": true
+      }
+    ],
+    "range_add_discovered": true,
+    "exact_public_semantic_receipt": true
+  },
+  "scope": "Last public inspection is complete selected table-cell set Record002,003,004,006; independent app IDs/event history agree. No screenshot or image receipt inferred.",
+  "independent_root_review": {
+    "trace_sha256_verified": true,
+    "exact_complete_public_selected_set": true,
+    "receipt_label_matches": true,
+    "scope": "Final selected table cells 002,003,004,006 all selected; same window, all pruning false, no unreadable branches or subsequent tool call. App oracle separately establishes actual selection."
+  }
+}

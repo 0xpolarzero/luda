@@ -1,0 +1,6 @@
+Processing request of type CallToolRequest
+Processing request of type ListToolsRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+{"initial": {"selected_ids": [6], "events": [], "row_count": 8}, "actual": {"selected_ids": [2, 3, 4, 6], "events": [[2, 6], [2, 3, 6], [2, 3, 4, 6]], "row_count": 8}, "checks": {"exact_selected_ids": true, "initial_record_preserved": true, "no_unrequested_selection": true}}
