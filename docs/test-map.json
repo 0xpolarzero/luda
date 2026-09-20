@@ -699,9 +699,19 @@
         "test_semantic.ProtectedInput.test_provider_exception_cannot_echo_secret",
         "test_semantic.ProtectedInput.test_nonprotected_refused",
         "test_semantic.ProtectedInput.test_missing_editable_interface_refused",
-        "test_semantic.ProtectedInput.test_invalid_secret_never_reaches_provider"
+        "test_semantic.ProtectedInput.test_invalid_secret_never_reaches_provider",
+        "test_browser_secret.BrowserSecretTests.test_dispatch_only_without_clipboard_or_content_readback",
+        "test_browser_secret.BrowserSecretTests.test_unknown_active_or_stale_before_focus_never_inputs",
+        "test_browser_secret.BrowserSecretTests.test_post_native_plan_guard_precedes_selection_and_content",
+        "test_browser_secret.BrowserSecretTests.test_replacement_after_select_prevents_content_dispatch",
+        "test_browser_secret.BrowserSecretTests.test_masking_change_after_input_is_uncertain_no_retry",
+        "test_browser_secret.BrowserSecretTests.test_empty_replace_uses_backspace_without_enter_or_plaintext",
+        "test_browser_secret.BrowserSecretTests.test_invalid_single_line_text_has_no_effect",
+        "test_browser_secret.BrowserSecretTests.test_parent_rejects_secret_payload_in_success",
+        "test_browser_secret.BrowserSecretTests.test_utf16_maxlength_refuses_astral_before_focus",
+        "test_browser_secret.BrowserSecretTests.test_parent_rejects_progress_before_any_secret_projection"
       ],
-      "limits": "Mock protected-input provider; live GTK protected field local coverage exists, authentication workflows and browser protected input remain unqualified."
+      "limits": "Mock native protected-input and owned-browser contracts cover dispatch-only results, preflight boundaries, uncertain changes and payload rejection. Separate owned Chromium live evidence verifies exact synthetic application hashes and clipboard preservation, including an explicitly paste-blocking field; those effects are not established by these mocks. Other engines, arbitrary masked controls, actual accounts and release qualification remain outside this evidence."
     },
     "AUTH-07": {
       "implementation": "partial",
@@ -710,9 +720,19 @@
         "test_semantic.ProtectedInput.test_provider_exception_cannot_echo_secret",
         "test_semantic.ProtectedInput.test_nonprotected_refused",
         "test_semantic.ProtectedInput.test_missing_editable_interface_refused",
-        "test_semantic.ProtectedInput.test_invalid_secret_never_reaches_provider"
+        "test_semantic.ProtectedInput.test_invalid_secret_never_reaches_provider",
+        "test_browser_secret.BrowserSecretTests.test_dispatch_only_without_clipboard_or_content_readback",
+        "test_browser_secret.BrowserSecretTests.test_unknown_active_or_stale_before_focus_never_inputs",
+        "test_browser_secret.BrowserSecretTests.test_post_native_plan_guard_precedes_selection_and_content",
+        "test_browser_secret.BrowserSecretTests.test_replacement_after_select_prevents_content_dispatch",
+        "test_browser_secret.BrowserSecretTests.test_masking_change_after_input_is_uncertain_no_retry",
+        "test_browser_secret.BrowserSecretTests.test_empty_replace_uses_backspace_without_enter_or_plaintext",
+        "test_browser_secret.BrowserSecretTests.test_invalid_single_line_text_has_no_effect",
+        "test_browser_secret.BrowserSecretTests.test_parent_rejects_secret_payload_in_success",
+        "test_browser_secret.BrowserSecretTests.test_utf16_maxlength_refuses_astral_before_focus",
+        "test_browser_secret.BrowserSecretTests.test_parent_rejects_progress_before_any_secret_projection"
       ],
-      "limits": "Mock protected-input provider; live GTK protected field local coverage exists, authentication workflows and browser protected input remain unqualified."
+      "limits": "Mock native protected-input and owned-browser contracts cover dispatch-only results, preflight boundaries, uncertain changes and payload rejection. Separate owned Chromium live evidence verifies exact synthetic application hashes and clipboard preservation, including an explicitly paste-blocking field; those effects are not established by these mocks. Other engines, arbitrary masked controls, actual accounts and release qualification remain outside this evidence."
     },
     "SEC-07": {
       "implementation": "partial",
