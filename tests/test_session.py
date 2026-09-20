@@ -77,7 +77,7 @@ class SessionLaunchTests(unittest.TestCase):
         self.assertEqual(env['HOME'],'/home/desktop')
     def test_browser_selection_checked_after_drop_without_ambient_passthrough(self):
         self.setup_launch();events=[]
-        with patch('luda.session.os.initgroups'),patch('luda.session.os.setgid'),patch('luda.session.os.setuid',side_effect=lambda uid:events.append('drop')),patch('luda.managed_browser.selected',side_effect=lambda prefix:events.append('verify') or dict(executable='/verified/chrome',version='1.2.3.4',sha256='a'*64)),patch.dict(os.environ,{'LUDA_CHROMIUM_EXECUTABLE':'/ambient/untrusted'}),patch('luda.session.os.execvpe') as execute:
+        with patch('luda.session.os.initgroups'),patch('luda.session.os.setgid'),patch('luda.session.os.setuid',side_effect=lambda uid:events.append('drop')),patch('luda.managed_browser.selected',side_effect=lambda prefix:events.append('verify') or dict(executable='/verified/chrome',version='1.2.3.4',sha256='a'*64,architecture='aarch64')),patch.dict(os.environ,{'LUDA_CHROMIUM_EXECUTABLE':'/ambient/untrusted'}),patch('luda.session.os.execvpe') as execute:
             session.main()
         self.assertEqual(events,['drop','verify'])
         self.assertEqual(execute.call_args.args[2]['LUDA_CHROMIUM_EXECUTABLE'],'/verified/chrome')

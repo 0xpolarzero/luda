@@ -102,6 +102,7 @@ def main():
         env['LUDA_CHROMIUM_EXECUTABLE'] = browser['executable']
         env['LUDA_MANAGED_BROWSER_VERSION'] = browser['version']
         env['LUDA_MANAGED_BROWSER_SHA256'] = browser['sha256']
+        env['LUDA_MANAGED_BROWSER_ARCHITECTURE'] = browser['architecture']
     os.execvpe(command[0], command, env)
 
 

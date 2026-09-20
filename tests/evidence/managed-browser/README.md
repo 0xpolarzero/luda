@@ -30,3 +30,17 @@ failures (wire method argument collision and small readline limit) are retained
 alongside corrected runs; none is counted as a product pass. Sixty-eight focused
 installer, bootstrap, session and browser checks passed. Hosted and Silo onboarding
 qualification remain separate.
+
+Review follow-up: `--replace-owned-executable /absolute/disposable-copy/chrome`
+optionally replaces only an executable owned by the running test account and
+matching the installed selection, after MCP startup. It requires a separately
+provisioned disposable browser distribution copy; never pass the real supplied
+browser. The probe expects `BROWSER_SELECTION_CHANGED`, `effect: none`, and no
+replacement execution marker, then restores the original file in `finally` and
+performs the normal workflow. Linux UID1001 installed release
+`0.1.0-3e39445c7b0b2d4a` passed this actual follow-up; final runtime modules matched
+the installed wheel. Hashes/result are retained at
+`/workspace/luda-managed-browser-artifacts/review-qualification.json`. Seventy-two
+focused checks include the independently reproduced FIFO, replacement and
+unmanifested-configuration regressions. This is distinct from the earlier result,
+which did not test replacement after startup.

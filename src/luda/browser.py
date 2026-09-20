@@ -43,12 +43,17 @@ MESSAGES = {
 
 def capability(environment):
     executable = environment.get('LUDA_CHROMIUM_EXECUTABLE','')
-    return {'available':importlib.util.find_spec('playwright') is not None and bool(executable) and Path(executable).is_absolute() and Path(executable).is_file() and os.access(executable,os.X_OK),
+    try:
+        playwright_version=importlib.metadata.version('playwright') if importlib.util.find_spec('playwright') is not None else None
+    except (importlib.metadata.PackageNotFoundError, ValueError, TypeError, OSError):
+        playwright_version=None
+    return {'available':playwright_version is not None and bool(executable) and Path(executable).is_absolute() and Path(executable).is_file() and os.access(executable,os.X_OK),
             'dependency':'optional browser extra; explicit LUDA_CHROMIUM_EXECUTABLE',
             'managed_selection_verified':bool(environment.get('LUDA_MANAGED_BROWSER_SHA256')),
+            'managed_verification_scope':'launcher_startup; revalidated before each open' if environment.get('LUDA_MANAGED_BROWSER_SHA256') else None,
             'verified_executable_version':environment.get('LUDA_MANAGED_BROWSER_VERSION'),
             'launch_verified':False,
-            'playwright_version':importlib.metadata.version('playwright') if importlib.util.find_spec('playwright') is not None else None,
+            'playwright_version':playwright_version,
             'automatic_downloads':False,'lifetime':'temporary_session',
             'unsaved_content_survives_disconnect':False,'field_limit':64000}
 
@@ -135,6 +140,11 @@ class OwnedBrowser:
             raise DesktopError('BROWSER_ALREADY_OPEN',MESSAGES['BROWSER_ALREADY_OPEN'])
         if not capability(self.desktop.environment)['available']:
             raise DesktopError('BROWSER_ADAPTER_UNAVAILABLE','Install the optional locked browser dependencies and configure LUDA_CHROMIUM_EXECUTABLE; Luda never downloads a browser automatically.')
+        from .managed_browser import verify_environment
+        try:
+            verify_environment(self.desktop.environment, checkpoint)
+        except ValueError:
+            raise DesktopError('BROWSER_SELECTION_CHANGED','Managed browser selection is unavailable or changed; review provisioning before opening it.',effect='none') from None
         self.topology=self.desktop.display().topology()
         proof_read, proof_write = os.pipe2(os.O_CLOEXEC | os.O_NONBLOCK)
         self.cleanup_proof = proof_read

@@ -21,7 +21,7 @@ the independently verified expected digest, not a value guessed from this guide)
 
 Supported architecture values are `aarch64` and `x86_64`, matching the current Linux
 host and ELF machine. The executable must be a canonical absolute path, an
-executable regular ELF64 file, without writable group/other bits. Shell wrappers
+executable regular ELF64 file of at most 1GiB, without writable group/other bits. Shell wrappers
 and symlink paths are deliberately unsupported. The hash covers **only the
 executable file**, not adjacent resources/libraries or the entire distribution.
 Provision those files from your separately verified artifact or package source.
@@ -50,10 +50,12 @@ It does not publish a release or download a browser artifact.
 Each browser-enabled release stores `.venv/luda-browser.json`. `luda-session`
 revalidates that fixed selection **after switching to the desktop account**, then
 passes only its executable and verification metadata to the launched command.
+Before every owned-browser open, the backend revalidates the expected selection again; changed files refuse with no dispatched input. Hashing uses nonblocking/nofollow regular-file descriptors, bounded chunks, a five-second deadline, operation cancellation checks and before/after file identity checks. Hash deadline/cancellation checks are cooperative between reads; they do not guarantee interruption of a kernel-blocked remote-filesystem read. This is not protection against a hostile same-account actor racing arbitrary changes after verification, nor does it hash adjacent browser resources.
+
 Ambient `LUDA_CHROMIUM_EXECUTABLE` is still discarded. Existing managed MCP/SSH
 command paths remain unchanged. Doctor reports the Playwright version and verified
 executable version separately from `launch_verified: false`: dependency/version
-checks do not establish sandbox, display or application launch success. Explicit
+checks do not establish sandbox, display or application launch success. Doctor labels the verification as historical launcher-startup evidence; it does not assert that the file has remained unchanged since then. Missing Playwright distribution metadata makes the optional capability unavailable without breaking core diagnostics. Explicit
 `desktop_open_browser` reports the version of the actual launched browser.
 
 Rollback verifies the old release and its external executable before selecting it;

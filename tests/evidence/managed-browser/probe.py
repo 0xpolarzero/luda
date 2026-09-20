@@ -3,7 +3,7 @@ import argparse,asyncio,http.server,json,os,pwd,subprocess,sys,threading,time
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[3];sys.path.insert(0,str(ROOT/'tests'))
 import live_mcp_disconnect as wire
-parser=argparse.ArgumentParser();parser.add_argument('--prefix',type=Path,required=True);parser.add_argument('--output',type=Path,required=True);args=parser.parse_args()
+parser=argparse.ArgumentParser();parser.add_argument('--prefix',type=Path,required=True);parser.add_argument('--output',type=Path,required=True);parser.add_argument('--replace-owned-executable',type=Path);args=parser.parse_args()
 if os.getuid()==0 or os.environ.get('LUDA_ISOLATED_TEST_DISPLAY')!='1':raise SystemExit('Private ordinary-account session required')
 args.output.mkdir(parents=True,exist_ok=True);wire.OUT=args.output
 oracle={'text':None}
@@ -30,6 +30,22 @@ async def main():
   await client.request('initialize',{'protocolVersion':'2025-03-26','capabilities':{},'clientInfo':{'name':'managed-browser-probe','version':'1'}});await client.send({'jsonrpc':'2.0','method':'notifications/initialized'})
   doctor=await client.call('desktop_doctor');cap=doctor['owned_browser']
   assert cap['available'] and cap['managed_selection_verified'] and cap['verified_executable_version']=='153.0.8010.12' and cap['playwright_version']=='1.63.0' and not cap['launch_verified'],cap
+  replacement_refused=False
+  if args.replace_owned_executable:
+   executable=args.replace_owned_executable.resolve()
+   selection=json.loads((args.prefix/'current/.venv/luda-browser.json').read_text())
+   assert str(executable)==selection['executable'] and executable.stat().st_uid==os.getuid()
+   backup=executable.with_name(executable.name+'.probe-original');assert not backup.exists()
+   marker=args.output/'replacement-executed'
+   executable.rename(backup)
+   try:
+    executable.write_text('#!/bin/sh\ntouch "'+str(marker)+'"\n');executable.chmod(0o755)
+    response=await client.request('tools/call',{'name':'desktop_open_browser','arguments':{'url':'about:blank','lifetime':'temporary_session'}})
+    value=json.loads(response['result']['content'][0]['text'])
+    assert value['code']=='BROWSER_SELECTION_CHANGED' and value['effect']=='none',value
+    assert not marker.exists();replacement_refused=True
+   finally:
+    executable.unlink(missing_ok=True);backup.rename(executable)
   opened=await client.call('desktop_open_browser',url=f'http://127.0.0.1:{server.server_port}',lifetime='temporary_session');wid=opened['window_id']
   await client.call('desktop_activate',window_id=wid)
   tree=await client.call('desktop_inspect',window_id=wid);field=next(n for n in tree['text_fields'] if n['name']=='Managed field')
@@ -50,7 +66,7 @@ async def main():
    if not profile.exists() and not wire.alive(owned):break
    await asyncio.sleep(.03)
   assert not profile.exists() and not wire.alive(owned)
-  result={'passed':True,'uid':os.getuid(),'release':(args.prefix/'current').resolve().name,'capability':cap,'actual_browser':opened,'independent_unicode_text_match':True,'cleanup_confirmed':True,'ambient_selection_ignored':True}
+  result={'passed':True,'uid':os.getuid(),'release':(args.prefix/'current').resolve().name,'capability':cap,'actual_browser':opened,'independent_unicode_text_match':True,'cleanup_confirmed':True,'ambient_selection_ignored':True,'post_startup_replacement_refused':replacement_refused}
   (args.output/'result.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result))
  finally:
   if client.process:await client.close()

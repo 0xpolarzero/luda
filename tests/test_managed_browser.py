@@ -39,6 +39,44 @@ class BrowserSelection(unittest.TestCase):
         self.assertIsNone(browser.selected(self.root))
         config=self.root/browser.CONFIG_NAME;config.write_text(json.dumps(self.value));config.chmod(0o666)
         with self.assertRaises(ValueError):browser.selected(self.root)
+    def test_fifo_and_sparse_oversize_refused_before_probe(self):
+        self.path.unlink();os.mkfifo(self.path)
+        import subprocess
+        code='import json;from luda.managed_browser import verify;verify(json.loads('+repr(json.dumps(self.value))+'))'
+        result=subprocess.run([sys.executable,'-c',code],capture_output=True,timeout=1)
+        self.assertNotEqual(result.returncode,0)
+        self.path.unlink()
+        with self.path.open('wb') as stream:stream.truncate(1024*1024*1024+1)
+        self.path.chmod(0o755)
+        with patch.object(browser,'bounded_version') as probe,self.assertRaises(ValueError):browser.verify(self.value)
+        probe.assert_not_called()
+    def test_hash_cancellation_and_mutation_refuse_before_version(self):
+        calls=[]
+        def cancel():
+            calls.append(1)
+            if len(calls)>1:raise RuntimeError('cancelled')
+        with patch.object(browser,'bounded_version') as probe,self.assertRaisesRegex(RuntimeError,'cancelled'):browser.verify(self.value,checkpoint=cancel)
+        probe.assert_not_called()
+        read=os.read
+        def mutate(fd,size):
+            value=read(fd,size)
+            if value:self.path.write_bytes(b'changed')
+            return value
+        with patch.object(browser.os,'read',side_effect=mutate),patch.object(browser,'bounded_version') as probe,self.assertRaises(ValueError):browser.verify(self.value)
+        probe.assert_not_called()
+    def test_changed_selection_refuses_open_before_guard(self):
+        from luda.browser import OwnedBrowser,capability
+        from luda.common import DesktopError
+        from unittest.mock import Mock
+        environment=dict(LUDA_CHROMIUM_EXECUTABLE=str(self.path),LUDA_MANAGED_BROWSER_SHA256=self.value['sha256'],LUDA_MANAGED_BROWSER_VERSION=self.value['version'])
+        self.path.write_bytes(b'replacement');desktop=Mock(environment=environment)
+        with patch('luda.browser.importlib.metadata.version',return_value='1.63.0'),patch('luda.browser.subprocess.Popen') as spawn,self.assertRaises(DesktopError) as caught:OwnedBrowser(desktop).open('about:blank','temporary_session')
+        self.assertEqual(caught.exception.code,'BROWSER_SELECTION_CHANGED');self.assertEqual(caught.exception.effect,'none')
+        desktop.display.assert_not_called();spawn.assert_not_called()
+        with patch('luda.browser.importlib.util.find_spec',return_value=True),patch('luda.browser.importlib.metadata.version',side_effect=__import__('importlib.metadata').metadata.PackageNotFoundError):
+            result=capability(environment)
+        self.assertFalse(result['available']);self.assertIsNone(result['playwright_version'])
+
     def test_bounded_probe_cleans_successful_parent_background_child(self):
         self.root.chmod(0o755)
         script=self.root/'probe';marker=self.root/'late'
@@ -59,6 +97,14 @@ class BrowserSelection(unittest.TestCase):
 class ManagedInstallerBrowser(unittest.TestCase):
     setUp=fixture.Installation.setUp
     runner=fixture.Installation.runner
+    def test_added_browser_config_not_admitted_into_base_identity(self):
+        base=installer.install(self.prefix,self.source,self.runner)
+        path=self.prefix/'current/.venv/luda-browser.json';path.write_text('{}')
+        with patch.object(installer,'selected_browser') as selected,self.assertRaises(installer.InstallError):installer.install(self.prefix,self.source,self.runner)
+        selected.assert_not_called();self.assertTrue(path.exists())
+        with self.assertRaises(installer.InstallError):installer.rollback(self.prefix,base['release'])
+        self.assertEqual((self.prefix/'current').resolve().name,base['release'])
+
     def test_optional_identity_repeat_failure_and_rollback(self):
         config=self.root/'browser.json';config.write_text('{}')
         value=dict(schema_version=1,executable='/trusted/chrome',sha256='a'*64,version='1.2.3.4',architecture=platform.machine())

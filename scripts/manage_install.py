@@ -223,6 +223,9 @@ def verify_release(directory, identity, user="silo-desktop"):
         files = value.get('files')
         if value.get('product') != 'luda' or value.get('release') != identity or not isinstance(files, dict) or not files:
             raise InstallError('Invalid completed release manifest; refusing selection.')
+        browser_config = directory / '.venv/luda-browser.json'
+        if (browser_config.exists() or browser_config.is_symlink()) != ('.venv/luda-browser.json' in files):
+            raise InstallError('Browser configuration presence differs from this release manifest; preserve it and review the installation.')
         for name, expected in files.items():
             relative = Path(name)
             if relative.is_absolute() or '..' in relative.parts or not relative.parts:
