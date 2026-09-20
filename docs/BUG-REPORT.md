@@ -41,3 +41,16 @@ path and target IDs, returned only JSON, reported ready health, and left
 independently persisted widget text unchanged. Doctor’s tool-schema fingerprint
 matched canonical actual `tools/list` declarations. This tests the source checkout
 in the guest, not a new installed release or Mac SSH discovery.
+
+The safe-code/verb/build-identity follow-up at `7244781` passed 624 unit
+tests and 23 private-desktop MCP checks. A real root bootstrap upgrade then
+selected `0.1.0-32f10eb9e0f565de` under the test installation prefix, with
+system provisioning skipped. Its payload manifest verified; wheel SHA-256 was
+`b762256a3b0de901ca2c43cd3b2ace2954fc808e851525e48ec50011ba71190b`.
+All 23 MCP checks passed again using that installed wheel and copied independent
+fixtures, under UID 1001 on KasmVNC with the shared lease. Installed CLI report
+returned ready health, matching build hashes, fresh-process scope and no prior
+operations. Evidence is retained under `artifacts/report-identity/installed-7244781/`.
+The source qualification fingerprint was
+`0569ca1ecc0b1a43b950d172310575cd0065959cdfacd8def08cc98ead28af8f`;
+this installed result does not imply Mac host registration.
