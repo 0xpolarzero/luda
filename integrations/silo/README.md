@@ -534,3 +534,5 @@ suite pass (27 tests); the patch applies cleanly after0018.
 Patch 0020 refreshes the embedded agent skill for explicitly selected cooperating-editor clipboard transport, including clipboard effects and unsupported generic-editor boundaries.
 
 Patch 0021 clarifies the owned-browser field focus prerequisite before selecting text, following the held-out rich-editor agent evaluation.
+
+Patch 0022 documents the explicit owned-browser password-entry exception, including dispatch-only results and clipboard preservation. Other protected-field text tools remain unsupported.
