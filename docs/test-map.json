@@ -1211,6 +1211,25 @@
         "test_version_identity.CLIVersionIdentity.test_malformed_distribution_does_not_remove_ready_doctor"
       ],
       "limits": "Driver version, canonical actual tools/list identity, editable and installed bundled-skill bytes, malformed or unavailable artifacts, and shared CLI/public doctor identity path. The bundled artifact hash does not identify the skill loaded by an agent; no automatic plugin cache invalidation, schema migration or fresh Mac/SSH compatibility qualification."
+    },
+    "WAY-01": {
+      "implementation": "implemented",
+      "tests": [
+        "test_backend_support.BackendSupport.test_pure_wayland_rejected_before_opening_x11",
+        "test_backend_support.BackendSupport.test_missing_display_does_not_guess_default_server",
+        "test_backend_support.BackendSupport.test_server_refuses_before_handler_or_session_input",
+        "test_backend_support.BackendSupport.test_diagnostics_remain_available_without_accepting_the_backend"
+      ],
+      "limits": "Explicit unsupported-session refusal before handler/input; diagnostics remain available. Actual private Weston and stdio MCP refusal evidence is recorded in WAYLAND-BASELINE.md. No native Wayland backend or universal compositor qualification."
+    },
+    "WAY-05": {
+      "implementation": "implemented",
+      "tests": [
+        "test_backend_support.BackendSupport.test_xwayland_protocol_detection_needs_no_environment_hint",
+        "test_backend_support.BackendSupport.test_explicit_native_x11_target_is_not_rejected_by_unrelated_hints",
+        "test_backend_support.BackendSupport.test_server_refuses_before_handler_or_session_input"
+      ],
+      "limits": "XWAYLAND protocol-extension rejection prevents treating Xwayland access as native Wayland support; native X11 remains available despite stale hints. Actual Weston/Xwayland and native Xvfb evidence is recorded in WAYLAND-BASELINE.md. Older servers without the extension and other compositors are not qualified."
     }
   }
 }
