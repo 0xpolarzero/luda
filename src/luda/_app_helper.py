@@ -39,6 +39,17 @@ def read_request(stream):
     return json.loads(raw)
 
 
+def spawned_identity(pid):
+    """Capture only the callback's unreaped same-UID child generation."""
+    try:
+        proc=Path('/proc')/str(pid)
+        if type(pid) is not int or pid<=0 or proc.stat().st_uid!=os.getuid():return None
+        fields=(proc/'stat').read_text().rsplit(')',1)[1].split()
+        if fields[0]=='Z':return None
+        return {'pid':pid,'start':fields[19]}
+    except (OSError,IndexError):return None
+
+
 def main():
     effect='none'
     try:
@@ -72,12 +83,15 @@ def main():
             context.setenv('ACCESSIBILITY_ENABLED','1')
             context.setenv('QT_LINUX_ACCESSIBILITY_ALWAYS_ON','1')
             context.unsetenv('NO_AT_BRIDGE')
-            pids=[]
+            pids=[];identities=[]
             completion={'done':False,'failed':False};loop=GLib.MainLoop()
             def launched(*unused):completion['done']=True;loop.quit()
             def launch_failed(*unused):completion['failed']=True;loop.quit()
             context.connect('launched',launched);context.connect('launch-failed',launch_failed)
-            def pid_callback(info,pid,*unused):pids.append(pid)
+            def pid_callback(info,pid,*unused):
+                pids.append(pid)
+                identity=spawned_identity(pid)
+                if identity is not None:identities.append(identity)
             def child_setup(*unused):os.setsid()
             # Every launched process receives /dev/null; no inherited MCP pipes.
             # A new session also isolates newly spawned apps from helper cleanup.
@@ -97,7 +111,11 @@ def main():
                     if GLib.MainContext.default().find_source_by_id(timer):GLib.source_remove(timer)
             if not completion['done'] or completion['failed']:
                 raise AppError('LAUNCH_FAILED','Application activation did not complete; inspect before retrying.')
-            result={'effect':'dispatched','application_id':request['application_id'],'spawned_pids':pids,
+            # Reap an already-exited direct child without waiting for GUI lifetime.
+            for pid in pids:
+                try:os.waitpid(pid,os.WNOHANG)
+                except ChildProcessError:pass
+            result={'effect':'dispatched','application_id':request['application_id'],'spawned_pids':pids,'spawned_processes':identities,
                     'verification':'Launch accepted; observe windows to confirm readiness. An existing singleton may handle the request.'}
         else:raise AppError('INVALID_ARGUMENT','Unknown application operation.')
         print(json.dumps({'result':result}))

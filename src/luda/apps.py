@@ -1,7 +1,9 @@
 """Installed-application discovery and launch through native desktop entries."""
 import json
+import math
+import time
 from pathlib import Path
-from .common import DesktopError, run
+from .common import DesktopError, run, checkpoint, mark_effect
 
 
 def _text(value, name, maximum):
@@ -54,3 +56,42 @@ def launch_application(application_id,files_or_uris=None):
     if sum(len(v.encode('utf-8')) for v in files_or_uris)>65536:
         raise DesktopError('INVALID_ARGUMENT','Combined files and URIs exceed 64 KB.')
     return _call('launch',{'application_id':application_id,'files_or_uris':files_or_uris})
+
+
+def launch_and_observe(desktop,application_id,files_or_uris=None,wait_timeout=1.0):
+    """One launch followed by bounded observations, never document-readiness guesses."""
+    if type(wait_timeout) not in (int,float) or not math.isfinite(wait_timeout) or not 0<=wait_timeout<=3:
+        raise DesktopError('INVALID_ARGUMENT','wait_timeout must be a finite number from 0 to 3 seconds.')
+    result=launch_application(application_id,files_or_uris)
+    mark_effect('dispatched')
+    observation={'state':'not_requested','candidates':[], 'total_candidates':0,'truncated':False,
+                 'scope':'Windows match captured launch-process generations only; request-document readiness is not verified.'}
+    result['window_observation']=observation
+    if wait_timeout==0:return result
+    identities=set()
+    for item in result.get('spawned_processes',[]):
+        if isinstance(item,dict) and type(item.get('pid')) is int and item['pid']>0 and isinstance(item.get('start'),str) and item['start'].isdigit():
+            identities.add((item['pid'],item['start']))
+    if not identities:
+        observation['state']='unassociated'
+        return result
+    deadline=time.monotonic()+wait_timeout
+    while True:
+        checkpoint()
+        try:
+            windows=desktop.list_windows()
+        except DesktopError as exc:
+            if exc.code in ('CANCELLED','TIMEOUT'):raise
+            observation.update(state='unavailable',reason='Window enumeration failed after launch.')
+            return result
+        candidates=[{k:w[k] for k in ('window_id','pid','start','title','active') if k in w}
+                    for w in windows if (w.get('pid'),w.get('start')) in identities]
+        unavailable=getattr(desktop,'window_diagnostics',{}).get('unavailable_count',0)
+        count=len(candidates)
+        observation.update(candidates=candidates[:50],total_candidates=count,truncated=count>50,
+                           state='unavailable' if unavailable else 'multiple_candidates' if count>1 else 'one_candidate' if count==1 else 'pending')
+        if unavailable:observation['unavailable_windows']=unavailable
+        else:observation.pop('unavailable_windows',None)
+        remaining=deadline-time.monotonic()
+        if remaining<=0:return result
+        time.sleep(min(.05,remaining))

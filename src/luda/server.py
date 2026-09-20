@@ -20,7 +20,7 @@ from .session_reconnect import prepare_reconnect
 from .keyboard import set_recovery_hooks, recover_keyboard_input
 from .progress import operation_progress
 from .desktop import Desktop
-from .apps import list_applications, launch_application
+from .apps import list_applications, launch_and_observe
 from .session_state import require_session_input
 
 
@@ -124,7 +124,7 @@ def execute(method, *args, _cancelled=None, **kwargs):
                             d.require_supported_backend()
                         if not observation:
                             require_session_input()
-                        application_methods = {'list_applications':list_applications, 'launch_application':launch_application}
+                        application_methods = {'list_applications':list_applications, 'launch_application':lambda *values,**options:launch_and_observe(d,*values,**options)}
                         handler = application_methods[method] if method in application_methods else getattr(d,method)
                         result = handler(*args,**kwargs)
             except DesktopError as exc:
@@ -282,9 +282,9 @@ async def desktop_open_browser(url: str, lifetime: Literal['temporary_session'])
 
 
 @mcp.tool()
-async def desktop_launch(application_id: str, files_or_uris: list[str] | None = None) -> CallToolResult:
-    """Launch an installed application by its desktop_applications ID, optionally opening absolute existing paths or URIs. No command strings. Returns dispatched, not ready: inspect desktop_windows for the new or existing app; never blindly retry an uncertain launch."""
-    return await execute_async('launch_application',application_id,files_or_uris)
+async def desktop_launch(application_id: str, files_or_uris: list[str] | None = None, wait_timeout: float = 1.0) -> CallToolResult:
+    """Launch an installed application by its desktop_applications ID, optionally opening absolute existing paths or URIs. Returns dispatched with process-bound window candidates observed for wait_timeout seconds (default 1, range 0–3; 0 skips observation). Candidates do not prove document readiness; singleton association is never guessed. Inspect candidates or desktop_windows before acting; never blindly retry an uncertain launch."""
+    return await execute_async('launch_application',application_id,files_or_uris,wait_timeout)
 
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))

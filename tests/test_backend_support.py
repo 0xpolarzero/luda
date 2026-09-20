@@ -56,7 +56,7 @@ class BackendSupport(unittest.TestCase):
                 handler = Mock()
                 backend = SimpleNamespace(transaction=lambda: nullcontext(), control=Mock(), require_supported_backend=Mock(side_effect=DesktopError('UNSUPPORTED_BACKEND', 'Unsupported display.')))
                 setattr(backend, method, handler)
-                with patch.object(server, 'get_backend', return_value=backend), patch.object(server, 'require_session_input') as input_guard, patch.object(server, 'launch_application') as launch:
+                with patch.object(server, 'get_backend', return_value=backend), patch.object(server, 'require_session_input') as input_guard, patch.object(server, 'launch_and_observe') as launch:
                     result = server.execute(method, *arguments)
                 payload = json.loads(result.content[0].text)
                 self.assertTrue(result.isError)

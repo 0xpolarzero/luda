@@ -1,0 +1,6 @@
+Processing request of type ListToolsRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+{"checks": ["two same-generation windows, early decoy not called ready", "delayed single dispatch", "zero single dispatch", "raw boolean wait refused", "owned apps terminated and reaped; no replay"], "uid": 1001, "scope": "process-bound candidates, not request-document readiness"}

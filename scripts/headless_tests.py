@@ -74,7 +74,8 @@ def main():
                     if wm.poll() is not None or time.monotonic() > deadline:
                         raise RuntimeError('Isolated window manager failed to become ready')
                     time.sleep(.1)
-                suites = [('native', [str(ROOT / 'tests/live_backend.py')]),
+                suites = [('launch-observation', [str(ROOT / 'tests/live_launch_observation.py')]),
+                          ('native', [str(ROOT / 'tests/live_backend.py')]),
                           ('mcp', [str(ROOT / 'tests/live_mcp.py'), '--server', str(Path(sys.executable).parent / 'luda')]),
                           ('cancellation', [str(ROOT / 'tests/live_cancellation.py'), '--server', str(Path(sys.executable).parent / 'luda')]),
                           ('control', [str(ROOT / 'tests/live_control.py')]),

@@ -95,10 +95,10 @@ Open a fresh owned Chromium with explicit temporary_session lifetime. Browser/pr
 ## `desktop_launch`
 
 ```python
-desktop_launch(application_id: str, files_or_uris: list[str] | None=None)
+desktop_launch(application_id: str, files_or_uris: list[str] | None=None, wait_timeout: float=1.0)
 ```
 
-Launch an installed application by its desktop_applications ID, optionally opening absolute existing paths or URIs. No command strings. Returns dispatched, not ready: inspect desktop_windows for the new or existing app; never blindly retry an uncertain launch.
+Launch an installed application by its desktop_applications ID, optionally opening absolute existing paths or URIs. Returns dispatched with process-bound window candidates observed for wait_timeout seconds (default 1, range 0–3; 0 skips observation). Candidates do not prove document readiness; singleton association is never guessed. Inspect candidates or desktop_windows before acting; never blindly retry an uncertain launch.
 
 ## `desktop_windows`
 
