@@ -1,0 +1,24 @@
+{
+  "startup": {
+    "events": 24,
+    "distinct_context_generations": 4,
+    "all_assertions_passed": true
+  },
+  "late": {
+    "events": 12,
+    "distinct_context_generations": 4,
+    "all_assertions_passed": true
+  },
+  "mousepad": {
+    "events": 19,
+    "all_assertions_passed": true,
+    "file_unchanged": true,
+    "context_public_properties": [
+      "input-purpose",
+      "input-hints"
+    ],
+    "version": "Mousepad 0.6.1"
+  },
+  "scope": "Read-only hook prototype; process inactive and exact field identity remain unknown.",
+  "gtk_version": "3.24.41"
+}

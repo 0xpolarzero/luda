@@ -1,0 +1,14 @@
+{
+  "startup": {
+    "events": 23,
+    "distinct_context_generations": 4,
+    "all_assertions_passed": true
+  },
+  "late": {
+    "events": 11,
+    "distinct_context_generations": 4,
+    "all_assertions_passed": true
+  },
+  "scope": "Read-only hook prototype; process inactive and exact field identity remain unknown.",
+  "gtk_version": "3.24.41"
+}

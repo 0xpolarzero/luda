@@ -1,0 +1,1 @@
+Preserved first stock-Mousepad attempt: assertion incorrectly expected context_public_properties == []. Actual properties were input-purpose and input-hints; no field/context identity property. File oracle true; real preedit start/end events present. Corrected assertion to the observed two property names, without changing module semantics.
