@@ -50,6 +50,20 @@ class ReconnectTests(unittest.TestCase):
             self.assertEqual(subprocess_environment()['LUDA_RECONNECT_ORACLE'],'candidate')
         self.assertIsNone(subprocess_environment())
         self.assertEqual(os.environ.get('LUDA_RECONNECT_ORACLE'),original)
+    def test_input_companion_cleanup_uses_candidate_environment(self):
+        import tempfile
+        from pathlib import Path
+        from luda.input_guard import held_button
+        with tempfile.TemporaryDirectory() as directory:
+            proof=Path(directory)/'display'
+            executable=Path(directory)/'xdotool'
+            executable.write_text('#!'+sys.executable+'\nimport os,pathlib\npathlib.Path('+repr(str(proof))+').write_text(os.environ["DISPLAY"])\n')
+            executable.chmod(0o700)
+            with environment_scope(dict(os.environ,PATH=directory,DISPLAY=':replacement')),patch('luda.input_guard.run',side_effect=[b'',DesktopError('BACKEND_ERROR','release failed')]):
+                with self.assertRaises(DesktopError):
+                    with held_button('1'):pass
+            self.assertEqual(proof.read_text(),':replacement')
+
     def test_success_retains_pause_and_locks_during_swap(self):
         with reconnect.prepare_reconnect(self.old,None,lambda **kw:self.new) as (new,result):
             self.assertTrue(self.old.locked and new.locked)
