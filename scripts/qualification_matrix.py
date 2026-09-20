@@ -31,6 +31,7 @@ SUITES = {
     'file-destinations': suite('live_file_destinations.py', 'FILE-10', artifacts=('file-destinations','files')),
     'browser-download': suite('live_browser_download.py', 'FILE-09', browser='--executable', artifacts=('browser-download',), gaps=('Native chooser may lack accessibility; fixed-layout screenshot workflow qualified, interruption/resume not qualified',)),
     'overlays': suite('live_overlays.py', 'MENU-05 MENU-06 MENU-10', artifacts=('overlays',)),
+    'auth': suite('live_auth.py', 'AUTH-04 AUTH-05 AUTH-06 AUTH-10', browser='--browser', artifacts=('auth',), gaps=('Unmasked OTP has no nonretention guarantee; window metadata does not attest OAuth origin/session; same-window content can invalidate visual intent',)),
     'data-controls': suite('live_data.py', 'DATA-01 DATA-02 DATA-04 AX-01 AX-06', wm=False, artifacts=('data',), gaps=('GTK cell edit action can be ineffective and transient editor absent from AX; explicit GUI clipboard workflow is verified separately',)),
     'injector-reuse': suite('live_injector_reuse.py', 'KEY-07 LIFE-04', wm=False, artifacts=('injector-reuse',)),
     'firefox': suite('live_firefox.py', 'WEB-02 EDIT-01 EDIT-02 EDIT-03 EDIT-09 SEM-04 AX-09', wm=False, firefox='--executable', artifacts=('firefox',), gaps=('Gecko protected input lacks functional native EditableText; explicit secret case remains failing',)),
