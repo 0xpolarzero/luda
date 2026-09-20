@@ -1,5 +1,11 @@
 # Visible agent actions and automatic input routing
 
+The stricter requirement to never take over human input is not met by this
+shared-input implementation. See the subsequent
+[independent-input research and acceptance design](INDEPENDENT-INPUT-DESIGN.md).
+That design supersedes the earlier decision to set MPX aside; it is not yet a
+shipped or qualified input backend.
+
 Luda uses its existing tools to perform actions with as little desktop interference
 as the available mechanism permits. The agent does not select a background mode
 or use a separate set of tools. When foreground input is needed, Luda activates
