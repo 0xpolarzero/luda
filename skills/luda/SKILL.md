@@ -17,7 +17,7 @@ For text:
 - `desktop_paste` pastes at the caret through CLIPBOARD. The shortcut is selected from the window class; override it only for known app-specific bindings. Shift+Insert can use PRIMARY instead in some terminals. This tool only verifies clipboard contents; read the destination or observe the resulting UI.
 - LF, tabs, blank lines and Unicode are preserved by the tool. CR, NUL and other control characters are rejected rather than silently changed.
 - Use `desktop_type_secret` only for an observed protected field. It does not read or verify the secret value, and never submits it. Ordinary typing and reading refuse protected fields.
-- Use `desktop_press_keys` for deliberate Tab, Return, shortcuts and submission. Pasted newlines can execute commands in a terminal. Inspect multiline-paste dialogs and follow the user's intended action; the tool does not accept them automatically.
+- Use `desktop_press_keys` for deliberate Tab, Return, shortcuts and submission. `INPUT_HELD` means existing keys/buttons must be released before proceeding; do not clear human-held input. `UNSUPPORTED_KEYMAP` means the requested symbol is unavailable in the current keyboard group; use semantic text tools rather than changing the user’s layout. Pasted newlines can execute commands in a terminal. Inspect multiline-paste dialogs and follow the user's intended action; the tool does not accept them automatically.
 
 `effect=verified` names the specific condition checked. `dispatched` means input was sent. `uncertain` means an effect may already have occurred: inspect before retrying, especially for Save, Send, Delete or submission. Do not turn a timeout into an automatic repeated click.
 

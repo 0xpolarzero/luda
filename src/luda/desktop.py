@@ -1,6 +1,7 @@
 import base64
 from contextlib import contextmanager
 import hashlib
+from importlib.metadata import version
 import io
 import json
 import math
@@ -96,7 +97,7 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
 
     def doctor(self):
         dependencies = {c: shutil.which(c, path=self.environment.get('PATH', os.defpath)) is not None for c in ('xdotool','wmctrl','scrot','xclip','xprop')}
-        result = {'version':'0.1.0','backend':'X11 + AT-SPI','dependencies':dependencies,
+        result = {'version':version('luda'),'backend':'X11 + AT-SPI','dependencies':dependencies,
                   'display':self.environment.get('DISPLAY'),'session_bus':bool(self.environment.get('DBUS_SESSION_BUS_ADDRESS')),
                   'uid':os.getuid(),'transport':'stdio','support':'experimental X11; Wayland unsupported',
                   'ime_composition':composition_capability(),

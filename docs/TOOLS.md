@@ -130,7 +130,7 @@ Paste through CLIPBOARD when semantic typing is unavailable. Chooses common app 
 desktop_press_keys(window_id: str, chord: str)
 ```
 
-Send one deliberate chord, e.g. ctrl+s, ctrl+shift+v, Return, Tab, Escape. Requires target focus; never use this to type text.
+Send one deliberate chord, e.g. ctrl+s, ctrl+shift+v, Return, Tab, Escape. Requires target focus, refuses held keys/buttons, and uses the current keyboard group without changing its mapping. Unavailable symbols return UNSUPPORTED_KEYMAP; never use this to type text.
 
 ## `desktop_click`
 
