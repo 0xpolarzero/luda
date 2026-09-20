@@ -36,10 +36,11 @@ LUDA_ISOLATED_TEST_DISPLAY=1 xvfb-run -a \
 
 LUDA_ISOLATED_TEST_DISPLAY=1 xvfb-run -a \
   -s '-screen 0 1200x800x24 -nolisten tcp' \
-  dbus-run-session -- .venv/bin/python tests/live_ime_browser.py
+  dbus-run-session -- .venv/bin/python tests/live_ime_browser.py \
+  --executable "$LUDA_CHROMIUM_EXECUTABLE"
 ```
 
-The browser fixture uses the documented local Chromium test binary and blocks hostname resolution. Tested native packages: GTK 3.24.41, AT-SPI 2.52.0, XFWM4 4.18.0 on ARM64 Ubuntu. The observed input is synthetic fixture data only.
+The browser fixture requires an explicit Chromium executable and blocks hostname resolution. Tested native packages: GTK 3.24.41, AT-SPI 2.52.0, XFWM4 4.18.0 on ARM64 Ubuntu. The observed input is synthetic fixture data only.
 
 ## Why an engine query is insufficient
 

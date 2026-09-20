@@ -1,4 +1,5 @@
 """Real GTK IM-context key composition through Chromium, independent DOM events."""
+import argparse
 import json
 import os
 from pathlib import Path
@@ -12,6 +13,7 @@ from live_ime import stop
 ROOT=Path(__file__).resolve().parents[1];OUT=ROOT/'artifacts/ime-browser';OUT.mkdir(parents=True,exist_ok=True)
 
 def main():
+    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--executable',required=True);args=parser.parse_args()
     if os.environ.get('LUDA_ISOLATED_TEST_DISPLAY')!='1':raise SystemExit('Private display only.')
     records=[]
     with tempfile.TemporaryDirectory(prefix='luda-browser-ime-') as temp:
@@ -25,7 +27,7 @@ def main():
             d=Desktop()
             try:
                 with sync_playwright() as pw:
-                    browser=pw.chromium.launch(executable_path='/workspace/silo-desktop-research/browsers/chromium-1243/chrome-linux-arm64/chrome',headless=False,args=['--no-sandbox','--force-renderer-accessibility','--host-resolver-rules=MAP * 0.0.0.0'],env=dict(os.environ,ACCESSIBILITY_ENABLED='1'))
+                    browser=pw.chromium.launch(executable_path=args.executable,headless=False,args=['--no-sandbox','--force-renderer-accessibility','--host-resolver-rules=MAP * 0.0.0.0'],env=dict(os.environ,ACCESSIBILITY_ENABLED='1'))
                     try:
                         for operation in ('observe','focus','replace','insert','select','paste'):
                             page=browser.new_page()
