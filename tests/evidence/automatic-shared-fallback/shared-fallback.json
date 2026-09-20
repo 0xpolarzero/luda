@@ -1,0 +1,11 @@
+{
+  "passed": true,
+  "checks": [
+    "unknown toolkit gets automatic shared pointer fallback",
+    "core-only app click effect exactly once",
+    "automatic shared keyboard activation",
+    "three exact characters in intended app",
+    "human app did not receive fallback keys"
+  ],
+  "scope": "real MCP on private Xvfb/XFWM, independent core-only application file oracle"
+}

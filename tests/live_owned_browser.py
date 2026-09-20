@@ -87,7 +87,7 @@ async def main(executable):
                 await session.initialize()
                 async def call(tool,**kw):
                     r=await session.call_tool(tool,kw);v=json.loads(r.content[0].text)
-                    if r.isError:raise AssertionError((tool,v))
+                    if r.isError:raise AssertionError((tool,v,subprocess.check_output(['xprop','-root','_NET_ACTIVE_WINDOW'],text=True),subprocess.check_output(['xdotool','getwindowfocus','-f'],text=True)))
                     return v
                 async def error(name,code,**kw):
                     r=await session.call_tool(name,kw);v=json.loads(r.content[0].text)
@@ -190,12 +190,14 @@ async def main(executable):
                 await button('Replace field');await asyncio.sleep(.1)
                 await error('desktop_type','STALE_TARGET',element_id=eid,text='must not appear')
                 eid=await field('Exact field');await call('desktop_focus_element',element_id=eid)
+                await call('desktop_type',element_id=eid,text='',mode='replace')
+                await oracle('')
                 await human_foreground()
                 await call('desktop_press_keys',window_id=wid,chord='a')
                 native_actual=await oracle('a')
                 native_windows=(await call('desktop_windows'))['windows']
                 record('native-keys-automatic-foreground-fallback',native_actual.get('text')=='a' and
-                       next(w for w in native_windows if w['window_id']==wid)['active'] and
+                       int(subprocess.check_output(['xdotool','getwindowfocus'],text=True))==next(w for w in native_windows if w['window_id']==wid)['xid'] and
                        any(e['type']=='keydown' and e['key']=='a' and e['trusted'] for e in native_actual['events']),native_actual)
                 await call('desktop_type',element_id=eid,text='',mode='replace')
                 await call('desktop_press_keys',window_id=wid,chord='ctrl+shift+u')

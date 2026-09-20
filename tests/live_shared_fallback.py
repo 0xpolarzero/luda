@@ -36,7 +36,7 @@ async def child():
                     await client.initialize()
                     async def call(name,**args):
                         result=await client.call_tool(name,args);value=json.loads(result.content[0].text)
-                        assert not result.isError,(name,value)
+                        assert not result.isError,(name,value,command('xprop','-root','_NET_ACTIVE_WINDOW'),command('xdotool','getwindowfocus','-f'),command('wmctrl','-l'))
                         return value
                     windows=(await call('desktop_windows'))['windows']
                     target=next(w for w in windows if w['pid']==app.pid);wid=target['window_id']
@@ -44,11 +44,11 @@ async def child():
                     bounds=target['bounds'];x,y=bounds['x']+80,bounds['y']+80
                     await call('desktop_click',window_id=wid,snapshot_id=shot['snapshot_id'],x=x,y=y)
                     wait(lambda:state()['clicks']==1 and state()['releases']==1)
-                    assert int(command('xdotool','getactivewindow'))==target['xid']
+                    assert int(command('xdotool','getwindowfocus'))==target['xid']
                     command('xdotool','windowactivate','--sync',human_xid)
                     await call('desktop_press_keys',window_id=wid,chord='a',count=3)
                     wait(lambda:state()['text']=='aaa')
-                    assert int(command('xdotool','getactivewindow'))==target['xid']
+                    assert int(command('xdotool','getwindowfocus'))==target['xid']
                     assert json.loads((base/'human.json').read_text())['text']==''
                     report={'passed':True,'checks':['unknown toolkit gets automatic shared pointer fallback','core-only app click effect exactly once','automatic shared keyboard activation','three exact characters in intended app','human app did not receive fallback keys'],'scope':'real MCP on private Xvfb/XFWM, independent core-only application file oracle'}
                     output=ROOT/'artifacts/shared-fallback';output.mkdir(parents=True,exist_ok=True)
