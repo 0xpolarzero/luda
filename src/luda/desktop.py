@@ -323,7 +323,7 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
     def key(self, window_id, chord):
         validate_chord(chord)
         target = self.target_window(window_id)
-        return send_chord(chord, target['xid'])
+        return send_chord(chord, target['xid'], target_generation=target['window_id'].rsplit(':',1)[-1])
 
     def ax(self, request, mutating=False):
         worker = str(Path(__file__).with_name('ax_worker.py'))

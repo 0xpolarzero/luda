@@ -28,6 +28,14 @@ class FakeKeyboard(Keyboard):
 
 
 class KeyboardContract(unittest.TestCase):
+    def test_desktop_passes_observed_window_generation_to_native_planner(self):
+        from luda.desktop import Desktop
+        desktop=Desktop();self.addCleanup(desktop.close)
+        desktop.target_window=Mock(return_value={'xid':99,'window_id':'epoch:63:123:456:'+('a'*32)})
+        with patch('luda.desktop.send_chord',return_value={'effect':'dispatched'}) as send:
+            self.assertEqual(desktop.key('observed','Return')['effect'],'dispatched')
+        send.assert_called_once_with('Return',99,target_generation='a'*32)
+
     def test_bounded_grammar(self):
         for chord in ('ctrl+s','ctrl+shift+v','Return','A','F24','super+alt+F1'):
             self.assertTrue(validate_chord(chord))
