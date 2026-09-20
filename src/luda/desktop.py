@@ -458,7 +458,10 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         if 'error' in result:
             effect = result.get('effect', 'uncertain' if mutating and result['error']=='ACCESSIBILITY_ERROR' else 'none')
             mark_effect(effect)
-            raise DesktopError(result['error'],result.get('message','Accessibility failed.'),effect=effect,details={'progress':progress} if progress is not None else None)
+            details = {'progress': progress} if progress is not None else {}
+            if result['error'] == 'NOT_INTERACTABLE' and result.get('foreground_required') is True:
+                details['foreground_required'] = True
+            raise DesktopError(result['error'],result.get('message','Accessibility failed.'),effect=effect,details=details)
         if mutating:
             mark_effect(result.get('effect', 'dispatched'))
         return result
@@ -570,7 +573,8 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
                 # Only a provider refusal proven to precede mutation permits a
                 # single foreground retry. Never replay uncertain app effects.
                 if (op == 'read' or w.get('active') is not False or exc.effect != 'none'
-                        or exc.code not in ('FOCUS_CHANGED', 'NOT_INTERACTABLE')):
+                        or not (exc.code == 'FOCUS_CHANGED' or
+                                (exc.code == 'NOT_INTERACTABLE' and exc.details.get('foreground_required') is True))):
                     raise
                 with self.prepare_input_window(target['window_id']) as current:
                     result = dispatch(current)

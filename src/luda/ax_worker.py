@@ -1159,17 +1159,28 @@ def main(req):
     target = req["target"]
     if target.get("root_bus_guid") != bus_generation():
         return {"error": "STALE_TARGET", "message": "Accessibility bus changed; inspect again.", "effect": "none"}
+    root_showing = None
     for node, _ in candidates(pid,root_path=target["root_path"],root_provider=target.get("root_provider")):
         if node.path != target["path"]:
+            if node.path == target["root_path"]:
+                root_showing = "showing" in states_of(node)
             continue
         current = describe(node, pid)
+        if node.path == target["root_path"]:
+            root_showing = "showing" in current["states"]
         if (any(current[k] != target[k] for k in ("role", "name", "start"))
                 or current.get("name_fingerprint") != target.get("name_fingerprint")
                 or "defunct" in current["states"]):
             return {"error": "STALE_TARGET", "message": "Element identity changed; inspect again."}
         op = req["op"]
         if op not in ("read", "locate") and ("showing" not in current["states"] or not {"enabled", "sensitive"}.intersection(current["states"])):
-            return {"error": "NOT_INTERACTABLE", "message": "Element must be enabled and showing for mutation; inspect the visible target."}
+            result = {"error": "NOT_INTERACTABLE", "message": "Element must be enabled and showing for mutation; inspect the visible target."}
+            # Activation can reveal a hidden top-level window, but cannot
+            # enable a disabled control or reveal a scrolled-offscreen child.
+            if (root_showing is False and "showing" not in current["states"]
+                    and {"enabled", "sensitive"}.intersection(current["states"])):
+                result["foreground_required"] = True
+            return result
         if op in ("read", "set", "insert", "select", "value") and current["protected"]:
             return {"error": "PROTECTED_FIELD", "message": "This implementation does not read or write protected fields."}
         if target["root_bus_guid"] != bus_generation():

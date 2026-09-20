@@ -123,14 +123,14 @@ class BackgroundRouting(unittest.TestCase):
     def test_no_effect_background_focus_refusal_retries_once_in_foreground(self):
         for code in ('FOCUS_CHANGED', 'NOT_INTERACTABLE'):
             d = self.driver()
-            d.ax.side_effect = [DesktopError(code, 'preflight refusal'), {'effect': 'dispatched'}]
+            d.ax.side_effect = [DesktopError(code, 'preflight refusal', details={'foreground_required': True}), {'effect': 'dispatched'}]
             self.assertEqual(d.element('field', 'invoke')['effect'], 'dispatched')
             d.activate.assert_called_once_with('window')
             self.assertEqual(d.ax.call_count, 2)
 
     def test_hidden_background_target_still_refuses_after_one_foreground_try(self):
         d = self.driver()
-        d.ax.side_effect = DesktopError('NOT_INTERACTABLE', 'hidden')
+        d.ax.side_effect = DesktopError('NOT_INTERACTABLE', 'hidden', details={'foreground_required': True})
         with self.assertRaises(DesktopError) as caught: d.element('field', 'invoke')
         self.assertEqual(caught.exception.effect, 'uncertain')
         self.assertEqual(d.ax.call_count, 2)
@@ -168,3 +168,21 @@ class BackgroundRouting(unittest.TestCase):
             with self.assertRaises(DesktopError) as caught: d.paste('window', 'hello')
         self.assertEqual(caught.exception.effect, 'uncertain')
         d.activate.assert_called_once()
+
+    def test_disabled_or_offscreen_refusal_does_not_activate(self):
+        for reason in ('disabled', 'offscreen'):
+            d = self.driver()
+            d.ax.side_effect = DesktopError('NOT_INTERACTABLE', reason)
+            with self.assertRaises(DesktopError) as caught:
+                d.element('field', 'invoke')
+            self.assertEqual(caught.exception.effect, 'none')
+            d.activate.assert_not_called()
+            d.ax.assert_called_once()
+
+    def test_only_literal_foreground_marker_allows_fallback(self):
+        for value in (False, None, 'true', 1):
+            d = self.driver()
+            d.ax.side_effect = DesktopError('NOT_INTERACTABLE', 'refused', details={'foreground_required': value})
+            with self.assertRaises(DesktopError): d.element('field', 'invoke')
+            d.activate.assert_not_called()
+            d.ax.assert_called_once()
