@@ -14,6 +14,10 @@ from .common import DesktopError, checkpoint, mark_effect, process_identity
 from .timing import elapsed_time
 
 MESSAGES = {
+    'BROWSER_TIMEOUT':'Owned browser operation exceeded its deadline; inspect before retrying.',
+    'LINE_BREAK_SEMANTICS_REQUIRED':'This editor requires line_breaks=paragraph for LF; no input sent.',
+    'FORMATTING_CHANGED':'Existing rich-text formatting changed after input; inspect before retrying.',
+    'TEXT_REPRESENTATION_UNSUPPORTED':'This editor contains unsupported structure or marks; no exact text route is available.',
     'STALE_TARGET':'Browser document or field changed or expired; inspect again.',
     'PROTECTED_FIELD':'Owned browser ordinary text operations refuse protected fields.',
     'UNSUPPORTED_FIELD':'Only ordinary HTML text inputs and textareas are supported.',
@@ -100,7 +104,7 @@ class OwnedBrowser:
                             raise DesktopError(code if code in MESSAGES else 'BROWSER_OPERATION_FAILED',MESSAGES.get(code,MESSAGES['BROWSER_OPERATION_FAILED']),effect=effect)
                         return value
         except DesktopError as exc:
-            if exc.code not in MESSAGES or exc.code == 'BROWSER_CLOSED':
+            if exc.code not in MESSAGES or exc.code in ('BROWSER_CLOSED','BROWSER_TIMEOUT'):
                 self.close()
                 if sent and mutation:exc.effect='uncertain';mark_effect()
             raise
@@ -153,7 +157,7 @@ class OwnedBrowser:
             self.window_id=windows[0]['window_id']
             return {'window_id':self.window_id,'effect':'dispatched','browser_version':value['version'],
                     'lifetime':'temporary_session','profile':'temporary','unsaved_content_survives_disconnect':False,
-                    'supported_fields':'ordinary HTML text inputs and textareas; inspect text_fields',
+                    'supported_fields':'ordinary HTML fields and cooperating paragraph editors; inspect text_fields',
                     'retention':'Browser and profile are deleted on backend close, reconnect or server disconnect; unsaved content is lost.'}
         except BaseException:
             self.close()

@@ -491,7 +491,7 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
             validate_text(kwargs['text'])
         return self.ax({'op':op,'pid':w['pid'],'start':w['start'],'target':node,**kwargs},op!='read')
 
-    def type_text(self, element_id, text, mode='insert'):
+    def type_text(self, element_id, text, mode='insert', line_breaks=None):
         validate_text(text)
         if mode not in ('insert','replace'):
             raise DesktopError('INVALID_ARGUMENT','Text mode must be insert or replace.')
@@ -499,7 +499,9 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         if not target or elapsed_time()-target['time']>=60:
             raise DesktopError('STALE_TARGET','Element expired; inspect again.')
         if target.get('provider') == 'owned_browser':
-            return self.browser.element(target,'type',text=text,mode=mode)
+            return self.browser.element(target,'type',text=text,mode=mode,line_breaks=line_breaks)
+        if line_breaks is not None:
+            raise DesktopError('UNSUPPORTED_ACTION','Explicit paragraph input requires a cooperating owned-browser editor.')
         node = target['node']
         if node.get('protected'):
             raise DesktopError('PROTECTED_FIELD','Ordinary typing does not write protected fields.')

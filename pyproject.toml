@@ -22,3 +22,5 @@ where = ["src"]
 
 [tool.setuptools.data-files]
 "share/luda/skills/luda" = ["skills/luda/SKILL.md"]
+
+"share/luda/integrations/prosemirror" = ["integrations/prosemirror/luda-prosemirror.mjs"]

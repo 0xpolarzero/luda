@@ -4,6 +4,7 @@ import os
 import sys
 import time
 import uuid
+from ._browser_rich import decode as decode_rich, RichInvalid, unchanged_prefix
 from urllib.parse import urlsplit
 
 MAX_TEXT = 64000
@@ -113,7 +114,7 @@ class Worker:
                 self.elements[token] = {'node':node,'document':self.page.evaluate_handle('document'),'time':now,'type':meta['type'],'tag':meta['tag']}
                 rows.append({'token':token,'name':meta['name'],'role':role,'states':state,'protected':meta['protected'],
                              'supported':supported and not meta['protected'],'provider':'owned_browser',
-                             'text_representation':'html_value','actions':['focus','read','select','type'] if supported and not meta['protected'] else [],
+                             'text_representation':'html_value','multiline':meta['tag']=='TEXTAREA','line_break_semantics':'LF' if meta['tag']=='TEXTAREA' else None,'actions':['focus','read','select','type'] if supported and not meta['protected'] else [],
                              'interfaces':['Text'],'unsupported_reason':'PROTECTED_FIELD' if meta['protected'] else None if supported else 'UNSUPPORTED_FIELD'})
             kept = {id(v['node']) for v in self.elements.values()}
             for node in handles:
@@ -121,13 +122,42 @@ class Worker:
                     node.dispose()
             while len(self.elements)>1000:
                 self.dispose(next(iter(self.elements)))
-            return {'fields':rows,'truncated':count>500 or more,'unsupported':{'frames':False,'shadow_roots':'not traversed; field tokens only refer to light DOM','contenteditable':'unsupported'},'effect':'none'}
+            rich, rich_more = self.inspect_rich(request, now, max(0, request['limit']-len(rows)))
+            rows.extend(rich)
+            while len(self.elements)>1000:self.dispose(next(iter(self.elements)))
+            return {'fields':rows,'truncated':count>500 or more or rich_more,'unsupported':{'frames':False,'shadow_roots':'not traversed; field tokens only refer to light DOM','contenteditable':'only explicitly registered basic paragraph editors'},'effect':'none'}
         finally:
             doc.dispose()
 
+    def inspect_rich(self, request, now, limit):
+        registry=self.page.evaluate_handle("() => window.__ludaProseMirror?.version===1 ? window.__ludaProseMirror.list().slice(0,32) : []")
+        entries=registry.get_properties();rows=[];more=False
+        try:
+            for key,entry in entries.items():
+                if not key.isdigit():entry.dispose();continue
+                node=entry.get_property('root')
+                meta=node.evaluate("n=>({name:(n.getAttribute('aria-label')||'').slice(0,300)})")
+                observed=entry.evaluate('entry=>entry.read()')
+                problem=observed.get('error')
+                if not problem:
+                    try:decode_rich(observed)
+                    except RichInvalid as exc:problem=exc.code
+                role='entry';states=['editable'] if not problem and observed.get('enabled') else []
+                if request.get('name') and request['name'].casefold() not in meta['name'].casefold() or request.get('role') and request['role'].casefold() not in role or request.get('states') and not set(request['states'])<=set(states):
+                    entry.dispose();node.dispose();continue
+                if len(rows)>=limit:
+                    more=True;entry.dispose();node.dispose();continue
+                token=uuid.uuid4().hex
+                self.elements[token]={'node':node,'bridge':entry,'document':self.page.evaluate_handle('document'),'time':now,'type':'basic-paragraphs-v1','tag':'PROSEMIRROR'}
+                rows.append({'token':token,'name':meta['name'],'role':role,'states':states,'protected':False,'supported':not problem,'unsupported_reason':problem,
+                             'provider':'owned_browser','text_representation':'paragraphs','actions':[] if problem else ['focus','read','select','type'],
+                             'interfaces':['Text'],'multiline':True,'line_break_semantics':'paragraph','write_scope':'whole-field replace or append at end'})
+            return rows,more
+        finally:registry.dispose()
+
     def dispose(self, token):
         item = self.elements.pop(token)
-        for name in ('node','document'):
+        for name in ('node','document','bridge'):
             try:item[name].dispose()
             except Exception:pass
 
@@ -143,7 +173,13 @@ class Worker:
         if not current:
             raise Refused('STALE_TARGET')
         self.protocol.send('Emulation.setFocusEmulationEnabled', {'enabled':False})
-        value = item['node'].evaluate(SNAPSHOT)
+        if 'bridge' in item:
+            value=item['bridge'].evaluate("entry => window.__ludaProseMirror?.get(entry.id)===entry ? entry.read() : {error:'STALE_TARGET'}")
+            if 'error' not in value:
+                try:value=decode_rich(value)
+                except RichInvalid as exc:raise Refused(exc.code) from None
+        else:
+            value = item['node'].evaluate(SNAPSHOT)
         if 'error' in value:
             raise Refused(value['error'])
         if value['type'] != item['type'] or value['tag'] != item['tag']:
@@ -164,12 +200,15 @@ class Worker:
     def read(self, token, limit):
         _, value = self.snapshot(token)
         text = value['text']
-        return {'effect':'none','text':text[:limit],'characters':len(text),'truncated':len(text)>limit,
+        result = {'effect':'none','text':text[:limit],'characters':len(text),'truncated':len(text)>limit,
                 'caret_offset':value['start'] if value['direction']=='backward' else value['end'],
                 'selections':[{'start_offset':value['start'],'end_offset':value['end']}] if value['start']!=value['end'] else [],
                 'offset_units':'Unicode code points','provider_offset_units':'UTF-16 code units',
                 'plain_text_verification_supported':True,'text_representation':'html_value',
                 'composition':value['composition']}
+        if value['tag']=='PROSEMIRROR':
+            result.update(text_representation='paragraphs',model=value['model'] if len(text)<=limit else None,model_truncated=len(text)>limit,stored_marks=value['stored_marks'],line_breaks='paragraph',selection_supported=value['start'] is not None)
+        return result
 
     def focus(self, token):
         item, _ = self.snapshot(token, mutation=True)
@@ -183,6 +222,13 @@ class Worker:
         item, before = self.snapshot(token, mutation=True, focus=True)
         if type(start) is not int or type(end) is not int or not 0<=start<=end<=len(before['text']):
             raise Refused('INVALID_ARGUMENT')
+        if before['tag']=='PROSEMIRROR':
+            if (start,end)==(0,len(before['text'])):self.rich_key('a','KeyA',65,2)
+            elif start==end==len(before['text']):self.rich_key('End','End',35,2)
+            else:raise Refused('UNSUPPORTED_SELECTION')
+            _,after=self.snapshot(token,mutation=True,focus=True)
+            if after['model']!=before['model'] or (after['start'],after['end'])!=(start,end):raise Refused('SELECTION_UNVERIFIED')
+            return {'effect':'verified','start_offset':start,'end_offset':end,'offset_units':'Unicode code points'}
         self.effect = 'uncertain'
         # Fixed selection-only operation: never assigns value or model content.
         item['node'].evaluate("""(node,range)=>{const chars=Array.from(node.value);node.setSelectionRange(chars.slice(0,range[0]).join('').length,chars.slice(0,range[1]).join('').length,'forward');}""",[start,end])
@@ -191,12 +237,14 @@ class Worker:
             raise Refused('SELECTION_UNVERIFIED')
         return {'effect':'verified','start_offset':start,'end_offset':end,'offset_units':'Unicode code points'}
 
-    def type(self, token, text, mode):
+    def type(self, token, text, mode, line_breaks=None):
         if not isinstance(text,str) or len(text)>MAX_TEXT or '\r' in text or '\x00' in text:
             raise Refused('UNSUPPORTED_TEXT')
         if mode not in ('insert','replace'):
             raise Refused('INVALID_ARGUMENT')
         _, before = self.snapshot(token, mutation=True)
+        if before['tag']=='PROSEMIRROR':return self.rich_type(token,text,mode,line_breaks,before)
+        if line_breaks is not None:raise Refused('UNSUPPORTED_ACTION')
         if before['tag']=='INPUT' and any(c in text for c in ('\n','\t')):
             raise Refused('UNSUPPORTED_TEXT')
         if not before['focused']:
@@ -232,6 +280,51 @@ class Worker:
                 raise Refused('TEXT_MISMATCH')
             self.page.wait_for_timeout(30)
 
+    def rich_key(self, key, code, number, modifiers=0):
+        self.effect='uncertain'
+        self.protocol.send('Input.dispatchKeyEvent',{'type':'keyDown','key':key,'code':code,'windowsVirtualKeyCode':number,'modifiers':modifiers})
+        self.protocol.send('Input.dispatchKeyEvent',{'type':'keyUp','key':key,'code':code,'windowsVirtualKeyCode':number,'modifiers':0})
+
+    def rich_type(self, token, text, mode, line_breaks, before):
+        if '\n' in text and line_breaks!='paragraph':raise Refused('LINE_BREAK_SEMANTICS_REQUIRED')
+        if line_breaks not in (None,'paragraph'):raise Refused('UNSUPPORTED_ACTION')
+        if mode=='insert' and (before['start'],before['end'])!=(len(before['text']),len(before['text'])):
+            raise Refused('UNSUPPORTED_SELECTION')
+        segments=text.split('\n')
+        if len(segments)>27 or (len(before['paragraphs']) if mode=='insert' else 1)+len(segments)-1>128 or len(text)+(len(before['text']) if mode=='insert' else 0)>MAX_TEXT:
+            raise Refused('VERIFICATION_LIMIT')
+        if not before['focused']:self.focus(token)
+        _,current=self.snapshot(token,mutation=True,focus=True)
+        if current['model']!=before['model'] or (current['start'],current['end'],current['stored_marks'])!=(before['start'],before['end'],before['stored_marks']):raise Refused('TEXT_CHANGED')
+        if mode=='replace':
+            if before['text']:self.select(token,0,len(before['text']))
+            else:self.rich_key('End','End',35,2)
+            _,current=self.snapshot(token,mutation=True,focus=True)
+            if current['model']!=before['model']:raise Refused('TEXT_CHANGED')
+        expected=before['text'] if mode=='insert' else ''
+        original=before if mode=='insert' else None
+        deadline=time.monotonic()+6
+        for index,segment in enumerate(segments):
+            actions=([('return',None)] if index else [])+([('text',segment)] if segment else [('delete',None)] if index==0 and mode=='replace' and before['text'] else [])
+            for action,payload in actions:
+                if time.monotonic()>=deadline:raise Refused('BROWSER_TIMEOUT')
+                _,fresh=self.snapshot(token,mutation=True,focus=True)
+                if (fresh['model'],fresh['selection'],fresh['stored_marks'])!=(current['model'],current['selection'],current['stored_marks']):raise Refused('TEXT_CHANGED')
+                if action=='return':self.rich_key('Enter','Enter',13);expected+='\n'
+                elif action=='delete':self.rich_key('Backspace','Backspace',8)
+                else:
+                    self.effect='uncertain';self.protocol.send('Input.insertText',{'text':payload});expected+=payload
+                _,after=self.snapshot(token,mutation=True,focus=True)
+                if after['text']!=expected or after['paragraphs']!=expected.split('\n'):
+                    raise Refused('TEXT_MISMATCH')
+                if original and not unchanged_prefix(original,after):raise Refused('FORMATTING_CHANGED')
+                if after['start']!=after['end'] or after['end']!=len(expected):raise Refused('SELECTION_UNVERIFIED')
+                current=after
+        return {'effect':'verified' if self.effect!='none' else 'none','exact_match':True,'expected_characters':len(expected),'actual_characters':len(current['text']),
+                'caret_verified':current['start']==current['end']==len(expected),'text_representation':'paragraphs','line_breaks':'paragraph',
+                'model':current['model'],'stored_marks':current['stored_marks'],'existing_formatting':'preserved' if mode=='insert' else 'replaced_with_field',
+                'verification':'Exact paragraph text, structure and unaffected existing marks; new formatting follows application behavior. Application commit is separate.'}
+
     def dispatch(self, request):
         self.effect = 'none'
         op=request.get('op')
@@ -241,7 +334,7 @@ class Worker:
         if op=='read':return self.read(token,request.get('limit',16000))
         if op=='focus':return self.focus(token)
         if op=='select':return self.select(token,request['start_offset'],request['end_offset'])
-        if op=='type':return self.type(token,request['text'],request['mode'])
+        if op=='type':return self.type(token,request['text'],request['mode'],request.get('line_breaks'))
         raise Refused('UNSUPPORTED_ACTION')
 
 

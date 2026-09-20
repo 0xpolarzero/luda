@@ -9,4 +9,4 @@ prune tests/fixtures/rich-editor/node_modules
 
 include .mcp.json
 recursive-include .codex-plugin *.json
-recursive-include integrations *.py *.json *.md *.patch
+recursive-include integrations *.py *.json *.md *.patch *.mjs

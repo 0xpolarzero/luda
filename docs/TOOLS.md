@@ -90,7 +90,7 @@ Find installed desktop applications by name, description or ID. Returns applicat
 desktop_open_browser(url: str, lifetime: Literal['temporary_session'])
 ```
 
-Open a fresh owned Chromium with explicit temporary_session lifetime. Browser/profile and unsaved content are deleted on server disconnect, backend close or reconnect. Requires optional browser dependencies and configured executable; never downloads automatically or attaches existing profiles. Inspect text_fields for exact ordinary HTML input/textarea control; protected fields, rich editors and frames are unsupported.
+Open a fresh owned Chromium with explicit temporary_session lifetime. Browser/profile and unsaved content are deleted on server disconnect, backend close or reconnect. Requires optional browser dependencies and configured executable; never downloads automatically or attaches existing profiles. Inspect text_fields for ordinary HTML fields and cooperating paragraph editors; protected fields, unregistered rich editors and frames are unsupported.
 
 ## `desktop_launch`
 
@@ -143,10 +143,10 @@ Read accessible text and representation metadata, preserving whitespace. limit c
 ## `desktop_type`
 
 ```python
-desktop_type(element_id: str, text: str, mode: Literal['insert', 'replace']='insert')
+desktop_type(element_id: str, text: str, mode: Literal['insert', 'replace']='insert', line_breaks: Literal['paragraph'] | None=None)
 ```
 
-Type into an editable element and verify exact readback. Default insert preserves surrounding text and replaces the selection; replace changes the entire field. Preserves Unicode/LF/tabs, never adds a submit key. Exact readback does not prove application commit or guarantee autocomplete events; inspect the result before an explicit commit or suggestion selection.
+Type into an editable element and verify exact readback. For a cooperating rich editor, LF requires line_breaks="paragraph"; only whole-field replace or append at the end is supported, and actual new formatting is reported. Default insert preserves surrounding text and replaces the selection; replace changes the entire field. Preserves Unicode/LF/tabs, never adds a submit key. Exact readback does not prove application commit or guarantee autocomplete events; inspect the result before an explicit commit or suggestion selection.
 
 ## `desktop_type_secret`
 
