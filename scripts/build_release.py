@@ -21,10 +21,10 @@ def git(*args):
 
 
 def plugin_zip(source, target, name):
-    required = [source / '.codex-plugin/plugin.json', source / '.mcp.json']
+    required = [source / '.codex-plugin/plugin.json', source / '.mcp.json', source / 'skills' / name / 'SKILL.md']
     if not all(p.is_file() for p in required):
         raise ValueError(f'Missing plugin files for {name}')
-    files = required + sorted((source / 'skills').rglob('*'))
+    files = list(dict.fromkeys(required + sorted((source / 'skills' / name).rglob('*'))))
     license_file = source / 'LICENSE'
     if license_file.is_file():
         files.append(license_file)
@@ -39,6 +39,8 @@ def plugin_zip(source, target, name):
 def verify_wheel(source, wheel, package, skill):
     expected = {str(p.relative_to(source / 'src')): p.read_bytes()
                 for p in (source / 'src' / package).rglob('*.py')}
+    if not (source / 'skills' / skill / 'SKILL.md').is_file():
+        raise ValueError('Missing packaged skill entrypoint')
     if not expected:
         raise ValueError('No runtime modules found')
     with zipfile.ZipFile(wheel) as archive:
@@ -85,6 +87,7 @@ def build(output):
         for project, package, skill in projects:
             metadata = tomllib.loads((project / 'pyproject.toml').read_text())['project']
             before = set(assets.glob('*.whl'))
+            before_source = set(assets.glob('*.tar.gz'))
             subprocess.run([sys.executable, '-I', '-c',
                 'import sys; from setuptools import build_meta; build_meta.build_wheel(sys.argv[1]); build_meta.build_sdist(sys.argv[1])',
                 str(assets)], cwd=project, check=True)
@@ -92,6 +95,13 @@ def build(output):
             if len(wheels) != 1:
                 raise ValueError('Expected exactly one wheel per distribution')
             wheel = wheels.pop()
+            sources = set(assets.glob('*.tar.gz')) - before_source
+            if len(sources) != 1:
+                raise ValueError('Expected exactly one source archive per distribution')
+            if package == 'luda':
+                with tarfile.open(sources.pop()) as distribution:
+                    if any('/addons/' in n or '/integrations/prosemirror/' in n for n in distribution.getnames()):
+                        raise ValueError('Core source archive must not bundle the editor add-on')
             checks[metadata['name']] = {'version': metadata['version'],
                 'runtime_modules': verify_wheel(project, wheel, package, skill), 'skill_matches': True}
             plugin_zip(project, assets / f'{skill}-plugin-{metadata["version"]}.zip', skill)
