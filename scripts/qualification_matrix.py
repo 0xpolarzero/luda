@@ -29,6 +29,7 @@ def suite(script, ids, *, wm=True, browser=None, electron=None, firefox=None, mo
 SUITES = {
     'nested-scroll': suite('live_nested_scroll.py', 'PTR-05', artifacts=('nested-scroll',)),
     'detached-menu': suite('live_detached_menu.py', 'MENU-08', artifacts=('detached-menu',), gaps=('Native GTK3 tear-off fixture and observed screenshot row only; no tray or other toolkit qualification',)),
+    'mcp-disconnect': suite('live_mcp_disconnect.py', 'MCP-08', artifacts=('mcp-disconnect',), gaps=('Real stdin EOF only; no claim to undo delivered input or arbitrary network disconnection',)),
     'image-editor': suite('live_image_editor.py', 'APPS-09 APPS-10', wm=False, artifacts=('image-editor',)),
     'session-input': suite('live_session_input.py', 'AUTH-09', artifacts=('session-input',)),
     'resource-limits': suite('live_resource_limits.py', 'PERF-10 ERR-06', artifacts=('resource-limits',)),
