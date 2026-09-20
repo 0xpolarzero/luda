@@ -23,6 +23,7 @@ from .control import Control
 from .timing import elapsed_time, suspend_offset
 from .waits import ConditionWaitsMixin
 from .input_guard import held_button
+from .session_state import session_state
 
 
 class Desktop(InteractionMixin, ConditionWaitsMixin):
@@ -79,7 +80,7 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
                   'display':os.environ.get('DISPLAY'),'session_bus':bool(os.environ.get('DBUS_SESSION_BUS_ADDRESS')),
                   'uid':os.getuid(),'transport':'stdio','support':'experimental X11; Wayland unsupported',
                   'limitations':['Human viewer input is not locked out.','No automatic clipboard restoration.',
-                                 'Accessibility mapping requires matching top-level geometry.','No automatic retry of mutations.']}
+                                 'Accessibility mapping requires a uniquely identified application window.','No automatic retry of mutations.']}
         try:
             result['geometry'] = self.display().geometry(self.display().root)
             result['display_available'] = True
@@ -92,7 +93,8 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         except DesktopError as exc:
             result['accessibility_available'] = False
             result['accessibility_error'] = str(exc)
-        result['ready'] = all(dependencies.values()) and result['display_available'] and result['session_bus'] and result['accessibility_available']
+        result['session_state'] = session_state()
+        result['ready'] = result['session_state']['input_ready'] is not False and all(dependencies.values()) and result['display_available'] and result['session_bus'] and result['accessibility_available']
         return result
 
     def active(self):

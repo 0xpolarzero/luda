@@ -68,7 +68,7 @@ def main():
     env = {'PATH': '/usr/local/bin:/usr/bin:/bin', 'HOME': account.pw_dir,
            'USER': account.pw_name, 'LOGNAME': account.pw_name, 'LANG': 'C.UTF-8',
            'PYTHONUNBUFFERED': '1', 'NO_AT_BRIDGE': '0'}
-    for key in ('DISPLAY', 'DBUS_SESSION_BUS_ADDRESS', 'XDG_RUNTIME_DIR', 'XAUTHORITY'):
+    for key in ('DISPLAY', 'DBUS_SESSION_BUS_ADDRESS', 'XDG_RUNTIME_DIR', 'XAUTHORITY', 'XDG_SESSION_ID'):
         if key in session:
             env[key] = session[key]
     env.setdefault('XAUTHORITY', str(Path(account.pw_dir)/'.Xauthority'))
