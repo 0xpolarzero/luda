@@ -308,4 +308,40 @@ class FocusRequest(unittest.TestCase):
         grab=__import__('unittest').mock.Mock(side_effect=RuntimeError('unsupported'))
         with self.assertRaises(RuntimeError):self.run_focus(grab,set())
 
+class TextBudgets(unittest.TestCase):
+    def test_oversized_provider_refused_before_read(self):
+        raw=Text();raw.text='x'*2_000_001
+        with patch.object(w.Atspi,'Text',Text,create=True),patch.object(Text,'get_text') as read:
+            with self.assertRaises(w.VerificationLimit):w.TextAccess(raw)
+            read.assert_not_called()
+    def test_oversized_codepoint_read_is_typed(self):
+        raw=Text();raw.text='x'*1_000_001
+        with patch.object(w.Atspi,'Text',Text,create=True):
+            with self.assertRaises(w.VerificationLimit):w.TextAccess(raw)
+    def test_budget_error_before_mutation(self):
+        with patch.object(w,'main',side_effect=w.VerificationLimit('private contents')):
+            r=w.dispatch({'op':'set','_mutation_started':True})
+        self.assertEqual(r['error'],'VERIFICATION_LIMIT');self.assertEqual(r['effect'],'none');self.assertNotIn('private',str(r))
+    def test_budget_error_after_mutation(self):
+        def operation(req):req['_mutation_started']=True;raise w.VerificationLimit('private contents')
+        with patch.object(w,'main',side_effect=operation):r=w.dispatch({'op':'set'})
+        self.assertEqual(r['effect'],'uncertain')
+    def test_native_errors_never_echo_contents(self):
+        with patch.object(w,'main',side_effect=RuntimeError('private contents')):
+            for op in ('read','insert','set','secret'):
+                r=w.dispatch({'op':op});self.assertNotIn('private',str(r));self.assertEqual(r['error'],'ACCESSIBILITY_ERROR')
+    def run_set(self,raw):
+        raw.path='/field'
+        current={'role':'entry','name':'Input','start':'1','states':['editable','enabled','showing'],'interfaces':['Text','EditableText'],'protected':False}
+        with patch.object(w.Atspi,'Text',Text,create=True),patch.object(w,'candidates',return_value=[(raw,0)]),patch.object(w,'describe',return_value=current):
+            return w.dispatch({'op':'set','pid':42,'text':'new','target':{**current,'root_path':'/root','path':'/field'}})
+    def test_set_refuses_oversized_existing_content_before_edit(self):
+        raw=Text();raw.text='x'*2_000_001;raw.set_text_contents=unittest.mock.Mock()
+        r=self.run_set(raw);self.assertEqual(r['error'],'VERIFICATION_LIMIT');self.assertEqual(r['effect'],'none');raw.set_text_contents.assert_not_called()
+    def test_set_oversized_provider_result_is_uncertain(self):
+        raw=Text()
+        def grow(text):raw.text='x'*2_000_001;return True
+        raw.set_text_contents=grow
+        r=self.run_set(raw);self.assertEqual(r['error'],'VERIFICATION_LIMIT');self.assertEqual(r['effect'],'uncertain')
+
 if __name__=='__main__':unittest.main()

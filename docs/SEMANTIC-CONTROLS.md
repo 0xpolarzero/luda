@@ -125,3 +125,5 @@ Recognized semantic action names are matched case-insensitively while preserving
 the provider's actual action index. Already-focused targets return verified without
 calling an unsupported focus method. See TOOLKIT-QUALIFICATION.md for the remaining
 GTK4 provider limitations and precise independent test results.
+
+Text normalization and exact replacement use bounded readback: at most two million provider units and one million Unicode code points. Larger fields refuse with `VERIFICATION_LIMIT`; the worker reports `effect: none` when this happens before text mutation, and `uncertain` if the provider grows beyond the budget after input. Read limits bound the returned prefix, while normalization still reads the bounded complete field to establish truthful public character counts and UTF-16 offset conversions. This is not a streaming large-document reader. Native provider exception messages are not returned because they may echo application contents or input.

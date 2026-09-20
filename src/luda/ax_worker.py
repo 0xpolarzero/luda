@@ -102,6 +102,10 @@ def states_of(node):
     return {s.value_nick for s in node.get_state_set().get_states()}
 
 
+class VerificationLimit(ValueError):
+    """Exact text normalization cannot fit the documented worker budget."""
+
+
 class TextAccess:
     """Normalize providers that use UTF-16 offsets (Qt) to Unicode code points.
 
@@ -128,10 +132,10 @@ class TextAccess:
     def _refresh(self):
         count = Atspi.Text.get_character_count(self.raw)
         if not 0 <= count <= 2_000_000:
-            raise ValueError("Text provider exceeds the bounded offset-normalization budget.")
+            raise VerificationLimit("Text provider exceeds the bounded offset-normalization budget.")
         text = Atspi.Text.get_text(self.raw, 0, count)
         if len(text) > 1_000_000:
-            raise ValueError("Text provider exceeds the one-million-code-point budget.")
+            raise VerificationLimit("Text provider exceeds the one-million-code-point budget.")
         if count == len(text):
             self.utf16 = self.toolkit.casefold() == "qt"
         elif count == len(text.encode("utf-16-le")) // 2:
@@ -423,6 +427,7 @@ def semantic(node, current, req):
             count = t.get_n_selections()
             if count > 1:
                 return failure("UNSUPPORTED", "Multiple selections cannot be changed safely.")
+            req["_mutation_started"] = True
             if start == end:
                 if count:
                     t.remove_selection(0)
@@ -470,6 +475,7 @@ def semantic(node, current, req):
         if t.get_text(0, -1) != before or range_now != (start, end):
             return failure("STALE_TARGET", "Text changed before insertion; inspect again.")
         accepted = True
+        req["_mutation_started"] = True
         if end > start:
             accepted = bool(edit.delete_text(t.provider_offset(start), t.provider_offset(end)))
             if not accepted or not verify(lambda: t.get_text(0, -1) == before[:start] + before[end:]):
@@ -653,8 +659,14 @@ def main(req):
             if "editable" not in current["states"] or not {"enabled", "sensitive"}.intersection(current["states"]):
                 return {"error": "NOT_EDITABLE", "message": "Element is not editable and enabled."}
             text = req["text"]
+            if not isinstance(text, str) or len(text) > 1_000_000 or any(c in text for c in ('\0', '\r')) or any(0xD800 <= ord(c) <= 0xDFFF for c in text):
+                return failure("UNSUPPORTED_TEXT", "Text must be valid Unicode without NUL or CR and at most one million characters.")
+            # Qualify complete existing text before mutation; bounded independent
+            # readback also refuses a provider that grows unexpectedly afterward.
+            t = TextAccess(node.get_text_iface())
+            req["_mutation_started"] = True
             accepted = node.get_editable_text_iface().set_text_contents(text)
-            actual = Atspi.Text.get_text(node.get_text_iface(), 0, -1)
+            actual = t.get_text(0, -1)
             return {"effect": "verified" if actual == text else "uncertain", "accepted": accepted,
                     "exact_match": actual == text, "expected_characters": len(text),
                     "actual_characters": len(actual)}
@@ -680,8 +692,27 @@ def main(req):
     return {"error": "STALE_TARGET", "message": "Element not found within traversal budget; inspect again."}
 
 
+def dispatch(request):
+    # Provider exception strings can contain application contents or input.
+    # Expose fixed diagnostics, never the native exception's message.
+    request = dict(request)
+    request.pop("_mutation_started", None)
+    try:
+        return main(request)
+    except VerificationLimit:
+        return {"error": "VERIFICATION_LIMIT",
+                "message": "Exact text verification exceeds the one-million-code-point or two-million-provider-unit budget.",
+                "effect": "uncertain" if request.get("_mutation_started") else "none"}
+    except Exception:
+        return {"error": "ACCESSIBILITY_ERROR",
+                "message": "The accessibility provider failed. Inspect again before retrying an action.",
+                "effect": "none" if request.get("op") in ("read", "inspect") else "uncertain"}
+
+
 if __name__ == "__main__":
     try:
-        print(json.dumps(main(json.load(sys.stdin)), ensure_ascii=False))
-    except Exception as exc:
-        print(json.dumps({"error": "ACCESSIBILITY_ERROR", "message": str(exc)[:500]}))
+        request = json.load(sys.stdin)
+    except Exception:
+        print(json.dumps(failure("INVALID_ARGUMENT", "Worker request must be valid JSON.")))
+    else:
+        print(json.dumps(dispatch(request), ensure_ascii=False))
