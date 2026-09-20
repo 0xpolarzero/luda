@@ -3,6 +3,7 @@ recursive-include docs *.md *.json
 recursive-include scripts *.py *.sh
 recursive-include skills *.md
 recursive-include tests *.py *.sh *.html *.js *.json *.md
+recursive-include tests/evidence/browser-download-cleanup *.log
 prune tests/tools/codex-cli/node_modules
 prune tests/fixtures/rich-editor/node_modules
 
