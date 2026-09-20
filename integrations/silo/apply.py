@@ -16,12 +16,12 @@ def apply(checkout, mutate=False):
         raise ValueError('Require the exact pinned Silo base commit.')
     if git('diff', '--quiet', 'HEAD', '--').returncode:
         raise ValueError('Require a checkout with no tracked changes.')
-    patches = [str(ASSETS / name) for name in ('0001-guest-onboarding.patch', '0002-desktop-onboarding.patch')]
+    patches = [str(ASSETS / name) for name in ('0001-guest-onboarding.patch', '0002-desktop-onboarding.patch', '0003-host-codex-registration.patch')]
     if git('apply', '--check', *patches).returncode:
         raise ValueError('Patch check failed; preserve existing files and inspect the checkout.')
     if mutate and git('apply', *patches).returncode:
         raise ValueError('Patch application failed; inspect the checkout before retrying.')
-    return 'Applied both patches.' if mutate else 'Both patches apply cleanly; no files changed.'
+    return 'Applied all three patches.' if mutate else 'All three patches apply cleanly; no files changed.'
 
 
 def main():

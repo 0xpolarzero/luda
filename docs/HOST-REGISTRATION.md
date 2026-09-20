@@ -98,12 +98,13 @@ skill, partial marketplace success and completed installation with a lost reply.
 The generated plugin passes plugin-creator validation. Existing local and remote
 builder API tests remain unchanged. No real user profile is modified by tests.
 
-A Silo app implementation should reuse the existing Rust private-SSH transport,
-implement bundle construction/registration in Rust, and expose an explicit action
-that shows the selected VM and Codex profile. Reuse the same JSON contracts,
-CLI commands and failure-state tests rather than assuming a host Python runtime.
-Host CLI discovery/profile selection, persistent path management, native UI,
-Mac application integration and fresh-thread discovery remain deliverables or
-acceptance work; this utility alone does not qualify those cases.
+The [third native Silo integration patch](../integrations/silo/README.md#explicit-native-host-registration-third-patch)
+now supplies an explicit local-VM registration action in Rust using Silo's private
+SSH transport, without assuming host Python. It requires manually selected
+executable/profile paths and verifies the installed guest skill against embedded
+reviewed bytes. Linux frontend/native tests and temporary-profile actual CLI
+registration pass. Mac packaging, real Silo VM connectivity and fresh-conversation
+tool discovery remain acceptance work. Updates/removal and automatic discovery
+are not implemented by this first native increment.
 
 [Real private SSH qualification](HOST-PLUGIN-SSH-QUALIFICATION.md) now exercises both generated VM commands through MCP initialization, doctor, windows and screenshots against distinct owned desktops. It exposed and verified the launcher working-directory fix. The test uses one loopback SSH daemon and two local sessions; it does not replace actual Mac/Silo acceptance.

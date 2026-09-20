@@ -303,3 +303,11 @@ class SiloIntegrationTests(unittest.TestCase):
         for name in ('agent-tools.py', 'agent-tools-release.json'):
             self.assertEqual((checkout / 'app/SiloUI/src-tauri/guest' / name).read_bytes(),
                              (ASSETS / 'guest' / name).read_bytes())
+
+    def test_native_patch_embeds_exact_reviewed_skill(self):
+        checkout = self.state / 'native';checkout.mkdir()
+        subprocess.run(['git', 'init', '-q', str(checkout)], check=True)
+        target = 'app/SiloUI/src-tauri/guest/luda-codex-skill.md'
+        subprocess.run(['git', '-C', str(checkout), 'apply', '--include=' + target,
+                        str(ASSETS / '0003-host-codex-registration.patch')], check=True)
+        self.assertEqual((checkout / target).read_bytes(), (ROOT / 'skills/luda/SKILL.md').read_bytes())

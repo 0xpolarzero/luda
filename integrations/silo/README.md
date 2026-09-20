@@ -148,3 +148,47 @@ incremental compile. Reverse-apply checks matched both final patches against the
 tested checkout. Retained evidence is `artifacts/silo-rust/results.json` and
 `cargo-desktop-tests.log` in the main Luda evidence directory; earlier successful
 runs are retained separately. No microsandbox runtime was launched for that test.
+
+## Explicit native host registration (third patch)
+
+`0003-host-codex-registration.patch` adds **Connect tools to Codex** to the native
+Desktop actions menu. The user selects an existing, owned canonical Codex profile
+directory and trusted executable using explicit absolute paths, then confirms
+registration for the displayed VM. No default profile is silently selected or
+modified. This first action supports local Silo VMs only; remote Silo hosts are
+refused. The Rust implementation requires no host Python runtime.
+
+The native command reuses Silo's private pinned SSH transport, embeds the reviewed
+Luda skill, and requires the installed guest skill to match those exact bytes.
+Per-VM plugin, marketplace and MCP server identities coexist in one profile.
+Persistent bundles and receipts live under the selected profile. A cooperative
+profile lock serializes these registrations; it does not lock unrelated Codex
+writers. Actual Codex CLI marketplace/plugin commands perform registration.
+Readback verifies cached MCP/skill hashes and the effective stdio command, args,
+environment, inherited environment names and working directory. Conflicting,
+disabled, changed or interrupted registrations are preserved for explicit review;
+this increment does not provide update/removal or automatically retry partial work.
+Each CLI call is bounded to 30 seconds and 1 MiB output; timeout kills its process
+group before returning an uncertain result. Error messages omit subprocess text.
+
+The UI distinguishes registered profile configuration from runtime readiness.
+Open a new Codex conversation, select the displayed VM-specific server and verify
+`desktop_doctor`/`desktop_observe`. Identically named skill guidance is generic,
+not a guarantee of VM routing. This action does not associate a plugin with an
+undocumented Codex SSH executor, discover profiles automatically, or prove Mac
+packaging or real microsandbox connectivity.
+
+Validation: five native tests passed on Linux ARM64/Rust 1.94.0, including the
+opt-in actual Codex 0.155.1 CLI test using temporary profiles. That test verifies
+two distinct effective MCP servers, idempotency, preservation of unrelated model
+settings, and refusal without overwrite of matching-argv overrides of `cwd`,
+`env` and `env_vars`. Other tests cover unsafe/symlink profiles, lock contention,
+partial registration without replay, and timeout cleanup preventing a late child
+write. Twenty frontend tests and full TypeScript checking passed. Twenty-two Luda
+integration tests passed, including exact embedded skill byte consistency. All
+three patches applied to a clean checkout of the pinned base. The native unit
+build uses the same test-only bundle-resource override documented above; it does
+not qualify application packaging. Evidence lives in
+`artifacts/silo-native-registration/` in the main checkout, including earlier
+harness failures (incorrect synthetic build variable names and repeated fixture
+directory creation), corrected logs and exact patch hashes.
