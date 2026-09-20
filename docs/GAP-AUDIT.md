@@ -1,6 +1,6 @@
 # Current capability and evidence gaps
 
-Audit of source `71690ff` on 2026-09-20. The implementation, evidence and remaining
+Audit refreshed against source `ae824b2` on 2026-09-20. The implementation, evidence and remaining
 product work must be assessed separately. The [346-case catalog](REQUIREMENTS.md)
 retains its original priorities and acceptance criteria. No case becomes
 release-qualified through a passing unit test, a live-suite association or this
@@ -10,14 +10,14 @@ source-bound findings.
 
 ## Evidence now available
 
-The [current unit record](UNIT-COVERAGE-CURRENT.md) contains 607 passing root
-tests and the matching ordinary-account run (606 passed, one unavailable Codex
-CLI registration test skipped). Its map names 131 requirements and 264 distinct
-unit methods. The [live inventory](LIVE-COVERAGE.md) registers 65 fixtures and
-154 distinct requirement associations. These overlap and are not a reliability
+The [current unit record](UNIT-COVERAGE-CURRENT.md) contains 645 passing root
+tests and the matching ordinary-account run (644 passed, one unavailable Codex
+CLI registration test skipped). Its map names 133 requirements and 281 distinct
+unit methods. The [live inventory](LIVE-COVERAGE.md) registers 68 fixtures and
+158 distinct requirement associations. These overlap and are not a reliability
 percentage or evidence that all associated requirements passed.
 
-Both hosted workflows passed at `71690ff`, including independent AMD64 unit,
+Both hosted workflows passed at `8dd8aef`, including independent AMD64 unit,
 headless-X11 and native-application jobs. Local evidence uses the ARM64 Silo guest
 and private ordinary-account desktops. [Validation](VALIDATION.md) retains the
 exact versions, source revisions, source fingerprints and known failures.
@@ -46,6 +46,10 @@ with system provisioning skipped; the installed runtime passed 31 native and
 18 MCP checks on KasmVNC as UID 1001. Both release payloads matched their manifests.
 This is working guest setup, not automatic host-side registration.
 
+[Sanitized reports](BUG-REPORT.md) and [driver/tool/skill identities](COMPATIBILITY.md)
+now have unit, live MCP and installed-wheel evidence. [The current unit record](UNIT-COVERAGE-CURRENT.md)
+also retains the corrected generated-inventory failure instead of omitting it.
+
 ## Concrete unresolved behavior
 
 | Area | Remaining boundary |
@@ -57,9 +61,9 @@ This is working guest setup, not automatic host-side registration.
 | Input and application races | X11 does not give exclusive human-input ownership, atomic clipboard delivery or application transactions. Successful dispatch is not task completion, and cleanup cannot undo an application effect. |
 | Uninspectable installer children | Bootstrap cannot attribute a newly appearing unreadable process safely. It reports cleanup unconfirmed and forbids automatic retry rather than killing an unattributed process or claiming no effect. This is a declared recovery boundary, not successful containment. |
 
-## Remaining local work
+## Additional scoped evidence
 
-The following are concrete evidence gaps, not proposals to add redundant APIs:
+The following subsequent experiments add bounded evidence:
 
 - **KEY-10:** the subsequent [dead-key/Compose run](DEAD-COMPOSE-QUALIFICATION.md)
   now establishes nine scoped refusal/recovery assertions through actual MCP,
@@ -91,9 +95,11 @@ of leaks is inferred from it.
 - Fresh ARM64/AMD64 microsandbox provisioning and Silo GUI installation/upgrade
   acceptance need the actual product environment. Hosted AMD64 Linux is not a
   fresh microsandbox image.
-- [Silo source review](SILO-INTEGRATION-REVIEW.md) identifies missing automatic
-  guest-bootstrap invocation, host registration and separate tool-health UI.
-  These are implementation deliverables, not merely tests awaiting a Mac.
+- The [optional Silo patch](../integrations/silo/README.md) now implements guest
+  bootstrap invocation and separate tools status/UI against pinned Silo source,
+  with actual Linux Rust/frontend tests and real HTTPS/bootstrap composition.
+  It remains unapplied to the product and disabled until a trusted release
+  artifact is configured. Host registration is still a missing deliverable.
 - Actual Mac Codex SSH placement, tool/skill discovery, human viewer continuity
   and reconnect require host access. A specific macOS runner/workspace has been
   requested; this Linux guest cannot establish those outcomes.

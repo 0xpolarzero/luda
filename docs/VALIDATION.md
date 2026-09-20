@@ -137,3 +137,9 @@ fresh Mac Codex discovery.
 5. **Product integration and external acceptance:** Silo does not yet invoke Luda installation or register its tools/skill when creating a GUI sandbox. [The source review](SILO-INTEGRATION-REVIEW.md) identifies the missing integration hooks. Fresh ARM64/AMD64 microsandbox provisioning, Silo installation/health/viewer lifecycle, and actual Mac Codex SSH discovery also require host acceptance; Linux fixtures or generated configuration cannot establish those outcomes.
 
 Wayland, OCR, audiovisual interaction and rich clipboard formats are separate catalog expansions. The current GUI backend remains XFCE/KasmVNC; Luda controls the desktop already visible to the user.
+
+## Subsequent diagnostics and Silo integration checks
+
+Source `ae824b2` passed 645 root unit tests, and 644 plus one expected unavailable-Codex-CLI skip as UID 1001, with matching unchanged source hashes. The initially stale generated inventory failure and corrected records are preserved in [the current unit record](UNIT-COVERAGE-CURRENT.md). Actual MCP passed 23 checks at this source. [Installed report verification](BUG-REPORT.md) retains the earlier wheel's exact identity and KasmVNC checks.
+
+The [optional pinned-Silo patch](../integrations/silo/README.md) passed 21 guest-wrapper tests, 18 frontend tests, TypeScript checking and six actual Linux ARM64 Rust desktop tests. A separate [real HTTPS/bootstrap composition](SILO-COMPOSITION-QUALIFICATION.md) passed with system provisioning explicitly skipped. The final source distribution was built with hash-locked build dependencies and contained all six integration assets (`artifacts/silo-integration/packaging-ae824b2/`). These are bounded integration results; fresh images, product deployment and Mac host discovery remain unqualified.
