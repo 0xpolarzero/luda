@@ -2,7 +2,7 @@
 
 Luda remains under active development, not release-qualified. Local evidence comes from an ARM64 Ubuntu 24.04 Silo guest with XFCE/X11 and KasmVNC 1.5.0, plus private Xvfb/XFWM4 sessions. Hosted Ubuntu AMD64 CI runs independent unit, headless and native-application suites. Each suite's account, source and environment matter; these are not interchangeable environments.
 
-The [345-case catalog](REQUIREMENTS.md) defines acceptance targets. [Qualification records](QUALIFICATION.md) distinguish implementations, narrow test assertions, provider limitations and external product acceptance. Test counts are not a reliability percentage.
+The [346-case catalog](REQUIREMENTS.md) defines acceptance targets. [Qualification records](QUALIFICATION.md) distinguish implementations, narrow test assertions, provider limitations and external product acceptance. Test counts are not a reliability percentage.
 
 ## Working capabilities and limits
 

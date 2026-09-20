@@ -43,7 +43,8 @@ Expired screenshot: pointer actions rejected before input
 Screenshot from another server: rejected instead of interpreted locally
 Blank or black frame: distinguish real image from failed capture
 Very large desktop: bounded image size and memory use
-Sensitive observation: no automatic screenshot retention or external upload'''),
+Sensitive observation: no automatic screenshot retention or external upload
+Missing glyphs: read-only sampled font diagnostics distinguish rendering gaps from text corruption without claiming universal Unicode coverage or blocking unrelated controls'''),
 ('GEO','Coordinates and displays','P0','''Decorated window: frame extents obtained from the window manager, not fixed offsets
 Borderless window: zero extents handled correctly
 Maximized and fullscreen windows: correct origin and bounds

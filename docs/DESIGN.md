@@ -4,7 +4,7 @@
 
 A local agent should operate the same visible desktop that the Silo user sees, inside the same microsandbox guest, without a vendor account, separate model loop, second VM, or cloud desktop. The interface must make intended targets and observed effects explicit. Silo owns VM lifecycle and viewer delivery; this package owns desktop control and agent instructions.
 
-The current implementation is a working experimental prototype for Ubuntu 24.04/XFCE/X11, developed on ARM64 with KasmVNC. Its name and version do not imply production support. The 345-case acceptance catalog defines the broader target; it is not a list of implemented or passed cases.
+The current implementation is a working experimental prototype for Ubuntu 24.04/XFCE/X11, developed on ARM64 with KasmVNC. Its name and version do not imply production support. The 346-case acceptance catalog defines the broader target; it is not a list of implemented or passed cases.
 
 ## Own code versus upstream primitives
 

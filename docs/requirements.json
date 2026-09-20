@@ -228,6 +228,11 @@
           "id": "OBS-10",
           "acceptance": "Sensitive observation: no automatic screenshot retention or external upload",
           "qualification": "unqualified"
+        },
+        {
+          "id": "OBS-11",
+          "acceptance": "Missing glyphs: read-only sampled font diagnostics distinguish rendering gaps from text corruption without claiming universal Unicode coverage or blocking unrelated controls",
+          "qualification": "unqualified"
         }
       ]
     },

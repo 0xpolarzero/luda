@@ -2,7 +2,7 @@
 
 Local Linux desktop control for agents. Luda attaches to the XFCE/X11 desktop already visible in a Silo microsandbox and exposes typed MCP tools plus an agent skill. It runs entirely inside the guest, without a model API, cloud worker or second VM.
 
-**Under active development; not yet release-qualified.** The [345-case acceptance catalog](docs/REQUIREMENTS.md) defines the target, and [validation status](docs/VALIDATION.md) distinguishes working features from remaining gaps. Successful input dispatch is never presented as proof that an application completed the intended task.
+**Under active development; not yet release-qualified.** The [346-case acceptance catalog](docs/REQUIREMENTS.md) defines the target, and [validation status](docs/VALIDATION.md) distinguishes working features from remaining gaps. Successful input dispatch is never presented as proof that an application completed the intended task.
 
 ## Use it
 

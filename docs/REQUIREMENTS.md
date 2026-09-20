@@ -53,6 +53,7 @@ This is a bounded engineering catalog, not a claim that all possible GUI states 
 - **OBS-08** — Blank or black frame: distinguish real image from failed capture.
 - **OBS-09** — Very large desktop: bounded image size and memory use.
 - **OBS-10** — Sensitive observation: no automatic screenshot retention or external upload.
+- **OBS-11** — Missing glyphs: read-only sampled font diagnostics distinguish rendering gaps from text corruption without claiming universal Unicode coverage or blocking unrelated controls.
 
 ## GEO: Coordinates and displays (P0)
 
