@@ -14,6 +14,7 @@ class FakeDesktop:
     def __init__(self):
         self.started = threading.Event()
         self.control = Mock()
+    def require_supported_backend(self): pass
     def transaction(self): return nullcontext()
     def blocked(self):
         self.started.set()

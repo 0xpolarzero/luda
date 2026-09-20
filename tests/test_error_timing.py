@@ -13,7 +13,7 @@ class ErrorTiming(unittest.TestCase):
         for failure, code, effect in [(DesktopError('STALE_TARGET','Inspect again.'),'STALE_TARGET','none'),
                                       (RuntimeError(secret),'INTERNAL_ERROR','uncertain')]:
             with self.subTest(code=code):
-                backend=SimpleNamespace(transaction=lambda:nullcontext(),control=Mock(),inspect=Mock(side_effect=failure))
+                backend=SimpleNamespace(transaction=lambda:nullcontext(),require_supported_backend=Mock(),control=Mock(),inspect=Mock(side_effect=failure))
                 clock=SimpleNamespace(monotonic=Mock(side_effect=[100.,100.125,100.130]))
                 with patch.object(server,'get_backend',return_value=backend),patch.object(server,'time',clock):
                     result=server.execute('inspect','observed-window')

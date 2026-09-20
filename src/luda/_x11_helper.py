@@ -1,5 +1,6 @@
 """Read client geometry in root pixels, avoiding window-manager frame offsets."""
 import ctypes as C
+import os
 import re
 import secrets
 from .common import DesktopError
@@ -39,6 +40,10 @@ def _decode_wm_class(prop):
 
 class _NativeX11:
     def __init__(self):
+        if not os.environ.get('DISPLAY'):
+            if os.environ.get('WAYLAND_DISPLAY') or os.environ.get('XDG_SESSION_TYPE') == 'wayland':
+                raise DesktopError('UNSUPPORTED_BACKEND', 'Native Wayland is unsupported. Select the intended X11 desktop; no input sent.')
+            raise DesktopError('DISPLAY_UNAVAILABLE', 'DISPLAY is missing; use the selected desktop session launcher.')
         x = self.lib = C.CDLL('libX11.so.6')
         x.XOpenDisplay.argtypes = [C.c_char_p]; x.XOpenDisplay.restype = C.c_void_p
         x.XDefaultRootWindow.argtypes = [C.c_void_p]; x.XDefaultRootWindow.restype = C.c_ulong
@@ -52,6 +57,12 @@ class _NativeX11:
         self.display = x.XOpenDisplay(None)
         if not self.display:
             raise DesktopError('DISPLAY_UNAVAILABLE', 'Cannot open DISPLAY; use the session launcher and run doctor.')
+        x.XQueryExtension.argtypes = [C.c_void_p, C.c_char_p, C.POINTER(C.c_int), C.POINTER(C.c_int), C.POINTER(C.c_int)]
+        x.XQueryExtension.restype = C.c_int
+        opcode, event, error = C.c_int(), C.c_int(), C.c_int()
+        if x.XQueryExtension(self.display, b'XWAYLAND', C.byref(opcode), C.byref(event), C.byref(error)):
+            self.close()
+            raise DesktopError('UNSUPPORTED_BACKEND', 'Xwayland is unsupported: its X11 view does not represent the full Wayland desktop. Select the intended native X11 desktop; no input sent.')
         self.root = x.XDefaultRootWindow(self.display)
 
     def geometry(self, window):

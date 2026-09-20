@@ -98,6 +98,14 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
             self.x = X11()
         return self.x
 
+    def require_supported_backend(self):
+        # A fresh helper connection detects replacement by an unsupported server;
+        # environment hints alone cannot identify Xwayland.
+        if self.x is None:
+            self.display()  # Construction already checks the current server.
+        else:
+            self.x.root
+
     def doctor(self):
         dependencies = {c: shutil.which(c, path=self.environment.get('PATH', os.defpath)) is not None for c in ('xdotool','wmctrl','scrot','xclip','xprop')}
         result = {'version':version('luda'),'backend':'X11 + AT-SPI','dependencies':dependencies,
@@ -110,7 +118,7 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
             result['geometry'] = self.display().geometry(self.display().root)
             result['display_available'] = True
         except DesktopError as exc:
-            result.update(display_available=False,display_error=str(exc))
+            result.update(display_available=False,display_error=str(exc),display_error_code=exc.code)
         try:
             result['display_topology'] = topology_summary(self.display().topology())
             result['topology_available'] = True

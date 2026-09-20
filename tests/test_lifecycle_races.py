@@ -16,6 +16,7 @@ class QuarantineOwnership(unittest.IsolatedAsyncioTestCase):
         short_release = threading.Event()
         class Backend:
             control = Mock()
+            def require_supported_backend(self): pass
             def transaction(self):
                 return nullcontext()
             def blocked(self):
@@ -59,6 +60,7 @@ class QuarantineOwnership(unittest.IsolatedAsyncioTestCase):
         release = threading.Event()
         class Backend:
             control = Mock()
+            def require_supported_backend(self): pass
             def transaction(self):return nullcontext()
             def blocked(self):
                 started.set()

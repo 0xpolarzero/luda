@@ -14,6 +14,7 @@ SECRET='synthetic-sensitive-value-do-not-echo'
 
 class Backend:
     control=Mock()
+    def require_supported_backend(self): pass
     def transaction(self):return nullcontext()
     def element(self,*args,**kwargs):raise RuntimeError(SECRET)
     def ready(self):return {'ready':True}

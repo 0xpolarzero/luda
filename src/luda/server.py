@@ -99,6 +99,8 @@ def execute(method, *args, _cancelled=None, **kwargs):
                     atexit.unregister(d.close)
                 else:
                     with d.transaction():
+                        if method not in ('doctor', 'list_applications'):
+                            d.require_supported_backend()
                         if not observation:
                             require_session_input()
                         application_methods = {'list_applications':list_applications, 'launch_application':launch_application}
