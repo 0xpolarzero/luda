@@ -46,7 +46,10 @@ def ended_ownership(request):
         if token['generation'] != request['server_generation']:
             raise DesktopError('SESSION_CHANGED', 'Cleanup identity does not match its original server.')
         names = {token['name'] + ' pointer', token['name'] + ' keyboard'}
-        if not any(device['name'] in names for device in devices.devices()):
+        ids = {token['pointer'], token['keyboard']}
+        # Renaming an existing master is not proof that its held state vanished.
+        # Reused IDs are likewise ambiguous; keep cleanup blocked conservatively.
+        if not any(device['name'] in names or device['id'] in ids for device in devices.devices()):
             return {'released': True, 'session_changed': False,
                     'cleanup_skipped': True, 'private_devices_removed': True}
         return None

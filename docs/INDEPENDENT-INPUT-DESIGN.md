@@ -1,5 +1,9 @@
 # Independent input: implementation research and acceptance design
 
+**Review candidate, not a default-backend release.** Chromium native keyboard
+compatibility and application-issued focus remain blockers. See the
+[candidate status and evidence](../tests/evidence/private-input/CANDIDATE.md).
+
 Status: private-device routing implemented; bounded GTK/XFWM and lifecycle checks pass. Research and validation date: 2026-09-20. See [current evidence](../tests/evidence/private-input/README.md). Broader toolkit, legacy-client, and window-manager qualification remains open. GTK accessibility focus can request WM activation and redirect human focus; native device isolation does not prevent that callback. The earlier runtime at `556d699` used shared devices; its passing routing tests do not qualify independent input.
 
 ## Requirements

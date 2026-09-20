@@ -5,11 +5,11 @@ from luda._private_cleanup import ended_ownership
 
 class PrivateCleanup(unittest.TestCase):
     def test_surviving_owned_component_requires_normal_cleanup(self):
-        for suffix in (' pointer', ' keyboard'):
+        for suffix in (' pointer', ' keyboard', '-renamed'):
             with self.subTest(suffix=suffix):
-                token = {'name':'luda-'+'1'*32, 'generation':'2'*32}
+                token = {'name':'luda-'+'1'*32, 'generation':'2'*32, 'pointer':8, 'keyboard':9}
                 device = Mock()
-                device.devices.return_value = [{'name':token['name']+suffix}]
+                device.devices.return_value = [{'name':token['name']+suffix,'id':8}]
                 with patch('luda._private_cleanup._NativeX11') as native, \
                      patch('luda._private_cleanup.generation', return_value=token['generation']), \
                      patch('luda._private_cleanup.decode_token', return_value=token), \

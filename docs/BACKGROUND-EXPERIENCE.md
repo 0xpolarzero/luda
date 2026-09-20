@@ -1,5 +1,9 @@
 # Visible agent actions and automatic input routing
 
+**Review candidate, not a default-backend release.** Chromium native keyboard
+compatibility and application-issued focus remain blockers. See the
+[candidate status and evidence](../tests/evidence/private-input/CANDIDATE.md).
+
 Luda keeps the same tools and selects the input route internally. Supported
 accessibility actions address the control directly. Native clicks, drags, wheel
 input and chords use a session-owned XI2 pointer/keyboard pair; they never fall
