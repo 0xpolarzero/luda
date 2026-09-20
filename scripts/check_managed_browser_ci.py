@@ -41,8 +41,9 @@ def main():
             stderr=subprocess.STDOUT, timeout=600)
     release = (args.prefix / 'current').resolve(strict=True)
     installed_python = release / '.venv/bin/python'
-    package = Path(subprocess.check_output([str(installed_python), '-c',
-        'import pathlib,luda;print(pathlib.Path(luda.__file__).parent)'], text=True).strip())
+    package = Path(subprocess.check_output([str(installed_python), '-I', '-c',
+        'import pathlib,luda;print(pathlib.Path(luda.__file__).parent)'], text=True).strip()).resolve(strict=True)
+    assert package.is_relative_to((release / '.venv').resolve()), 'Imported package is outside selected release'
     hashes = {}
     source_files = sorted((ROOT / 'src/luda').rglob('*.py'))
     assert {p.relative_to(package) for p in package.rglob('*.py')} == {p.relative_to(ROOT / 'src/luda') for p in source_files}
