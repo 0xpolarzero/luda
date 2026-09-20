@@ -56,54 +56,51 @@ class InteractionMixin:
 
     @contextmanager
     def pointer_action(self, window_id, snapshot_id, points, popup_id=None):
-        """Activate only after validating observed points; recheck before input.
+        """Route validated visible pixels through the agent's private devices.
 
-        The original screenshot is never relabelled as a fresh observation. An
-        internal copy permits only this call's known focus/stacking transition.
-        Geometry, identity, workspace, topology and popup checks remain intact.
+        Device focus can update a toolkit's active-window bookkeeping. Permit
+        that transition only; geometry, coverage and popup identity stay checked.
         """
         cursor = getattr(self, 'cursor', None)
         if cursor is not None:
-            cursor.hide()  # Acknowledged unmap before occlusion checks.
+            cursor.hide()
         window = self.target_window(window_id, False)
-        if window.get('active') is not False:
-            yield snapshot_id
-            return
         for target, x, y in points:
             if popup_id is not None:
                 self._popup_point(target, popup_id, snapshot_id, x, y, False)
             else:
                 self._interaction_point(target, snapshot_id, x, y, False)
         snap = self.snapshots[snapshot_id]
-        ready = check_pointer_ready()
-        if ready['server_generation'] != snap.get('topology', {}).get('server_generation'):
-            raise DesktopError('STALE_OBSERVATION', 'X server changed after observation; observe again.')
-        token = None
-        try:
-            self.activate(window_id)
-            current = self.list_windows()
-            # Order may change when the WM raises the target. Only focus and
-            # stacking may differ; client positions/identities must still match.
-            def layout(signature):
-                return {row[0]: (row[1], row[3]) for row in signature}
-            signature = self.signature(current)
-            if layout(signature) != layout(snap['signature']):
-                raise DesktopError('STALE_OBSERVATION', 'Window layout changed during activation; observe again.')
-            if self.display().topology() != snap.get('topology'):
-                raise DesktopError('STALE_OBSERVATION', 'Desktop changed during activation; observe again.')
-            if self.popup_signature(self.observe_popups(current)) != self.popup_signature(snap.get('popups', [])):
-                raise DesktopError('STALE_OBSERVATION', 'Popup layout changed during activation; observe again.')
-            token = uuid.uuid4().hex
-            self.snapshots[token] = {**snap, 'signature': signature}
-            yield token
-        except DesktopError as exc:
-            if exc.effect == 'none':
-                exc.effect = 'uncertain'
-                exc.details['prior_effects_possible'] = True
-            raise
-        finally:
-            if token is not None:
-                self.snapshots.pop(token, None)
+        with self.input_scope():
+            ready = check_pointer_ready()
+            if ready['server_generation'] != snap.get('topology', {}).get('server_generation'):
+                raise DesktopError('STALE_OBSERVATION', 'X server changed after observation; observe again.')
+            token = None
+            focused = False
+            try:
+                self.focus_input(window)
+                focused = True
+                current = self.list_windows()
+                def layout(signature):
+                    return {row[0]: (row[1], row[3]) for row in signature}
+                signature = self.signature(current)
+                if layout(signature) != layout(snap['signature']):
+                    raise DesktopError('STALE_OBSERVATION', 'Window layout changed during agent focus; observe again.')
+                if self.display().topology() != snap.get('topology'):
+                    raise DesktopError('STALE_OBSERVATION', 'Desktop changed during agent focus; observe again.')
+                if self.popup_signature(self.observe_popups(current)) != self.popup_signature(snap.get('popups', [])):
+                    raise DesktopError('STALE_OBSERVATION', 'Popup layout changed during agent focus; observe again.')
+                token = uuid.uuid4().hex
+                self.snapshots[token] = {**snap, 'signature': signature}
+                yield token
+            except DesktopError as exc:
+                if focused and exc.effect == 'none':
+                    exc.effect = 'uncertain'
+                    exc.details['prior_effects_possible'] = True
+                raise
+            finally:
+                if token is not None:
+                    self.snapshots.pop(token, None)
 
     def pointer_readiness(self, snapshot_id, window):
         identity=window['window_id'].rsplit(':',1)[-1]

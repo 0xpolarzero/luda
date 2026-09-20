@@ -274,26 +274,24 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         w = next((w for w in windows if w['window_id']==window_id),None)
         if not w:
             raise DesktopError('STALE_TARGET','Window identity is no longer present; list windows again.')
-        if require_focus and not w['active']:
-            raise DesktopError('FOCUS_CHANGED','Target is not active. Activate it, inspect, then act.')
+        if require_focus:
+            self.check_input_focus(w)
         return w
 
     def activate(self, window_id):
-        w = self.target_window(window_id,False)
-        run(['xdotool','windowactivate',str(w['xid'])],effect='uncertain')
-        deadline = elapsed_time()+1.5
-        while elapsed_time()<deadline:
+        """Expose the target and focus only the agent's keyboard."""
+        window = self.target_window(window_id, False)
+        with self.input_scope():
+            raised = self._raise_window(window, window_id)
+            if raised.get('effect') != 'verified':
+                return raised
             try:
-                current = self.target_window(window_id, False)
+                self.focus_input(self.target_window(window_id, False))
             except DesktopError as exc:
-                # The numeric XID command was already sent; failed readback
-                # cannot establish that nothing happened.
                 exc.effect = 'uncertain'
                 raise
-            if current['active']:
-                return {'effect':'verified','window_id':window_id,'verification':'active window and observed generation match'}
-            time.sleep(.04)
-        raise DesktopError('ACTIVATION_FAILED','Window did not become active.',effect='uncertain')
+        return {'effect': 'verified', 'window_id': window_id,
+                'verification': 'Window raised and agent keyboard focus verified.'}
 
     def signature(self, windows):
         return [(w['window_id'], w['bounds'], w['active'], w['workspace']) for w in windows]
@@ -442,22 +440,19 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
 
     @contextmanager
     def prepare_input_window(self, window_id, *, activate=True):
-        """Keep activation effects attached to failures later in an input action."""
-        changed = False
-        try:
-            target = self.target_window(window_id, False)
-            if activate and target.get('active') is False:
-                # This target-independent probe catches already-held user input
-                # before focus changes. Native dispatch checks again for races.
-                if keyboard_capabilities().get('input_held') is True:
-                    raise DesktopError('INPUT_HELD','Keys or pointer buttons are already held; no foreground input sent.')
-                self.activate(window_id)
-                changed = True
-            yield self.target_window(window_id)
-        except DesktopError as exc:
-            if changed and exc.effect == 'none':
-                exc.effect = 'uncertain'
-            raise
+        """Focus the agent keyboard without changing the human input devices."""
+        with self.input_scope():
+            changed = False
+            try:
+                target = self.target_window(window_id, False)
+                if activate:
+                    self.focus_input(target)
+                    changed = True
+                yield self.target_window(window_id)
+            except DesktopError as exc:
+                if changed and exc.effect == 'none':
+                    exc.effect = 'uncertain'
+                raise
 
     def key(self, window_id, chord, count=1, *, _activate=True):
         validate_chord(chord)
