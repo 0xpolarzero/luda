@@ -183,6 +183,14 @@
       ],
       "scope": "xterm/Xfce terminal paste/confirmation and interrupt behavior measured by passive PTY bytes/signals.",
       "limits": "No pasted shell execution; bindings and bracketed-paste behavior are terminal-specific. PRIMARY/TUI workflows are separate."
+    },
+    "live_launch_observation.py": {
+      "requirements": [
+        "WM-09",
+        "WM-10"
+      ],
+      "scope": "One launch followed by bounded process-generation window candidates, with independent GUI launch counter.",
+      "limits": "Candidate windows do not prove requested-document readiness; singleton association remains unknown and launches are never retried."
     }
   }
 }
