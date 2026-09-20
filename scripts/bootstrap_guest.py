@@ -58,6 +58,43 @@ class InterruptedProcess(BootstrapError):
         super().__init__('Child execution interrupted; installation outcome must be inspected before retry.')
 
 
+def process_identity(directory):
+    stat = (directory / 'stat').read_text().rsplit(')', 1)[1].split()
+    if stat[0] == 'Z':
+        return None
+    # Nondumpable processes can change /proc directory ownership to root;
+    # the status Uid field remains the process identity, not that directory UID.
+    uid = next(line for line in (directory / 'status').read_text().splitlines() if line.startswith('Uid:'))
+    return (int(uid.split()[2]), stat[19])
+
+
+def process_snapshot():
+    result = {}
+    for directory in Path('/proc').iterdir():
+        if directory.name.isdigit():
+            try:
+                identity = process_identity(directory)
+                if identity is not None:
+                    result[int(directory.name)] = identity
+            except (OSError, ValueError, IndexError, StopIteration):
+                continue
+    return result
+
+
+def unreadable_new_candidates(baseline):
+    for pid, identity in process_snapshot().items():
+        if baseline.get(pid) == identity or (os.getuid() != 0 and identity[0] != os.getuid()):
+            continue
+        try:
+            (Path('/proc') / str(pid) / 'environ').read_bytes()
+        except (FileNotFoundError, ProcessLookupError):
+            continue
+        except OSError:
+            # Candidate attribution is unknown. Do not signal it; refuse proof.
+            return True
+    return False
+
+
 def tagged_processes(token):
     marker = (PROCESS_TOKEN + '=' + token).encode()
     found = {}
@@ -67,10 +104,10 @@ def tagged_processes(token):
         try:
             if marker not in (directory / 'environ').read_bytes().split(b'\0'):
                 continue
-            stat = (directory / 'stat').read_text().rsplit(')', 1)[1].split()
-            if stat[0] != 'Z':
-                found[int(directory.name)] = (directory.stat().st_uid, stat[19])
-        except (OSError, IndexError):
+            identity = process_identity(directory)
+            if identity is not None:
+                found[int(directory.name)] = identity
+        except (OSError, ValueError, IndexError, StopIteration):
             continue
     return found
 
@@ -98,6 +135,7 @@ def cleanup_tagged(token):
 
 def run_process(argv, *, stdout, stderr, timeout):
     token = uuid.uuid4().hex
+    baseline = process_snapshot()
     child = subprocess.Popen([str(v) for v in argv], stdout=stdout, stderr=stderr,
                              env={**os.environ, PROCESS_TOKEN: token}, start_new_session=True)
     interrupted = False
@@ -111,6 +149,7 @@ def run_process(argv, *, stdout, stderr, timeout):
         if child.poll() is None:
             child.kill()
         child.wait(timeout=2)
+        clean = clean and not unreadable_new_candidates(baseline)
     if interrupted or not clean:
         raise InterruptedProcess(clean)
     return code

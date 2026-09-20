@@ -6,6 +6,7 @@ from pathlib import Path
 import sys
 import subprocess
 import time
+import pwd
 import tempfile
 from types import SimpleNamespace
 import unittest
@@ -164,6 +165,54 @@ class GuestBootstrap(unittest.TestCase):
         child=Path('/proc')/pidfile.read_text()
         if child.exists():
             self.assertEqual((child/'stat').read_text().rsplit(')',1)[1].split()[0],'Z')
+
+    def test_ordinary_uid_nondumpable_child_is_unconfirmed_not_silently_skipped(self):
+        uid, gid = os.getuid(), os.getgid()
+        options = {}
+        if uid == 0:
+            account = next(value for value in pwd.getpwall() if value.pw_name == 'nobody')
+            uid, gid = account.pw_uid, account.pw_gid
+            options = dict(user=uid, group=gid, extra_groups=[])
+        self.root.chmod(0o755)
+        directory = self.root / 'ordinary-probe'
+        directory.mkdir()
+        if os.getuid() == 0:
+            os.chown(directory, uid, gid)
+        probe = r"""
+import ctypes,json,os,signal,subprocess,sys,time
+from pathlib import Path
+sys.path.insert(0,sys.argv[1])
+import bootstrap_guest as b
+root=Path(sys.argv[2]);pidfile=root/'identity.json'
+child_code='''import ctypes,json,os,time;from pathlib import Path
+ctypes.CDLL(None).prctl(4,0,0,0,0)
+identity=Path('/proc/self/stat').read_text().rsplit(')',1)[1].split()[19]
+Path(%r).write_text(json.dumps({'pid':os.getpid(),'start':identity,'token_preserved':bool(os.environ.get('LUDA_BOOTSTRAP_PROCESS_TOKEN'))}))
+time.sleep(20)
+''' % str(pidfile)
+parent_code='import subprocess,sys,time;subprocess.Popen([sys.executable,"-c",'+repr(child_code)+'],start_new_session=True);time.sleep(20)'
+try:
+ try:
+  b.run_process([sys.executable,'-c',parent_code],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=.6)
+  raise AssertionError('Interrupted invocation returned success')
+ except b.InterruptedProcess as exc:
+  value=json.loads(pidfile.read_text());pid=value['pid']
+  value.update(uid=os.getuid(),cleanup_verified=exc.cleanup_verified,alive=Path('/proc',str(pid)).exists())
+  assert value['token_preserved'] and value['alive'] and not exc.cleanup_verified,value
+  print(json.dumps(value))
+finally:
+ if pidfile.exists():
+  value=json.loads(pidfile.read_text());path=Path('/proc',str(value['pid']))
+  try:
+   if b.process_identity(path)==(os.getuid(),value['start']):os.kill(value['pid'],signal.SIGKILL)
+  except (FileNotFoundError,ProcessLookupError):pass
+"""
+        result=subprocess.run([sys.executable,'-c',probe,str(ROOT/'scripts'),str(directory)],capture_output=True,text=True,timeout=8,**options)
+        self.assertEqual(result.returncode,0,result.stderr)
+        evidence=json.loads(result.stdout)
+        self.assertNotEqual(evidence['uid'],0)
+        self.assertFalse(evidence['cleanup_verified'])
+        self.assertTrue(evidence['token_preserved'])
 
     def test_unproved_cleanup_marks_unknown_and_prohibits_automatic_retry(self):
         with patch.object(b,'desktop_status',return_value=self.status()),patch.object(b,'run_process',side_effect=b.InterruptedProcess(False)),patch.object(b,'doctor') as doctor:

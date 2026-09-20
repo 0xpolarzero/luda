@@ -54,7 +54,7 @@ On success, `config_directory` names `<output>/config`, containing
 After the installer exits, bootstrap acquires the existing prefix lock, requires the selected release to match the supplied source identity, and holds that lock through doctor and configuration generation. It never holds the lock while invoking the installer. A competing managed release switch is refused or serialized; later intentional updates can still change the generated `current` launcher. Successful readiness is a point-in-time check, not permanent session availability.
 No successful result asserts host discovery or release qualification.
 
-Interrupted child execution is cleaned using a per-invocation inherited token and revalidated process UID/start identities, including children that create new sessions. This targets only tagged descendants, not other installer processes or global process names. Cleanup is bounded; the contract assumes the trusted installer descendants preserve the inherited token. A timeout/interruption reports installation outcome `unknown` and disallows automatic retry, even if tagged cleanup succeeds: inspect the selected release and retained output first. If cleanup cannot be proved, `cleanup_verified` is false. Abrupt termination of bootstrap itself is not a durable external process supervisor.
+Interrupted child execution is cleaned using a per-invocation inherited token and revalidated process UID/start identities, including children that create new sessions. This targets only tagged descendants, not other installer processes or global process names. A prelaunch PID/UID/start snapshot also detects newly appearing live candidates whose environment cannot be read. Those candidates are never signaled without ownership proof; they make cleanup unconfirmed. Ordinary accounts consider same-UID candidates, while root considers all UIDs because installer children can drop privileges. A concurrently launched unrelated unreadable candidate can therefore conservatively block the cleanup claim. Process UID comes from `/proc/PID/status`, since nondumpability can change the proc directory owner. Cleanup is bounded; the contract assumes the trusted installer descendants preserve the inherited token. A timeout/interruption reports installation outcome `unknown` and disallows automatic retry, even if tagged cleanup succeeds: inspect the selected release and retained output first. If cleanup cannot be proved, `cleanup_verified` is false. Abrupt termination of bootstrap itself is not a durable external process supervisor.
 
 ## Finish in the intended host context
 
@@ -79,10 +79,10 @@ actual integration points.
 
 ## Validation scope
 
-Twelve focused tests cover rejection before child execution, stopped/missing
+Thirteen focused tests cover rejection before child execution, stopped/missing
 status ordering, literal shell-looking paths as argv, installer output routing,
 install/readiness/config failure boundaries, selected-release preservation,
-status/error redaction and machine-readable CLI failure, all path overlaps, non-root provisioning, release switching, and lock coverage. A real detached-child timeout regression verifies the tagged child cannot produce a delayed file effect. Existing installer tests
+status/error redaction and machine-readable CLI failure, all path overlaps, non-root provisioning, release switching, and lock coverage. A real detached-child timeout regression verifies the tagged child cannot produce a delayed file effect. A separate ordinary-UID regression retains the token but sets `PR_SET_DUMPABLE=0`; bootstrap reports cleanup unconfirmed while the child is alive. Only the test subsequently cleans its recorded PID/start identity. Existing installer tests
 remain separate. The separate installed-guest record below exercises the composed workflow;
 unit tests alone do not establish that result.
 
