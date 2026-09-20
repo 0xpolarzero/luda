@@ -106,6 +106,27 @@ class _NativeX11:
         finally:
             if data:x.XFree(data)
 
+    def restack_above(self, pair):
+        """Send an explicit-sibling configure request to the window manager.
+
+        Managed clients have different frame parents, so a direct XConfigureWindow
+        with the peer client can fail BadMatch before the WM receives it.
+        """
+        window,sibling=pair
+        class Request(C.Structure):
+            _fields_=[('type',C.c_int),('serial',C.c_ulong),('send_event',C.c_int),('display',C.c_void_p),('parent',C.c_ulong),('window',C.c_ulong),('x',C.c_int),('y',C.c_int),('width',C.c_int),('height',C.c_int),('border_width',C.c_int),('above',C.c_ulong),('detail',C.c_int),('value_mask',C.c_ulong)]
+        class Event(C.Union):
+            _fields_=[('request',Request),('pad',C.c_long*24)]
+        event=Event();event.request.type=23;event.request.send_event=True
+        event.request.display=self.display;event.request.parent=self.root
+        event.request.window=window;event.request.above=sibling
+        event.request.detail=0;event.request.value_mask=(1<<5)|(1<<6)
+        x=self.lib
+        x.XSendEvent.argtypes=[C.c_void_p,C.c_ulong,C.c_int,C.c_long,C.POINTER(Event)];x.XSendEvent.restype=C.c_int
+        accepted=bool(x.XSendEvent(self.display,self.root,False,(1<<19)|(1<<20),C.byref(event)))
+        x.XSync.argtypes=[C.c_void_p,C.c_int];x.XSync(self.display,False)
+        return {'accepted':accepted}
+
     def selection_owner(self, selection):
         x=self.lib
         x.XInternAtom.argtypes=[C.c_void_p,C.c_char_p,C.c_int];x.XInternAtom.restype=C.c_ulong
@@ -210,9 +231,12 @@ def main():
         request = json.loads(sys.stdin.buffer.read(65536))
         method = request['method']
         argument = request.get('argument')
-        if method not in {'root','selection_owner','geometry','geometries','window_tokens','surface_at','root_surface','transient_for','children','popup_surfaces'}:
+        if method not in {'root','selection_owner','restack_above','geometry','geometries','window_tokens','surface_at','root_surface','transient_for','children','popup_surfaces'}:
             raise DesktopError('INVALID_ARGUMENT','Unknown X11 metadata operation.')
-        if method=='selection_owner':
+        if method=='restack_above':
+            if not isinstance(argument,list) or len(argument)!=2 or any(isinstance(v,bool) or not isinstance(v,int) or not 1<=v<=0xffffffff for v in argument) or argument[0]==argument[1]:
+                raise DesktopError('INVALID_ARGUMENT','Restacking requires distinct target and sibling XIDs.')
+        elif method=='selection_owner':
             if argument not in {'CLIPBOARD','PRIMARY'}:
                 raise DesktopError('INVALID_ARGUMENT','Selection must be CLIPBOARD or PRIMARY.')
         elif method in {'geometries','window_tokens'}:

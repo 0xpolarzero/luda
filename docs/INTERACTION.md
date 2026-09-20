@@ -2,7 +2,7 @@
 
 `InteractionMixin` is composed with `Desktop`; public tool callers must hold its transaction lock. Window identities and screenshot expiry retain Desktop's contract.
 
-`manage_window(window_id, action, ...)` accepts move (`x,y`, outer frame origin), resize (`width,height`, client dimensions), maximize, minimize, restore, close, or workspace (`workspace`). It rejects irrelevant parameters before dispatch. Window-manager state is polled for 1.5 seconds; verified means the requested WM state was observed, not that application content was saved. Close sends the normal close request and never kills a process or confirms an unsaved-data dialog. Window managers may constrain geometry; such requests return dispatched if the exact state is not observed.
+`manage_window(window_id, action, ...)` accepts move (`x,y`, outer frame origin), resize (`width,height`, client dimensions), maximize, minimize, fullscreen, raise, restore, close, or workspace (`workspace`). It rejects irrelevant parameters before dispatch. Window-manager state is polled for 1.5 seconds; verified means the requested WM state was observed, not that application content was saved. Close sends the normal close request and never kills a process or confirms an unsaved-data dialog. Window managers may constrain geometry; such requests return dispatched if the exact state is not observed.
 
 `workspaces()` and `switch_workspace(workspace)` use existing workspace indexes. Creation/deletion is deliberately outside this contract.
 
@@ -49,3 +49,15 @@ Concurrent initialization uses a brief XGrabServer around reading, validating an
 `tests/live_window_tokens.py` used checked XCB requests against a disposable Xvfb to destroy and recreate the **same numeric XID on the same client connection**. It verified a different generation, identical results from racing independent initializers, preservation through move/unmap/remap, rejection of a malformed preexisting property, release after that exception, and release after killing a helper which demonstrably held a processed server grab. Decoder tests also cover wrong types, lengths, remaining bytes, uppercase/non-hex/NUL/non-ASCII values and invalid batch arguments.
 
 This is resource-lifetime identity, not protection from hostile X clients. Other clients can delete or forge a valid property; deleting it intentionally invalidates previously recorded identity. The nonce does not imply unchanged application content, widget content, or menu contents. Unmapping and remapping the same still-living resource intentionally retains its identity. A server grab briefly stalls other X clients; batches are capped at 512 and connection death releases the lock, but desktop responsiveness during enormous batches still needs workload measurement.
+
+## Fullscreen, raise and blocked close
+
+`desktop_window(..., action="fullscreen")` requests the EWMH fullscreen state and verifies the actual `_NET_WM_STATE_FULLSCREEN` flag. `restore` now removes fullscreen as well as maximization and minimization. The window manager determines monitor coverage and constrained geometry.
+
+`action="raise"` raises a visible window above peers with the same declared layer flags without requesting activation. It verifies actual root-child stacking and unchanged active window. Already-topmost windows need no mutation. Sticky windows include peers from the active workspace. Hidden windows are rejected. Focus changes caused by another actor during the operation produce FOCUS_CHANGED with uncertain effect; the tool never attempts to counteract human focus changes.
+
+On XFWM, a raw XRaiseWindow with no sibling activates the client, frame stacking requests are ignored, and `_NET_RESTACK_WINDOW` is unsupported. The isolated helper instead sends a ConfigureRequest with an explicit highest peer sibling, preserving window-manager layer handling without an activation request. [XFWM's request handling](https://github.com/xfce-mirror/xfwm4/blob/master/src/client.c) explains this distinction. Other window managers may decline the request; verification then remains dispatched.
+
+Close now reports `outcome="closed"` when the owner disappears, `blocked_by_dialog` with observed modal window IDs when the owner remains with a linked modal dialog, or `still_open` when no completion is observed. The dialog case remains dispatched, never pretends the application closed, and never confirms a dialog or infers its contents.
+
+The extended live interaction fixture verified fullscreen entry/exit through independent xprop reads; raise and repeated raise through independent xwininfo stacking and xdotool focus reads; preservation below an owned above-layer fixture; and a synthetic unsaved-close dialog whose independent oracle confirmed it was left unanswered. Nine unit cases cover malformed state arguments, hidden and sticky raises, explicit-sibling dispatch, focus-change refusal, idempotency, fullscreen restoration and blocked close.

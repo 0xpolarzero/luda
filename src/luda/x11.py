@@ -16,7 +16,8 @@ class X11:
     def _read(self, method, argument=None):
         try:
             raw = run([sys.executable, '-m', 'luda._x11_helper'],
-                      data=json.dumps({'method':method,'argument':argument}).encode(), timeout=2)
+                      data=json.dumps({'method':method,'argument':argument}).encode(), timeout=2,
+                      effect='uncertain' if method=='restack_above' else 'none')
         except DesktopError as exc:
             if exc.code == 'BACKEND_ERROR':
                 raise DesktopError('DISPLAY_UNAVAILABLE', 'X11 metadata helper exited unexpectedly; reconnect or run doctor.',
@@ -52,6 +53,11 @@ class X11:
             raise DesktopError('INVALID_ARGUMENT','Geometry batch must contain at most 512 XIDs.')
         result=self._read('geometries',[self._xid(window) for window in windows])
         return {int(xid):bounds for xid,bounds in result.items()}
+
+    def restack_above(self, window, sibling):
+        pair=[self._xid(window),self._xid(sibling)]
+        if pair[0]==pair[1]:raise DesktopError('INVALID_ARGUMENT','Restacking requires a distinct sibling.')
+        return self._read('restack_above',pair)
 
     def selection_owner(self, selection='CLIPBOARD'):
         if selection not in ('CLIPBOARD','PRIMARY'):

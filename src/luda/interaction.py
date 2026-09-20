@@ -48,7 +48,7 @@ class InteractionMixin:
             time.sleep(.04)
 
     def manage_window(self, window_id, action, x=None, y=None, width=None, height=None, workspace=None):
-        actions = {'move', 'resize', 'maximize', 'minimize', 'restore', 'close', 'workspace'}
+        actions = {'move', 'resize', 'maximize', 'minimize', 'fullscreen', 'raise', 'restore', 'close', 'workspace'}
         if action not in actions:
             raise DesktopError('INVALID_ARGUMENT', 'Unknown window action.')
         supplied = {k for k,v in {'x':x,'y':y,'width':width,'height':height,'workspace':workspace}.items() if v is not None}
@@ -62,28 +62,96 @@ class InteractionMixin:
         if action == 'workspace': self._workspace(workspace)
         w = self.target_window(window_id, False)
         xid = str(w['xid'])
+        if action == 'raise':return self._raise_window(w,window_id)
         if action == 'move': command = ['wmctrl','-ir',xid,'-e',f'0,{x},{y},-1,-1']
         elif action == 'resize': command = ['xdotool','windowsize',xid,str(width),str(height)]
         elif action == 'minimize': command = ['xdotool','windowminimize',xid]
+        elif action == 'fullscreen': command = ['wmctrl','-ir',xid,'-b','add,fullscreen']
         elif action == 'close': command = ['wmctrl','-ic',xid]
         elif action == 'workspace': command = ['wmctrl','-ir',xid,'-t',str(workspace)]
         else: command = ['wmctrl','-ir',xid,'-b',('add' if action == 'maximize' else 'remove')+',maximized_vert,maximized_horz']
         run(command, effect='uncertain')
         if action == 'restore':
+            run(['wmctrl','-ir',xid,'-b','remove,fullscreen'],effect='uncertain')
             run(['xdotool','windowmap',xid], effect='uncertain')
+        dialogs=[]
         def matches():
             current = next((v for v in self.list_windows() if v['window_id'] == window_id), None)
-            if action == 'close': return current is None
+            if action == 'close':
+                if current is None:return True
+                for candidate in self.windows.values():
+                    if candidate['window_id']==window_id or not w.get('pid') or candidate.get('pid')!=w['pid']:continue
+                    if self.display().transient_for(candidate['xid'])==w['xid'] and '_NET_WM_STATE_MODAL' in properties(candidate['xid']):
+                        dialogs.append(candidate['window_id'])
+                return bool(dialogs)
             if current is None: return False
             if action == 'move': return all(current['frame_bounds'][key] == value for key,value in [('x',x),('y',y)])
             if action == 'resize': return current['bounds']['width'] == width and current['bounds']['height'] == height
             if action == 'workspace': return current['workspace'] == workspace
             state = properties(current['xid'])
+            if action == 'fullscreen': return '_NET_WM_STATE_FULLSCREEN' in state
             if action == 'minimize': return '_NET_WM_STATE_HIDDEN' in state
             maximized = all('_NET_WM_STATE_MAXIMIZED_'+part in state for part in ('VERT','HORZ'))
             if action == 'maximize': return maximized
-            return not any(token in state for token in ('_NET_WM_STATE_HIDDEN','_NET_WM_STATE_MAXIMIZED_VERT','_NET_WM_STATE_MAXIMIZED_HORZ'))
-        return self._await_state(matches, {'window_id':window_id,'action':action})
+            return not any(token in state for token in ('_NET_WM_STATE_HIDDEN','_NET_WM_STATE_MAXIMIZED_VERT','_NET_WM_STATE_MAXIMIZED_HORZ','_NET_WM_STATE_FULLSCREEN'))
+        result=self._await_state(matches, {'window_id':window_id,'action':action})
+        if action=='close':
+            if dialogs:
+                result.update(effect='dispatched',outcome='blocked_by_dialog',dialog_window_ids=dialogs,verification='Owner remains open with an owned modal dialog. Inspect it; no dialog was confirmed.')
+            else:result['outcome']='closed' if result['effect']=='verified' else 'still_open'
+        return result
+
+    def _raise_window(self, window, window_id):
+        frame=self.display().root_surface(window['xid'])
+        if frame is None:raise DesktopError('STALE_TARGET','Window frame disappeared before raising.')
+        def stacking():
+            return self.display().children(self.display().root)
+        def layer(xid):
+            state=run(['xprop','-id',str(xid),'_NET_WM_STATE','_NET_WM_WINDOW_TYPE']).decode(errors='replace')
+            excluded=any(token in state for token in ('_NET_WM_STATE_HIDDEN','_NET_WM_WINDOW_TYPE_DOCK','_NET_WM_WINDOW_TYPE_DESKTOP'))
+            flags=tuple(token in state for token in ('_NET_WM_STATE_ABOVE','_NET_WM_STATE_BELOW','_NET_WM_STATE_FULLSCREEN'))
+            return excluded,flags
+        before=stacking()
+        if frame not in before:
+            raise DesktopError('UNSUPPORTED','Window manager does not expose this window in its stacking order.')
+        hidden,target_layer=layer(window['xid'])
+        if hidden:raise DesktopError('NOT_INTERACTABLE','Raise requires a visible application window; restore it first.')
+        visible_workspaces={-1,window['workspace']}
+        if window['workspace']==-1:
+            current=next((w['workspace'] for w in self.workspaces() if w['active']),None)
+            if current is None:raise DesktopError('UNSUPPORTED','Cannot resolve the current workspace for a sticky window.')
+            visible_workspaces.add(current)
+        focus=self.active()
+        peers=[]
+        for other in self.windows.values():
+            if other['xid']==window['xid'] or other['workspace'] not in visible_workspaces:continue
+            excluded,other_layer=layer(other['xid'])
+            if not excluded and other_layer==target_layer:
+                other_frame=self.display().root_surface(other['xid'])
+                if other_frame in before:peers.append((before.index(other_frame),other['xid']))
+        # Explicit sibling avoids XFWM's activate-on-unspecified-raise policy.
+        # Already-topmost windows require no mutation, including no focus request.
+        if peers and max(peers)[0]>before.index(frame):
+            self.display().restack_above(window['xid'],max(peers)[1])
+        def raised():
+            if self.active()!=focus:
+                raise DesktopError('FOCUS_CHANGED','Focus changed while raising. Inspect before continuing.',effect='uncertain')
+            windows=self.list_windows()
+            if not any(w['window_id']==window_id for w in windows):
+                raise DesktopError('STALE_TARGET','Window disappeared while raising.',effect='uncertain')
+            order=stacking()
+            if frame not in order or self.display().root_surface(window['xid'])!=frame:return False
+            for other in windows:
+                if other['xid']==window['xid'] or other['workspace'] not in visible_workspaces:continue
+                excluded,other_layer=layer(other['xid'])
+                if not excluded and other_layer==target_layer:
+                    other_frame=self.display().root_surface(other['xid'])
+                    if other_frame in order and order.index(other_frame)>order.index(frame):return False
+            return self.active()==focus
+        result=self._await_state(raised,{'window_id':window_id,'action':'raise'})
+        if result['effect']=='verified':
+            result['verification']='Window is above visible peers in its stacking layer; active window stayed unchanged.'
+        return result
 
     def _interaction_point(self, window_id, snapshot_id, x, y, require_focus=True):
         if any(isinstance(v, bool) or not isinstance(v, (int,float)) or not math.isfinite(v) for v in (x,y)):

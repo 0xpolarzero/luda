@@ -255,8 +255,8 @@ async def desktop_set_expanded(element_id: str, expanded: bool) -> CallToolResul
 
 
 @mcp.tool()
-async def desktop_window(window_id: str, action: Literal['move','resize','maximize','minimize','restore','close','workspace'], x: int | None = None, y: int | None = None, width: int | None = None, height: int | None = None, workspace: int | None = None) -> CallToolResult:
-    """Manage one window. move uses frame x/y; resize uses client width/height; workspace requires its index. Other actions take no extra parameters. A close can open a save dialog."""
+async def desktop_window(window_id: str, action: Literal['move','resize','maximize','minimize','fullscreen','raise','restore','close','workspace'], x: int | None = None, y: int | None = None, width: int | None = None, height: int | None = None, workspace: int | None = None) -> CallToolResult:
+    """Manage one window. move uses frame x/y; resize uses client width/height; workspace requires its index. fullscreen requests WM fullscreen; restore exits fullscreen/maximization/minimization; raise changes stacking without activation. Other actions take no extra parameters. Close reports an owned blocking dialog without confirming it."""
     return await execute_async('manage_window',window_id,action,x=x,y=y,width=width,height=height,workspace=workspace)
 
 
