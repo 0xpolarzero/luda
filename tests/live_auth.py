@@ -1,5 +1,7 @@
 """Synthetic auth boundaries: MCP drives UI; read-only DOM is an independent oracle."""
 import argparse
+import ctypes
+import hashlib
 import asyncio
 import functools
 import http.server
@@ -16,6 +18,19 @@ from playwright.async_api import async_playwright
 
 ROOT=Path(__file__).resolve().parents[1]
 OUT=ROOT/'artifacts/auth'
+
+
+def clipboard_owner():
+    # Independent Xlib oracle; do not use the production clipboard helper.
+    x=ctypes.CDLL('libX11.so.6')
+    x.XOpenDisplay.argtypes=[ctypes.c_char_p];x.XOpenDisplay.restype=ctypes.c_void_p
+    x.XInternAtom.argtypes=[ctypes.c_void_p,ctypes.c_char_p,ctypes.c_int];x.XInternAtom.restype=ctypes.c_ulong
+    x.XGetSelectionOwner.argtypes=[ctypes.c_void_p,ctypes.c_ulong];x.XGetSelectionOwner.restype=ctypes.c_ulong
+    x.XCloseDisplay.argtypes=[ctypes.c_void_p]
+    display=x.XOpenDisplay(None)
+    if not display:raise RuntimeError('Clipboard oracle display unavailable')
+    try:return x.XGetSelectionOwner(display,x.XInternAtom(display,b'CLIPBOARD',0))
+    finally:x.XCloseDisplay(display)
 
 async def main(executable):
     if os.getuid()==0 or os.environ.get('LUDA_ISOLATED_TEST_DISPLAY')!='1':
@@ -64,6 +79,37 @@ async def main(executable):
                             return found[0]
                         async def click(name,window_id=wid):
                             n=await node(name,window_id);return await call('desktop_invoke',element_id=n['element_id'],action=next(a for a in n['actions'] if a.casefold() in ('click','press','activate')))
+                        # The alternate route uses only observed focus + public key tools.
+                        # This independent owner is installed before either OTP is typed.
+                        sentinel=b'luda-auth-independent-clipboard-sentinel'
+                        owner=subprocess.Popen(['xclip','-selection','clipboard','-in','-quiet'],stdin=subprocess.PIPE,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+                        try:
+                            owner.stdin.write(sentinel);owner.stdin.close()
+                            deadline=time.monotonic()+2
+                            while subprocess.run(['xclip','-selection','clipboard','-o'],capture_output=True,timeout=2).stdout!=sentinel:
+                                if time.monotonic()>deadline:raise RuntimeError('Clipboard sentinel readiness')
+                                await asyncio.sleep(.02)
+                            original_owner=clipboard_owner()
+                            for layout in ('us','fr'):
+                                # Private-display fixture setup, never a production tool action.
+                                subprocess.run(['setxkbmap',layout],check=True,capture_output=True,timeout=3)
+                                await click('Reset synthetic fixture')
+                                await asyncio.sleep(.1)
+                                field=await node('One-time code')
+                                outputs=[await call('desktop_focus_element',element_id=field['element_id'])]
+                                for chord in ('ctrl+a','BackSpace',*'001204'):
+                                    outputs.append(await call('desktop_press_keys',window_id=wid,chord=chord))
+                                digest=await page.locator('#otp').evaluate("async e => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(e.value)))).map(x=>x.toString(16).padStart(2,'0')).join('')")
+                                exact=digest==hashlib.sha256(b'001204').hexdigest()
+                                untouched=owner.poll() is None and clipboard_owner()==original_owner and subprocess.run(['xclip','-selection','clipboard','-o'],capture_output=True,timeout=3).stdout==sentinel
+                                unsubmitted=await page.evaluate('audit.submissions===0 && !audit.verified')
+                                no_echo=all('001204' not in json.dumps(response) for response in outputs)
+                                record('digit-key-otp-'+layout,exact and untouched and unsubmitted and no_echo,application_hash_matches=exact,clipboard_owner_and_value_unchanged=untouched,no_implicit_submit=unsubmitted,response_contains_full_value=not no_echo)
+                        finally:
+                            subprocess.run(['setxkbmap','us'],check=True,capture_output=True,timeout=3)
+                            if owner.poll() is None:owner.terminate();owner.wait(timeout=3)
+                        await click('Reset synthetic fixture')
+                        await asyncio.sleep(.1)
                         otp=await node('One-time code')
                         old=await node('Existing session action')
                         err,result=await raw('desktop_type_secret',element_id=otp['element_id'],text='001204')

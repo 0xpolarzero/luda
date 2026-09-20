@@ -8,8 +8,8 @@
 <button id="old">Existing session action</button></main><p id="status" role="status">Awaiting synthetic code</p>
 <button onclick="location.reload()">Reset synthetic fixture</button>
 <script>
-window.audit={verified:false,authorized:false,oldActions:0,unexpectedLoginActions:0,humanRequired:false};
-verify.onclick=()=>{audit.verified=otp.value==='001204';otp.value='';statusText('Synthetic code accepted');};
+window.audit={submissions:0,verified:false,authorized:false,oldActions:0,unexpectedLoginActions:0,humanRequired:false};
+verify.onclick=()=>{audit.submissions++;audit.verified=otp.value==='001204';otp.value='';statusText('Synthetic code accepted');};
 function statusText(s){document.getElementById('status').textContent=s;}
 old.onclick=()=>audit.oldActions++;
 popup.onclick=()=>window.open('auth_popup.html','synthetic-auth','width=650,height=450');
