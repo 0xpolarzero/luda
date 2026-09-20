@@ -18,3 +18,7 @@ This test downloads and extracts source but never invokes its installer. The can
 ## Updated 24-patch candidate
 
 The [61b8c0a candidate](../../../integrations/silo/releases/61b8c0a.json) includes the current 50-module runtime and skill contract mirrored by all 24 Silo patches. The same verifier downloaded its canonical archive and checked all 884 files, executable bits, 89 directories and actual guest extraction modes against the trusted full Git commit. The [result](61b8c0a/result.json) records 10,061,571 compressed bytes, 14,221,625 expanded file bytes and the matching SHA-256. No downloaded code executed. The default guest manifest remains disabled; this is a selectable source candidate, not fresh Mac/Silo acceptance. Later test-only commits are not included in this immutable archive. The older proof above remains historical evidence.
+
+## Updated 25-patch candidate
+
+The [e08bc91 candidate](../../../integrations/silo/releases/e08bc91.json) adds canonical managed diagnostics and formatting guidance mirrored by Silo patch 0025. Its [independent canonical-download proof](e08bc91/result.json) matches all 984 Git files, executable bits and 105 directories, then verifies actual guest extraction. The archive is 11,104,155 bytes; expanded files total 15,486,508 bytes. All 25 ordered patches check cleanly against the pinned Silo checkout. The selectable candidate includes this skill; the older 24-patch candidate remains historical. Default onboarding remains disabled and fresh Mac/Silo acceptance is still required.
