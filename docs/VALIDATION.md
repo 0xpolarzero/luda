@@ -91,10 +91,11 @@ fingerprint. The newer scoped records include [locale forms](DATA-ENTRY-QUALIFIC
 and [authentication boundaries](AUTH-QUALIFICATION.md). These have distinct source
 snapshots and supported scopes; they are not a single universal acceptance pass.
 
-The integrated `af41eba` unit run passed **581 tests** with unchanged source
-(`artifacts/qualification/error-timing-agent-unit.json`). The same revision passed
+The integrated `bba9c45` unit run passed **589 tests** with unchanged source
+(`artifacts/qualification/native-representation-compact-unit.json`). The same revision passed
 the ordinary-account actual MCP suite, including elapsed time on a real error
-response. [Error privacy](ERROR-PRIVACY.md) specifies the timing boundary; the
+response. This revision includes native text representation guards and compact
+JSON responses; the public MCP suite passed after both changes. [Error privacy](ERROR-PRIVACY.md) specifies the timing boundary; the
 earlier installed wheel predates this change. Later live-only additions have
 their own recorded runs. The [live inventory](LIVE-COVERAGE.md) distinguishes
 registered fixtures from standalone experiments; its associations are not passes.
