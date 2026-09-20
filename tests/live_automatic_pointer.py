@@ -116,6 +116,38 @@ async def child():
                     assert f'X={x}\nY={y}\n' in command('xdotool', 'getmouselocation', '--shell')
                     cases.append('MCP inactive hover activates without a button event')
 
+                    human_id = next(w['window_id'] for w in windows if w['pid'] == human.pid)
+                    tree = await call('desktop_inspect', window_id=human_id)
+                    field = next(n for n in tree['nodes'] if n['name'] == 'Contract text')
+                    button = next(n for n in tree['nodes'] if n['name'] == 'Record action')
+                    command('wmctrl', '-ir', str(hw['xid']), '-e', '0,750,90,550,500')
+                    def desktop_state():
+                        return (command('xdotool', 'getactivewindow'),
+                                command('xdotool', 'getwindowfocus'),
+                                command('xdotool', 'getmouselocation', '--shell'),
+                                command('xprop', '-root', '_NET_CLIENT_LIST_STACKING'))
+                    before = desktop_state()
+                    await call('desktop_type', element_id=field['element_id'], text='MCP background proof', mode='replace')
+                    wait(lambda: json.loads((base / 'human/state.json').read_text())['text'] == 'MCP background proof')
+                    assert desktop_state() == before
+                    current = await call('desktop_inspect', window_id=human_id)
+                    bounds = next(n['bounds'] for n in current['nodes'] if n['name'] == 'Contract text')
+                    marker = (bounds['x'] + bounds['width']//2 + 1, bounds['y'] + bounds['height']//2 + 6)
+                    assert ImageGrab.grab(xdisplay=os.environ['DISPLAY']).getpixel(marker) == (255,85,170)
+                    cases.append('MCP background text preserves desktop and marker follows moved control')
+                    await call('desktop_invoke', element_id=button['element_id'])
+                    wait(lambda: json.loads((base / 'human/state.json').read_text())['clicks'] == 1)
+                    assert desktop_state() == before
+                    cases.append('MCP background invoke changes independent app counter exactly once')
+
+                    disabled = next(n for n in current['nodes'] if n['name'] == 'Disabled action')
+                    response = await client.call_tool('desktop_invoke', {'element_id': disabled['element_id']})
+                    failure = json.loads(response.content[0].text)
+                    assert response.isError and failure['code'] == 'NOT_INTERACTABLE' and failure['effect'] == 'none'
+                    assert desktop_state() == before
+                    assert json.loads((base / 'human/state.json').read_text())['clicks'] == 1
+                    cases.append('disabled background control refuses without unnecessary foreground activation')
+
                     human_front()
                     shot = await call('desktop_observe', max_width=2560)
                     command('wmctrl', '-ir', str(tw['xid']), '-e', '0,60,70,500,300')

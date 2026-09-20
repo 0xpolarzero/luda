@@ -1162,8 +1162,11 @@ def main(req):
     root_showing = None
     for node, _ in candidates(pid,root_path=target["root_path"],root_provider=target.get("root_provider")):
         if node.path != target["path"]:
-            if node.path == target["root_path"]:
-                root_showing = "showing" in states_of(node)
+            if node.path == target["root_path"] and req["op"] not in ("read", "locate"):
+                try:
+                    root_showing = "showing" in states_of(node)
+                except Exception:
+                    pass  # Unknown visibility never authorizes activation.
             continue
         current = describe(node, pid)
         if node.path == target["root_path"]:
