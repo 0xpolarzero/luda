@@ -1,0 +1,270 @@
+diff --git a/app/SiloUI/.changeset/optional-agent-onboarding.md b/app/SiloUI/.changeset/optional-agent-onboarding.md
+new file mode 100644
+index 0000000..4734118
+--- /dev/null
++++ b/app/SiloUI/.changeset/optional-agent-onboarding.md
+@@ -0,0 +1,5 @@
++---
++"silo-ui": minor
++---
++
++Add optional, explicitly configured Luda guest onboarding and a separate last-check status for agent tools. Desktop viewing remains available when tools need attention; host agent registration is not automatic.
+diff --git a/app/SiloUI/src-tauri/src/desktop.rs b/app/SiloUI/src-tauri/src/desktop.rs
+index e35aab1..b165a40 100644
+--- a/app/SiloUI/src-tauri/src/desktop.rs
++++ b/app/SiloUI/src-tauri/src/desktop.rs
+@@ -72,6 +72,54 @@ fn guest(
+     Ok(output.stdout)
+ }
+ 
++// Install the optional integration assets, then invoke only the existing guest
++// bootstrap wrapper. Desktop startup/viewing does not depend on its result.
++fn agent_tools_script(background: bool) -> String {
++    let mut script = String::from("\nsh -eu <<'SILO_AGENT_TOOLS_SETUP' >/dev/null 2>&1 || true\ninstall -d -m 0755 /usr/local/lib/silo-agent-tools\nagent_stage=$(mktemp -d /usr/local/lib/silo-agent-tools/.stage.XXXXXXXX)\ntrap 'rm -rf \"$agent_stage\"' EXIT\ncat > \"$agent_stage/agent-tools.py\" <<'SILO_AGENT_TOOLS_PY'\n");
++    script.push_str(include_str!("../guest/agent-tools.py"));
++    script.push_str("\nSILO_AGENT_TOOLS_PY\ncat > \"$agent_stage/release.json\" <<'SILO_AGENT_TOOLS_RELEASE'\n");
++    script.push_str(include_str!("../guest/agent-tools-release.json"));
++    script.push_str("\nSILO_AGENT_TOOLS_RELEASE\nchmod 0755 \"$agent_stage/agent-tools.py\"\nchmod 0644 \"$agent_stage/release.json\"\nmv \"$agent_stage/agent-tools.py\" /usr/local/lib/silo-agent-tools/agent-tools.py\nmv \"$agent_stage/release.json\" /usr/local/lib/silo-agent-tools/release.json\n");
++    if background {
++        // The wrapper's nonblocking lock prevents duplicate attempts. Dispatch
++        // alone asserts no success: subsequent status is pending/unconfirmed.
++        script.push_str("nohup python3 /usr/local/lib/silo-agent-tools/agent-tools.py ensure </dev/null >/dev/null 2>&1 &\n");
++    } else {
++        // Creation runs in a temporary guest boot: finish before it stops again.
++        script.push_str("python3 /usr/local/lib/silo-agent-tools/agent-tools.py ensure >/dev/null 2>&1\n");
++    }
++    script.push_str("SILO_AGENT_TOOLS_SETUP\n");
++    script
++}
++
++fn public_agent_tools(value: Value) -> Value {
++    let mut state = value["state"].as_str().filter(|state| matches!(*state,
++        "unconfigured" | "pending" | "ready" | "attention" | "unconfirmed" | "update_available"))
++        .unwrap_or("unconfirmed");
++    if state == "ready" && (value["installation_completed"].as_bool() != Some(true)
++        || value["configuration_generated"].as_bool() != Some(true)
++        || value["last_ready"].as_bool() != Some(true)) {
++        state = "unconfirmed";
++    }
++    let reason = value["reason"].as_str().filter(|reason| matches!(*reason,
++        "desktop_status_unavailable" | "source_preparation_failed" | "bootstrap_failed"
++        | "bootstrap_unconfirmed" | "metadata_unavailable" | "operation_busy"));
++    json!({"state":state,"reason":reason,
++        "installationCompleted":value["installation_completed"].as_bool(),
++        "configurationGenerated":value["configuration_generated"].as_bool().unwrap_or(false),
++        "lastReady":value["last_ready"].as_bool(),
++        "checkedAt":value["checked_at"].as_u64().filter(|value| *value <= 9_999_999_999)})
++}
++
++fn agent_tools_status(runner: &dyn RuntimeRunner, paths: &RuntimePaths, name: &str) -> Value {
++    let output = guest(runner, paths, name,
++        "if [ -f /usr/local/lib/silo-agent-tools/agent-tools.py ]; then python3 /usr/local/lib/silo-agent-tools/agent-tools.py status; else printf '%s\\n' '{\"state\":\"unconfigured\"}'; fi",
++        Duration::from_secs(5), false);
++    let value = output.ok().filter(|text| text.len() <= 65536)
++        .and_then(|text| serde_json::from_str(&text).ok()).unwrap_or(Value::Null);
++    public_agent_tools(value)
++}
++
+ pub(crate) fn configure_with(
+     runner: &dyn RuntimeRunner,
+     paths: &RuntimePaths,
+@@ -101,12 +149,13 @@ pub(crate) fn configure_with(
+         "/usr/local/bin/silo-desktop autostart {}\n",
+         desired.start_with_sandbox
+     ));
++    script.push_str(&agent_tools_script(false));
+     guest(
+         runner,
+         paths,
+         name,
+         &script,
+-        Duration::from_secs(1800),
++        Duration::from_secs(3900),
+         true,
+     )?;
+     Ok(())
+@@ -158,7 +207,9 @@ fn status_with(
+     let output = guest(runner, paths, machine.name(), "if [ -x /usr/local/bin/silo-desktop ]; then /usr/local/bin/silo-desktop status; else printf '%s\\n' '{\"installed\":false,\"state\":\"uninstalled\",\"autoStart\":false}'; fi", Duration::from_secs(15), false).map_err(|e| e.to_string())?;
+     let value: Value = serde_json::from_str(output.trim())
+         .map_err(|_| "The desktop returned an invalid status.")?;
+-    public_status(value)
++    let mut public = public_status(value)?;
++    public["agentTools"] = agent_tools_status(runner, paths, machine.name());
++    Ok(public)
+ }
+ 
+ // Project explicit public fields: credentials and arbitrary guest output never reach the UI.
+@@ -220,11 +271,15 @@ fn local(app: &AppHandle, workspace: &str, action: Option<&str>) -> Result<Value
+         } else if inspected.status != "Running" {
+             return Err("Start the sandbox before changing its desktop session.".into());
+         }
++        let mut script = format!("set -e\n/usr/local/bin/silo-desktop {action} >/dev/null\n");
++        if matches!(action, "start" | "restart") {
++            script.push_str(&agent_tools_script(true));
++        }
+         guest(
+             &runtime::ProcessRunner,
+             &paths,
+             workspace,
+-            &format!("/usr/local/bin/silo-desktop {action}"),
++            &script,
+             Duration::from_secs(60),
+             false,
+         )
+@@ -388,10 +443,11 @@ mod tests {
+         .unwrap();
+         let calls = runner.calls.lock().unwrap();
+         assert_eq!(calls.len(), 1);
+-        assert_eq!(
+-            calls[0].last().unwrap(),
+-            "/usr/local/bin/silo-desktop autostart false\n"
+-        );
++        let script = calls[0].last().unwrap();
++        assert!(script.starts_with("/usr/local/bin/silo-desktop autostart false\n"));
++        assert!(!script.contains("SILO_DESKTOP_SERVICE_SOURCE"));
++        assert!(script.contains("agent-tools.py ensure"));
++        assert!(!script.contains("nohup python3"));
+     }
+     #[test]
+     fn stopped_status_never_boots_vm() {
+@@ -409,6 +465,30 @@ mod tests {
+         assert_eq!(calls.len(), 1);
+         assert_eq!(calls[0][0], "inspect");
+     }
++    #[test]
++    fn tool_health_is_separate_projected_and_fail_closed() {
++        let public = public_agent_tools(json!({"state":"attention", "last_ready":false,
++            "installation_completed":true,"password":"private","error":"private"}));
++        assert_eq!(public["state"], "attention");
++        assert_eq!(public["installationCompleted"], true);
++        assert_eq!(public["lastReady"], false);
++        assert!(!public.to_string().contains("private"));
++        assert_eq!(public_agent_tools(json!({"state":"private"}))["state"], "unconfirmed");
++        assert_eq!(public_agent_tools(json!({"state":"ready", "last_ready":false}))["state"], "unconfirmed");
++        assert!(public_agent_tools(json!({"reason":"private"}))["reason"].is_null());
++    }
++
++    #[test]
++    fn configuration_is_synchronous_but_start_dispatch_is_detached() {
++        let foreground = agent_tools_script(false);
++        let background = agent_tools_script(true);
++        assert!(!foreground.contains("nohup python3"));
++        assert!(background.contains("nohup python3"));
++        assert!(background.contains("</dev/null >/dev/null 2>&1 &"));
++        assert!(foreground.contains("sh -eu <<'SILO_AGENT_TOOLS_SETUP' >/dev/null 2>&1 || true"));
++        assert!(!background.contains("silo-desktop connection"));
++    }
++
+     #[test]
+     fn status_projection_does_not_leak_guest_credentials() {
+         let public = public_status(json!({"installed":true,"autoStart":true,"state":"running","password":"private","connection":{"token":"private"}})).unwrap();
+diff --git a/app/SiloUI/src/desktop/linux-desktop-native.test.tsx b/app/SiloUI/src/desktop/linux-desktop-native.test.tsx
+index 4ebdc04..35af9a9 100644
+--- a/app/SiloUI/src/desktop/linux-desktop-native.test.tsx
++++ b/app/SiloUI/src/desktop/linux-desktop-native.test.tsx
+@@ -101,3 +101,12 @@ it("updates the native inset when the viewport changes even if display bounds ar
+   await act(async () => { window.dispatchEvent(new Event("resize")) })
+   expect(invoke.mock.calls.filter(([command]) => command === "desktop_viewer_attach")).toHaveLength(1)
+ })
++
++
++it("attaches the native viewer even when optional tools are unconfirmed", async () => {
++  invoke.mockImplementation(async command => command === "read_desktop_state" ? { installed: true, autoStart: true, state: "running", agentTools: { state: "unconfirmed" } } : undefined)
++  render(<NativeLinuxDesktopViewer workspace="dev" name="dev" />)
++  await waitFor(() => expect(invoke).toHaveBeenCalledWith("desktop_viewer_attach", expect.objectContaining({ workspace: "dev" })))
++  expect(screen.getByText("Tools setup unconfirmed")).toBeVisible()
++  expect(invoke.mock.calls.some(([command]) => command === "desktop_action")).toBe(false)
++})
+diff --git a/app/SiloUI/src/desktop/linux-desktop-state.ts b/app/SiloUI/src/desktop/linux-desktop-state.ts
+index d7e0d03..56dd696 100644
+--- a/app/SiloUI/src/desktop/linux-desktop-state.ts
++++ b/app/SiloUI/src/desktop/linux-desktop-state.ts
+@@ -1,6 +1,14 @@
+ import { z } from "zod"
+ 
+ export const linuxDesktopStateSchema = z.object({
++  agentTools: z.object({
++    state: z.enum(["unconfigured", "pending", "ready", "attention", "unconfirmed", "update_available"]),
++    reason: z.enum(["desktop_status_unavailable", "source_preparation_failed", "bootstrap_failed", "bootstrap_unconfirmed", "metadata_unavailable", "operation_busy"]).nullish(),
++    installationCompleted: z.boolean().nullish(),
++    configurationGenerated: z.boolean().optional(),
++    lastReady: z.boolean().nullish(),
++    checkedAt: z.number().int().nonnegative().nullish(),
++  }).optional(),
+   installed: z.boolean(),
+   version: z.string().nullish(),
+   state: z.enum(["running", "starting", "stopped", "failed", "uninstalled", "vm-stopped"]),
+diff --git a/app/SiloUI/src/desktop/linux-desktop-viewer.test.tsx b/app/SiloUI/src/desktop/linux-desktop-viewer.test.tsx
+index 80a04a1..067d5c8 100644
+--- a/app/SiloUI/src/desktop/linux-desktop-viewer.test.tsx
++++ b/app/SiloUI/src/desktop/linux-desktop-viewer.test.tsx
+@@ -48,3 +48,17 @@ describe("desktop viewer lifecycle", () => {
+     expect(screen.queryByRole("button", { name: /Start desktop|agent|control/i })).not.toBeInTheDocument()
+   })
+ })
++
++
++it.each(["attention", "unconfirmed", "pending", "unconfigured"] as const)("keeps the desktop display available when tools are %s", state => {
++  const { onAction } = viewer({ installed: true, autoStart: true, state: "running", agentTools: { state } })
++  expect(screen.getByLabelText("Linux desktop display")).toBeVisible()
++  expect(screen.getByLabelText("Agent tools status")).toBeVisible()
++  expect(screen.getByRole("button", { name: "Desktop actions" })).toBeVisible()
++  expect(onAction).not.toHaveBeenCalled()
++})
++
++it("describes a successful tools check as historical, not host discovery", () => {
++  viewer({ installed: true, autoStart: true, state: "running", agentTools: { state: "ready", lastReady: true, checkedAt: 1 } })
++  expect(screen.getByText("Last tools check passed")).toHaveAttribute("title", expect.stringContaining("agent registration are not verified"))
++})
+diff --git a/app/SiloUI/src/desktop/linux-desktop-viewer.tsx b/app/SiloUI/src/desktop/linux-desktop-viewer.tsx
+index 69a01b6..6c97420 100644
+--- a/app/SiloUI/src/desktop/linux-desktop-viewer.tsx
++++ b/app/SiloUI/src/desktop/linux-desktop-viewer.tsx
+@@ -19,10 +19,15 @@ export function LinuxDesktopViewer({ name, state, busy, error, onAction, onRetry
+   const [menuOpen, setMenuOpen] = useState(false)
+   const [confirm, setConfirm] = useState<"stop" | "restart" | null>(null)
+   const running = state?.state === "running"
++  const tools = state?.agentTools
++  const toolsLabel = !tools ? "Tools not checked" : tools.state === "unconfigured" ? "Tools not configured"
++    : tools.state === "pending" ? "Tools setup pending" : tools.state === "ready" ? "Last tools check passed"
++    : tools.state === "update_available" ? "Tools update available" : tools.state === "unconfirmed" ? "Tools setup unconfirmed" : "Tools need attention"
+   const actionLabel = state?.state === "vm-stopped" ? state.autoStart ? "Start sandbox" : "Start sandbox and desktop" : state?.state === "failed" ? "Restart desktop" : "Start desktop"
+   return <TooltipProvider><main className="flex h-dvh min-h-0 flex-col bg-background text-foreground">
+     <header className="flex h-11 shrink-0 items-center gap-2 border-b border-border px-3">
+       <Monitor aria-hidden="true" className="size-4" /><h1 className="min-w-0 flex-1 truncate text-xs font-medium">{name}</h1>
++      <span className="text-xs text-muted-foreground" aria-label="Agent tools status" title={tools?.checkedAt ? `Last check: ${new Date(tools.checkedAt * 1000).toISOString()}. Current availability and agent registration are not verified.` : tools?.reason === "operation_busy" ? "A guest tools operation is in progress; completion is not confirmed." : tools?.reason === "desktop_status_unavailable" ? "Guest desktop status could not be verified. Inspect setup before retrying." : "Agent tools are separate from the desktop viewer. Host agent registration is not verified."}>{toolsLabel}</span>
+       <Button variant="ghost" size="icon-xs" aria-label="Toggle fullscreen" onClick={onFullscreen}><Maximize /></Button>
+       {running && <Button variant="ghost" size="icon-xs" aria-label="Desktop actions" aria-expanded={menuOpen} onClick={() => setMenuOpen(value => !value)}><Ellipsis /></Button>}
+     </header>
+diff --git a/docs/SiloUI-DESKTOP.md b/docs/SiloUI-DESKTOP.md
+index 73cb42f..4fde406 100644
+--- a/docs/SiloUI-DESKTOP.md
++++ b/docs/SiloUI-DESKTOP.md
+@@ -31,8 +31,25 @@ Run graphical programs as this user with `DISPLAY=:1` and
+ accessibility bus. Existing root-owned files retain their normal Linux access
+ rules; users can deliberately change permissions or copy files as appropriate.
+ 
+-Silo does not install agent harnesses, computer-use plugins, or MCP servers.
+-Users configure compatible Linux tools themselves. Tools running in a remote
++Agent tools remain unconfigured by default. An integrator can configure the
++optional `guest/agent-tools-release.json` with a trusted full Luda source archive
++URL, SHA-256 and commit. No published artifact is assumed. When enabled, desktop
++configuration invokes the existing Luda guest bootstrap during the temporary
++VM boot; ordinary explicit desktop start/restart dispatches the same wrapper in
++the background without waiting for installation. Its lock prevents duplicate
++attempts, and dispatch is not reported as installation success. A stopped desktop
++remains pending; there is no implicit start from a tools status check.
++
++Tool state is separate from desktop/viewer state. Last-check timestamps are
++historical observations, not current readiness or host agent registration.
++Failed/interrupted attempts require inspection and explicit guest administrative
++`python3 /usr/local/lib/silo-agent-tools/agent-tools.py retry-after-review`; there
++is no automatic retry or upgrade. A changed source manifest reports an available
++update. Bootstrap configuration bundles are retained under the private
++`/var/lib/silo-agent-tools/attempt-*/bundle/config` paths. Installing the guest
++server does not register it in a host Codex profile or install a skill into the
++user's project. Users must complete placement in their intended agent context.
++The viewer remains usable when optional tools are missing or need attention. Tools running in a remote
+ SSH project must execute inside the guest and target this display; selecting
+ an SSH project does not redirect a macOS-only plugin. Human and automated
+ input share the ordinary Linux session without Silo arbitrating control.
