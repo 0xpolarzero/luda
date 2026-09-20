@@ -3,7 +3,7 @@ name: luda
 description: Operate native applications and desktop dialogs inside a Silo Linux X11 sandbox using the Luda tools. Use for visible desktop interaction; browser DOM tasks can use an available browser tool attached to the same guest.
 ---
 
-Use `desktop_doctor` when attaching or recovering a session. If the desktop restarted, use `desktop_reconnect` to attach the existing connection to a validated same-account session, then observe again; all old handles expire. If several sessions exist, select the intended reported session PID. Reconnect never resumes a paused display. Do not guess DISPLAY or attach to a different user's session.
+Use `desktop_doctor` when attaching or recovering a session. Its per-capability report can expose a usable screenshot/pointer fallback when accessibility is unavailable; `ready` is backend health, not approval to resume a pause. If the desktop restarted, use `desktop_reconnect` to attach the existing connection to a validated same-account session, then observe again; all old handles expire. If several sessions exist, select the intended reported session PID. Reconnect never resumes a paused display. Do not guess DISPLAY or attach to a different user's session.
 
 For an installed application, find its application_id with `desktop_applications`, then use `desktop_launch`. A launch may be handled by an existing window; observe windows before launching again.
 

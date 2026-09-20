@@ -11,3 +11,7 @@ The live test starts its own D-Bus session and a synthetic screensaver provider.
 ```sh
 .venv/bin/python tests/live_session_state.py
 ```
+
+## Partial readiness
+
+`desktop_doctor.capabilities` distinguishes screenshot, pointer, native keyboard, clipboard and accessibility backends. `backend_available` means the primitive is present, not that a particular application or focused target is safe to mutate. Verified text remains `application_dependent`. A paused, locked or unavailable control state blocks mutation capabilities while read-only observation can remain available. Missing accessibility can therefore leave a useful screenshot/pointer fallback. `ready` is the combined backend health check, not permission to resume a pause or evidence of supported IME composition.

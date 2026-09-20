@@ -28,6 +28,7 @@ from .input_guard import held_button
 from .keyboard import validate_chord, send_chord, keyboard_capabilities
 from .session_state import session_state
 from .ime import composition_capability
+from .diagnostics import capability_summary
 from .storage import storage_errors, staged_payload
 
 
@@ -119,7 +120,13 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
             result['accessibility_error'] = 'Accessibility provider returned an invalid application count.'
         result['session_state'] = session_state()
         result['keyboard'] = keyboard_capabilities()
-        result['ready'] = result['session_state']['input_ready'] is not False and all(dependencies.values()) and result['display_available'] and result['session_bus'] and result['accessibility_available'] and result['keyboard']['available']
+        try:
+            result['control'] = {'available':True, **self.control.status()}
+        except DesktopError as exc:
+            result['control'] = {'available':False, 'reason':exc.code}
+        result['capabilities'] = capability_summary(result)
+        result['capability_scope'] = 'Backend availability only; target focus, current input state and application support are checked per action.'
+        result['ready'] = result['session_state']['input_ready'] is not False and all(dependencies.values()) and result['display_available'] and result['session_bus'] and result['accessibility_available'] and result['keyboard']['available'] and result['control']['available']
         return result
 
     def active(self):

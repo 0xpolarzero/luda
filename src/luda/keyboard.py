@@ -88,6 +88,8 @@ def validate_chord(chord):
 def keyboard_capabilities():
     try:
         result=json.loads(run([sys.executable,'-m','luda._keyboard_native','probe'],data=b'{}\n',timeout=2,max_output_bytes=4096))
+        if not isinstance(result,dict):
+            return {'available':False,'reason':'invalid_response'}
         if result.get('code'):
             return {'available':False,'reason':result['code']}
         if result.get('available') is not True:
