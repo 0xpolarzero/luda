@@ -130,7 +130,7 @@ Return screenshot plus window layout and a 15-second snapshot ID. Pointer coordi
 desktop_inspect(window_id: str, limit: int=150, name: str | None=None, role: str | None=None, states: list[str] | None=None, max_depth: int=30)
 ```
 
-Inspect a window or find controls by name/role substring and required states. Returns bounded tree, parent IDs, supported actions and 60-second element IDs. Owned browser text_fields have distinct provider-bound IDs for ordinary HTML fields. Empty matches and unavailable accessibility are distinct.
+Inspect a window or find controls by name/role substring and required states. Returns bounded tree, parent IDs, supported actions and 60-second element IDs. Owned browser text_fields have distinct provider-bound IDs for ordinary HTML fields and explicitly cooperating paragraph editors; role="entry" filters for fields. Field metadata describes line breaks and write scope. Empty matches and unavailable accessibility are distinct.
 
 ## `desktop_read_text`
 
@@ -226,7 +226,7 @@ Invoke the sole action returned by inspect, or supply its exact action name. Mul
 desktop_select(element_id: str, start_offset: int, end_offset: int)
 ```
 
-Select a text range using Unicode code-point offsets, or place caret when equal; verify the result.
+Select a text range using Unicode code-point offsets, or place caret when equal; verify the result. Cooperating paragraph editors currently support only the complete range (0 to the characters count from readback) or a collapsed caret at that end. Their middle ranges and middle carets are refused before selection; ordinary HTML fields support code-point ranges.
 
 ## `desktop_set_value`
 

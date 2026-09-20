@@ -297,7 +297,7 @@ async def desktop_observe(max_width: int = 1280) -> CallToolResult:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
 async def desktop_inspect(window_id: str, limit: int = 150, name: str | None = None, role: str | None = None, states: list[str] | None = None, max_depth: int = 30) -> CallToolResult:
-    """Inspect a window or find controls by name/role substring and required states. Returns bounded tree, parent IDs, supported actions and 60-second element IDs. Owned browser text_fields have distinct provider-bound IDs for ordinary HTML fields. Empty matches and unavailable accessibility are distinct."""
+    """Inspect a window or find controls by name/role substring and required states. Returns bounded tree, parent IDs, supported actions and 60-second element IDs. Owned browser text_fields have distinct provider-bound IDs for ordinary HTML fields and explicitly cooperating paragraph editors; role="entry" filters for fields. Field metadata describes line breaks and write scope. Empty matches and unavailable accessibility are distinct."""
     return await execute_async('inspect',window_id,limit,name=name,role=role,states=states,max_depth=max_depth)
 
 
@@ -371,7 +371,7 @@ async def desktop_invoke(element_id: str, action: str | None = None) -> CallTool
 
 @mcp.tool()
 async def desktop_select(element_id: str, start_offset: int, end_offset: int) -> CallToolResult:
-    """Select a text range using Unicode code-point offsets, or place caret when equal; verify the result."""
+    """Select a text range using Unicode code-point offsets, or place caret when equal; verify the result. Cooperating paragraph editors currently support only the complete range (0 to the characters count from readback) or a collapsed caret at that end. Their middle ranges and middle carets are refused before selection; ordinary HTML fields support code-point ranges."""
     return await execute_async('element',element_id,'select',start_offset=start_offset,end_offset=end_offset)
 
 
