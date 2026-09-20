@@ -88,6 +88,28 @@ class ReconnectTests(unittest.TestCase):
             self.assertIs(server.backend,self.new)
             self.assertTrue(self.old.closed)
             self.assertFalse(self.new.closed)
+    def test_repeated_reconnect_unregisters_closed_backends(self):
+        registered=set()
+        def register(callback):registered.add(callback)
+        def unregister(callback):registered.discard(callback)
+        with patch.object(server,'backend',self.old),patch.object(server.atexit,'register',side_effect=register),patch.object(server.atexit,'unregister',side_effect=unregister):
+            registered.add(self.old.close)
+            for _ in range(12):
+                candidate=Candidate(self.selected['environment'])
+                with patch.object(server,'Desktop',return_value=candidate):
+                    self.assertFalse(server.execute('reconnect',42).isError)
+                self.assertEqual(registered,{candidate.close})
+            self.assertTrue(self.old.closed)
+
+    def test_closed_backend_discards_cached_targets(self):
+        from luda.desktop import Desktop
+        desktop=Desktop()
+        desktop.snapshots['private-image']={'image':'private'}
+        desktop.elements['field']={'text':'private'}
+        desktop.windows['window']={'title':'private'}
+        desktop.close()
+        self.assertEqual((desktop.snapshots,desktop.elements,desktop.windows),({},{},{}))
+
     def test_server_failed_probe_keeps_backend(self):
         reconnect.run.side_effect=DesktopError('COMMAND_FAILED','bad bus')
         with patch.object(server,'backend',self.old),patch.object(server,'Desktop',return_value=self.new):

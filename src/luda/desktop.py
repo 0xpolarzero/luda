@@ -495,4 +495,7 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
                 cleanup()
             except Exception as exc:
                 errors.append(str(exc))
+        self.snapshots.clear()
+        self.elements.clear()
+        self.windows.clear()
         self.cleanup_errors = errors

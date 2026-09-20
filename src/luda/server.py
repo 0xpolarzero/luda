@@ -65,6 +65,7 @@ def execute(method, *args, _cancelled=None, **kwargs):
                             backend = candidate
                             atexit.register(candidate.close)
                     d.close()
+                    atexit.unregister(d.close)
                 else:
                     with d.transaction():
                         application_methods = {'list_applications':list_applications, 'launch_application':launch_application}
