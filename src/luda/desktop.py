@@ -20,6 +20,7 @@ from .common import DesktopError, display_identity, checkpoint, mark_effect, pro
 from .x11 import X11
 from .fonts import font_coverage
 from .ocr import recognize, retain_snapshot
+from .recording import Recordings
 from .interaction import InteractionMixin
 from .control import Control
 from .admission import Admission
@@ -48,6 +49,7 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         self.elements = {}
         self.windows = {}
         self.clipboard_owner = None
+        self.recordings = Recordings(self)
         self.local_lock = threading.Lock()
         name = hashlib.sha256(display_identity(self.environment.get('DISPLAY','')).encode()).hexdigest()[:12]
         self.lockfd = None
@@ -140,6 +142,8 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         result['font_coverage'] = font_coverage(self.environment)
         result['ocr'] = {'available': shutil.which('tesseract', path=self.environment.get('PATH', os.defpath)) is not None,
                          'engine': 'tesseract', 'scope': 'Optional executable availability only; requested language and recognition checked by desktop_ocr.'}
+        result['recording'] = {'available': all(shutil.which(name,path=self.environment.get('PATH',os.defpath)) for name in ('ffmpeg','ffprobe')),
+                               'scope':'Optional executables only; start validates capture support. No audio.'}
         result['session_state'] = session_state()
         result['keyboard'] = keyboard_capabilities()
         try:
@@ -335,6 +339,9 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
                 'image_size': dict(zip(('width', 'height'), snapshot['image'])),
                 'confidence_semantics': 'Engine score 0–100; uncalibrated, not a probability or proof of exact text.',
                 **result}
+
+    def recording(self, action, recording_id=None, max_seconds=30):
+        return self.recordings.action(action, recording_id, max_seconds)
 
     def point(self, window_id, snapshot_id, x, y):
         return self._interaction_point(window_id,snapshot_id,x,y)
@@ -599,7 +606,8 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
             return
         self.closed = True
         errors = []
-        for cleanup in (lambda: stop_process(self.clipboard_owner) if self.clipboard_owner else None,
+        for cleanup in (lambda: self.recordings.close() if hasattr(self, 'recordings') else None,
+                        lambda: stop_process(self.clipboard_owner) if self.clipboard_owner else None,
                         lambda: self.x.close() if self.x else None,
                         lambda: self.admission.cancel() if getattr(self, 'admission', None) else None,
                         lambda: os.close(self.lockfd) if self.lockfd is not None else None):

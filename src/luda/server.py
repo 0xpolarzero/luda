@@ -71,18 +71,22 @@ def execute(method, *args, _cancelled=None, **kwargs):
         from .reporting import ELEMENT_ACTIONS
         if isinstance(args[1], str) and args[1] in ELEMENT_ACTIONS:
             event['action'] = args[1]
+    cleanup_recording = method == 'recording' and bool(args) and args[0] in ('stop','delete','status')
     try:
-        if _quarantined.is_set() and method != 'recover_input':
+        if _quarantined.is_set() and method != 'recover_input' and not cleanup_recording:
             raise DesktopError('BUSY', 'Previous cancelled operation is still cleaning up; no new input sent.')
-        acquired = _operation_gate.acquire(blocking=False)
-        if not acquired:
-            raise DesktopError('BUSY', 'Another operation is in progress; reconnect does not cancel it.')
+        if not cleanup_recording:
+            acquired = _operation_gate.acquire(blocking=False)
+            if not acquired:
+                raise DesktopError('BUSY', 'Another operation is in progress; reconnect does not cancel it.')
         d = get_backend()
         observation = method in ('reconnect','list_applications','doctor','list_windows','window_overview','observe','ocr','inspect','workspaces','wait_for','wait_condition') or (method=='element' and len(args)>1 and args[1]=='read')
-        guard = None if observation or method == 'recover_input' else d.control.require_active
+        guard = None if observation or method == 'recover_input' or cleanup_recording else d.control.require_active
         with operation_scope(timeout=12, cancelled=_cancelled, guard=guard) as operation:
             try:
-                if method == 'recover_input':
+                if cleanup_recording:
+                    result = d.recording(*args, **kwargs)
+                elif method == 'recover_input':
                     # Recovery releases only recorded ownership. It must work
                     # while paused/quarantined, without entering the ordinary
                     # transaction that intentionally refuses pending cleanup.
@@ -169,6 +173,12 @@ async def desktop_control(action: Literal['status','pause','resume']='status') -
         return CallToolResult(content=[TextContent(type='text',text=json.dumps({'ok':True,**state},separators=(',',':')))])
     except DesktopError as exc:
         return result_error(exc.code,str(exc),exc.effect)
+
+
+@mcp.tool()
+async def desktop_recording(action: Literal['start', 'status', 'stop', 'delete'], recording_id: str | None = None, max_seconds: int = 30) -> CallToolResult:
+    """Explicit temporary screen recording: start, status, stop or delete by ticket. Start records only this X11 display, no audio, at 10fps and at most 1280×720 for 1–60 seconds. Start is not completed-file verification; stop/status return a path only after decoding verifies completion. Files are private, bounded and deleted on backend close/reconnect/server death; explicitly copy elsewhere before closure to save durably. Stop/delete remain usable while paused. Optional local ffmpeg/ffprobe required."""
+    return await execute_async('recording', action, recording_id, max_seconds)
 
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))

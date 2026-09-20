@@ -12,6 +12,14 @@ desktop_control(action: Literal['status', 'pause', 'resume']='status')
 
 Pause/resume cooperating agent input across servers on this display. Pause interrupts at the next checkpoint; already-delivered input is not undone. Observation remains available. This does not stop arbitrary external input programs.
 
+## `desktop_recording`
+
+```python
+desktop_recording(action: Literal['start', 'status', 'stop', 'delete'], recording_id: str | None=None, max_seconds: int=30)
+```
+
+Explicit temporary screen recording: start, status, stop or delete by ticket. Start records only this X11 display, no audio, at 10fps and at most 1280×720 for 1–60 seconds. Start is not completed-file verification; stop/status return a path only after decoding verifies completion. Files are private, bounded and deleted on backend close/reconnect/server death; explicitly copy elsewhere before closure to save durably. Stop/delete remain usable while paused. Optional local ffmpeg/ffprobe required.
+
 ## `desktop_ocr`
 
 ```python

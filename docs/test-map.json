@@ -1247,6 +1247,21 @@
         "test_ocr.OCRTests.test_public_schema_is_read_only"
       ],
       "limits": "Optional local Tesseract candidates from retained screenshot pixels, uncalibrated scores, image-space boxes and bounded parser/cache/process lifecycle. Actual English GTK/Pango geometry and historical-image oracle are separately documented in OCR.md. No exact/current text guarantee, automatic input, universal scripts or accuracy qualification."
+    },
+    "MEDIA-01": {
+      "implementation": "implemented",
+      "tests": [
+        "test_recording.RecordingTests.test_invalid_duration_and_missing_dependency_do_not_spawn",
+        "test_recording.RecordingTests.test_limits_and_unknown_tickets_are_explicit",
+        "test_recording.RecordingTests.test_delete_only_original_inode_and_preserve_user_file",
+        "test_recording.RecordingTests.test_cleanup_dispatch_bypasses_pause_quarantine_and_active_operation_gate",
+        "test_recording.RecordingTests.test_start_remains_blocked_during_quarantine",
+        "test_recording.RecordingTests.test_storage_failure_before_spawn_is_typed",
+        "test_recording.RecordingTests.test_spawn_failure_removes_only_new_empty_directory",
+        "test_recording.RecordingTests.test_parent_death_setup_rejects_reparented_child_and_prctl_failure",
+        "test_recording.RecordingTests.test_malformed_supervisor_output_does_not_skip_cleanup"
+      ],
+      "limits": "Fixed optional local X11 recording contract; unit fault/dispatch/inode checks do not establish arbitrary crash or storage reliability. See RECORDING.md for actual private GUI probes and retention limits."
     }
   }
 }
