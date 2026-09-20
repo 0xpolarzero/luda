@@ -85,6 +85,13 @@ async def main():
     value,_=await call('desktop_paste',window_id=wid,text=payload,shortcut='ctrl_v')
     await asyncio.sleep(.15)
     record('mcp-paste-independent-readback',json.loads((OUT/'state.json').read_text())['text']==payload and value['effect']=='dispatched')
+    prior_operation=value['operation_id']
+    report,response=await call('desktop_report')
+    serialized=response.content[0].text
+    record('mcp-report-bounded-correlation',report['schema_version']==1 and report['effect']=='none' and report['history_scope']=='current_mcp_process' and len(report['operations'])<=32 and any(row.get('operation_id')==prior_operation and row.get('method')=='paste' for row in report['operations']))
+    record('mcp-report-content-free',len(response.content)==1 and response.content[0].type=='text' and all(sensitive not in serialized for sensitive in (payload,'MCP literal text','Contract text',str(ROOT),str(OUT),wid,eid,shot['snapshot_id'])) and all(set(row)<=set(('operation_id','method','effect','elapsed_ms','ok')) for row in report['operations']))
+    record('mcp-report-health-and-no-input',report['health']['ready'] is True and json.loads((OUT/'state.json').read_text())['text']==payload)
+
  finally:
   p.terminate();p.wait(timeout=3)
   (OUT/'results.json').write_text(json.dumps(results,ensure_ascii=False,indent=2))
