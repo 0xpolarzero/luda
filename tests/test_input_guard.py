@@ -25,6 +25,19 @@ class InputGuardTests(unittest.TestCase):
                 with held_button('1'):raise DesktopError('CANCELLED','test',effect='uncertain')
         self.assertEqual(caught.exception.code,'CANCELLED')
         self.assertTrue(run.call_args.kwargs['cleanup'])
+    def test_release_failure_preserves_original_error_and_companion_retries(self):
+        with tempfile.TemporaryDirectory() as directory:
+            proof=Path(directory)/'released'
+            executable=Path(directory)/'xdotool'
+            executable.write_text('#!'+sys.executable+'\nfrom pathlib import Path\nPath('+repr(str(proof))+').touch()\n')
+            executable.chmod(0o700)
+            with patch.dict(os.environ,PATH=directory),patch('luda.input_guard.run',side_effect=[b'',DesktopError('BACKEND_ERROR','release failed')]):
+                with self.assertRaises(DesktopError) as caught:
+                    with held_button('1'):raise DesktopError('CANCELLED','original',effect='uncertain')
+            self.assertEqual(caught.exception.code,'CANCELLED')
+            self.assertEqual(caught.exception.details['button_release_failed'],'BACKEND_ERROR')
+            self.assertTrue(proof.exists())
+
     def test_parent_death_runs_independent_release_command(self):
         with tempfile.TemporaryDirectory() as directory:
             path=Path(directory);proof=path/'released'

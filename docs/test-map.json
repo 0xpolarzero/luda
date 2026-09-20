@@ -485,7 +485,7 @@
     "PTR-07": {
       "implementation": "partial",
       "tests": [
-        "test_interaction.InteractionTests.test_drag_releases_after_motion_failure"
+        "test_interaction.InteractionTests.test_drag_guard_exits_after_motion_failure"
       ],
       "limits": "Mock motion failure proves release attempted; real drag interruption separately covered by live_control.py."
     },
@@ -557,7 +557,7 @@
     "ERR-09": {
       "implementation": "partial",
       "tests": [
-        "test_interaction.MoreInteractionTests.test_cleanup_failure_retains_original_error"
+        "test_input_guard.InputGuardTests.test_release_failure_preserves_original_error_and_companion_retries"
       ],
       "limits": "Retains original failure and failed cleanup information; forced server-death key release remains unqualified."
     },
