@@ -25,6 +25,7 @@ async def main():
   client.log=(args.output/'mcp.log').open('w')
   # Poison ambient selection: only the verified release configuration may win.
   env=dict(os.environ,LUDA_CHROMIUM_EXECUTABLE='/not-the-selected-browser')
+  for variable in ('PYTHONPATH','PYTHONHOME'):env.pop(variable,None)
   client.process=await asyncio.create_subprocess_exec(str(release/'luda-session'),'--user',pwd.getpwuid(os.getuid()).pw_name,'--session-pid',str(xfce.pid),'--',str(release/'luda'),limit=2*1024*1024,env=env,stdin=asyncio.subprocess.PIPE,stdout=asyncio.subprocess.PIPE,stderr=client.log,start_new_session=True)
   client.task=asyncio.create_task(client.read())
   await client.request('initialize',{'protocolVersion':'2025-03-26','capabilities':{},'clientInfo':{'name':'managed-browser-probe','version':'1'}});await client.send({'jsonrpc':'2.0','method':'notifications/initialized'})
