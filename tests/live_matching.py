@@ -116,6 +116,11 @@ async def main():
                 results.append(
                     {"case": "flat-and-scale-mismatch-refused", "passed": True}
                 )
+                # Each scenario explicitly captures its own source: earlier
+                # OpenCV checks can exhaust the 15-second lease on slow CI.
+                fresh_source = await call("desktop_observe", max_width=2560)
+                args["template_snapshot_id"] = fresh_source["snapshot_id"]
+                args["template_bounds"] = oracle["boxes"][0]
                 await call(
                     "desktop_window",
                     window_id=target["window_id"],
@@ -150,7 +155,10 @@ async def main():
                         "passed": True,
                     }
                 )
-                args["snapshot_id"] = moved["snapshot_id"]
+                retained = await call("desktop_observe", max_width=2560)
+                args.update(template_snapshot_id=retained["snapshot_id"],
+                            template_bounds=moved_oracle["boxes"][0],
+                            snapshot_id=retained["snapshot_id"])
                 (OUT / "blank").touch()
                 for _ in range(80):
                     if json.loads((OUT / "oracle.json").read_text())["phase"] == 2:
