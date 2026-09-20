@@ -44,8 +44,10 @@ to release identity, so base/browser selections and changed versions are distinc
 installations. A failed preparation leaves the previous selection intact.
 
 Bootstrap accepts the same explicit `--browser-config` alongside its existing
-`--user`. This does not yet add a Silo UI option or extend Silo's guest manifest.
-It does not publish a release or download a browser artifact.
+`--user`. [Silo patch 0018](../integrations/silo/README.md) adds a trusted optional
+manifest candidate and explicit enable/disable UI, with selection-aware status
+and reviewed retries. These patches are not yet shipped in Silo; the source
+manifest remains disabled. Neither path publishes a release or downloads a browser artifact.
 
 Each browser-enabled release stores `.venv/luda-browser.json`. `luda-session`
 revalidates that fixed selection **after switching to the desktop account**, then
