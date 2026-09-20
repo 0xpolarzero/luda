@@ -132,8 +132,6 @@ raise SystemExit(0 if ready['ready'] and not refused['ready'] else 1)
             self.assertEqual(m.inside('firefox',None,None,'/test/firefox'),1)
             self.assertEqual(run.call_args.args[0][-2:],['--executable','/test/firefox'])
             wm.assert_not_called()
-if __name__=='__main__':unittest.main()
-
 class SuiteTimeoutTests(unittest.TestCase):
     def test_clipboard_only_larger_default(self):
         self.assertEqual(m.suite_timeout(m.SUITES['owned-rich-clipboard']),300)
@@ -146,3 +144,5 @@ class SuiteTimeoutTests(unittest.TestCase):
     def test_default_metadata_clamped(self):
         self.assertEqual(m.suite_timeout({'timeout_seconds':999}),300)
         self.assertEqual(m.suite_timeout({'timeout_seconds':-1}),1)
+
+if __name__=='__main__':unittest.main()

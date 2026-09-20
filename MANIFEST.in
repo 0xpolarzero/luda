@@ -24,3 +24,6 @@ recursive-include tests/evidence/rich-progress *.log
 recursive-include tests/evidence/window-geometry *.log
 recursive-include tests/evidence/agent-delayed-save-first-attempt *.gz *.png
 recursive-include tests/evidence/agent-terminal-confirmation-first-attempt *.gz *.png
+recursive-include tests/evidence/preedit-refusal-oracle *.log
+recursive-include tests/evidence/electron-native-clear *.gz
+recursive-include tests/evidence/hosted-clipboard-suite-timeout *.gz

@@ -34,6 +34,12 @@ provenance, not cryptographic proof of a Git object relationship. Installation
 executes trusted source/build code and can access package repositories using the
 existing locked installer. It is not an offline installation.
 
+The [release artifact helper](../../docs/RELEASE-ARTIFACT.md) can now prepare a
+candidate archive, checksum, manifest and Git-tree provenance together. It checks
+every archived file against the exact commit, disables replacement objects and
+preserves existing output directories. It does not publish the asset or enable
+this integration's manifest.
+
 URLs cannot contain credentials, query strings or fragments. Redirects must
 remain HTTPS and satisfy the same rule. Download limits are 32 MiB and 120 wall-clock seconds enforced by a Linux process alarm covering headers and body; ordinary-file payloads are limited to 128 MiB across 10,000 yielded file/directory entries. Tar PAX/GNU metadata is parsed by Python before those counters and is not bounded by that payload limit.
 Only ordinary files/directories under `luda-COMMIT/` are accepted, with no links,
