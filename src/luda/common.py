@@ -10,6 +10,8 @@ import tempfile
 import threading
 import time
 
+from .timing import elapsed_time
+
 
 class DesktopError(Exception):
     def __init__(self, code, message, *, effect="none", details=None):
@@ -30,7 +32,7 @@ _current_operation = contextvars.ContextVar("luda_operation", default=None)
 
 @contextmanager
 def operation_scope(timeout=12, cancelled=None, guard=None):
-    operation = Operation(time.monotonic() + timeout, cancelled or threading.Event(), guard=guard)
+    operation = Operation(elapsed_time() + timeout, cancelled or threading.Event(), guard=guard)
     token = _current_operation.set(operation)
     try:
         yield operation
@@ -43,7 +45,7 @@ def checkpoint():
     if operation:
         if operation.cancelled.is_set():
             raise DesktopError("CANCELLED", "Operation cancelled. Inspect state before retrying.", effect=operation.effect)
-        if time.monotonic() >= operation.deadline:
+        if elapsed_time() >= operation.deadline:
             raise DesktopError("TIMEOUT", "Overall operation deadline exceeded. Inspect state before retrying.", effect=operation.effect)
         if operation.guard:
             try:
@@ -98,7 +100,7 @@ def run(args, *, data=None, timeout=3, effect="none", cleanup=False,
         if source:
             source.close()
     mark_effect(effect)
-    deadline = time.monotonic() + timeout
+    deadline = elapsed_time() + timeout
     streams = selectors.DefaultSelector()
     output, error = bytearray(), bytearray()
     total = 0
@@ -109,7 +111,7 @@ def run(args, *, data=None, timeout=3, effect="none", cleanup=False,
         while streams.get_map() or process.poll() is None:
             if not cleanup:
                 checkpoint()
-            remaining = deadline - time.monotonic()
+            remaining = deadline - elapsed_time()
             if remaining <= 0:
                 raise DesktopError("TIMEOUT", "Command timed out. Inspect before retrying.", effect=effect)
             for key, _ in streams.select(timeout=min(remaining, .05)):

@@ -71,6 +71,19 @@ class OutputBounds(unittest.TestCase):
                 run([sys.executable,'-c','print("x"*4096)'],max_output_bytes=10)
         self.assertLessEqual(len(os.listdir('/proc/self/fd')),before+1)
 
+    def test_command_deadline_uses_suspend_aware_clock(self):
+        clock=[100.0]
+        timer=threading.Timer(.06,lambda:clock.__setitem__(0,105.0))
+        timer.start()
+        try:
+            began=time.monotonic()
+            with patch('luda.common.elapsed_time',side_effect=lambda:clock[0]),self.assertRaises(DesktopError) as raised:
+                run([sys.executable,'-c','import time;time.sleep(30)'],timeout=1)
+            self.assertEqual(raised.exception.code,'TIMEOUT')
+            self.assertLess(time.monotonic()-began,1)
+        finally:
+            timer.cancel()
+
     def test_cancellation_while_draining_output_remains_bounded(self):
         cancelled=threading.Event()
         timer=threading.Timer(.08,cancelled.set)
