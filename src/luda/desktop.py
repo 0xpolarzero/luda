@@ -385,7 +385,7 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         node = target['node']
         if node.get('protected'):
             raise DesktopError('PROTECTED_FIELD','Ordinary typing does not write protected fields.')
-        if 'EditableText' in node['interfaces']:
+        if 'EditableText' in node['interfaces'] and node.get('native_text_mutation_supported',True):
             result = self.element(element_id,'insert' if mode=='insert' else 'set',text=text)
             if result.get('exact_match') is False:
                 raise DesktopError('TEXT_MISMATCH','Application text does not match the requested result; inspect before retrying.',effect='uncertain',details={k:v for k,v in result.items() if k in ('actual_characters','expected_characters','caret_verified')})

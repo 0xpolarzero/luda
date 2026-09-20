@@ -17,6 +17,40 @@ def identity(pid):
     return Path(f"/proc/{pid}/stat").read_text().rsplit(")", 1)[1].split()[19]
 
 
+def toolkit_name(node):
+    app = node.get_application() if hasattr(node, "get_application") else None
+    return (app.get_toolkit_name() or "") if app else ""
+
+
+def native_text_mutation_supported(node, current):
+    # Gecko advertises EditableText for text roles while its ATK callbacks
+    # return without editing them. Keep the raw interfaces visible to agents.
+    return not (toolkit_name(node).casefold() == "gecko" and
+                current["role"] in ("entry", "text", "password text"))
+
+
+def decode_gecko_text(text, count):
+    """Undo exactly Mozilla DOMtoATK's one synthetic FEFF after each astral.
+
+    A genuine FEFF after an astral appears after its synthetic FEFF and survives.
+    Refuse changed/unknown conventions instead of guessing or stripping all BOMs.
+    """
+    result = []
+    i = 0
+    while i < len(text):
+        char = text[i]
+        result.append(char)
+        i += 1
+        if ord(char) > 0xFFFF:
+            if i >= len(text) or text[i] != "\ufeff":
+                raise ValueError("Unsupported Gecko ATK padding convention.")
+            i += 1
+    decoded = "".join(result)
+    if count != len(text) or count != len(decoded.encode("utf-16-le")) // 2:
+        raise ValueError("Gecko text count disagrees with its padding convention.")
+    return decoded
+
+
 def describe(node, pid):
     interfaces = node.get_interfaces()
     state = node.get_state_set()
@@ -36,6 +70,8 @@ def describe(node, pid):
         value = node.get_value_iface()
         r["value"] = {"current": value.get_current_value(), "minimum": value.get_minimum_value(),
                       "maximum": value.get_maximum_value(), "increment": value.get_minimum_increment()}
+    if "EditableText" in interfaces:
+        r["native_text_mutation_supported"] = native_text_mutation_supported(node, r)
     return r
 
 
@@ -118,8 +154,7 @@ class TextAccess:
     """
     def __init__(self, raw):
         self.raw = raw
-        app = raw.get_application() if hasattr(raw, "get_application") else None
-        self.toolkit = (app.get_toolkit_name() or "") if app else ""
+        self.toolkit = toolkit_name(raw)
         self.document = None
         self.selection_source = "Text"
         if self.toolkit.casefold() == "chromium" and hasattr(Atspi, "Document"):
@@ -140,7 +175,10 @@ class TextAccess:
         text = Atspi.Text.get_text(self.raw, 0, count)
         if len(text) > 1_000_000:
             raise VerificationLimit("Text provider exceeds the one-million-code-point budget.")
-        if count == len(text):
+        if self.toolkit.casefold() == "gecko":
+            text = decode_gecko_text(text, count)
+            self.utf16 = True
+        elif count == len(text):
             self.utf16 = self.toolkit.casefold() == "qt"
         elif count == len(text.encode("utf-16-le")) // 2:
             self.utf16 = True
@@ -335,9 +373,13 @@ def choose_by_action(node, parent, current, extend):
 def semantic(node, current, req):
     """Return None for legacy operations. Never emulate unsupported semantics by typing."""
     op = req["op"]
+    if op in ("set", "insert") and not native_text_mutation_supported(node, current):
+        return failure("UNSUPPORTED", "Gecko text controls do not implement native EditableText mutations; use verified ordinary typing where permitted.")
     if op == "secret":
         if not current["protected"]:
             return failure("NOT_PROTECTED_FIELD", "Explicit protected input requires an observed protected field.")
+        if not native_text_mutation_supported(node, current):
+            return failure("UNSUPPORTED", "Gecko protected controls do not implement native EditableText mutations.")
         if "EditableText" not in current["interfaces"] or "editable" not in current["states"]:
             return failure("UNSUPPORTED", "Protected input requires an editable EditableText interface.")
         text = req.get("text")
@@ -436,6 +478,14 @@ def semantic(node, current, req):
             if count > 1:
                 return failure("UNSUPPORTED", "Multiple selections cannot be changed safely.")
             req["_mutation_started"] = True
+            if t.toolkit.casefold() == "gecko" and start != end:
+                # Gecko's AddSelection can expose the correct DOM range while
+                # leaving the editor insertion caret at its old location. A
+                # verified collapsed caret first synchronizes that editor state.
+                accepted = t.set_caret_offset(start)
+                if not accepted or not verify(lambda: t.get_caret_offset() == start and t.get_n_selections() == 0):
+                    return {"error": "SELECTION_UNVERIFIED", "message": "Gecko insertion caret could not be synchronized before selection.", "effect": "uncertain"}
+                count = 0
             if start == end:
                 if count:
                     t.remove_selection(0)
@@ -658,6 +708,7 @@ def main(req):
             return {"text": content, "characters": n, "truncated": n > limit,
                     "caret_offset": t.get_caret_offset(), "offset_units": "Unicode code points",
                     "provider_offset_units": "UTF-16 code units" if t.utf16 else "Unicode code points",
+                    "provider_text_encoding": "Gecko ATK astral padding" if t.toolkit.casefold() == "gecko" else "plain",
                     "selections": selections, "selection_source": t.selection_source,
                     "selections_truncated": t.get_n_selections() > 100,
                     **representation}
