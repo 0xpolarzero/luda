@@ -1,17 +1,15 @@
-# Unit mapping coverage: 730-test snapshot
+# Unit mapping coverage: 745-test snapshot
 
-Source `f6a0230` passed 730 root tests. The matching ordinary-account run passed 722, with eight unavailable Codex CLI tests explicitly skipped. Both retained unchanged fingerprint `81d3f139a5a377e7fd2e0f1149e4cd9630dd0a424bb5ffc007bf8031f0ba373e`. Records are `root-browser-mapped.json` and `ordinary-browser-mapped.json` under `artifacts/qualification/backend-host/`.
+Source `60ddc75` passed 745 root tests. The matching ordinary-account run passed 737, with eight unavailable Codex CLI tests explicitly skipped. Both retained unchanged fingerprint `a39e99733300010e9ab71b2dedfd07faa8ac77e647b5e0f5baf071751c6f01e9`. Records are `root-managed-boundaries-final.json` and `ordinary-managed-boundaries.json` under `artifacts/qualification/backend-host/`.
 
 - Catalog: 346 cases, all release-unqualified.
-- Mapping at this source: 145 requirements and 339 distinct exact unit methods.
+- Mapping: 145 requirements and 339 distinct exact unit methods.
 - Evidence: 145 local-tests-passed; 201 cases without mapped unit assertions.
 
-The [719-test snapshot](UNIT-COVERAGE-F98B139.md) retains browser lifecycle, matching source hashes, hosted AMD64 browser and actual Silo registration results. Eleven subsequent tests cover the [cooperating paragraph provider](../integrations/prosemirror/README.md), including selection-time content changes, unsupported stored marks, and known paragraph limits.
+The [730-test snapshot](UNIT-COVERAGE-F6A0230.md) retains hosted browser, media and Silo evidence. Subsequent tests cover optional managed browser configuration, revalidation and release membership, plus native browser insertion/deletion at grapheme boundaries. A passing refusal is evidence of preventing an unsupported edit, not support for arbitrary Unicode range editing.
 
-At the preceding source `0af1a74`, integrated actual MCP run `run-1789889430917405927` passed with unchanged source: ordinary HTML/browser cleanup in 11.467 seconds and cooperating rich-editor workflows in 22.952 seconds. Rich evidence includes exact text/paragraph structure, preserved existing formatting, explicit new formatting readback, composition refusal, actual cancellation and no replay. Independent review reproduced two defects and verified their corrections before integration. Generic rich editors, arbitrary schemas and middle selections remain unsupported.
+Actual private MCP boundary run `1789891304330310696` passed in 15.927 seconds, including unchanged combining/emoji deletion refusals and whole-field replacement. Independent review reproduced the original destructive partial-emoji deletion and confirmed its correction. The separate explicit clipboard prototype passed 25 rich range cases, while its native comparison failures remain recorded; clipboard transport is still test-only at this snapshot.
 
-All sixteen Silo patches checked and applied to a fresh pinned checkout; embedded skill bytes match and 23 integration unit tests passed. Actual Mac packaging, Silo deployment and fresh VM acceptance remain separate outstanding work.
+All seventeen Silo patches checked and applied to a fresh pinned checkout; embedded skill bytes match and 25 Silo integration/CI checks passed. Actual Mac packaging, Silo deployment and fresh VM acceptance remain outstanding.
 
-The live inventory contains 78 fixture scripts and 162 distinct requirement associations. These counts are not qualification percentages. Run `.venv/bin/python scripts/qualify.py --output /absolute/evidence.json` for a new exact-source record.
-
-Hosted source `0af1a74` also passed [HTML and paragraph browser suites](https://github.com/0xpolarzero/luda/actions/runs/35497076130) in 34.409 and 57.376 seconds and [all four optional media suites](https://github.com/0xpolarzero/luda/actions/runs/35497076155), including corrected image matching in 22.936 seconds. Both retained fingerprint `0d7cc02ca44804364b26ed0aad3a0f2f526d251622b0c03047062784f43b827e`, matching the prior local records. The later map adds only named browser assertions with explicit provider limits; no release qualification changes.
+Managed installation was exercised through a real wheel and ordinary-account launcher at earlier source `737e670`, with 46 installed runtime modules byte-equal to source, actual Unicode/LF browser edits and confirmed EOF cleanup. A later stricter installed-module-set check found stale `build/lib` content included in a wheel; that failed run is retained and requires an installer correction. No passing hosted managed-installation result is claimed here.
