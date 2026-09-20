@@ -1420,9 +1420,18 @@
       "tests": [
         "test_window_geometry.WindowGeometryTests.test_maximize_reports_state_and_bounds_without_restore_promise",
         "test_window_geometry.WindowGeometryTests.test_later_wm_state_change_downgrades_prior_match",
-        "test_window_geometry.WindowGeometryTests.test_stale_initial_identity_never_dispatches"
+        "test_window_geometry.WindowGeometryTests.test_stale_initial_identity_never_dispatches",
+        "test_window_history.HistoryTests.test_matched_and_nonmatching_are_historical_only",
+        "test_window_history.HistoryTests.test_current_external_state_or_hints_change_unknown",
+        "test_window_history.HistoryTests.test_observed_external_change_and_revert_stays_unknown",
+        "test_window_history.HistoryTests.test_replacement_never_inherits_reference",
+        "test_window_history.HistoryTests.test_own_other_action_invalidates_even_matching_final_geometry",
+        "test_window_history.HistoryTests.test_repeated_maximize_keeps_original_reference",
+        "test_window_history.HistoryTests.test_postrestore_hints_change_is_unknown_not_guessed_constraint",
+        "test_window_history.HistoryTests.test_unstable_capture_or_missing_hints_never_known",
+        "test_window_history.HistoryTests.test_resource_bound_and_clear"
       ],
-      "limits": "Maximize/restore results expose fresh same-generation bounds and WM flags; later state disagreement cannot retain a prior verified result. The separate owned GTK3/XFWM live fixture observes restored geometry matching its pre-maximize rectangle. There is no automatic stored-geometry restore/comparison cache, reliable external-change invalidation, or generic preserve-prior-geometry promise."
+      "limits": "Observed same-generation pre-maximize bounds and constraints support historical restore comparison; cache invalidates on observed changes and own state actions. No forced geometry or continuous event history; external changes that revert between observations may go undetected. Separate GTK live evidence is provider-scoped; release qualification remains outstanding."
     }
   }
 }

@@ -16,7 +16,7 @@ w.connect('destroy',Gtk.main_quit);w.show_all();Gtk.main()''')
 
 def main():
  assert os.getuid()!=0 and os.environ.get('LUDA_ISOLATED_TEST_DISPLAY')=='1'
- output=Path(os.environ['LUDA_GEOMETRY_OUTPUT']);output.mkdir(parents=True,exist_ok=False)
+ output=Path(os.environ.get('LUDA_GEOMETRY_OUTPUT',str(Path(__file__).resolve().parents[1]/'artifacts/restore-comparison')));output.mkdir(parents=True,exist_ok=True)
  wm=subprocess.Popen(['xfwm4','--compositor=off'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
  driver=None;apps=[];records=[]
  def record(name,result):records.append({'case':name,'result':result});(output/'results.json').write_text(json.dumps(records,indent=2)+'\n')
@@ -109,5 +109,5 @@ def isolated():
   raise SystemExit(code)
 
 if __name__=='__main__':
- if os.environ.get('LUDA_RESTORE_CHILD')=='1':main()
+ if os.environ.get('LUDA_RESTORE_CHILD')=='1' or os.environ.get('LUDA_ISOLATED_TEST_DISPLAY')=='1':main()
  else:isolated()

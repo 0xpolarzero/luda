@@ -42,7 +42,7 @@ jobs:
         run: LUDA_ISOLATED_TEST_DISPLAY=1 xvfb-run -a -s '-screen 0 1440x900x24 -nolisten tcp' dbus-run-session -- .venv/bin/python scripts/headless_tests.py
       - name: Independently observed window geometry
         if: ${{ !cancelled() }}
-        run: .venv/bin/python scripts/qualification_matrix.py --suites window-geometry
+        run: .venv/bin/python scripts/qualification_matrix.py --suites window-geometry restore-comparison
       - name: Observed list and table range selection
         if: ${{ !cancelled() }}
         run: .venv/bin/python scripts/qualification_matrix.py --suites range-selection
