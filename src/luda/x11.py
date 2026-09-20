@@ -48,6 +48,14 @@ class X11:
     def geometry(self, window):
         return self._read('geometry',self._xid(window))
 
+    def window_metadata(self, windows):
+        """Bounded geometry, generation, ownership and optional WM properties."""
+        if not isinstance(windows,(list,tuple)) or len(windows)>512:
+            raise DesktopError('INVALID_ARGUMENT','Metadata batch must contain at most 512 XIDs.')
+        result=self._read('window_metadata',[self._xid(window) for window in windows])
+        result['windows']={int(xid):metadata for xid,metadata in result['windows'].items()}
+        return result
+
     def geometries(self, windows):
         if not isinstance(windows,(list,tuple)) or len(windows)>512:
             raise DesktopError('INVALID_ARGUMENT','Geometry batch must contain at most 512 XIDs.')

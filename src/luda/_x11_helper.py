@@ -16,6 +16,27 @@ def _decode_window_token(actual_type, fmt, raw, remaining):
     return raw.decode('ascii')
 
 
+def _decode_frame_extents(prop):
+    actual,fmt,values,remaining=prop
+    if actual!=6 or fmt!=32 or remaining or len(values)!=4 or any(v>65535 for v in values):
+        raise DesktopError('INVALID_PROPERTY','Invalid bounded frame extents.')
+    return dict(zip(('left','right','top','bottom'),values))
+
+
+def _decode_wm_class(prop):
+    actual,fmt,raw,remaining=prop
+    if actual!=31 or fmt!=8 or remaining or len(raw)>1024:
+        raise DesktopError('INVALID_PROPERTY','Invalid or oversized WM_CLASS.')
+    parts=raw.split(b'\0')
+    if len(parts)!=3 or parts[-1] or any(len(part)>512 for part in parts[:2]):
+        raise DesktopError('INVALID_PROPERTY','WM_CLASS must contain two bounded strings.')
+    result=[]
+    for value in parts[:2]:
+        try:result.append(value.decode('utf-8'))
+        except UnicodeDecodeError:result.append(value.decode('latin-1'))
+    return result
+
+
 class _NativeX11:
     def __init__(self):
         x = self.lib = C.CDLL('libX11.so.6')
@@ -180,6 +201,66 @@ class _NativeX11:
             x.XUngrabServer(self.display)
             x.XSync(self.display,False)
 
+    def _property(self, window, name, length):
+        x=self.lib
+        x.XInternAtom.argtypes=[C.c_void_p,C.c_char_p,C.c_int];x.XInternAtom.restype=C.c_ulong
+        x.XGetWindowProperty.argtypes=[C.c_void_p,C.c_ulong,C.c_ulong,C.c_long,C.c_long,C.c_int,C.c_ulong,C.POINTER(C.c_ulong),C.POINTER(C.c_int),C.POINTER(C.c_ulong),C.POINTER(C.c_ulong),C.POINTER(C.POINTER(C.c_ubyte))]
+        x.XGetWindowProperty.restype=C.c_int;x.XFree.argtypes=[C.c_void_p]
+        if not hasattr(self,'_property_atoms'):self._property_atoms={}
+        if name not in self._property_atoms:self._property_atoms[name]=x.XInternAtom(self.display,name.encode(),True)
+        atom=self._property_atoms[name]
+        if not atom:return None
+        actual,nitems,remaining=C.c_ulong(),C.c_ulong(),C.c_ulong();fmt=C.c_int();data=C.POINTER(C.c_ubyte)()
+        status=x.XGetWindowProperty(self.display,window,atom,0,length,False,0,C.byref(actual),C.byref(fmt),C.byref(nitems),C.byref(remaining),C.byref(data))
+        try:
+            if status:raise DesktopError('STALE_TARGET','Window disappeared while reading metadata.')
+            if not actual.value:return None
+            if fmt.value==32:
+                values=list(C.cast(data,C.POINTER(C.c_ulong))[:min(nitems.value,length)]) if data else []
+            else:
+                values=C.string_at(data,min(nitems.value,length*4)) if data and fmt.value==8 else b''
+            return actual.value,fmt.value,values,remaining.value
+        finally:
+            if data:x.XFree(data)
+
+    def window_metadata(self, windows):
+        requested=list(dict.fromkeys(windows));unavailable={};result={}
+        def tokens(ids):
+            try:return self.window_tokens(ids)
+            except DesktopError as exc:
+                if exc.code!='INVALID_WINDOW_TOKEN':raise
+                valid={}
+                for xid in ids:
+                    try:valid.update(self.window_tokens([xid]))
+                    except DesktopError as error:unavailable[xid]=error.code
+                return valid
+        before=tokens(requested)
+        for xid in requested:
+            if xid not in before:
+                unavailable.setdefault(xid,'STALE_TARGET');continue
+            try:
+                item={'bounds':self.geometry(xid),'generation':before[xid],
+                      'frame_extents':None,'wm_class':[],'pid':None,'unavailable_properties':[]}
+                for name,key,length,decode in [('_NET_FRAME_EXTENTS','frame_extents',4,_decode_frame_extents),('WM_CLASS','wm_class',257,_decode_wm_class)]:
+                    prop=self._property(xid,name,length)
+                    if prop is None:item['unavailable_properties'].append({'property':name,'code':'MISSING_PROPERTY'})
+                    else:
+                        try:item[key]=decode(prop)
+                        except DesktopError as error:item['unavailable_properties'].append({'property':name,'code':error.code})
+                prop=self._property(xid,'_NET_WM_PID',1)
+                if prop is not None and prop[0]==6 and prop[1]==32 and prop[3]==0 and len(prop[2])==1 and 0<prop[2][0]<=0x7fffffff:
+                    item['pid']=prop[2][0]
+                else:item['unavailable_properties'].append({'property':'_NET_WM_PID','code':'MISSING_PROPERTY' if prop is None else 'INVALID_PROPERTY'})
+                result[xid]=item
+            except DesktopError as exc:unavailable[xid]=exc.code
+        after=tokens(list(result))
+        for xid in list(result):
+            if after.get(xid)!=before[xid]:
+                unavailable.setdefault(xid,'STALE_TARGET');del result[xid]
+        return {'windows':result,'unavailable':[{'xid':xid,'code':code} for xid,code in unavailable.items()],
+                'requested_count':len(windows),'unique_requested_count':len(requested),
+                'returned_count':len(result),'unavailable_count':len(unavailable)}
+
     def geometries(self, windows):
         result={}
         for xid in windows:
@@ -231,7 +312,7 @@ def main():
         request = json.loads(sys.stdin.buffer.read(65536))
         method = request['method']
         argument = request.get('argument')
-        if method not in {'root','selection_owner','restack_above','geometry','geometries','window_tokens','surface_at','root_surface','transient_for','children','popup_surfaces'}:
+        if method not in {'root','selection_owner','restack_above','geometry','geometries','window_metadata','window_tokens','surface_at','root_surface','transient_for','children','popup_surfaces'}:
             raise DesktopError('INVALID_ARGUMENT','Unknown X11 metadata operation.')
         if method=='restack_above':
             if not isinstance(argument,list) or len(argument)!=2 or any(isinstance(v,bool) or not isinstance(v,int) or not 1<=v<=0xffffffff for v in argument) or argument[0]==argument[1]:
@@ -239,7 +320,7 @@ def main():
         elif method=='selection_owner':
             if argument not in {'CLIPBOARD','PRIMARY'}:
                 raise DesktopError('INVALID_ARGUMENT','Selection must be CLIPBOARD or PRIMARY.')
-        elif method in {'geometries','window_tokens'}:
+        elif method in {'geometries','window_metadata','window_tokens'}:
             if not isinstance(argument,list) or len(argument)>512 or any(isinstance(v,bool) or not isinstance(v,int) or not 1 <= v <= 0xffffffff for v in argument):
                 raise DesktopError('INVALID_ARGUMENT','Invalid X11 metadata batch.')
         elif method == 'surface_at':
