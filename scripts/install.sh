@@ -117,7 +117,7 @@ fi
 python3 "$source_dir/scripts/manage_install.py" install --prefix "$prefix" "${optional[@]}"
 if [[ "$runtime_only" == true ]]; then
   echo "Luda runtime installed at $prefix. No agents were configured."
-  echo "Connect an agent with: $prefix/current/.venv/bin/luda setup --user $account --agent NAME"
+  printf 'Connect an agent with: %q setup --prefix %q --user %q --agent NAME\n' "$prefix/current/.venv/bin/luda" "$prefix" "$account"
 else
   "$prefix/current/.venv/bin/python" -m luda.setup --prefix "$prefix" --user "$account" "${agents[@]}" "${setup_options[@]}"
 fi
