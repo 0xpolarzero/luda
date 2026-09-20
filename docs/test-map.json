@@ -568,11 +568,19 @@
     "ERR-06": {
       "implementation": "partial",
       "tests": [
+        "test_resource_limits.ResourceFailureOrdering.test_failed_spawn_retains_prior_operation_uncertainty",
+        "test_resource_limits.ResourceFailureOrdering.test_resource_fault_after_spawn_preserves_cancellation_priority",
+        "test_resource_limits.ResourceFailureOrdering.test_unknown_os_failure_not_misclassified_as_resource_exhaustion",
+        "test_resource_limits.ResourceLimits.test_address_space_exhaustion_after_dispatch_preserves_uncertainty",
+        "test_resource_limits.ResourceLimits.test_address_space_exhaustion_during_readonly_capture",
+        "test_resource_limits.ResourceLimits.test_descriptor_exhaustion_before_backend_startup",
+        "test_resource_limits.ResourceLimits.test_descriptor_exhaustion_before_subprocess_spawn",
+        "test_resource_limits.ResourceLimits.test_descriptor_exhaustion_staging_subprocess_input",
         "test_x11.X11Tests.test_crashed_helper_is_display_error",
         "test_x11.X11Tests.test_malformed_response_rejected",
         "test_x11.X11Tests.test_native_error_retains_code"
       ],
-      "limits": "X11 helper exception/response contracts only; all backends not thereby qualified."
+      "limits": "X11 helper exception/response contracts only; all backends not thereby qualified. Real local descriptor/address-space exhaustion receives RESOURCE_UNAVAILABLE with cleanup and recovery; other unknown OS failures are not mislabeled."
     },
     "ERR-09": {
       "implementation": "partial",
@@ -824,11 +832,19 @@
     "PERF-10": {
       "implementation": "partial",
       "tests": [
+        "test_admission.AdmissionTests.test_queue_capacity_is_explicit_and_bounded",
         "test_output_bounds.OutputBounds.test_combined_streams_cannot_each_consume_entire_allowance",
         "test_output_bounds.OutputBounds.test_overflow_repetition_does_not_leak_pipe_or_selector_descriptors",
-        "test_admission.AdmissionTests.test_queue_capacity_is_explicit_and_bounded"
+        "test_resource_limits.ResourceFailureOrdering.test_failed_spawn_retains_prior_operation_uncertainty",
+        "test_resource_limits.ResourceFailureOrdering.test_resource_fault_after_spawn_preserves_cancellation_priority",
+        "test_resource_limits.ResourceFailureOrdering.test_unknown_os_failure_not_misclassified_as_resource_exhaustion",
+        "test_resource_limits.ResourceLimits.test_address_space_exhaustion_after_dispatch_preserves_uncertainty",
+        "test_resource_limits.ResourceLimits.test_address_space_exhaustion_during_readonly_capture",
+        "test_resource_limits.ResourceLimits.test_descriptor_exhaustion_before_backend_startup",
+        "test_resource_limits.ResourceLimits.test_descriptor_exhaustion_before_subprocess_spawn",
+        "test_resource_limits.ResourceLimits.test_descriptor_exhaustion_staging_subprocess_input"
       ],
-      "limits": "Subprocess output, queue/caches and descriptor cleanup have bounded regression coverage. Short live_resource_stress is separate; this is not hours-long endurance or an OS resource guarantee."
+      "limits": "Subprocess output, queue/caches and descriptor cleanup have bounded regression coverage. Short live_resource_stress is separate; this is not hours-long endurance or an OS resource guarantee. Actual disposable child RLIMIT_NOFILE and RLIMIT_AS failures are bounded and redacted; post-spawn uncertainty and cancellation priority are preserved. These do not establish host-wide RAM/CPU pressure behavior."
     },
     "SEC-08": {
       "implementation": "partial",
@@ -934,9 +950,15 @@
         "test_element_name_identity.Names.test_public_inspection_hides_digest_but_handle_retains_it",
         "test_element_name_identity.Names.test_reused_path_with_changed_cropped_suffix_is_stale_before_action",
         "test_element_name_identity.Names.test_suffix_after_public_limit_changes_private_identity",
-        "test_element_name_identity.Names.test_unreadable_name_marks_inspection_incomplete"
+        "test_element_name_identity.Names.test_unreadable_name_marks_inspection_incomplete",
+        "test_provider_identity.ProviderScope.test_disappeared_provider_never_rebinds_identical_path",
+        "test_provider_identity.ProviderScope.test_foreign_provider_child_is_incomplete_not_exposed",
+        "test_provider_identity.ProviderScope.test_geometry_selected_root_stays_in_its_provider",
+        "test_provider_identity.ProviderScope.test_missing_provider_identity_never_widens_scope",
+        "test_provider_identity.ProviderScope.test_mutation_cannot_choose_first_colliding_provider",
+        "test_provider_identity.ProviderScope.test_well_known_alias_not_accepted_as_generation"
       ],
-      "limits": "Complete bounded UTF-8 name identity detects changes beyond the public 300-character label, hides private digests, and fails closed on unreadable/oversized identities. Protected names are never read. Mock providers do not establish every toolkit identity race."
+      "limits": "Complete bounded UTF-8 name identity detects changes beyond the public 300-character label, hides private digests, and fails closed on unreadable/oversized identities. Protected names are never read. Mock providers do not establish every toolkit identity race. Private provider connection identity scopes colliding object paths across same-PID providers; disappeared providers cannot silently rebind. Same-provider identical widget reuse and bus-lifetime replacement require separate evidence."
     },
     "DATA-01": {
       "implementation": "partial",
@@ -961,6 +983,17 @@
         "test_element_name_identity.Names.test_reused_path_with_changed_cropped_suffix_is_stale_before_action"
       ],
       "limits": "Recycled row position/name refuses or remains uncertain. Mock identity changes do not establish all actual sorted/filtered provider workflows or automatic reacquisition."
+    },
+    "SEM-01": {
+      "implementation": "partial",
+      "tests": [
+        "test_invoke_default.InvokeDefault.test_multiple_actions_require_explicit_choice_before_worker",
+        "test_invoke_default.InvokeDefault.test_no_action_does_not_guess_click",
+        "test_invoke_default.InvokeDefault.test_null_defaults_but_duplicate_actions_remain_ambiguous",
+        "test_invoke_default.InvokeDefault.test_sole_observed_provider_action_is_used_without_guessing",
+        "test_invoke_default.InvokeDefault.test_unobserved_action_cannot_be_selected"
+      ],
+      "limits": " A sole cached observed action can be invoked without guessing its toolkit name; multiple actions require explicit choice and unobserved actions are refused. Mock tests do not verify application completion."
     }
   }
 }
