@@ -24,3 +24,15 @@ python3 scripts/probe_system_auth.py --output artifacts/system-auth/preflight.js
 The probe returns **2 for blocked prerequisites**, or **0 for prerequisites found but not qualified**. It inspects only known distro locations and the standard system-bus socket; custom installations can differ. If that socket exists, it queries existing names through `org.freedesktop.DBus.ListNames` without calling or activating the polkit authority. It retains package versions, known executable paths, matching process names/UIDs and policy filenames, not policy contents, unrelated bus names or credentials.
 
 The recorded ordinary-user result is `artifacts/system-auth/preflight.json`. No fake authentication fixture, runtime change or catalog-level pass accompanies this report.
+
+## Subsequent isolated qualification
+
+The read-only baseline above remains historical. A later, explicitly provisioned
+[private real-polkit test](PRIVATE-SYSTEM-AUTH-QUALIFICATION.md) starts official
+pinned packages only inside disposable mount/PID/network namespaces. It confirms
+that the unmodified GNOME agent still cannot register without a login session.
+Separately, a custom cancel-only graphical agent receives a real authority request
+for owned `pkexec /usr/bin/true`; public GUI Cancel causes caller exit126 without
+credentials or authorization. This is scoped protocol/cancellation evidence, not
+GNOME dialog or production privileged-prompt classification. Host services,
+accounts, executables and policies remain unchanged; AUTH-08 remains unqualified.
