@@ -6,6 +6,7 @@ import http.server
 import json
 import os
 import signal
+import subprocess
 from unittest.mock import patch
 from pathlib import Path
 import sys
@@ -79,7 +80,7 @@ async def main(executable):
             await asyncio.sleep(.03)
     # GTK's canonical built-in ID; 'simple' can fall back to an installed IBus module.
     params=StdioServerParameters(command=str(ROOT/'.venv/bin/luda'),env=dict(os.environ,LUDA_CHROMIUM_EXECUTABLE=executable,GTK_IM_MODULE="gtk-im-context-simple"))
-    browser_pid=None;profile=None
+    browser_pid=None;profile=None;human=None
     try:
         async with stdio_client(params) as streams:
             async with ClientSession(*streams) as session:
@@ -107,6 +108,31 @@ async def main(executable):
                     if len(found)!=1:raise AssertionError(tree)
                     return found[0]['element_id']
                 eid=await field('Exact field')
+                # A separately launched GTK app owns foreground while the existing
+                # browser tools choose their own foreground fallback.
+                human=subprocess.Popen(['/usr/bin/python3',str(ROOT/'tests/overlay_fixture.py'),str(OUT/'human.json')],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+                deadline=time.monotonic()+5
+                while True:
+                    windows=(await call('desktop_windows'))['windows']
+                    human_window=next((w for w in windows if w['pid']==human.pid),None)
+                    if human_window:break
+                    if time.monotonic()>deadline:raise AssertionError('Owned human fixture did not appear')
+                    await asyncio.sleep(.04)
+                async def human_foreground():
+                    await call('desktop_activate',window_id=human_window['window_id'])
+                    active=(await call('desktop_windows'))['windows']
+                    assert next(w for w in active if w['window_id']==human_window['window_id'])['active']
+                await human_foreground()
+                before_pointer=subprocess.check_output(['xdotool','getmouselocation','--shell'],text=True,timeout=2)
+                typed=await call('desktop_type',element_id=eid,text='background browser',mode='replace')
+                actual=await fresh_oracle()
+                active=(await call('desktop_windows'))['windows']
+                record('background-type-automatic-foreground',typed['exact_match'] and actual['text']=='background browser' and actual['active']=='text' and next(w for w in active if w['window_id']==wid)['active'] and subprocess.check_output(['xdotool','getmouselocation','--shell'],text=True,timeout=2)==before_pointer,actual)
+                await human_foreground()
+                selected=await call('desktop_select',element_id=eid,start_offset=0,end_offset=10)
+                actual=await fresh_oracle()
+                active=(await call('desktop_windows'))['windows']
+                record('background-select-automatic-foreground',selected['effect']=='verified' and actual['selection']==[0,10] and actual['text']=='background browser' and actual['active']=='text' and next(w for w in active if w['window_id']==wid)['active'],actual)
                 payload='A👩🏽‍💻B\n\t日本語 é\n\n'
                 typed=await call('desktop_type',element_id=eid,text=payload,mode='replace')
                 actual=await oracle(payload)
@@ -229,6 +255,10 @@ async def main(executable):
                     await client.close()
 
     finally:
+        if human is not None:
+            human.terminate()
+            try:human.wait(timeout=3)
+            except subprocess.TimeoutExpired:human.kill();human.wait(timeout=3)
         server.shutdown();server.server_close()
     return 0
 

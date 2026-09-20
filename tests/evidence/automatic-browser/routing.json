@@ -1,0 +1,121 @@
+[
+  {
+    "case": "background-type-automatic-foreground",
+    "passed": true,
+    "details": {
+      "oracle_document": 1,
+      "oracle_sequence": 5,
+      "oracle_barrier": 1,
+      "active": "text",
+      "frames": 0,
+      "text": "background browser",
+      "single": "",
+      "selection": [
+        18,
+        18
+      ],
+      "events": [
+        {
+          "type": "focus",
+          "inputType": null,
+          "trusted": true,
+          "isComposing": null,
+          "key": null,
+          "code": null,
+          "data": null
+        },
+        {
+          "type": "beforeinput",
+          "inputType": "insertText",
+          "trusted": true,
+          "isComposing": false,
+          "key": null,
+          "code": null,
+          "data": "background browser"
+        },
+        {
+          "type": "input",
+          "inputType": "insertText",
+          "trusted": true,
+          "isComposing": false,
+          "key": null,
+          "code": null,
+          "data": "background browser"
+        }
+      ]
+    }
+  },
+  {
+    "case": "background-select-automatic-foreground",
+    "passed": true,
+    "details": {
+      "oracle_document": 1,
+      "oracle_sequence": 9,
+      "oracle_barrier": 2,
+      "active": "text",
+      "frames": 0,
+      "text": "background browser",
+      "single": "",
+      "selection": [
+        0,
+        10
+      ],
+      "events": [
+        {
+          "type": "focus",
+          "inputType": null,
+          "trusted": true,
+          "isComposing": null,
+          "key": null,
+          "code": null,
+          "data": null
+        },
+        {
+          "type": "beforeinput",
+          "inputType": "insertText",
+          "trusted": true,
+          "isComposing": false,
+          "key": null,
+          "code": null,
+          "data": "background browser"
+        },
+        {
+          "type": "input",
+          "inputType": "insertText",
+          "trusted": true,
+          "isComposing": false,
+          "key": null,
+          "code": null,
+          "data": "background browser"
+        },
+        {
+          "type": "blur",
+          "inputType": null,
+          "trusted": true,
+          "isComposing": null,
+          "key": null,
+          "code": null,
+          "data": null
+        },
+        {
+          "type": "focus",
+          "inputType": null,
+          "trusted": true,
+          "isComposing": null,
+          "key": null,
+          "code": null,
+          "data": null
+        },
+        {
+          "type": "select",
+          "inputType": null,
+          "trusted": true,
+          "isComposing": null,
+          "key": null,
+          "code": null,
+          "data": null
+        }
+      ]
+    }
+  }
+]
