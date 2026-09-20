@@ -1,0 +1,47 @@
+name: Silo native registration
+on:
+  workflow_dispatch:
+  push:
+    paths: ['integrations/silo/**', 'tests/tools/silo-registration/**', 'tests/tools/codex-cli/**', '.github/workflows/silo-registration.yml']
+  pull_request:
+    paths: ['integrations/silo/**', 'tests/tools/silo-registration/**', 'tests/tools/codex-cli/**', '.github/workflows/silo-registration.yml']
+permissions:
+  contents: read
+jobs:
+  linux-registration:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: 0xpolarzero/silo
+          ref: 777e1090d5e998059758160912138228ba98378d
+          path: upstream-silo
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Linux native build dependencies and pinned toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends build-essential pkg-config libwebkit2gtk-4.1-dev libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev patchelf libdbus-1-dev libclang-dev libcap-ng-dev cmake
+          rustup toolchain install 1.94.0 --profile minimal
+          rustup default 1.94.0
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: upstream-silo/app/SiloUI/src-tauri
+          key: registration-no-bundle
+      - name: Install locked actual Codex CLI
+        run: npm ci --ignore-scripts --no-audit --no-fund --prefix tests/tools/codex-cli
+      - name: Apply patches and test actual frontend and Rust registration module
+        run: python tests/tools/silo-registration/run.py upstream-silo --codex tests/tools/codex-cli/node_modules/.bin/codex --output artifacts/silo-registration-ci
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: silo-registration-linux-evidence
+          path: artifacts/silo-registration-ci/
+          retention-days: 7
