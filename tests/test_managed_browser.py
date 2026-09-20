@@ -70,7 +70,7 @@ class BrowserSelection(unittest.TestCase):
         from unittest.mock import Mock
         environment=dict(LUDA_CHROMIUM_EXECUTABLE=str(self.path),LUDA_MANAGED_BROWSER_SHA256=self.value['sha256'],LUDA_MANAGED_BROWSER_VERSION=self.value['version'])
         self.path.write_bytes(b'replacement');desktop=Mock(environment=environment)
-        with patch('luda.browser.importlib.metadata.version',return_value='1.63.0'),patch('luda.browser.subprocess.Popen') as spawn,self.assertRaises(DesktopError) as caught:OwnedBrowser(desktop).open('about:blank','temporary_session')
+        with patch('luda.browser.importlib.util.find_spec',return_value=True),patch('luda.browser.importlib.metadata.version',return_value='1.63.0'),patch('luda.browser.subprocess.Popen') as spawn,self.assertRaises(DesktopError) as caught:OwnedBrowser(desktop).open('about:blank','temporary_session')
         self.assertEqual(caught.exception.code,'BROWSER_SELECTION_CHANGED');self.assertEqual(caught.exception.effect,'none')
         desktop.display.assert_not_called();spawn.assert_not_called()
         with patch('luda.browser.importlib.util.find_spec',return_value=True),patch('luda.browser.importlib.metadata.version',side_effect=__import__('importlib.metadata').metadata.PackageNotFoundError):
