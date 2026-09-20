@@ -25,6 +25,7 @@ from .waits import ConditionWaitsMixin
 from types import MappingProxyType
 from .common import environment_scope, subprocess_environment
 from .input_guard import held_button
+from .keyboard import validate_chord, send_chord
 from .session_state import session_state
 from .ime import composition_capability
 from .storage import storage_errors, staged_payload
@@ -293,14 +294,9 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         return {'effect':'dispatched','verification':'Observe the resulting application state.'}
 
     def key(self, window_id, chord):
-        self.target_window(window_id)
-        parts=chord.split('+')
-        modifiers={'ctrl','alt','shift','super'}
-        named={'Return','Tab','Escape','BackSpace','Delete','Home','End','Left','Right','Up','Down','Page_Up','Page_Down','Insert','space'}
-        if not parts or any(p not in modifiers for p in parts[:-1]) or not (parts[-1] in named or re.fullmatch(r'[A-Za-z0-9]|F(?:[1-9]|1[0-9]|2[0-4])',parts[-1])):
-            raise DesktopError('INVALID_KEY','Use e.g. ctrl+s, ctrl+shift+v, Return, Tab, or Escape. Text belongs in desktop_type.')
-        run(['xdotool','key','--clearmodifiers',chord],effect='uncertain')
-        return {'effect':'dispatched','verification':'Key delivery does not prove application outcome.'}
+        validate_chord(chord)
+        target = self.target_window(window_id)
+        return send_chord(chord, target['xid'])
 
     def ax(self, request, mutating=False):
         worker = str(Path(__file__).with_name('ax_worker.py'))
