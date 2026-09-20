@@ -4,6 +4,7 @@ recursive-include scripts *.py *.sh *.js *.mjs
 recursive-include skills *.md
 recursive-include tests *.py *.sh *.html *.js *.json *.md
 recursive-include tests/evidence/browser-download-cleanup *.log
+recursive-include tests/evidence/browser-clipboard-guardian *.log
 prune tests/tools/codex-cli/node_modules
 prune tests/fixtures/rich-editor/node_modules
 prune tests/fixtures/owned-rich-editor/node_modules
