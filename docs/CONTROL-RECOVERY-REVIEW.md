@@ -12,6 +12,13 @@ Repeated completion cleanup is idempotent. Tests cover both overlapping
 cancellation and a worker that exceeds the two-second cleanup wait, with
 new operations rejected until its eventual completion.
 
+Pending keyboard guardians also retain their own recovery ownership before
+a tool can return `KEYBOARD_CLEANUP_PENDING`. The server registers the same
+thread-safe retain/release callbacks with the keyboard layer. A real child
+process integration test verifies pending keyboard cleanup blocks pointer
+operations too, and guardian completion cannot clear another operation's
+recovery ownership. Unproven cleanup remains quarantined.
+
 Control commands previously fetched a backend and then read or updated its
 pause state outside the backend-swap lock. A concurrent reconnect could
 switch displays before the old display's pause completed. Control commands

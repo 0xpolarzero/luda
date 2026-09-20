@@ -15,6 +15,7 @@ from mcp.types import CallToolResult, ImageContent, TextContent, ToolAnnotations
 
 from .common import DesktopError, operation_scope, checkpoint
 from .session_reconnect import prepare_reconnect
+from .keyboard import set_recovery_hooks
 from .desktop import Desktop
 from .apps import list_applications, launch_application
 
@@ -41,6 +42,8 @@ def _release_quarantine(task):
         if not _quarantine_owners:
             _quarantined.clear()
 
+
+set_recovery_hooks(_retain_quarantine, _release_quarantine)
 
 def get_backend():
     global backend
