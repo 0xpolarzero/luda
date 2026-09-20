@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """Prepare exact committed source and a Silo manifest; never publish or install."""
 import argparse
+import ctypes
 import gzip
 import hashlib
 import io
 import json
+import os
 from pathlib import Path, PurePosixPath
 import re
 import subprocess
@@ -19,7 +21,18 @@ REQUIRED = {'pyproject.toml', 'MANIFEST.in', 'requirements.lock', 'build-require
 
 
 def git(repo, *args):
-    return subprocess.check_output(['git', '-C', str(repo), *args], stderr=subprocess.PIPE, timeout=30)
+    return subprocess.check_output(['git', '--no-replace-objects', '-C', str(repo), *args], stderr=subprocess.PIPE, timeout=30)
+
+
+def publish(stage, output):
+    """Linux no-replace publication also preserves a concurrently created directory."""
+    native = ctypes.CDLL(None, use_errno=True)
+    rename = native.renameat2
+    rename.argtypes = [ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p, ctypes.c_uint]
+    rename.restype = ctypes.c_int
+    if rename(-100, os.fsencode(stage), -100, os.fsencode(output), 1):
+        code = ctypes.get_errno()
+        raise OSError(code, os.strerror(code), str(output))
 
 
 def prepare(repo, commit, source_url, output):
@@ -100,7 +113,7 @@ def prepare(repo, commit, source_url, output):
         (stage / 'SHA256SUMS').write_text(digest + '  ' + name + '\n')
         for filename, value in [('agent-tools-release.json', manifest), ('provenance.json', provenance)]:
             (stage / filename).write_text(json.dumps(value, indent=2) + '\n')
-        stage.rename(output)
+        publish(stage, output)
     return provenance
 
 

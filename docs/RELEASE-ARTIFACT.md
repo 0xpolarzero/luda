@@ -12,14 +12,18 @@ python3 scripts/prepare_release.py --commit FULL_40_CHARACTER_COMMIT \
   --output /absolute/fresh-release-directory
 ```
 
-The helper reads committed Git objects, ignoring local staged, unstaged and
-untracked changes. It rejects links, submodules, incomplete source, moving refs,
+The Linux helper reads committed Git objects with replacement objects disabled,
+ignoring local staged, unstaged and untracked changes. It rejects links,
+submodules, incomplete source, moving refs,
 unsafe URLs and archives exceeding Silo's guest limits. Every archived file's
 content and executable bit must match its Git tree entry; export-ignore or
 export-subst cannot silently alter the package. Repeated preparation in the
 same Git/Python environment produces identical files. Git archive format and
 compression implementations may differ across tool versions; provenance records
 the Git version, and the generated SHA256 always identifies the actual bytes.
+Publication uses Linux `renameat2(RENAME_NOREPLACE)`, preserving even an empty
+destination directory created concurrently. Unsupported publication fails
+without replacing the destination.
 
 The manifest's URL is intended publication configuration, not proof that an
 asset is available there. After publishing those exact bytes, review the URL,
@@ -30,6 +34,9 @@ verification. It does not replace release testing or fresh Mac/guest acceptance.
 Local validation includes dirty-checkout independence, deterministic output,
 attribute-induced omission/substitution refusal, ordinary-file/executable
 preservation, immutable commit and URL validation, and extraction with the real
-Silo guest helper. Preparing source `9d4f8c0` produced a 1,831,221-byte archive
+Silo guest helper. Independent review reproduced two initial gaps: replacement
+refs could change the archive while retaining the requested commit label, and
+ordinary rename could replace a concurrent empty directory. Both are corrected
+with actual Git/filesystem regressions. Preparing source `9d4f8c0` produced a 1,831,221-byte archive
 containing 613 files; the actual guest extractor accepted it. This local candidate
 was not published or configured in the Silo product.

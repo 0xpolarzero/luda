@@ -7,6 +7,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'scripts'))
@@ -68,6 +69,26 @@ class PrepareReleaseTests(unittest.TestCase):
         (self.repo / 'link').symlink_to('requirements.lock'); self.commit()
         with self.assertRaises(ValueError): self.prepare('linked')
         self.assertFalse((self.root / 'linked').exists())
+
+    def test_replace_refs_cannot_change_the_committed_source(self):
+        original = self.sha
+        (self.repo / 'src/luda/server.py').write_text('replacement contents'); self.commit()
+        self.git('replace', original, self.sha)
+        proof = self.prepare(commit=original, url='https://example.invalid/luda-' + original + '.tar.gz')
+        import tarfile
+        with tarfile.open(self.root / 'out' / proof['archive']) as archive:
+            self.assertEqual(archive.extractfile('luda-' + original + '/src/luda/server.py').read(), b'committed fixture\n')
+        self.assertEqual(proof['commit'], original)
+
+    def test_concurrent_empty_directory_is_not_replaced(self):
+        original = release.publish; identities = []
+        def race(stage, output):
+            output.mkdir(); identities.append(output.stat().st_ino)
+            original(stage, output)
+        with patch.object(release, 'publish', side_effect=race), self.assertRaises(FileExistsError):
+            self.prepare()
+        self.assertEqual((self.root / 'out').stat().st_ino, identities[0])
+        self.assertEqual(list((self.root / 'out').iterdir()), [])
 
     def test_moving_refs_and_noncommit_objects_are_refused(self):
         for commit in ('HEAD', self.sha[:8], self.git('rev-parse', 'HEAD^{tree}')):
