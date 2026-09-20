@@ -43,6 +43,14 @@ These executable paths are guest paths. They must execute on the guest side of t
 
 For Silo integration, the equivalent lifecycle is: provision desktop and dependencies, install a release, run readiness, register the reviewed guest-side MCP entry and skill, then open a fresh agent connection. Registration is kept explicit so an installer cannot silently replace unrelated agent configuration.
 
+## Tool approval and SSH placement
+
+For unattended sandbox tasks, generate the bundle with `--tool-approval approve`. This explicitly preauthorizes Luda's tools in that profile. `writes` asks before mutations, `prompt` asks for every tool, and the default `auto` leaves the client policy in control. A noninteractive client with policy `never` can otherwise discover/read the desktop but reject every mutation; the fresh-agent evaluation reproduced this configuration distinction.
+
+Use `--placement local` (default) when Codex itself runs inside the guest. For a host-side Codex configuration intended to use the selected SSH executor, `--placement remote` emits `experimental_environment = "remote"`; executable paths remain guest paths. This follows the current official [MCP configuration reference](https://learn.chatgpt.com/docs/config-file/config-reference). Remote placement is experimental, and the actual fresh Mac SSH onboarding flow still requires end-to-end testing. Generating the fragment alone does not qualify it.
+
+The generated server is `required = true`, so a client supporting this option reports startup failure instead of silently continuing without Luda. These configuration fields and the fresh local agent test were checked with Codex CLI 0.155.1.
+
 ## Rollback and uninstall
 
 Select a previously completed release without rebuilding it:

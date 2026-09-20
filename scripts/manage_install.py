@@ -253,7 +253,9 @@ def uninstall(prefix):
                 'note': 'Unmodified installed files removed; modified/unknown files and external configuration preserved.'}
 
 
-def config(prefix, output, user):
+def config(prefix, output, user, tool_approval="auto", placement="local"):
+    if tool_approval not in ("auto","prompt","writes","approve") or placement not in ("local","remote"):
+        raise InstallError("Unknown tool approval mode or MCP placement.")
     if not re.fullmatch(r'[a-z_][a-z0-9_-]*[$]?', user):
         raise InstallError('Desktop user must be a literal Linux account name.')
     metadata = state(prefix)
@@ -266,6 +268,9 @@ def config(prefix, output, user):
         command = str(prefix / 'current/.venv/bin/luda-session')
         arguments = ['--user', user, '--', str(prefix / 'current/.venv/bin/luda')]
         toml = '[mcp_servers.luda]\ncommand = ' + json.dumps(command) + '\nargs = ' + json.dumps(arguments) + '\nstartup_timeout_sec = 20\ntool_timeout_sec = 20\n'
+        toml += "required = true\ndefault_tools_approval_mode = " + json.dumps(tool_approval) + "\n"
+        if placement == "remote":
+            toml += 'experimental_environment = "remote"\n'
         tomllib.loads(toml)
         (output / 'config.toml.fragment').write_text(toml)
         shutil.copytree(prefix / 'current/skills/luda', output / '.agents/skills/luda')
@@ -273,7 +278,7 @@ def config(prefix, output, user):
     except BaseException:
         shutil.rmtree(output)
         raise
-    return {'status': 'generated', 'output': str(output), 'desktop_user': user}
+    return {'status': 'generated', 'output': str(output), 'desktop_user': user, 'tool_approval':tool_approval, 'placement':placement}
 
 
 def doctor(prefix, user):
@@ -296,6 +301,8 @@ def main():
     parser.add_argument('--release')
     parser.add_argument('--output', type=Path)
     parser.add_argument('--user', default='silo-desktop')
+    parser.add_argument('--tool-approval',choices=['auto','prompt','writes','approve'],default='auto',help='MCP tool approval policy in generated config; approve supports unattended sandbox tasks.')
+    parser.add_argument('--placement',choices=['local','remote'],default='local',help='Use remote for a host Codex config targeting its selected SSH executor; local for Codex running inside the guest.')
     args = parser.parse_args()
     try:
         prefix = checked_prefix(args.prefix)
@@ -308,7 +315,7 @@ def main():
         elif args.action == 'config':
             if args.output is None:
                 parser.error('config requires --output')
-            result = config(prefix, args.output, args.user)
+            result = config(prefix, args.output, args.user, args.tool_approval, args.placement)
         else:
             result = doctor(prefix, args.user)
         print(json.dumps(result, indent=2))

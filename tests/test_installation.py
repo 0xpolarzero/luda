@@ -114,6 +114,17 @@ class Installation(unittest.TestCase):
             installer.config(self.prefix, output, 'silo-desktop')
         self.assertEqual((output / '.agents/skills/luda/SKILL.md').read_text(), 'fixture skill')
 
+    def test_remote_unattended_config_is_explicit_and_parseable(self):
+        installer.install(self.prefix,self.source,self.runner)
+        output=self.root/'remote-config'
+        result=installer.config(self.prefix,output,'silo-desktop',tool_approval='approve',placement='remote')
+        server=installer.tomllib.loads((output/'config.toml.fragment').read_text())['mcp_servers']['luda']
+        self.assertEqual(server['default_tools_approval_mode'],'approve')
+        self.assertEqual(server['experimental_environment'],'remote')
+        self.assertTrue(server['required']);self.assertEqual(result['placement'],'remote')
+        with self.assertRaises(installer.InstallError):installer.config(self.prefix,self.root/'bad','silo-desktop',tool_approval='unknown')
+        self.assertFalse((self.root/'bad').exists())
+
     def test_unknown_current_path_is_preserved(self):
         self.prefix.mkdir()
         (self.prefix / 'current').write_text('user content')
