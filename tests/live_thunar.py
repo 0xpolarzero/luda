@@ -11,6 +11,7 @@ import tempfile
 import time
 
 from luda.desktop import Desktop
+from window_oracles import application_target
 
 OUT = Path(__file__).resolve().parents[1] / 'artifacts/thunar'
 OUT.mkdir(parents=True, exist_ok=True)
@@ -47,7 +48,11 @@ def run(root):
         def windows():
             return [w for w in d.list_windows() if w['pid'] == p.pid]
         def active():
-            return until(lambda: next((w['window_id'] for w in windows() if w['active']), None))
+            def selected():
+                current = windows()
+                (OUT / 'last-windows.json').write_text(json.dumps(current, indent=2))
+                return application_target(current, wid)
+            return until(selected)
         wid = until(lambda: next((w['window_id'] for w in windows()), None))
         d.activate(wid)
         def nodes():

@@ -7,6 +7,7 @@ import time
 
 from luda.common import DesktopError
 from luda.desktop import Desktop
+from window_oracles import application_target
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / 'artifacts/terminals'
@@ -59,7 +60,9 @@ def scenario(kind, bracketed):
             cancelled = False
             deadline = time.monotonic() + 5
             while not state()['hex'] and time.monotonic() < deadline:
-                active = next((w for w in d.list_windows() if w['pid'] == p.pid and w['active']), None)
+                owned = [w for w in d.list_windows() if w['pid'] == p.pid]
+                target = application_target(owned, wid)
+                active = next((w for w in owned if w['window_id'] == target), None)
                 if active and active['window_id'] != wid:
                     tree = d.inspect(active['window_id'])
                     (OUT / (label + '-dialog.json')).write_text(json.dumps(tree, indent=2))
@@ -69,7 +72,7 @@ def scenario(kind, bracketed):
                         if not cancelled:
                             cancel = next(n for n in tree['nodes'] if n['role'] == 'push button' and n['name'].replace('_', '').casefold() == 'cancel')
                             d.element(cancel['element_id'], 'invoke', action=cancel['actions'][0])
-                            until(lambda: any(w['window_id'] == wid and w['active'] for w in d.list_windows()))
+                            until(lambda: application_target([w for w in d.list_windows() if w['pid'] == p.pid], wid) == wid)
                             record(label + '-confirmation-cancel-preserves-pty', state()['hex'] == '')
                             cancelled = True
                             # A new explicit operation after confirmed cancellation, not retrying uncertain input.

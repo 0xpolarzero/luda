@@ -11,6 +11,7 @@ import tempfile
 import time
 
 from luda.desktop import Desktop
+from window_oracles import application_target
 
 OUT = Path(__file__).resolve().parents[1] / 'artifacts/files' / f'run-{time.time_ns()}'
 OUT.mkdir(parents=True, exist_ok=True)
@@ -61,7 +62,11 @@ class Editor:
         return tree['nodes']
 
     def active(self):
-        return until(lambda: next((w['window_id'] for w in self.windows() if w['active']), None))
+        def selected():
+            windows = self.windows()
+            (OUT / 'last-windows.json').write_text(json.dumps(windows, indent=2))
+            return application_target(windows, self.wid)
+        return until(selected)
 
     def edit(self, value):
         node = until(lambda: next((n for n in self.nodes(self.wid) if 'EditableText' in n['interfaces'] and 'multi-line' in n['states']), None))
@@ -102,6 +107,10 @@ def overwrite(root):
         until(lambda: any(n['role'] == 'push button' and n['name'] == 'Replace' for n in e.nodes()))
         e.button('Cancel')
         record('overwrite-cancel-preserves-existing-bytes', target.read_bytes() == b'preserve me\n')
+        # GTK's overwrite Cancel returns to Save As; cancel that chooser too.
+        until(lambda: not any(n['name'] == 'Replace' for n in e.nodes()))
+        if e.active() != e.wid:
+            e.button('Cancel')
         until(lambda: e.active() == e.wid)
         e.cleanup()
         e = Editor(original)

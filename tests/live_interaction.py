@@ -6,6 +6,9 @@ import time
 import tempfile
 from pathlib import Path
 from luda.desktop import Desktop
+from luda._x11_helper import _NativeX11
+from luda._private_input import bind_private_input, TOKEN_ENV
+from live_private_input_owner import pointer as query_pointer
 from luda.interaction import InteractionMixin
 
 class Driver(Desktop, InteractionMixin): pass
@@ -36,9 +39,16 @@ try:
         d.activate(w['window_id']); snap=d.observe()
         current=next(v for v in snap['windows'] if v['window_id']==w['window_id'])
         b=current['bounds']; sx=snap['image_size']['width']/snap['desktop_size']['width'];sy=snap['image_size']['height']/snap['desktop_size']['height']
+        human_pointer=subprocess.check_output(['xdotool','getmouselocation','--shell'])
         result=d.hover(w['window_id'],snap['snapshot_id'],(b['x']+30)*sx,(b['y']+40)*sy)
-        actual=subprocess.check_output(['xdotool','getmouselocation','--shell']).decode()
-        assert f"X={b['x']+30}\n" in actual and f"Y={b['y']+40}\n" in actual,actual
+        native = _NativeX11()
+        try:
+            bind_private_input(native, d.private_input.environment()[TOKEN_ENV])
+            actual, _ = query_pointer(native)
+            assert actual[:2] == [b['x']+30, b['y']+40], actual
+        finally:
+            native.close()
+        assert subprocess.check_output(['xdotool','getmouselocation','--shell']) == human_pointer
         results.append({'hover':'pointer position independently verified'})
         assert isinstance(d.display().popup_surfaces(),list)
         assert d.display().transient_for(w['xid']) is None
@@ -63,7 +73,7 @@ try:
             d.manage_window(other['window_id'],'move',x=100,y=120)
             subprocess.check_call(['xdotool','mousemove','0','0'])
             d.activate(other['window_id'])
-            before_focus=int(subprocess.check_output(['xdotool','getactivewindow']))
+            before_focus=int(subprocess.check_output(['xdotool','getwindowfocus']))
             for _ in range(2):
                 result=d.manage_window(w['window_id'],'raise')
                 assert result['effect']=='verified',result
@@ -73,7 +83,7 @@ try:
                 first_frame=d.display().root_surface(w['xid']);peer_frame=d.display().root_surface(other['xid'])
                 upper_frame=d.display().root_surface(upper['xid'])
                 assert order.index(upper_frame)<order.index(first_frame)<order.index(peer_frame),order
-                assert int(subprocess.check_output(['xdotool','getactivewindow']))==before_focus
+                assert int(subprocess.check_output(['xdotool','getwindowfocus']))==before_focus
             results.append({'raise':'stacking increased below the above-layer fixture, remained idempotent, and preserved independently observed focus'})
         finally:
             if pinned is not None:pinned.terminate();pinned.wait(timeout=5)
