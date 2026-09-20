@@ -13,7 +13,8 @@ PATCHES = ('0001-guest-onboarding.patch', '0002-desktop-onboarding.patch',
            '0005-refresh-agent-skill.patch', '0006-host-registration-lifecycle.patch',
            '0007-reviewed-version-update.patch', '0008-native-ssh-qualification.patch',
            '0009-bound-keygen-capture.patch', '0010-refresh-recording-skill.patch',
-           '0011-inspect-update-recovery.patch', '0012-refresh-matching-skill.patch')
+           '0011-inspect-update-recovery.patch', '0012-refresh-matching-skill.patch',
+           '0013-reconcile-registration-state.patch')
 
 
 def apply(checkout, mutate=False):
