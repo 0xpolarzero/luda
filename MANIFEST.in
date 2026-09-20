@@ -27,3 +27,4 @@ recursive-include tests/evidence/agent-terminal-confirmation-first-attempt *.gz 
 recursive-include tests/evidence/preedit-refusal-oracle *.log
 recursive-include tests/evidence/electron-native-clear *.gz
 recursive-include tests/evidence/hosted-clipboard-suite-timeout *.gz
+recursive-include tests/evidence/agent-stale-first-attempt *.gz *.png

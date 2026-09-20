@@ -1,0 +1,14 @@
+{
+  "attempt": 1,
+  "rerun": false,
+  "original_result_preserved": true,
+  "original_automated_passed": false,
+  "workflow_oracle_passed": true,
+  "visual_review": {
+    "reviewer": "implementing agent",
+    "image": "last-observation.png",
+    "sha256": "f1d5b6925cc90c4122d043cd643f042d2d20a8cfd5ad2a1fbd6b61741bc072bd",
+    "observed": "Selected: Amber and Saved Amber"
+  },
+  "scoped_reviewed_outcome": "First attempt received actual STALE_OBSERVATION none, reobserved and used changed coordinates/new snapshot, then committed Amber exactly once with no decoy clicks."
+}
