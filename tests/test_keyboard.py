@@ -45,9 +45,9 @@ class KeyboardContract(unittest.TestCase):
         desktop.target_window.assert_not_called()
 
     def test_bounded_grammar(self):
-        for chord in ('ctrl+s','ctrl+shift+v','Return','A','F24','super+alt+F1'):
+        for chord in ('ctrl+s','ctrl+shift+v','Return','A','F24','super+alt+F1','ctrl+plus','ctrl+minus','ctrl+bracketleft','shift+semicolon'):
             self.assertTrue(validate_chord(chord))
-        for chord in (None,True,0,'','ctrl+ctrl+s','ctrl++s','Caps_Lock','Num_Lock','ctrl+hello','a b','a\n','F25','x'*65,'--clearmodifiers'):
+        for chord in (None,True,0,'','ctrl+ctrl+s','ctrl++s','Caps_Lock','Num_Lock','ctrl+hello','a b','a\n','F25','x'*65,'--clearmodifiers','ctrl++','ctrl+é','ctrl+XF86PowerOff'):
             with self.subTest(chord=chord),self.assertRaises(DesktopError):validate_chord(chord)
     def test_repeat_bounds_before_any_helper(self):
         for count in (True,False,0,21,-1,1.0,'2',None):

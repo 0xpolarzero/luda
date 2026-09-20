@@ -138,7 +138,11 @@ def validate_chord(chord):
         raise DesktopError('INVALID_KEY','Supply one named key chord, such as ctrl+s, Return or Escape.')
     parts=chord.split('+')
     modifiers={'ctrl','alt','shift','super'}
-    named={'Return','Tab','Escape','BackSpace','Delete','Home','End','Left','Right','Up','Down','Page_Up','Page_Down','Insert','space'}
+    named={'Return','Tab','Escape','BackSpace','Delete','Home','End','Left','Right','Up','Down','Page_Up','Page_Down','Insert','space',
+           'plus','minus','equal','comma','period','slash','backslash','semicolon','apostrophe',
+           'bracketleft','bracketright','grave','asciitilde','exclam','at','numbersign','dollar',
+           'percent','asciicircum','ampersand','asterisk','parenleft','parenright','underscore',
+           'braceleft','braceright','bar','colon','quotedbl','less','greater','question'}
     if any(p not in modifiers for p in parts[:-1]) or len(set(parts[:-1]))!=len(parts[:-1]) or not (parts[-1] in named or re.fullmatch(r'[A-Za-z0-9]|F(?:[1-9]|1[0-9]|2[0-4])',parts[-1])):
         raise DesktopError('INVALID_KEY','Use one named key with optional ctrl, alt, shift or super. Text belongs in desktop_type.')
     return parts

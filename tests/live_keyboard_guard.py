@@ -130,6 +130,19 @@ def run_child():
             clear();subprocess.run(['setxkbmap','fr'],check=True)
             key('A');key('1');wait(lambda:text()=='A1')
             rows.append('french-layout-uppercase-and-shifted-digit')
+            for layout in ('us','fr'):
+                clear();subprocess.run(['setxkbmap',layout],check=True)
+                for name in ('plus','minus','equal','comma','period','slash','semicolon'):
+                    result=key(name);assert result['group_unchanged'] and result['locks_unchanged']
+                wait(lambda:text()=='+-=,./;')
+                for name,expected in (('plus',43),('minus',45),('slash',47)):
+                    before=len(json.loads((output/'state.json').read_text())['events'])
+                    key('ctrl+'+name)
+                    def delivered():
+                        events=json.loads((output/'state.json').read_text())['events'][before:]
+                        return any(e['keyval']==expected and e['state']&4 and 'KEY_PRESS' in e['kind'] for e in events)
+                    wait(delivered);assert not oracle.pressed()
+            rows.append('named-punctuation-and-control-shortcuts-us-french-independent-events')
             subprocess.run(['setxkbmap','-layout','us,ru'],check=True);oracle.group(1)
             try:key('a');raise AssertionError('unsupported current-group symbol accepted')
             except DesktopError as exc:assert exc.code=='UNSUPPORTED_KEYMAP',exc.code
