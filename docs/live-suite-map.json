@@ -162,10 +162,11 @@
         "WM-04",
         "WM-05",
         "WM-06",
-        "WM-07"
+        "WM-07",
+        "WIN-07"
       ],
       "scope": "Window states, geometry, raise ordering/focus and close blocked by owned modal dialog.",
-      "limits": "One Xfwm setup; numerical EWMH dispatch is asynchronous and not an atomic identity transaction."
+      "limits": "One Xfwm setup; numerical EWMH dispatch is asynchronous and not an atomic identity transaction. Explicit minimize/restore requires verified results and subsequent activation/observation; it does not test activation on another workspace."
     },
     "live_mcp_applications.py": {
       "requirements": [

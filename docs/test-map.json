@@ -1106,6 +1106,82 @@
         "test_error_redaction.ErrorRedaction.test_unexpected_failure_does_not_clear_unfinished_recovery_owner"
       ],
       "limits": "Unexpected failures return fixed INTERNAL_ERROR diagnostics with operation ID and uncertain effect. Gate release permits recovery only when no separate unfinished cleanup owner remains. These deterministic error paths do not prove all native failure modes recover."
+    },
+    "ENV-03": {
+      "implementation": "partial",
+      "tests": [
+        "test_session.SessionLaunchTests.test_privilege_drop_precedes_exec_and_environment_is_allowlisted",
+        "test_session.SessionLaunchTests.test_unrelated_account_cannot_attach"
+      ],
+      "limits": "Mocked account/syscall launcher checks ordering and environment allowlist; does not exercise real root SSH transport or prove a launched GUI process identity."
+    },
+    "ENV-04": {
+      "implementation": "partial",
+      "tests": [
+        "test_session.SessionLaunchTests.test_desktop_account_executes_without_privilege_calls"
+      ],
+      "limits": "Mocked same-account launch verifies exec without privilege syscalls; real fresh SSH attachment is separate evidence."
+    },
+    "ENV-05": {
+      "implementation": "partial",
+      "tests": [
+        "test_session.SessionDiscoveryTests.test_exact_session_and_environment_with_equals",
+        "test_session.SessionDiscoveryTests.test_missing_or_invalid_environment_is_not_guessed",
+        "test_session.SessionDiscoveryTests.test_nonexistent_explicit_pid_does_not_fallback"
+      ],
+      "limits": "Synthetic proc tree discovers DISPLAY=:7 with its session bus, rejects incomplete environments and refuses fallback for a missing explicit PID. No actual SSH environment is exercised."
+    },
+    "ENV-07": {
+      "implementation": "partial",
+      "tests": [
+        "test_session.SessionLaunchTests.test_missing_authority_prevents_exec"
+      ],
+      "limits": "Only missing authority-file preflight is asserted using a mocked filesystem check; stale cookies, real X authentication rejection and cookie-redaction failures are not covered by this method."
+    },
+    "ENV-09": {
+      "implementation": "partial",
+      "tests": [
+        "test_session.SessionWaitTests.test_missing_session_retried_until_ready",
+        "test_session.SessionWaitTests.test_ambiguous_session_is_not_retried",
+        "test_session.SessionWaitTests.test_deadline_and_zero_timeout_are_bounded"
+      ],
+      "limits": "Mocked discovery and elapsed clock establish retry/bounded failure; not a fresh desktop service startup timing measurement."
+    },
+    "DIAG-02": {
+      "implementation": "partial",
+      "tests": [
+        "test_doctor_environment.DoctorEnvironment.test_malformed_provider_count_is_redacted_and_not_ready"
+      ],
+      "limits": "Doctor rejects malformed/negative mocked provider replies and redacts them. This does not qualify actual bus activation, provider hangs or all toolkit capabilities."
+    },
+    "DIAG-03": {
+      "implementation": "partial",
+      "tests": [
+        "test_diagnostic_capabilities.DiagnosticCapabilities.test_unavailable_accessibility_keeps_screenshot_fallback_available",
+        "test_diagnostic_capabilities.DiagnosticCapabilities.test_pause_and_unknown_control_block_mutations_but_not_observation",
+        "test_diagnostic_capabilities.DiagnosticCapabilities.test_display_loss_and_missing_keyboard_have_distinct_capabilities",
+        "test_diagnostic_capabilities.DiagnosticCapabilities.test_provider_success_does_not_claim_every_editor_supported",
+        "test_diagnostic_capabilities.DiagnosticCapabilities.test_missing_topology_disables_snapshot_pointer_but_not_semantics"
+      ],
+      "limits": "Synthetic capability reports distinguish observation, semantics, keyboard, topology and blocked mutations; provider success retains application-dependent editing. These are classification assertions, not actual missing-dependency environments."
+    },
+    "WIN-02": {
+      "implementation": "partial",
+      "tests": [
+        "test_provider_identity.ProviderScope.test_geometry_selected_root_stays_in_its_provider",
+        "test_provider_identity.ProviderScope.test_mutation_cannot_choose_first_colliding_provider",
+        "test_provider_identity.ProviderScope.test_disappeared_provider_never_rebinds_identical_path"
+      ],
+      "limits": "Synthetic same-PID accessibility trees with colliding names/paths verify selected-root/provider scoping and stale refusal. Does not establish all real multi-window toolkit mappings."
+    },
+    "WIN-09": {
+      "implementation": "partial",
+      "tests": [
+        "test_activation_identity.ActivationIdentity.test_reused_active_xid_does_not_verify_original_generation",
+        "test_activation_identity.ActivationIdentity.test_post_dispatch_lookup_failure_retains_uncertainty",
+        "test_window_enumeration.WindowEnumerationTests.test_repeated_race_stops_after_three_attempts"
+      ],
+      "limits": "Mocked recycled activation target rejects original generation; failed post-dispatch lookup stays uncertain; disappearing enumeration race has bounded retries. No atomic guarantee against asynchronous window-manager target closure."
     }
   }
 }

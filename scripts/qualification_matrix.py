@@ -64,7 +64,7 @@ SUITES = {
     'window-metadata-capacity': suite('live_window_metadata_capacity.py', 'PERF-07', wm=False, modules=()),
     'window-metadata': suite('live_window_metadata.py', 'GEO-01 PERF-07 ERR-06'),
     'geometry': suite('live_geometry.py', 'OBS-02 GEO-01 GEO-02 GEO-04 GEO-09'),
-    'clipboard-interference': suite('live_clipboard_interference.py', 'CLIP-01 CLIP-04 CLIP-05 CLIP-06 CLIP-07 CONC-10 FAULT-08', artifacts=('clipboard',)),
+    'clipboard-interference': suite('live_clipboard_interference.py', 'CLIP-01 CLIP-03 CLIP-04 CLIP-05 CLIP-06 CLIP-07 CONC-10 FAULT-08', artifacts=('clipboard',)),
     'drag': suite('live_drag.py', 'PTR-08'),
     'popup': suite('live_popup.py', 'MENU-04'),
     'resource-stress': suite('live_resource_stress.py', 'AX-06 PERF-06 PERF-09'),
