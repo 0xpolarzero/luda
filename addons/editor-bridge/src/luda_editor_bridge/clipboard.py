@@ -1,11 +1,12 @@
 """Bounded X11 clipboard owner for an explicitly requested rich-editor route."""
 import json
+import os
 import sys
 import shutil
 import subprocess
 import time
 from pathlib import Path
-from luda.common import DesktopError, run, stop_process
+from luda.common import DesktopError, run, stop_process, environment_scope, subprocess_environment
 from luda.storage import staged_payload, storage_errors
 from luda.keyboard import keyboard_capabilities
 
@@ -20,7 +21,13 @@ class Clipboard(NativeInput):
 
     def preflight(self):
         if not shutil.which('xclip'):raise DesktopError('DEPENDENCY_MISSING','Clipboard transport requires xclip.')
-        state=keyboard_capabilities()
+        # The browser worker addresses CDP directly and owns no private input
+        # pair. Inspect the human/core seat without allocating or injecting.
+        environment=dict(subprocess_environment() or os.environ)
+        environment.pop('LUDA_PRIVATE_INPUT',None)
+        environment['LUDA_INPUT_ROUTE']='shared'
+        with environment_scope(environment):
+            state=keyboard_capabilities()
         if not state.get('available'):raise DesktopError('KEYBOARD_UNAVAILABLE','Keyboard state is unavailable.')
         if state.get('latched_input'):raise DesktopError('UNSUPPORTED_INPUT_STATE','Clear latched input before clipboard typing.')
         if state.get('input_held'):raise DesktopError('INPUT_HELD','Release held input before clipboard typing.')

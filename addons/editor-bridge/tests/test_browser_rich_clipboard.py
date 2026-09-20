@@ -95,6 +95,20 @@ class RichClipboardTests(unittest.TestCase):
 
 
 class ClipboardOwnerTests(unittest.TestCase):
+    def test_preflight_reads_shared_seat_without_private_pair(self):
+        from unittest.mock import patch
+        from luda.common import environment_scope, subprocess_environment
+        from luda_editor_bridge.clipboard import Clipboard
+        seen=[]
+        def probe():
+            seen.append(dict(subprocess_environment()))
+            return {'available':True}
+        environment={'DISPLAY':':123','LUDA_PRIVATE_INPUT':'old','LUDA_INPUT_ROUTE':'private'}
+        with environment_scope(environment),patch('luda_editor_bridge.clipboard.shutil.which',return_value='/usr/bin/xclip'),patch('luda_editor_bridge.clipboard.keyboard_capabilities',side_effect=probe):
+            Clipboard('unused').preflight()
+            self.assertEqual(subprocess_environment(),environment)
+        self.assertEqual(seen,[{'DISPLAY':':123','LUDA_INPUT_ROUTE':'shared'}])
+
     def test_missing_dependency_fails_before_keyboard_probe(self):
         from unittest.mock import patch
         from luda_editor_bridge.clipboard import Clipboard

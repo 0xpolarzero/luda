@@ -148,6 +148,12 @@ async def main(executable):
             baseline=await call('editor_status')
             prior_ids={event['operation_id'] for event in baseline['operations']}
             owned=wire.process_identities(client.process.pid)
+            # Cancellation closes the browser, while the MCP session (including
+            # its cursor overlay) remains available for explicit recovery.
+            guards=[pid for pid in owned if b'luda_editor_bridge.guard' in Path('/proc',str(pid),'cmdline').read_bytes().split(b'\0')]
+            record('cancel-browser-ownership',len(guards)==1)
+            all_owned=owned
+            owned={guards[0]:all_owned[guards[0]],**wire.process_identities(guards[0])}
             payload='\n'.join('segment-'+str(i) for i in range(27))
             pending=await client.begin('tools/call',{'name':'editor_type','arguments':{'element_id':eid,'text':payload,'line_breaks':'paragraph','transport':'clipboard'}})
             request_id=client.next_id
@@ -178,7 +184,11 @@ async def main(executable):
             record('fresh-session-no-replay',state['modelText']==seeds['plain'])
             eid=await field();recovered=await call('editor_type',element_id=eid,text='explicit recovery',mode='replace',transport='clipboard')
             await wait(lambda:state['modelText']=='explicit recovery');record('explicit-recovery-new-request',recovered['exact_match'] and state['modelText']=='explicit recovery')
+            all_owned.update(wire.process_identities(client.process.pid))
         finally:barrier_release.set();await client.close();service.shutdown();service.server_close()
+        deadline=time.monotonic()+5
+        while wire.alive(all_owned) and time.monotonic()<deadline:await asyncio.sleep(.05)
+        record('disconnect-closes-all-session-processes',not wire.alive(all_owned),survivors=wire.alive(all_owned))
     return 0
 
 if __name__=='__main__':
