@@ -119,8 +119,13 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
                 if getattr(self, 'private_input', None) is None:
                     from .private_input import PrivateInput
                     self.private_input = PrivateInput(self.environment)
-                environment = self.private_input.environment()
-                environment['LUDA_INPUT_ROUTE'] = 'private'
+                candidate = self.private_input.environment()
+                candidate['LUDA_INPUT_ROUTE'] = 'private'
+                with environment_scope(candidate):
+                    capability = keyboard_capabilities()
+                if capability.get('available') is not True:
+                    raise DesktopError(capability.get('reason','INPUT_UNAVAILABLE'), 'Independent input is unavailable.')
+                environment = candidate
                 if target is not None:
                     self._private_windows = cached | {target}
             except DesktopError as exc:
@@ -142,6 +147,8 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         """Foreground compatibility route, selected before application input."""
         window = self.target_window(window_id, False)
         state = keyboard_capabilities()
+        if state.get('available') is not True:
+            raise DesktopError(state.get('reason','KEYBOARD_UNAVAILABLE'), 'Foreground input is unavailable.')
         if state.get('input_held') is True:
             raise DesktopError('INPUT_HELD', 'Release held keys or mouse buttons before foreground input.')
         if window.get('active'):

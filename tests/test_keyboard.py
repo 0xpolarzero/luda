@@ -67,6 +67,7 @@ class KeyboardContract(unittest.TestCase):
         desktop=Desktop();self.addCleanup(desktop.close)
         desktop.target_window=Mock(return_value={'xid':99,'window_id':'epoch:63:123:456:'+('a'*32)})
         desktop.private_input=Mock(environment=Mock(return_value={}))
+        desktop.input_scope=Mock(side_effect=lambda *args:nullcontext())
         desktop.focus_input=Mock()
         with patch('luda.interaction.properties',return_value=''),patch('luda.desktop.send_chord',return_value={'effect':'dispatched'}) as send:
             self.assertEqual(desktop.key('observed','Return')['effect'],'dispatched')

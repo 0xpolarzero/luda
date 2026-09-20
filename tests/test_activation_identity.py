@@ -11,7 +11,7 @@ class ActivationIdentity(unittest.TestCase):
         original={'window_id':'original-generation','xid':99,'active':False}
         d.list_windows=Mock(side_effect=[[original],after])
         d.active=Mock(return_value=777)
-        d.input_scope=Mock(side_effect=lambda:nullcontext())
+        d.input_scope=Mock(side_effect=lambda *args:nullcontext())
         d._raise_window=Mock(return_value={'effect':'verified'})
         d.focus_input=Mock()
         self.enterContext(patch('luda.interaction.properties',return_value=''))

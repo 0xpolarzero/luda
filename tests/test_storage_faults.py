@@ -27,7 +27,7 @@ class StorageFaults(unittest.TestCase):
         d.target_window = Mock(return_value={'wm_class': [], 'window_id': 'fixture', 'xid':42})
         self.enterContext(patch('luda.interaction.properties',return_value=''))
         d.key = Mock()
-        d.input_scope=lambda: nullcontext()
+        d.input_scope=lambda *args: nullcontext()
         d.focus_input=Mock()
         d.check_input_focus=Mock()
         return d
@@ -111,7 +111,7 @@ from luda.desktop import Desktop
 from luda.common import DesktopError
 with tempfile.TemporaryDirectory() as directory:
  d=Desktop();d.runtime=Path(directory);d.target_window=lambda *args,**kwargs:{'wm_class':[], 'xid':42}
- d.input_scope=lambda:nullcontext()
+ d.input_scope=lambda *args:nullcontext()
  d.focus_input=lambda *args:None
  d.check_input_focus=lambda *args:None
  d.key=lambda *args,**kwargs: (_ for _ in ()).throw(AssertionError('key dispatched'))
