@@ -48,6 +48,10 @@ class X11:
     def geometry(self, window):
         return self._read('geometry',self._xid(window))
 
+    def topology(self):
+        """Current root, server generation and bounded RandR layout metadata."""
+        return self._read('topology')
+
     def window_metadata(self, windows):
         """Bounded geometry, generation, ownership and optional WM properties."""
         if not isinstance(windows,(list,tuple)) or len(windows)>512:

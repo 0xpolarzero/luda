@@ -69,6 +69,11 @@ class _NativeX11:
             self.lib.XCloseDisplay(self.display)
             self.display = None
 
+    def topology(self, unused=None):
+        from ._randr import read_topology
+        return {'server_generation': self.window_tokens([self.root])[self.root],
+                'root': self.geometry(self.root), 'randr': read_topology(self)}
+
     def transient_for(self, window):
         """ICCCM owner hint, including managed dialogs; zero means no hint."""
         fn = self.lib.XGetTransientForHint
@@ -312,7 +317,7 @@ def main():
         request = json.loads(sys.stdin.buffer.read(65536))
         method = request['method']
         argument = request.get('argument')
-        if method not in {'root','selection_owner','restack_above','geometry','geometries','window_metadata','window_tokens','surface_at','root_surface','transient_for','children','popup_surfaces'}:
+        if method not in {'root','topology','selection_owner','restack_above','geometry','geometries','window_metadata','window_tokens','surface_at','root_surface','transient_for','children','popup_surfaces'}:
             raise DesktopError('INVALID_ARGUMENT','Unknown X11 metadata operation.')
         if method=='restack_above':
             if not isinstance(argument,list) or len(argument)!=2 or any(isinstance(v,bool) or not isinstance(v,int) or not 1<=v<=0xffffffff for v in argument) or argument[0]==argument[1]:
@@ -326,7 +331,7 @@ def main():
         elif method == 'surface_at':
             if not isinstance(argument,list) or len(argument)!=2 or any(isinstance(v,bool) or not isinstance(v,int) or not -32768 <= v <= 32767 for v in argument):
                 raise DesktopError('INVALID_ARGUMENT','Invalid surface point.')
-        elif method != 'root' and (isinstance(argument,bool) or not isinstance(argument,int) or not 1 <= argument <= (4096 if method == 'popup_surfaces' else 0xffffffff)):
+        elif method not in ('root', 'topology') and (isinstance(argument,bool) or not isinstance(argument,int) or not 1 <= argument <= (4096 if method == 'popup_surfaces' else 0xffffffff)):
             raise DesktopError('INVALID_ARGUMENT','Invalid X11 metadata argument.')
         native = _NativeX11()
         result = native.root if method == 'root' else getattr(native,method)(argument)

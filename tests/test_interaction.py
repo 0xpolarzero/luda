@@ -69,10 +69,12 @@ class PointTests(unittest.TestCase):
         d.signature=lambda windows:'same'
         class Display:
             root=1
+            def topology(self): return {'generation': 1}
             def surface_at(self,x,y):return 20
             def root_surface(self,xid):return 20
             def geometry(self, root): return {'width':100,'height':100}
         d.display=lambda:Display()
+        d.snapshots['s']['topology'] = d.display().topology()
         return d
     def test_scales_image_to_root_and_rejects_half_open_edges(self):
         d=self.driver()

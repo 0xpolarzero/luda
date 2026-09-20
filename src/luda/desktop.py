@@ -110,6 +110,11 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         except DesktopError as exc:
             result.update(display_available=False,display_error=str(exc))
         try:
+            result['display_topology'] = self.display().topology()
+            result['topology_available'] = True
+        except DesktopError as exc:
+            result.update(topology_available=False, topology_error={'code':exc.code,'message':str(exc)})
+        try:
             check = run(['/usr/bin/python3','-c',"import gi;gi.require_version('Atspi','2.0');from gi.repository import Atspi;Atspi.set_timeout(600,1000);print(Atspi.get_desktop(0).get_child_count())"],timeout=4)
             count = int(check)
             if count < 0:raise ValueError()
@@ -129,7 +134,7 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
             result['control'] = {'available':False, 'reason':exc.code}
         result['capabilities'] = capability_summary(result)
         result['capability_scope'] = 'Backend availability only; target focus, current input state and application support are checked per action.'
-        result['ready'] = result['session_state']['input_ready'] is not False and all(dependencies.values()) and result['display_available'] and result['session_bus'] and result['accessibility_available'] and result['keyboard']['available'] and result['control']['available']
+        result['ready'] = result['session_state']['input_ready'] is not False and all(dependencies.values()) and result['display_available'] and result['topology_available'] and result['session_bus'] and result['accessibility_available'] and result['keyboard']['available'] and result['control']['available']
         return result
 
     def active(self):
@@ -241,6 +246,7 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         root = self.display().geometry(self.display().root)
         if root['width']<=0 or root['height']<=0 or root['width']*root['height']>32_000_000:
             raise DesktopError('SCREENSHOT_LIMIT','Desktop capture is limited to 32 million native pixels; reduce display resolution.')
+        topology = self.display().topology()
         before = self.list_windows()
         before_popups = self.observe_popups(before)
         with tempfile.TemporaryDirectory(dir=self.runtime) as directory:
@@ -257,12 +263,14 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
                 buf = io.BytesIO();source.save(buf,format='PNG')
         after = self.list_windows()
         after_popups = self.observe_popups(after)
+        if topology != self.display().topology():
+            raise DesktopError('DESKTOP_CHANGED','Display layout changed during capture; observe again.')
         if self.signature(before)!=self.signature(after) or self.popup_signature(before_popups)!=self.popup_signature(after_popups):
             raise DesktopError('DESKTOP_CHANGED','Window layout changed during capture; observe again.')
         token = uuid.uuid4().hex
         now = elapsed_time()
         self.snapshots = {k:v for k,v in self.snapshots.items() if now-v['time']<15}
-        snapshot = {'time':now,'signature':self.signature(after),'native':native,'image':(width,height),'popups':after_popups}
+        snapshot = {'time':now,'signature':self.signature(after),'native':native,'image':(width,height),'popups':after_popups,'topology':topology}
         self.snapshots[token] = snapshot
         while len(self.snapshots)>16:self.snapshots.pop(next(iter(self.snapshots)))
         return {'snapshot_id':token,'expires_after_seconds':15,
@@ -272,6 +280,7 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
                 'image_bounds_semantics':'Half-open rectangles of integer screenshot pixel positions; clipped to image, not an occlusion check.',
                 'image_size':{'width':width,'height':height},
                 'desktop_size':{'width':native[0],'height':native[1]},
+                'display_topology':topology,
                 'windows':[{**w,'image_bounds':image_bounds(w['bounds'],native,(width,height))} for w in after],
                 'popups':[{**p,'image_bounds':image_bounds(p['bounds'],native,(width,height))} for p in after_popups],
                 'image_base64':base64.b64encode(buf.getvalue()).decode()}

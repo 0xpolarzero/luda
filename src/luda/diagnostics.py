@@ -12,8 +12,8 @@ def capability_summary(report):
         if blocked:return 'blocked'
         return 'application_dependent' if semantic else 'backend_available'
     return {
-        'screen_observation':'backend_available' if display and dependencies.get('scrot') else 'unavailable',
-        'pointer_input':input_state(display and dependencies.get('xdotool')),
+        'screen_observation':'backend_available' if display and report.get('topology_available', False) and dependencies.get('scrot') else 'unavailable',
+        'pointer_input':input_state(display and report.get('topology_available', False) and dependencies.get('xdotool')),
         'keyboard_input':input_state(display and report['keyboard']['available']),
         'clipboard_paste':input_state(display and report['keyboard']['available'] and dependencies.get('xclip')),
         'accessibility_read':'backend_available' if display and report['accessibility_available'] else 'unavailable',

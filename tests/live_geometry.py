@@ -75,6 +75,23 @@ try:
                         check_error(lambda:d.hover(window['window_id'],snap['snapshot_id'],a,c),'OUT_OF_BOUNDS')
                     results.append({'style':style,'returned_width':width,'pixel_and_pointer_oracles':True})
                 if style=='borderless':assert w['bounds']==w['frame_bounds'],w
+                if style=='decorated':
+                    # Real RandR 1.5 monitor mutation without changing root
+                    # dimensions, independently visible through xrandr.
+                    monitor='luda-geometry-'+str(os.getpid())
+                    subprocess.run(['xrandr','--setmonitor',monitor,'320/85x240/64+0+0','none'],check=True)
+                    try:
+                        assert monitor in subprocess.check_output(['xrandr','--listmonitors']).decode()
+                        current=d.display().topology()
+                        assert current['root']==snap['display_topology']['root']
+                        assert current!=snap['display_topology']
+                        check_error(lambda:d.hover(window['window_id'],snap['snapshot_id'],x,y),'STALE_OBSERVATION')
+                        snap,w,image=snapshot(window,321)
+                        d.hover(window['window_id'],snap['snapshot_id'],x,y)
+                        results.append({'same_root_monitor_addition':'old pointer observation refused; fresh observation accepted'})
+                    finally:subprocess.run(['xrandr','--delmonitor',monitor],check=True)
+                    check_error(lambda:d.hover(window['window_id'],snap['snapshot_id'],x,y),'STALE_OBSERVATION')
+                    snap,w,image=snapshot(window,321)
                 old=snap['snapshot_id']
                 d.manage_window(window['window_id'],'move',x=-100,y=100)
                 check_error(lambda:d.hover(window['window_id'],old,x,y),'STALE_OBSERVATION')

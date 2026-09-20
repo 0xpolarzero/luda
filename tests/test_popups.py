@@ -14,6 +14,7 @@ class Display:
     def popup_surfaces(self):return self.popups
     def window_tokens(self,xids):return {xid: str(xid) for xid in xids}
     def geometry(self,xid):return {'width':100,'height':100}
+    def topology(self):return {'generation': 1}
     def surface_at(self,x,y):return self.top
 
 class Driver(InteractionMixin):
@@ -26,7 +27,7 @@ class Driver(InteractionMixin):
     def signature(self,windows):return 'layout'
     def capture(self):
         popups=self.observe_popups()
-        self.snapshots['s']={'time':time.monotonic(),'popups':popups,'signature':'layout','native':(100,100),'image':(100,100)}
+        self.snapshots['s']={'time':time.monotonic(),'popups':popups,'signature':'layout','native':(100,100),'image':(100,100),'topology':self.x.topology()}
         return popups[0]['popup_id']
 
 @patch('luda.interaction.process_identity',return_value='123')

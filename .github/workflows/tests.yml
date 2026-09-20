@@ -30,7 +30,7 @@ jobs:
       - name: Install real desktop dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y xvfb xfwm4 dbus-x11 at-spi2-core python3-gi gir1.2-atspi-2.0 gir1.2-gtk-3.0 xdotool wmctrl scrot xclip x11-utils
+          sudo apt-get install -y xvfb xfwm4 dbus-x11 at-spi2-core python3-gi gir1.2-atspi-2.0 gir1.2-gtk-3.0 xdotool wmctrl scrot xclip x11-utils x11-xserver-utils libxrandr2
           python -m venv .venv
           .venv/bin/python -m pip install --require-hashes -r requirements.lock
           .venv/bin/python -m pip install --no-deps -e .

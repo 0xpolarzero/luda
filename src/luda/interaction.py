@@ -166,6 +166,8 @@ class InteractionMixin:
         root = self.display().geometry(self.display().root)
         if (root['width'],root['height']) != tuple(snap['native']):
             raise DesktopError('STALE_OBSERVATION', 'Display resolution changed; observe again.')
+        if self.display().topology() != snap.get('topology'):
+            raise DesktopError('STALE_OBSERVATION', 'Display layout or X server changed; observe again.')
         iw,ih = snap['image']; nw,nh = snap['native']
         if not 0 <= x < iw or not 0 <= y < ih:
             raise DesktopError('OUT_OF_BOUNDS', 'Point is outside screenshot.')
@@ -253,6 +255,8 @@ class InteractionMixin:
         root=self.display().geometry(self.display().root)
         if (root['width'],root['height'])!=tuple(snap['native']):
             raise DesktopError('STALE_OBSERVATION','Display resolution changed; observe again.')
+        if self.display().topology() != snap.get('topology'):
+            raise DesktopError('STALE_OBSERVATION', 'Display layout or X server changed; observe again.')
         iw,ih=snap['image'];nw,nh=snap['native']
         if not 0<=x<iw or not 0<=y<ih:raise DesktopError('OUT_OF_BOUNDS','Point is outside screenshot.')
         px,py=int(x*nw/iw),int(y*nh/ih);b=observed['bounds']
