@@ -27,7 +27,7 @@ from types import MappingProxyType
 from .common import environment_scope, subprocess_environment
 from .input_guard import held_button
 from .pointer_input import click_button
-from .keyboard import validate_chord, send_chord, keyboard_capabilities, keyboard_recovery_checkpoint
+from .keyboard import validate_chord, validate_key_count, send_chord, keyboard_capabilities, keyboard_recovery_checkpoint
 from .session_state import session_state
 from .coordinates import image_bounds, topology_summary
 from .ime import composition_capability
@@ -321,10 +321,11 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
                     pointer.move(ax,ay);time.sleep(.02)
         return {'effect':'dispatched','verification':'Observe the resulting application state.'}
 
-    def key(self, window_id, chord):
+    def key(self, window_id, chord, count=1):
         validate_chord(chord)
+        validate_key_count(count)
         target = self.target_window(window_id)
-        return send_chord(chord, target['xid'], target_generation=target['window_id'].rsplit(':',1)[-1])
+        return send_chord(chord, target['xid'], target_generation=target['window_id'].rsplit(':',1)[-1],count=count)
 
     def ax(self, request, mutating=False):
         worker = str(Path(__file__).with_name('ax_worker.py'))

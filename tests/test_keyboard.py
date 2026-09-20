@@ -34,7 +34,15 @@ class KeyboardContract(unittest.TestCase):
         desktop.target_window=Mock(return_value={'xid':99,'window_id':'epoch:63:123:456:'+('a'*32)})
         with patch('luda.desktop.send_chord',return_value={'effect':'dispatched'}) as send:
             self.assertEqual(desktop.key('observed','Return')['effect'],'dispatched')
-        send.assert_called_once_with('Return',99,target_generation='a'*32)
+        send.assert_called_once_with('Return',99,target_generation='a'*32,count=1)
+
+    def test_invalid_repeat_count_precedes_window_lookup(self):
+        from luda.desktop import Desktop
+        desktop=Desktop();self.addCleanup(desktop.close)
+        desktop.target_window=Mock()
+        for value in (True,False,0,21,1.5,'2',None):
+            with self.subTest(count=value),self.assertRaises(DesktopError):desktop.key('observed','Return',value)
+        desktop.target_window.assert_not_called()
 
     def test_bounded_grammar(self):
         for chord in ('ctrl+s','ctrl+shift+v','Return','A','F24','super+alt+F1'):

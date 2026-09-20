@@ -11,6 +11,9 @@ class ProtocolValidation(unittest.IsolatedAsyncioTestCase):
             ('desktop_click',dict(window_id='w',snapshot_id='s',x=True,y=2)),
             ('desktop_click',dict(window_id='w',snapshot_id='s',x='1',y=2)),
             ('desktop_click',dict(window_id='w',snapshot_id='s',x=1,y=2,count=True)),
+            ('desktop_press_keys',dict(window_id='w',chord='Down',count=True)),
+            ('desktop_press_keys',dict(window_id='w',chord='Down',count='2')),
+            ('desktop_press_keys',dict(window_id='w',chord='Down',count=1.5)),
             ('desktop_set_checked',dict(element_id='e',checked='false')),
             ('desktop_set_checked',dict(element_id='e',checked=1)),
             ('desktop_select',dict(element_id='e',start_offset=True,end_offset=2)),
@@ -56,3 +59,5 @@ class ProtocolValidation(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(dispatch.call_args.args,('pointer','w','s',1.0,2.5))
             await mcp.call_tool('desktop_set_checked',dict(element_id='e',checked=False))
             self.assertIs(dispatch.call_args.kwargs['checked'],False)
+            await mcp.call_tool('desktop_press_keys',dict(window_id='w',chord='Down',count=5))
+            self.assertEqual(dispatch.call_args.args,('key','w','Down',5))

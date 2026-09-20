@@ -254,9 +254,9 @@ async def desktop_paste(window_id: str, text: str, shortcut: Literal['ctrl_v','c
 
 
 @mcp.tool()
-async def desktop_press_keys(window_id: str, chord: str) -> CallToolResult:
-    """Send one deliberate chord, e.g. ctrl+s, ctrl+shift+v, Return, Tab, Escape. Requires target focus, refuses held keys/buttons, and uses the current keyboard group without changing its mapping. Unavailable symbols return UNSUPPORTED_KEYMAP; never use this to type text."""
-    return await execute_async('key',window_id,chord)
+async def desktop_press_keys(window_id: str, chord: str, count: int = 1) -> CallToolResult:
+    """Send a deliberate chord, e.g. ctrl+s, Return, Tab, Escape or Down. count is 1–20 complete press/release repetitions, default 1. Revalidates target identity, focus and input state between repetitions; stops on the first failure and never retries. Requires target focus, refuses held keys/buttons, and preserves the current keyboard mapping. Unavailable symbols return UNSUPPORTED_KEYMAP; text belongs in desktop_type. Dispatched count is not application completion."""
+    return await execute_async('key',window_id,chord,count)
 
 
 @mcp.tool()
