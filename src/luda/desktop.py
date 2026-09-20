@@ -22,6 +22,7 @@ from .interaction import InteractionMixin
 from .control import Control
 from .timing import elapsed_time, suspend_offset
 from .waits import ConditionWaitsMixin
+from .input_guard import held_button
 
 
 class Desktop(InteractionMixin, ConditionWaitsMixin):
@@ -232,13 +233,10 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
                 raise DesktopError('INVALID_ARGUMENT','Invalid scroll direction.')
             run(['xdotool','click','--repeat',str(count),'--delay','35',mapping[direction]],effect='uncertain')
         elif kind=='drag':
-            try:
-                run(['xdotool','mousedown',buttons[button]],effect='uncertain')
+            with held_button(buttons[button]):
                 for step in range(1,11):
                     ax=round(px+(end[0]-px)*step/10);ay=round(py+(end[1]-py)*step/10)
                     run(['xdotool','mousemove',str(ax),str(ay)],effect='uncertain');time.sleep(.02)
-            finally:
-                run(['xdotool','mouseup',buttons[button]],effect='uncertain',cleanup=True,timeout=1)
         return {'effect':'dispatched','verification':'Observe the resulting application state.'}
 
     def key(self, window_id, chord):
