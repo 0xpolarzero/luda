@@ -1,6 +1,6 @@
 # Broad opt-in qualification matrix
 
-`scripts/qualification_matrix.py` runs 22 existing suites with separate Xvfb, session D-Bus and private XDG config/data/cache/runtime directories for each suite. It is opt-in and refuses UID 0. It supplements the stable native-app and headless CI runners; it does not replace them or run authenticated agent evaluations.
+`scripts/qualification_matrix.py` runs the suites listed by `--list` with separate Xvfb, session D-Bus and private XDG config/data/cache/runtime directories for each suite. It is opt-in and refuses UID 0. It supplements the stable native-app and headless CI runners; it does not replace them or run authenticated agent evaluations.
 
 ```sh
 .venv/bin/python scripts/qualification_matrix.py --list
