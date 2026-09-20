@@ -11,8 +11,8 @@
     "w3c-keyname": "2.2.8"
   },
   "files": {
-    "fixture.js": "a04d57b4b2f39c4bef7970dae04e89da70ab38ab14a839202717f66fdd86db76",
-    "editor.bundle.js": "8b1c8d855153b941e83ed326bbc93a6d1cf21f0ae91d436247cdc4a644eeb540",
+    "fixture.js": "f7f55c68abf530302d011d20135f489b1f9b5a8af6570f72acccca23270bd9f3",
+    "editor.bundle.js": "9fc01a0f32a119b6aeb9eba5d13eef15b3cb608f69df457935b55f5586822036",
     "package-lock.json": "ecb8aba7917dbb3dc5ea44666b02d6a0bfaf84ddc8318fdc4aaf04b4d772f90b"
   },
   "bridge_sha256": "bf554b1850dbeaf5a74927ff105ca899049e8b91a6b3a0a7b5dd4b141219a20e"

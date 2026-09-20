@@ -10,6 +10,7 @@ ROOT=Path(__file__).resolve().parents[1];OUT=ROOT/'artifacts/owned-rich-clipboar
 async def main(executable):
     if os.getuid()==0 or os.environ.get('LUDA_ISOLATED_TEST_DISPLAY')!='1':raise RuntimeError('Private ordinary-account desktop required')
     OUT.mkdir(parents=True,exist_ok=True);wire.OUT=OUT;state={};rows=[];lock=threading.Lock()
+    barrier_entered=threading.Event();barrier_release=threading.Event();barrier_state={}
     def record(case,passed,**details):
         rows.append(dict(case=case,passed=bool(passed),**details));(OUT/'results.json').write_text(json.dumps(rows,ensure_ascii=False,indent=2))
         if not passed:raise AssertionError(case)
@@ -22,7 +23,13 @@ async def main(executable):
             data=path.read_bytes();self.send_response(200);self.send_header('Content-Type','text/javascript' if path.suffix in ('.js','.mjs') else 'text/html; charset=utf-8');self.end_headers();self.wfile.write(data)
         def do_POST(self):
             value=json.loads(self.rfile.read(int(self.headers['Content-Length'])))
-            with lock:state.clear();state.update(value)
+            if self.path=='/cancel-barrier':
+                barrier_state.update(value)
+                (OUT/'cancel-barrier-oracle.json').write_text(json.dumps(value,ensure_ascii=False,indent=2))
+                barrier_entered.set()
+                barrier_release.wait(12)  # Independently bounded even if the client fails.
+            else:
+                with lock:state.clear();state.update(value)
             (OUT/'oracle.json').write_text(json.dumps(value,ensure_ascii=False,indent=2));self.send_response(204);self.end_headers()
     service=http.server.ThreadingHTTPServer(('127.0.0.1',0),Handler);threading.Thread(target=service.serve_forever,daemon=True).start()
     async def wait(predicate):
@@ -114,20 +121,28 @@ async def main(executable):
             await call('desktop_press_keys',window_id=wid,chord='Escape')
             document_id=state['documentId'];await button('Reload document');await wait(lambda:state['documentId']!=document_id)
             eid=await field();await call('desktop_type',element_id=eid,text='',mode='replace')
+            record('cancel-empty-baseline',await wait(lambda:state.get('modelText')==''))
+            await button('Arm cancellation barrier')
+            owned=wire.process_identities(client.process.pid)
             payload='\n'.join('segment-'+str(i) for i in range(27))
             pending=await client.begin('tools/call',{'name':'desktop_type','arguments':{'element_id':eid,'text':payload,'line_breaks':'paragraph','transport':'clipboard'}})
             request_id=client.next_id
-            await wait(lambda:bool(state['modelText']))
-            record('cancel-after-independent-first-input',bool(state['modelText']) and not pending.done())
-            await client.send({'jsonrpc':'2.0','method':'notifications/cancelled','params':{'requestId':request_id,'reason':'synthetic bounded cancellation'}})
-            await asyncio.sleep(.5);partial=state['modelText'];await asyncio.sleep(.3)
-            record('cancel-stops-without-replay',payload.startswith(partial) and partial!=payload and state['modelText']==partial,partial=partial)
+            try:
+                entered=await asyncio.to_thread(barrier_entered.wait,5)
+                record('cancel-after-independent-first-input',entered and barrier_state.get('modelText')=='segment-0' and not pending.done(),oracle=dict(barrier_state),response=pending.result() if pending.done() else None)
+                await client.send({'jsonrpc':'2.0','method':'notifications/cancelled','params':{'requestId':request_id,'reason':'synthetic bounded cancellation'}})
+                deadline=time.monotonic()+8
+                while wire.alive(owned) and time.monotonic()<deadline:await asyncio.sleep(.05)
+                record('cancel-owned-browser-processes-closed',not wire.alive(owned),survivors=wire.alive(owned),response=pending.result() if pending.done() else None)
+            finally:barrier_release.set()
+            partial=barrier_state.get('modelText')
+            record('cancel-stops-without-replay',partial=='segment-0' and partial!=payload,partial=partial)
             document_id=state['documentId'];opened=await call('desktop_open_browser',url=f'http://127.0.0.1:{service.server_port}',lifetime='temporary_session');wid=opened['window_id']
             await call('desktop_activate',window_id=wid);await wait(lambda:state['documentId']!=document_id)
             record('fresh-session-no-replay',state['modelText']==seeds['plain'])
             eid=await field();recovered=await call('desktop_type',element_id=eid,text='explicit recovery',mode='replace',transport='clipboard')
             await wait(lambda:state['modelText']=='explicit recovery');record('explicit-recovery-new-request',recovered['exact_match'] and state['modelText']=='explicit recovery')
-        finally:await client.close();service.shutdown();service.server_close()
+        finally:barrier_release.set();await client.close();service.shutdown();service.server_close()
     return 0
 
 if __name__=='__main__':

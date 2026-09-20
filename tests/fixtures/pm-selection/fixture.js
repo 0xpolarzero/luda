@@ -11,6 +11,7 @@ const documentId = crypto.randomUUID();
 const events = [];
 let generation = 0, revision = 0, view = null, root, unregister;
 let persistTail = Promise.resolve();
+let cancellationBarrier = false;
 let spoofNextComposition = false, spoofNextKey = false, blurNext = false;
 const SEEDS={plain:'A👩🏽‍💻B éC', paragraphs:'first\n\nlast', marks:'LEFT middle RIGHT', empty:'', boundaries:'AB\nCD\nEF'};
 const allowed = new Set(['doc', 'paragraph', 'text', 'hard_break']);
@@ -57,6 +58,15 @@ function mount() {
       dispatchTransaction(transaction) {
         view.updateState(view.state.apply(transaction));
         if (transaction.docChanged) revision++;
+        // Test-only barrier: report the actual applied model, then block the
+        // renderer until the external harness releases or closes this browser.
+        if (transaction.docChanged && cancellationBarrier) {
+          cancellationBarrier = false;
+          const request = new XMLHttpRequest();
+          request.open('POST', '/cancel-barrier', false);
+          request.setRequestHeader('Content-Type', 'application/json');
+          request.send(JSON.stringify(snapshot()));
+        }
         persist();
       },
     });
@@ -139,3 +149,5 @@ Object.defineProperty(window,'ludaSelectionProbe',{value:Object.freeze({
 
 document.querySelector('#comparison').addEventListener('input',persist);
 document.querySelector('#same-length').onclick=()=>{view.dispatch(view.state.tr.insertText('Z',1,2));persist();};
+
+document.querySelector('#cancel-barrier').onclick=()=>{cancellationBarrier=true;};
