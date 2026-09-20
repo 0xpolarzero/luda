@@ -61,8 +61,10 @@ This is working guest setup, not automatic host-side registration.
 
 The following are concrete evidence gaps, not proposals to add redundant APIs:
 
-- **KEY-10:** qualify dead-key and Compose support or explicit no-input refusal
-  through the public interface and an independent widget/key-state oracle.
+- **KEY-10:** the subsequent [dead-key/Compose run](DEAD-COMPOSE-QUALIFICATION.md)
+  now establishes nine scoped refusal/recovery assertions through actual MCP,
+  independent widget/key-state oracles and exact private layout restoration.
+  It qualifies the named refusal route, not composition support.
 - **AUTH-03:** qualify an actual native password-manager popup with a disposable
   synthetic vault. Existing ordinary password fields and OAuth fixtures do not
   establish that application workflow or browser-extension compatibility.
@@ -70,8 +72,8 @@ The following are concrete evidence gaps, not proposals to add redundant APIs:
   with bounded CPU-pressure evidence. Do not infer system-wide OOM, swapping or
   every low-resource interleaving from these separate experiments.
 
-These three investigations were started after this audit snapshot; they are not
-reported as passes here. Broader provider/application combinations and unseen
+These investigations were started after this audit snapshot; only the explicitly
+linked completed result above is reported as a pass. Broader provider/application combinations and unseen
 agent tasks also remain unqualified. Additional work should name the missing
 assertion and independent oracle, rather than simply repeat existing passes.
 
