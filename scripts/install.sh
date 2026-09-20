@@ -17,10 +17,11 @@ source_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 python3 - "$source_dir/scripts" "$prefix" "${optional[@]}" <<'PYVALIDATE'
 import argparse,sys
 sys.path.insert(0,sys.argv[1])
-from manage_install import checked_prefix, read_browser_config, verify_browser
+from manage_install import checked_prefix, read_browser_config, verify_browser, check_install_access
 checked_prefix(sys.argv[2])
 p=argparse.ArgumentParser();p.add_argument('--browser-config');p.add_argument('--user',default='silo-desktop')
 a=p.parse_args(sys.argv[3:])
+check_install_access(checked_prefix(sys.argv[2]),a.user)
 if a.browser_config:verify_browser(read_browser_config(a.browser_config),a.user)
 PYVALIDATE
 if [[ "$skip_system" != true ]]; then

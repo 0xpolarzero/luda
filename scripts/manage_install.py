@@ -8,6 +8,8 @@ import json
 import os
 from pathlib import Path
 import re
+import pwd
+import stat
 import shutil
 import signal
 import subprocess
@@ -51,9 +53,71 @@ def atomic_json(path, value):
         temporary.unlink(missing_ok=True)
 
 
+def create_public_directories(path):
+    """Set modes only on directories this invocation exclusively creates."""
+    missing = []
+    current = path
+    while not current.exists():
+        missing.append(current)
+        current = current.parent
+    for directory in reversed(missing):
+        directory.mkdir()
+        directory.chmod(0o755)
+
+
+def desktop_probe(command, user):
+    try:
+        account = pwd.getpwnam(user)
+        if os.getuid() not in (0, account.pw_uid):
+            raise InstallError('Installer must run as root or the selected desktop account.')
+        identity = (dict(user=account.pw_uid, group=account.pw_gid,
+                         extra_groups=os.getgrouplist(user, account.pw_gid)) if os.getuid() == 0 else {})
+        result = subprocess.run(list(map(str, command)), cwd='/', stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=20,
+            env={'PATH':'/usr/bin:/bin', 'LANG':'C.UTF-8', 'HOME':account.pw_dir}, **identity)
+        if result.returncode:
+            raise InstallError('Selected desktop account cannot access the installation; previous release remains selected.')
+    except (KeyError, OSError, subprocess.TimeoutExpired) as exc:
+        raise InstallError('Selected desktop account access check failed; previous release remains selected.') from exc
+
+
+def check_install_access(prefix, user):
+    ancestor = prefix
+    while not ancestor.exists():
+        ancestor = ancestor.parent
+    desktop_probe([Path(sys.executable).resolve(), '-I', '-c',
+        'import os,sys;sys.exit(0 if os.path.isdir(sys.argv[1]) and os.access(sys.argv[1],os.X_OK) else 1)', ancestor], user)
+
+
+def normalize_new_release(release):
+    # Called only for this invocation's exclusively created release, before its
+    # manifest. Never follow links to interpreters or other caller-owned files.
+    for path in [release, *release.rglob('*')]:
+        mode = path.lstat().st_mode
+        if stat.S_ISDIR(mode):
+            path.chmod(0o755)
+        elif stat.S_ISREG(mode) and path.name != '.luda-release-owner.json':
+            path.chmod(0o755 if mode & 0o111 else 0o644)
+
+
+def verify_desktop_access(release, user):
+    program = """import os,pathlib,sys
+import luda.server,luda.session
+root=pathlib.Path(sys.argv[1]).resolve()
+assert pathlib.Path(sys.prefix).resolve()==root/'.venv'
+for module in (luda.server,luda.session):
+    assert pathlib.Path(module.__file__).resolve().is_relative_to(root/'.venv')
+for name in ('luda','luda-session'):
+    assert os.access(root/'.venv/bin'/name,os.X_OK)
+with (root/'skills/luda/SKILL.md').open('rb') as stream:
+    assert stream.read(1)
+"""
+    desktop_probe([release/'.venv/bin/python', '-I', '-c', program, release], user)
+
+
 @contextmanager
 def locked(prefix):
-    prefix.mkdir(parents=True, exist_ok=True)
+    create_public_directories(prefix)
     fd = os.open(prefix / '.luda-install.lock', os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
     try:
         fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -161,6 +225,7 @@ def select(prefix, release):
 
 
 def install(prefix, source, runner=invoke, browser_config=None, user="silo-desktop"):
+    check_install_access(prefix, user)
     browser = verify_browser(read_browser_config(browser_config), user) if browser_config is not None else None
     identity = release_identity(source, browser)
     with locked(prefix):
@@ -175,11 +240,12 @@ def install(prefix, source, runner=invoke, browser_config=None, user="silo-deskt
             raise InstallError('Existing current path is not managed by this installer.')
         if not (prefix / MARKER).exists():
             atomic_json(prefix / MARKER, metadata)
-        releases.mkdir(exist_ok=True)
+        create_public_directories(releases)
         release = releases / identity
         if release.exists() or release.is_symlink():
             if identity in metadata['releases'] and not release.is_symlink() and (release / 'release.json').is_file():
                 verify_release(release, identity, user)
+                verify_desktop_access(release, user)
                 select(prefix, identity)
                 return {'status': 'already_installed', 'release': identity, 'prefix': str(prefix)}
             pending = release / '.luda-release-owner.json'
@@ -212,6 +278,8 @@ def install(prefix, source, runner=invoke, browser_config=None, user="silo-deskt
                 (release / '.venv/luda-browser.json').chmod(0o644)
             if release_identity(source, browser) != identity:
                 raise InstallError('Source changed during installation; previous release remains selected. Retry from an unchanged checkout.')
+            normalize_new_release(release)
+            verify_desktop_access(release, user)
             atomic_json(release / 'release.json', {'product': 'luda', 'release': identity,
                         'wheel_sha256': hashlib.sha256(wheels[0].read_bytes()).hexdigest(),
                         'files': inventory(release)})
@@ -232,6 +300,7 @@ def rollback(prefix, release, user="silo-desktop"):
         if release not in metadata['releases'] or (prefix / 'releases').is_symlink() or (prefix / 'releases' / release).is_symlink() or not (prefix / 'releases' / release / 'release.json').is_file():
             raise InstallError('Requested release is not a completed managed installation.')
         verify_release(prefix / 'releases' / release, release, user)
+        verify_desktop_access(prefix / 'releases' / release, user)
         select(prefix, release)
         return {'status': 'selected', 'release': release}
 
