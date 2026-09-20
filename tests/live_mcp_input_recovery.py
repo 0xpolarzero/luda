@@ -58,6 +58,9 @@ async def main():
             async with stdio_client(params) as streams:
                 async with ClientSession(*streams) as session:
                     await session.initialize();server_pid=int(pidfile.read_text())
+                    # This newly owned display address may carry a previous
+                    # private run's persistent pause record; establish fixture state.
+                    await call(session,'desktop_control',action='resume')
                     tools=await session.list_tools()
                     record('public-recovery-tool-discoverable',any(t.name=='desktop_recover_input' for t in tools.tools))
                     deadline=time.monotonic()+8
@@ -115,6 +118,7 @@ async def main():
                     record('replacement-held-key-and-button-untouched',bool(held) and bool(buttons) and oracle.pressed()==held and oracle.buttons()==buttons)
                     record('replacement-recovery-preserves-pause',(await call(session,'desktop_control'))['paused'])
                     command('xdotool','keyup','Control_L');command('xdotool','mouseup','1')
+                    await call(session,'desktop_control',action='resume')
         finally:
             for pid,start in stopped.items():
                 try:
