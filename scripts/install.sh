@@ -17,6 +17,7 @@ Requires Python 3.12+. System dependencies use apt-get and require root.
   --project PATH         Project directory for project-scoped configuration
   --export PATH          Export tools and skill for a custom agent
   --check-desktop        Check the running desktop after agent setup (not image builds)
+  --session MODE         discover (default, XFCE session) or direct (inherited GUI environment)
   --yes                  Noninteractive setup; still requires explicit selection
   --runtime-only         Install runtime without configuring any agent (image builds)
   --skip-system          Skip apt; use only when dependencies are already installed
@@ -59,7 +60,7 @@ while [[ $# -gt 0 ]]; do
     --runtime-only) runtime_only=true; shift ;;
     --check-desktop) setup_options+=(--check-desktop); shift ;;
     --yes) assume_yes=true; setup_options+=(--yes); shift ;;
-    --prefix|--user|--browser-config|--agent|--scope|--project|--export)
+    --prefix|--user|--browser-config|--agent|--scope|--project|--export|--session)
       [[ $# -ge 2 && -n "$2" && "$2" != --* ]] || fail "$1 requires a value"
       case "$1" in
         --prefix) [[ "$prefix_set" == false ]] || fail 'Specify the prefix only once'; prefix=$2; prefix_set=true ;;

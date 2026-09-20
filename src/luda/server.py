@@ -435,9 +435,14 @@ async def desktop_wait(condition: Literal['window_present','window_absent','wind
 
 
 def main():
+    import sys
+    if sys.argv[1:2] == ['setup']:
+        from .setup import main as setup_main
+        return setup_main(sys.argv[2:])
     parser = argparse.ArgumentParser(description='Luda local desktop MCP server and session controls')
     parser.add_argument('--version',action='version',version=version('luda'))
     sub = parser.add_subparsers(dest='command')
+    sub.add_parser('setup',help='Install the skill and register tools for selected agents (setup --help)')
     sub.add_parser('doctor',help='Print real desktop readiness as JSON')
     sub.add_parser('report',help='Print sanitized bug-report JSON; no earlier-process history')
     control = sub.add_parser('control',help='Coordinate human/agent input on this display')
