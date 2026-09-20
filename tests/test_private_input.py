@@ -1,8 +1,9 @@
 import json
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
-from luda._private_input import Devices, decode_token
+from luda._private_input import Binding, Devices, decode_token
+from luda.private_input import PrivateInput
 from luda.common import DesktopError
 
 
@@ -51,6 +52,43 @@ class PrivateIdentityTest(unittest.TestCase):
         api = self.device_api()
         self.assertTrue(api.remove(token()))
         api.xi.XIChangeHierarchy.assert_called_once()
+
+    def test_remove_holds_server_lock_through_validation(self):
+        api = self.device_api()
+        order = []
+        api.x.lib.XGrabServer.side_effect = lambda *_: order.append('grab')
+        api.x.lib.XUngrabServer.side_effect = lambda *_: order.append('ungrab')
+        api.generation.side_effect = lambda: (order.append('validate'), token()['generation'])[1]
+        api.xi.XIChangeHierarchy.side_effect = lambda *_: order.append('remove')
+        self.assertTrue(api.remove(token()))
+        self.assertEqual(order, ['grab', 'validate', 'remove', 'ungrab'])
+
+    def test_changed_client_pointer_refuses_input(self):
+        binding = object.__new__(Binding)
+        binding.devices = self.device_api()
+        binding.token = token()
+        binding.pointer = 8
+        def selected(display, window, result):
+            result._obj.value = 2
+            return True
+        binding.devices.xi.XIGetClientPointer.side_effect = selected
+        with self.assertRaises(DesktopError):
+            binding.validate()
+
+    def test_owner_start_timeout_and_invalid_identity_close_child(self):
+        for ready in [False, True]:
+            process = Mock()
+            process.poll.return_value = None
+            with self.subTest(ready=ready), patch('luda.private_input.subprocess.Popen', return_value=process), \
+                    patch('luda.private_input.select.select', return_value=([process.stdout] if ready else [], [], [])), \
+                    patch('luda.private_input.os.read', return_value=b'{"error":"startup failed"}'):
+                owner = PrivateInput({'DISPLAY': ':fixture'})
+                with self.assertRaises(DesktopError):
+                    owner.environment()
+                process.stdin.close.assert_called_once()
+                process.wait.assert_called_once()
+                self.assertIsNone(owner._process)
+
 
 
 if __name__ == '__main__':

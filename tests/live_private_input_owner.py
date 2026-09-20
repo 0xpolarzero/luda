@@ -4,6 +4,7 @@ import json
 import os
 import select
 import subprocess
+import sys
 import time
 
 from luda._private_input import Devices, bind_private_input, TOKEN_ENV
@@ -81,9 +82,18 @@ def run():
         owner._process.wait()
         wait_absent(devices, identity['name'])
         assert devices.devices() == baseline
+        # A crashed parent session does not need to run Python finalizers.
+        parent = subprocess.run([sys.executable, '-c',
+            'import os,json; from luda.private_input import PrivateInput; '
+            'from luda._private_input import TOKEN_ENV; owner=PrivateInput(); '
+            'print(owner.environment()[TOKEN_ENV], flush=True); os._exit(0)'],
+            capture_output=True, text=True, timeout=5, check=True)
+        abandoned = json.loads(parent.stdout)
+        wait_absent(devices, abandoned['name'])
+        assert devices.devices() == baseline
         test.XTestFakeKeyEvent(human.display, 38, False, 0)
         human.lib.XSync(human.display, False)
-        print(json.dumps({'passed': True, 'checks': ['private pointer', 'private keyboard', 'same-key release isolation', 'normal cleanup', 'owner SIGKILL cleanup', 'unchanged human devices']}))
+        print(json.dumps({'passed': True, 'checks': ['private pointer', 'private keyboard', 'same-key release isolation', 'normal cleanup', 'owner SIGKILL cleanup', 'parent crash EOF cleanup', 'unchanged human devices']}))
     finally:
         if owner: owner.close()
         if agent: agent.close()

@@ -4,6 +4,7 @@ import json
 import os
 import re
 import secrets
+import select
 import subprocess
 import sys
 
@@ -47,6 +48,8 @@ class Devices:
         self.x = native
         self.xi = C.CDLL('libXi.so.6')
         self.x.lib.XSync.argtypes = [C.c_void_p, C.c_int]
+        self.x.lib.XGrabServer.argtypes = [C.c_void_p]
+        self.x.lib.XUngrabServer.argtypes = [C.c_void_p]
         self.xi.XIQueryVersion.argtypes = [C.c_void_p, C.POINTER(C.c_int), C.POINTER(C.c_int)]
         self.xi.XIQueryDevice.argtypes = [C.c_void_p, C.c_int, C.POINTER(C.c_int)]
         self.xi.XIQueryDevice.restype = C.POINTER(DeviceInfo)
@@ -99,15 +102,21 @@ class Devices:
         return self.validate(token)
 
     def remove(self, token):
+        # An ID cannot be removed/reallocated between identity validation and removal.
+        self.x.lib.XGrabServer(self.x.display)
         try:
-            self.validate(token)
-        except DesktopError:
-            return False  # Stale IDs must never remove another device.
-        # Floating slaves avoids attaching any device to the human pair.
-        info = RemoveMaster(2, token['pointer'], 2, 0, 0)
-        self.xi.XIChangeHierarchy(self.x.display, C.byref(info), 1)
-        self.x.lib.XSync(self.x.display, False)
-        return True
+            try:
+                self.validate(token)
+            except DesktopError:
+                return False
+            # Floating slaves avoids attaching any device to the human pair.
+            info = RemoveMaster(2, token['pointer'], 2, 0, 0)
+            self.xi.XIChangeHierarchy(self.x.display, C.byref(info), 1)
+            self.x.lib.XSync(self.x.display, False)
+            return True
+        finally:
+            self.x.lib.XUngrabServer(self.x.display)
+            self.x.lib.XSync(self.x.display, False)
 
 
 class Binding:
@@ -122,7 +131,12 @@ class Binding:
             raise DesktopError('INPUT_UNAVAILABLE', 'Private input connection binding failed.')
 
     def validate(self):
-        return self.devices.validate(self.token)
+        self.devices.validate(self.token)
+        selected = C.c_int()
+        if (not self.devices.xi.XIGetClientPointer(self.devices.x.display, 0, C.byref(selected))
+                or selected.value != self.pointer):
+            raise DesktopError('INPUT_UNAVAILABLE', 'Private input connection binding changed; no input sent.')
+        return self.token
 
     def focus(self, window):
         self.validate()
@@ -160,6 +174,7 @@ def main():
                     or not re.fullmatch(r'luda-[0-9a-f]{32}', reservation['name'])
                     or not re.fullmatch(r'[0-9a-f]{32}', reservation['generation'])):
                 raise ValueError('Invalid private device reservation')
+            print('ready', flush=True)
             sys.stdin.buffer.read()
             if devices.generation() == reservation['generation']:
                 found = {d['name']: d for d in devices.devices()}
@@ -171,9 +186,12 @@ def main():
             name = 'luda-' + secrets.token_hex(16)
             reservation = dict(name=name, generation=devices.generation())
             watchdog = subprocess.Popen([sys.executable, '-m', 'luda._private_input', 'watchdog'],
-                                        stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                                        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
             watchdog.stdin.write(json.dumps(reservation).encode() + b'\n')
             watchdog.stdin.flush()
+            if (not select.select([watchdog.stdout], [], [], 1)[0]
+                    or os.read(watchdog.stdout.fileno(), 64) != b'ready\n'):
+                raise DesktopError('INPUT_UNAVAILABLE', 'Private input cleanup guardian did not start.')
             token = devices.create(name)
             print(json.dumps(token), flush=True)
             sys.stdin.buffer.read()  # Session exit or crash closes this pipe.
@@ -188,6 +206,7 @@ def main():
         if watchdog:
             watchdog.stdin.close()
             watchdog.wait(timeout=2)
+            watchdog.stdout.close()
 
 
 if __name__ == '__main__':
