@@ -10,10 +10,10 @@ source-bound findings.
 
 ## Evidence now available
 
-The [current unit record](UNIT-COVERAGE-CURRENT.md) now contains 719 passing root
-tests and the matching ordinary-account run (711 passed, eight unavailable Codex
+The [current unit record](UNIT-COVERAGE-CURRENT.md) now contains 730 passing root
+tests and the matching ordinary-account run (722 passed, eight unavailable Codex
 CLI tests skipped). Its map names 138 requirements and 318 distinct unit methods.
-These subsequent results retain their own source revision and fingerprint. The [live inventory](LIVE-COVERAGE.md) registers 77 fixtures and
+These subsequent results retain their own source revision and fingerprint. The [live inventory](LIVE-COVERAGE.md) registers 78 fixtures and
 162 distinct requirement associations. These overlap and are not a reliability
 percentage or evidence that all associated requirements passed.
 
@@ -55,7 +55,7 @@ also retains the corrected generated-inventory failure instead of omitting it.
 | Area | Remaining boundary |
 |---|---|
 | Active composition, EDIT-10 | [Real GTK/Chromium probes](IME-COMPOSITION.md) expose lost or later-committed preedit. Generic AT-SPI does not supply authoritative current composition state. The optional [owned-browser provider](OWNED-BROWSER.md) now refuses active or unknown composition in its ordinary HTML fields; generic native input remains unguarded by an authoritative composition signal. [Owned-browser prototypes](OWNED-BROWSER-CANCEL-PROTOTYPE.md) now qualify narrow explicit cancellation correlation while retaining unknown and uncertain cases; engine activation or daemon presence is insufficient. |
-| Rich text, WEB-03/DATA-07 | Opaque embedded-object text cannot establish exact logical plaintext. Both native and clipboard paths now refuse unsupported representations before mutation and report uncertainty if they arise afterward. This fixes false verification. A [test-only ProseMirror adapter](OWNED-RICH-EDITOR-PROTOTYPE.md) preserves exact paragraph-separated text in its declared route, but broad paste, hard-break, formatting and IME recovery failures remain; no production adapter is inferred. |
+| Rich text, WEB-03/DATA-07 | Opaque embedded-object text cannot establish exact logical plaintext. Both native and clipboard paths now refuse unsupported representations before mutation and report uncertainty if they arise afterward. This fixes false verification. The production [cooperating ProseMirror bridge](../integrations/prosemirror/README.md) now verifies whole-field replacement and end append for declared basic paragraphs, including exact text, structure and retained marks. Generic editors, middle selections, hard breaks, broader schemas and composition recovery remain unsupported. Earlier prototype failures remain preserved. |
 | Provider-specific semantic controls | GTK4 selection/caret and checkbox actions, some Qt combo actions, Electron non-BMP selection verification and protected Firefox editing retain explicit limitations. Tested GUI alternatives do not relabel semantic support. |
 | Content/session identity, AUTH-05 | A screenshot token validates age, native identity/layout and related checks, not unchanged control meaning. The retained old-login screenshot diagnostic did activate a replacement control. Fresh semantic inspection avoided it in the separate workflow. [Authentication evidence](AUTH-QUALIFICATION.md) and skill guidance preserve this distinction. |
 | Input and application races | X11 does not give exclusive human-input ownership, atomic clipboard delivery or application transactions. Successful dispatch is not task completion, and cleanup cannot undo an application effect. |
