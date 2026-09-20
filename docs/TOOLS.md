@@ -66,7 +66,7 @@ Retry cleanup of this server's interrupted supervised input, without replaying k
 desktop_reconnect(session_pid: int | None=None)
 ```
 
-Reconnect this MCP connection to a running XFCE session owned by this account after a desktop restart. Omit PID only when exactly one session exists. Validates display and bus before replacing the backend; failed validation preserves it. Returns BUSY during other operations, never restarts apps or replays input. All prior window, element and screenshot IDs expire; observe again. The selected display's pause state remains in force.
+Reconnect this MCP connection to a running XFCE session owned by this account after a desktop restart. Omit PID only when exactly one session exists. Validates display and bus before replacing the backend; failed validation preserves it. Returns BUSY during other operations, never restarts apps or replays input. All prior window, element and screenshot IDs expire; observe again. The selected display's pause state remains in force. Temporary owned browsers/profiles are closed and unsaved content is lost; browser_cleanup=unconfirmed reports cleanup that could not be proved.
 
 ## `desktop_doctor`
 
@@ -83,6 +83,14 @@ desktop_applications(query: str='', limit: int=50)
 ```
 
 Find installed desktop applications by name, description or ID. Returns application_id and file/URI support; works while input is paused. Use an exact returned ID with desktop_launch.
+
+## `desktop_open_browser`
+
+```python
+desktop_open_browser(url: str, lifetime: Literal['temporary_session'])
+```
+
+Open a fresh owned Chromium with explicit temporary_session lifetime. Browser/profile and unsaved content are deleted on server disconnect, backend close or reconnect. Requires optional browser dependencies and configured executable; never downloads automatically or attaches existing profiles. Inspect text_fields for exact ordinary HTML input/textarea control; protected fields, rich editors and frames are unsupported.
 
 ## `desktop_launch`
 
@@ -122,7 +130,7 @@ Return screenshot plus window layout and a 15-second snapshot ID. Pointer coordi
 desktop_inspect(window_id: str, limit: int=150, name: str | None=None, role: str | None=None, states: list[str] | None=None, max_depth: int=30)
 ```
 
-Inspect a window or find controls by name/role substring and required states. Returns bounded tree, parent IDs, supported actions and 60-second element IDs. Empty matches and unavailable accessibility are distinct.
+Inspect a window or find controls by name/role substring and required states. Returns bounded tree, parent IDs, supported actions and 60-second element IDs. Owned browser text_fields have distinct provider-bound IDs for ordinary HTML fields. Empty matches and unavailable accessibility are distinct.
 
 ## `desktop_read_text`
 
@@ -202,7 +210,7 @@ Drag between two observed points inside the same active window; always attempts 
 desktop_focus_element(element_id: str)
 ```
 
-Request accessibility focus in the active window. Inspect to confirm focused state.
+Request element focus in the active window; owned browser fields refuse active/unknown composition before focus. Inspect to confirm focused state.
 
 ## `desktop_invoke`
 

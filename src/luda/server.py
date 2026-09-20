@@ -109,7 +109,13 @@ def execute(method, *args, _cancelled=None, **kwargs):
                         with _backend_lock:
                             backend = candidate
                             atexit.register(candidate.close)
+                    old_browser = getattr(d, 'browser', None)
+                    had_browser = old_browser is not None and old_browser.process is not None
                     d.close()
+                    if had_browser:
+                        result['browser_cleanup'] = 'confirmed' if old_browser.process is None else 'unconfirmed'
+                        if old_browser.process is not None:
+                            result['effect'] = 'uncertain'
                     atexit.unregister(d.close)
                 else:
                     with d.transaction():
@@ -238,7 +244,7 @@ async def desktop_recover_input() -> CallToolResult:
 
 @mcp.tool()
 async def desktop_reconnect(session_pid: int | None = None) -> CallToolResult:
-    """Reconnect this MCP connection to a running XFCE session owned by this account after a desktop restart. Omit PID only when exactly one session exists. Validates display and bus before replacing the backend; failed validation preserves it. Returns BUSY during other operations, never restarts apps or replays input. All prior window, element and screenshot IDs expire; observe again. The selected display's pause state remains in force."""
+    """Reconnect this MCP connection to a running XFCE session owned by this account after a desktop restart. Omit PID only when exactly one session exists. Validates display and bus before replacing the backend; failed validation preserves it. Returns BUSY during other operations, never restarts apps or replays input. All prior window, element and screenshot IDs expire; observe again. The selected display's pause state remains in force. Temporary owned browsers/profiles are closed and unsaved content is lost; browser_cleanup=unconfirmed reports cleanup that could not be proved."""
     return await execute_async('reconnect', session_pid)
 
 
@@ -257,6 +263,12 @@ async def desktop_doctor() -> CallToolResult:
 async def desktop_applications(query: str = '', limit: int = 50) -> CallToolResult:
     """Find installed desktop applications by name, description or ID. Returns application_id and file/URI support; works while input is paused. Use an exact returned ID with desktop_launch."""
     return await execute_async('list_applications',query,limit)
+
+
+@mcp.tool()
+async def desktop_open_browser(url: str, lifetime: Literal['temporary_session']) -> CallToolResult:
+    """Open a fresh owned Chromium with explicit temporary_session lifetime. Browser/profile and unsaved content are deleted on server disconnect, backend close or reconnect. Requires optional browser dependencies and configured executable; never downloads automatically or attaches existing profiles. Inspect text_fields for exact ordinary HTML input/textarea control; protected fields, rich editors and frames are unsupported."""
+    return await execute_async('open_browser',url,lifetime)
 
 
 @mcp.tool()
@@ -285,7 +297,7 @@ async def desktop_observe(max_width: int = 1280) -> CallToolResult:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
 async def desktop_inspect(window_id: str, limit: int = 150, name: str | None = None, role: str | None = None, states: list[str] | None = None, max_depth: int = 30) -> CallToolResult:
-    """Inspect a window or find controls by name/role substring and required states. Returns bounded tree, parent IDs, supported actions and 60-second element IDs. Empty matches and unavailable accessibility are distinct."""
+    """Inspect a window or find controls by name/role substring and required states. Returns bounded tree, parent IDs, supported actions and 60-second element IDs. Owned browser text_fields have distinct provider-bound IDs for ordinary HTML fields. Empty matches and unavailable accessibility are distinct."""
     return await execute_async('inspect',window_id,limit,name=name,role=role,states=states,max_depth=max_depth)
 
 
@@ -347,7 +359,7 @@ async def desktop_drag(window_id: str, snapshot_id: str, x: float, y: float, end
 
 @mcp.tool()
 async def desktop_focus_element(element_id: str) -> CallToolResult:
-    """Request accessibility focus in the active window. Inspect to confirm focused state."""
+    """Request element focus in the active window; owned browser fields refuse active/unknown composition before focus. Inspect to confirm focused state."""
     return await execute_async('element',element_id,'focus')
 
 

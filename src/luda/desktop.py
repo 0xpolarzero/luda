@@ -21,6 +21,7 @@ from .x11 import X11
 from .fonts import font_coverage
 from .ocr import recognize, retain_snapshot
 from .recording import Recordings
+from .browser import OwnedBrowser, capability as browser_capability
 from .interaction import InteractionMixin
 from .control import Control
 from .admission import Admission
@@ -50,6 +51,7 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         self.windows = {}
         self.clipboard_owner = None
         self.recordings = Recordings(self)
+        self.browser = OwnedBrowser(self)
         self.local_lock = threading.Lock()
         name = hashlib.sha256(display_identity(self.environment.get('DISPLAY','')).encode()).hexdigest()[:12]
         self.lockfd = None
@@ -115,6 +117,7 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
                   'display':self.environment.get('DISPLAY'),'session_bus':bool(self.environment.get('DBUS_SESSION_BUS_ADDRESS')),
                   'uid':os.getuid(),'transport':'stdio','support':'experimental X11; Wayland unsupported',
                   'ime_composition':composition_capability(),
+                  'owned_browser':browser_capability(self.environment),
                   'limitations':['Human viewer input is not locked out.','No automatic clipboard restoration.',
                                  'Accessibility mapping requires a uniquely identified application window.','No automatic retry of mutations.']}
         try:
@@ -427,11 +430,25 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
             mark_effect(result.get('effect', 'dispatched'))
         return result
 
+    def open_browser(self, url, lifetime):
+        return self.browser.open(url, lifetime)
+
     def inspect(self, window_id, limit=150, name=None, role=None, states=None, max_depth=30):
         if not 1 <= limit <= 500:
             raise DesktopError('INVALID_ARGUMENT','limit must be 1–500.')
         w = self.target_window(window_id,False)
-        result = self.ax({'op':'inspect','pid':w['pid'],'start':w['start'],'limit':limit,'bounds':w['bounds'],'frame_bounds':w['frame_bounds'],'window_title':w['title'],'filters':{k:v for k,v in {'name':name,'role':role,'states':states}.items() if v is not None},'max_depth':max_depth})
+        owned = getattr(self, 'browser', None)
+        browser_fields = owned.inspect(window_id,limit,name,role,states) if owned and owned.window_id == window_id else None
+        try:
+            result = self.ax({'op':'inspect','pid':w['pid'],'start':w['start'],'limit':limit,'bounds':w['bounds'],'frame_bounds':w['frame_bounds'],'window_title':w['title'],'filters':{k:v for k,v in {'name':name,'role':role,'states':states}.items() if v is not None},'max_depth':max_depth})
+        except DesktopError as exc:
+            if not browser_fields or exc.code not in ('ACCESSIBILITY_UNAVAILABLE','ACCESSIBILITY_ERROR'):
+                raise
+            result = {'nodes':[], 'accessibility_error':exc.code}
+        if browser_fields is not None:
+            result['text_fields'] = browser_fields['fields']
+            result['text_fields_truncated'] = browser_fields['truncated']
+            result['owned_browser_limits'] = browser_fields['unsupported']
         now=elapsed_time()
         self.elements={k:v for k,v in self.elements.items() if now-v['time']<60}
         tokens = {node['path']:uuid.uuid4().hex for node in result['nodes']}
@@ -451,6 +468,8 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         target=self.elements.get(element_id)
         if not target or elapsed_time()-target['time']>=60:
             raise DesktopError('STALE_TARGET','Element expired or belongs to another server; inspect again.')
+        if target.get('provider') == 'owned_browser':
+            return self.browser.element(target,op,**kwargs)
         w=self.target_window(target['window_id'],op!='read')
         node=target['node']
         if node['start']!=w['start']:
@@ -478,6 +497,8 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         target = self.elements.get(element_id)
         if not target or elapsed_time()-target['time']>=60:
             raise DesktopError('STALE_TARGET','Element expired; inspect again.')
+        if target.get('provider') == 'owned_browser':
+            return self.browser.element(target,'type',text=text,mode=mode)
         node = target['node']
         if node.get('protected'):
             raise DesktopError('PROTECTED_FIELD','Ordinary typing does not write protected fields.')
@@ -629,7 +650,8 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
             return
         self.closed = True
         errors = []
-        for cleanup in (lambda: self.recordings.close() if hasattr(self, 'recordings') else None,
+        for cleanup in (lambda: self.browser.close() if hasattr(self, 'browser') else None,
+                        lambda: self.recordings.close() if hasattr(self, 'recordings') else None,
                         lambda: stop_process(self.clipboard_owner) if self.clipboard_owner else None,
                         lambda: self.x.close() if self.x else None,
                         lambda: self.admission.cancel() if getattr(self, 'admission', None) else None,

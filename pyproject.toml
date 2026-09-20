@@ -11,6 +11,7 @@ dependencies = ["mcp==1.30.0", "jsonschema==4.26.0", "Pillow>=12.0,<13"]
 
 [project.optional-dependencies]
 test = ["playwright==1.63.0"]
+browser = ["playwright==1.63.0"]
 
 [project.scripts]
 luda = "luda.server:main"

@@ -28,7 +28,7 @@ The installer creates versioned releases and switches `current` atomically. The 
 3. When accessibility is unavailable, observe the screenshot and use its coordinates. The same click/hover tools handle owned context menus and submenus.
 4. Read back or wait for the intended state. After an uncertain result, inspect before repeating input.
 
-The [tool reference](docs/TOOLS.md) is generated from actual MCP declarations. The [skill](skills/luda/SKILL.md) explains targeting, text and recovery. Other capabilities include [optional local OCR](docs/OCR.md) over a selected screenshot, [visual candidate matching](docs/IMAGE-MATCHING.md), [temporary screen recording](docs/RECORDING.md), window/workspace management, cross-window drag, table-row selection, clipboard paste, shared pause/resume and explicit input cleanup recovery. Pointer and key dispatch still require application-specific verification.
+The [tool reference](docs/TOOLS.md) is generated from actual MCP declarations. The [skill](skills/luda/SKILL.md) explains targeting, text and recovery. Other capabilities include [optional temporary owned-browser text control](docs/OWNED-BROWSER.md), [optional local OCR](docs/OCR.md) over a selected screenshot, [visual candidate matching](docs/IMAGE-MATCHING.md), [temporary screen recording](docs/RECORDING.md), window/workspace management, cross-window drag, table-row selection, clipboard paste, shared pause/resume and explicit input cleanup recovery. Pointer and key dispatch still require application-specific verification.
 
 ## Develop and test
 
