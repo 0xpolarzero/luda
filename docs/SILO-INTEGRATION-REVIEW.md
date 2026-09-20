@@ -86,3 +86,10 @@ Mac Codex configuration/profile, transferring/registering the bundle, separate
 health UI and user-facing upgrade/reconnect behavior still require Silo changes
 and real Mac acceptance. Do not reimplement its private SSH bridge, add a second
 SSH key flow, or claim an undocumented app command is supported.
+
+## Subsequent implementation
+
+The [explicit guest bootstrap](GUEST-BOOTSTRAP.md) now composes the guest-side
+steps above. Its own validation records distinguish unit evidence from installed
+guest results. Automatic Silo invocation, host registration and health UI remain
+separate missing integration work; no Silo source was changed.

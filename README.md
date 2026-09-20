@@ -6,7 +6,9 @@ Local Linux desktop control for agents. Luda attaches to the XFCE/X11 desktop al
 
 ## Use it
 
-With an existing Ubuntu 24.04 XFCE/X11 desktop:
+For an existing running Silo desktop, the [guest bootstrap](docs/GUEST-BOOTSTRAP.md) composes installation, readiness checks and a remote Codex configuration/skill bundle in one command. Host registration remains explicit.
+
+For manual installation on an existing Ubuntu 24.04 XFCE/X11 desktop:
 
 ```sh
 sudo bash scripts/install.sh /opt/luda
