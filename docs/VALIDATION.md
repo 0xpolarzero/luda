@@ -24,7 +24,7 @@ The [346-case catalog](REQUIREMENTS.md) defines acceptance targets. [Qualificati
 
 - `scripts/qualify.py`: named unit evidence linked to requirements. Unit success alone never grants release qualification.
 - `scripts/headless_tests.py`: sixteen isolated suites covering native/MCP input, cancellation, controls, menus, geometry, resources, waits, keyboard identity/repetition, input cleanup, server replacement and session-state hints. All sixteen passed locally at `e987d22`; subsequent changes require their own affected checks.
-- `scripts/native_app_tests.py`: five isolated ordinary-account suites for Mousepad, Thunar, window states, MCP launches and terminals. Both hosted AMD64 workflows completed successfully at `ca2f2ac`, including these suites and desktop contracts.
+- `scripts/native_app_tests.py`: five isolated ordinary-account suites for Mousepad, Thunar, window states, MCP launches and terminals. Both hosted AMD64 workflows completed successfully at `2f271b4`, including these suites and desktop contracts.
 - Provider suites: `live_semantic.py`, `live_toolkits.py`, `live_controls.py`, `live_combo.py`, and browser suites retain independent widget/DOM oracles and failures. See [toolkits](TOOLKIT-QUALIFICATION.md), [browser](BROWSER-QUALIFICATION.md) and [browser text](BROWSER-TEXT-CONTRACT.md).
 - [Reconnect](RECONNECT.md), [clipboard](CLIPBOARD-QUALIFICATION.md), [terminals](TERMINAL-QUALIFICATION.md), [geometry](GEOMETRY-QUALIFICATION.md), [resources](RESOURCE-QUALIFICATION.md) and [storage](STORAGE-FAULT-QUALIFICATION.md) document exact local assertions and limits.
 - `scripts/agent_eval.py` requires an already authenticated CLI and explicit private-display opt-in. [Agent evaluation](AGENT-EVALUATION.md) records every retained attempt, independent oracles, trace grading, source hashes and usage.
@@ -81,14 +81,22 @@ fingerprint. The newer scoped records include [locale forms](DATA-ENTRY-QUALIFIC
 [Thunar drag choices](THUNAR-DRAG-QUALIFICATION.md),
 [tray menus](TRAY-QUALIFICATION.md),
 [undo grouping](UNDO-QUALIFICATION.md),
+[single-line newline behavior](SINGLE-LINE-QUALIFICATION.md),
+[curses terminal interaction](TUI-QUALIFICATION.md),
+[stopped accessibility providers](AX-DEADLINE-QUALIFICATION.md),
+[GTK4 GUI alternatives](GTK4-GUI-WORKFLOWS.md),
+[fresh-agent file organization](AGENT-FILE-USABILITY.md),
 [RTL navigation](RTL-QUALIFICATION.md),
 [ten-minute sustained use](MCP-SOAK-QUALIFICATION.md),
 and [authentication boundaries](AUTH-QUALIFICATION.md). These have distinct source
 snapshots and supported scopes; they are not a single universal acceptance pass.
 
-The integrated `ade1e43` unit run passed 570 tests with unchanged source
-(`artifacts/qualification/current-gui-workflows-unit.json`). Later live-only additions
-have their own recorded runs. The [live inventory](LIVE-COVERAGE.md) distinguishes
+The integrated `af41eba` unit run passed **581 tests** with unchanged source
+(`artifacts/qualification/error-timing-agent-unit.json`). The same revision passed
+the ordinary-account actual MCP suite, including elapsed time on a real error
+response. [Error privacy](ERROR-PRIVACY.md) specifies the timing boundary; the
+earlier installed wheel predates this change. Later live-only additions have
+their own recorded runs. The [live inventory](LIVE-COVERAGE.md) distinguishes
 registered fixtures from standalone experiments; its associations are not passes.
 
 Native full-disk saving exposed an application data-loss failure: Mousepad truncated

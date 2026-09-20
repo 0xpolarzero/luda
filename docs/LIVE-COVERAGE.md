@@ -84,6 +84,7 @@ These existing live scripts are not registered in the three inventoried runners.
 - [live_disk_full_save.py](../tests/live_disk_full_save.py)
 - [live_font_diagnostic.py](../tests/live_font_diagnostic.py)
 - [live_font_rendering.py](../tests/live_font_rendering.py)
+- [live_gtk4_gui.py](../tests/live_gtk4_gui.py)
 - [live_mcp_soak.py](../tests/live_mcp_soak.py)
 - [live_randr_backends.py](../tests/live_randr_backends.py)
 - [live_ssh_loss.py](../tests/live_ssh_loss.py)
