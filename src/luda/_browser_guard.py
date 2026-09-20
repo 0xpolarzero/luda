@@ -93,7 +93,9 @@ def clear_profile(directory, descriptor, identity):
 def main():
     if ctypes.CDLL(None).prctl(36, 1, 0, 0, 0) != 0:  # PR_SET_CHILD_SUBREAPER
         return 1
-    directory = Path(tempfile.mkdtemp(prefix='owned-browser-', dir=sys.argv[1]))
+    # Chromium creates Unix sockets below TMPDIR (108-byte pathname limit).
+    # Use a short, exclusive 0700 root even when the desktop runtime is long.
+    directory = Path(tempfile.mkdtemp(prefix='luda-b-', dir='/tmp'))
     descriptor = os.open(directory, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
     identity = (os.fstat(descriptor).st_dev, os.fstat(descriptor).st_ino)
     proof_fd = int(sys.argv[2]) if len(sys.argv) > 2 else None

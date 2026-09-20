@@ -47,12 +47,14 @@ class BrowserCleanupTests(unittest.TestCase):
                 end=time.monotonic()+3
                 while not (root/'pid').exists() and time.monotonic()<end:time.sleep(.01)
                 download=Path((root/'temporary').read_text());self.assertEqual(download.read_text(),'synthetic')
-                self.assertTrue(download.is_relative_to(next(root.glob('owned-browser-*'))))
+                profile=download.parents[2]
+                self.assertEqual(profile.parent,Path('/tmp'))
+                self.assertEqual(profile.stat().st_mode & 0o777,0o700)
                 worker=int((root/'pid').read_text());os.kill(process.pid,signal.SIGSTOP)
                 owner.close()
                 self.assertIsNone(owner.process)
                 self.assertFalse(Path('/proc',str(worker)).exists())
-                self.assertEqual(list(root.glob('owned-browser-*')),[])
+                self.assertFalse(profile.exists())
                 self.assertFalse(download.exists())
             finally:
                 if process.poll() is None:os.kill(process.pid,signal.SIGCONT);process.terminate();process.wait(timeout=4)
