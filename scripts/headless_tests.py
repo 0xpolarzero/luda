@@ -41,13 +41,23 @@ def main():
     # An explicit opt-in prevents accidentally taking over an ordinary desktop.
     if os.environ.get('LUDA_ISOLATED_TEST_DISPLAY') != '1':
         raise SystemExit('Set LUDA_ISOLATED_TEST_DISPLAY=1 only for the fresh test X server.')
-    env = dict(os.environ, NO_AT_BRIDGE='0', GTK_MODULES='gail:atk-bridge')
+    env = dict(os.environ, NO_AT_BRIDGE='0', GTK_MODULES='gail:atk-bridge', GSETTINGS_BACKEND='memory')
     output = ROOT / 'artifacts/headless'
     output.mkdir(parents=True, exist_ok=True)
     results = []
     source_before = source_fingerprint(ROOT)
     with tempfile.TemporaryDirectory(prefix='luda-test-session-') as runtime:
-        env['XDG_RUNTIME_DIR'] = runtime
+        for key, suffix in [('XDG_RUNTIME_DIR','runtime'),('XDG_CONFIG_HOME','config'),
+                            ('XDG_DATA_HOME','data'),('XDG_CACHE_HOME','cache')]:
+            path=Path(runtime)/suffix
+            path.mkdir(mode=0o700)
+            env[key]=str(path)
+        env['XDG_CONFIG_DIRS']=env['XDG_CONFIG_HOME']
+        # This runner requires a newly created private bus. Activated services
+        # must inherit the same private settings paths as direct child apps.
+        subprocess.run(['dbus-update-activation-environment','XDG_RUNTIME_DIR','XDG_CONFIG_HOME',
+                        'XDG_DATA_HOME','XDG_CACHE_HOME','XDG_CONFIG_DIRS','GSETTINGS_BACKEND'],
+                       env=env,check=True,timeout=3)
         with (output / 'window-manager.log').open('wb') as log:
             wm = subprocess.Popen(['xfwm4', '--compositor=off'], env=env, stdout=log, stderr=log, start_new_session=True)
             try:
