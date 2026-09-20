@@ -34,7 +34,7 @@ SAMPLES = [
 def main(executable, native_composition_only=False):
     global OUT
     if native_composition_only:
-        OUT = ROOT / ('artifacts/rich-editor-cancel' if native_composition_only == 'cancel' else 'artifacts/rich-editor-ime')
+        OUT = ROOT / ('artifacts/rich-editor-protocol' if native_composition_only == 'protocol' else 'artifacts/rich-editor-cancel' if native_composition_only == 'cancel' else 'artifacts/rich-editor-ime')
     if os.getuid() == 0 or os.environ.get('LUDA_ISOLATED_TEST_DISPLAY') != '1':
         raise RuntimeError('Requires ordinary UID and private matrix desktop.')
     OUT.mkdir(parents=True, exist_ok=True)
@@ -134,6 +134,8 @@ def main(executable, native_composition_only=False):
                 if native_composition_only:
                     if native_composition_only == 'cancel':
                         from live_rich_cancel import exercise
+                    elif native_composition_only == 'protocol':
+                        from live_rich_protocol import exercise
                     else:
                         from live_rich_ime import exercise
                     exercise(page, desktop, browser_pid, wid, load, focus, persisted, record, button)
