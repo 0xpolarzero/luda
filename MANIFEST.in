@@ -10,6 +10,7 @@ prune tests/fixtures/owned-rich-editor/node_modules
 prune tests/fixtures/owned-rich-hard-breaks/node_modules
 prune tests/fixtures/pm-selection/node_modules
 prune tests/fixtures/agent-rich-clipboard/node_modules
+prune tests/fixtures/agent-hard-breaks/node_modules
 
 include .mcp.json
 recursive-include .codex-plugin *.json

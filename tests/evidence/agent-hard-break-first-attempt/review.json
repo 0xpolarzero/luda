@@ -1,0 +1,380 @@
+{
+  "attempt": 1,
+  "strict_original_passed": false,
+  "independent_oracle_checks": {
+    "exact_logical_text": true,
+    "one_paragraph_two_hard_breaks": true,
+    "prefix_marks": true,
+    "suffix_marks": true,
+    "caret_after_insert": true
+  },
+  "seconds": 84.923,
+  "source_unchanged": true,
+  "models_reported": [],
+  "resolved_model": "not exposed by retained CLI JSON; not guessed",
+  "tool_errors": [],
+  "calls": [
+    {
+      "tool": "list_mcp_resources",
+      "arguments": {
+        "server": "luda"
+      }
+    },
+    {
+      "tool": "desktop_doctor",
+      "arguments": {}
+    },
+    {
+      "tool": "desktop_open_browser",
+      "arguments": {
+        "lifetime": "temporary_session",
+        "url": "http://127.0.0.1:41533/"
+      }
+    },
+    {
+      "tool": "desktop_inspect",
+      "arguments": {
+        "window_id": "f9576d784cbd4d7a8b5745cd0d4eccd1:600003:12867:4065153:93dc5919b47c297f4909022daab1bb5c",
+        "role": "entry"
+      }
+    },
+    {
+      "tool": "desktop_read_text",
+      "arguments": {
+        "element_id": "1af303fc6690465cbe38c515e1983cfd"
+      }
+    },
+    {
+      "tool": "desktop_focus_element",
+      "arguments": {
+        "element_id": "1af303fc6690465cbe38c515e1983cfd"
+      }
+    },
+    {
+      "tool": "desktop_select",
+      "arguments": {
+        "element_id": "1af303fc6690465cbe38c515e1983cfd",
+        "start_offset": 8,
+        "end_offset": 27
+      }
+    },
+    {
+      "tool": "desktop_type",
+      "arguments": {
+        "element_id": "1af303fc6690465cbe38c515e1983cfd",
+        "text": "Arrive 08:45\nCafé terrace\nBring 日本語 notes",
+        "mode": "insert",
+        "transport": "clipboard",
+        "line_breaks": "hard_break"
+      }
+    },
+    {
+      "tool": "desktop_select",
+      "arguments": {
+        "element_id": "1af303fc6690465cbe38c515e1983cfd",
+        "start_offset": 8,
+        "end_offset": 49
+      }
+    },
+    {
+      "tool": "desktop_press_keys",
+      "arguments": {
+        "window_id": "f9576d784cbd4d7a8b5745cd0d4eccd1:600003:12867:4065153:93dc5919b47c297f4909022daab1bb5c",
+        "chord": "ctrl+b"
+      }
+    },
+    {
+      "tool": "desktop_read_text",
+      "arguments": {
+        "element_id": "1af303fc6690465cbe38c515e1983cfd"
+      }
+    },
+    {
+      "tool": "desktop_inspect",
+      "arguments": {
+        "window_id": "f9576d784cbd4d7a8b5745cd0d4eccd1:600003:12867:4065153:93dc5919b47c297f4909022daab1bb5c",
+        "name": "Save meeting note"
+      }
+    },
+    {
+      "tool": "desktop_inspect",
+      "arguments": {
+        "window_id": "f9576d784cbd4d7a8b5745cd0d4eccd1:600003:12867:4065153:93dc5919b47c297f4909022daab1bb5c",
+        "role": "push button"
+      }
+    },
+    {
+      "tool": "desktop_invoke",
+      "arguments": {
+        "element_id": "9c5ce92e16a74f51acb8f54be936b5ed",
+        "action": "press"
+      }
+    },
+    {
+      "tool": "desktop_inspect",
+      "arguments": {
+        "window_id": "f9576d784cbd4d7a8b5745cd0d4eccd1:600003:12867:4065153:93dc5919b47c297f4909022daab1bb5c",
+        "name": "Saved"
+      }
+    },
+    {
+      "tool": "desktop_observe",
+      "arguments": {}
+    }
+  ],
+  "non_desktop_discovery_calls": [
+    "list_mcp_resources"
+  ],
+  "screenshot_sha256": "a5101592cf44113fce2c6d8052aaef60d2e29d8f2ecad8e2e1779f76a6aabf81",
+  "visual_review": "Saved status and three visible lines; bold prefix and italic suffix visible. Pixels alone do not establish hard_break nodes or exact Unicode; independent model does. New text remains bold; selected replacement visible.",
+  "final_messages": [
+    "I’ll read the Luda skill, then use a temporary browser session to edit and verify the meeting note.",
+    "The three lines are inserted with two soft breaks in one paragraph. The editor inherited bold for the new text; I’ll remove that from the replacement text while preserving the bold prefix and italic suffix, then save.",
+    "Saved and verified: the requested text uses two soft breaks within one paragraph, with the bold prefix and italic suffix preserved. The new text inherited bold formatting.\n\nClipboard side effect: it now contains `Bring 日本語 notes`; the previous clipboard contents weren’t restored."
+  ],
+  "oracle": {
+    "selection": {
+      "type": "text",
+      "anchor": 10,
+      "head": 51
+    },
+    "modelCaretCodePoints": 49,
+    "model": {
+      "type": "doc",
+      "content": [
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "marks": [
+                {
+                  "type": "strong"
+                }
+              ],
+              "text": "Plan 🧭: Arrive 08:45"
+            },
+            {
+              "type": "hard_break",
+              "marks": [
+                {
+                  "type": "strong"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "marks": [
+                {
+                  "type": "strong"
+                }
+              ],
+              "text": "Café terrace"
+            },
+            {
+              "type": "hard_break",
+              "marks": [
+                {
+                  "type": "strong"
+                }
+              ]
+            },
+            {
+              "type": "text",
+              "marks": [
+                {
+                  "type": "strong"
+                }
+              ],
+              "text": "Bring 日本語 notes"
+            },
+            {
+              "type": "text",
+              "marks": [
+                {
+                  "type": "em"
+                }
+              ],
+              "text": " — approved"
+            }
+          ]
+        }
+      ]
+    },
+    "html": "<p><strong>Plan 🧭: Arrive 08:45<br>Café terrace<br>Bring 日本語 notes</strong><em> — approved</em></p>",
+    "paragraphs": [
+      "Plan 🧭: Arrive 08:45Café terraceBring 日本語 notes — approved"
+    ],
+    "strong": [
+      "Plan 🧭: Arrive 08:45Café terraceBring 日本語 notes"
+    ],
+    "em": [
+      " — approved"
+    ],
+    "events": [
+      {
+        "type": "paste",
+        "inputType": null,
+        "trusted": true
+      },
+      {
+        "type": "paste",
+        "inputType": null,
+        "trusted": true
+      },
+      {
+        "type": "paste",
+        "inputType": null,
+        "trusted": true
+      }
+    ]
+  },
+  "metrics": {
+    "completed_calls": 16,
+    "per_tool_calls": {
+      "list_mcp_resources": 1,
+      "desktop_doctor": 1,
+      "desktop_open_browser": 1,
+      "desktop_inspect": 4,
+      "desktop_read_text": 2,
+      "desktop_focus_element": 1,
+      "desktop_select": 2,
+      "desktop_type": 1,
+      "desktop_press_keys": 1,
+      "desktop_invoke": 1,
+      "desktop_observe": 1
+    },
+    "reported_backend_elapsed_ms_sum": 4345,
+    "calls_with_backend_elapsed_ms": 15,
+    "calls_without_backend_elapsed_ms": [
+      {
+        "id": "item_1",
+        "tool": "list_mcp_resources"
+      }
+    ],
+    "timing_scope": "Sum of public elapsed_ms only; excludes model reasoning, MCP transport overhead and calls without timing. Full tool wall time unavailable without event timestamps.",
+    "response_content_volumes": {
+      "list_mcp_resources": {
+        "text_utf8_bytes": 32,
+        "images": 0,
+        "image_base64_characters": 0,
+        "decoded_image_bytes": 0
+      },
+      "desktop_doctor": {
+        "text_utf8_bytes": 4682,
+        "images": 0,
+        "image_base64_characters": 0,
+        "decoded_image_bytes": 0
+      },
+      "desktop_open_browser": {
+        "text_utf8_bytes": 550,
+        "images": 0,
+        "image_base64_characters": 0,
+        "decoded_image_bytes": 0
+      },
+      "desktop_inspect": {
+        "text_utf8_bytes": 33751,
+        "images": 0,
+        "image_base64_characters": 0,
+        "decoded_image_bytes": 0
+      },
+      "desktop_read_text": {
+        "text_utf8_bytes": 1966,
+        "images": 0,
+        "image_base64_characters": 0,
+        "decoded_image_bytes": 0
+      },
+      "desktop_focus_element": {
+        "text_utf8_bytes": 113,
+        "images": 0,
+        "image_base64_characters": 0,
+        "decoded_image_bytes": 0
+      },
+      "desktop_select": {
+        "text_utf8_bytes": 336,
+        "images": 0,
+        "image_base64_characters": 0,
+        "decoded_image_bytes": 0
+      },
+      "desktop_type": {
+        "text_utf8_bytes": 1107,
+        "images": 0,
+        "image_base64_characters": 0,
+        "decoded_image_bytes": 0
+      },
+      "desktop_press_keys": {
+        "text_utf8_bytes": 368,
+        "images": 0,
+        "image_base64_characters": 0,
+        "decoded_image_bytes": 0
+      },
+      "desktop_invoke": {
+        "text_utf8_bytes": 181,
+        "images": 0,
+        "image_base64_characters": 0,
+        "decoded_image_bytes": 0
+      },
+      "desktop_observe": {
+        "text_utf8_bytes": 1516,
+        "images": 1,
+        "image_base64_characters": 86352,
+        "decoded_image_bytes": 64762
+      }
+    },
+    "inspections": [
+      {
+        "id": "item_5",
+        "arguments": {
+          "window_id": "f9576d784cbd4d7a8b5745cd0d4eccd1:600003:12867:4065153:93dc5919b47c297f4909022daab1bb5c",
+          "role": "entry"
+        },
+        "ok": true,
+        "nodes": 2,
+        "showing_nodes": 2,
+        "unnamed_nodes": 0,
+        "text_utf8_bytes": 2458,
+        "truncated": true
+      },
+      {
+        "id": "item_14",
+        "arguments": {
+          "window_id": "f9576d784cbd4d7a8b5745cd0d4eccd1:600003:12867:4065153:93dc5919b47c297f4909022daab1bb5c",
+          "name": "Save meeting note"
+        },
+        "ok": true,
+        "nodes": 1,
+        "showing_nodes": 1,
+        "unnamed_nodes": 0,
+        "text_utf8_bytes": 1283,
+        "truncated": true
+      },
+      {
+        "id": "item_15",
+        "arguments": {
+          "window_id": "f9576d784cbd4d7a8b5745cd0d4eccd1:600003:12867:4065153:93dc5919b47c297f4909022daab1bb5c",
+          "role": "push button"
+        },
+        "ok": true,
+        "nodes": 64,
+        "showing_nodes": 14,
+        "unnamed_nodes": 28,
+        "text_utf8_bytes": 26887,
+        "truncated": true
+      },
+      {
+        "id": "item_17",
+        "arguments": {
+          "window_id": "f9576d784cbd4d7a8b5745cd0d4eccd1:600003:12867:4065153:93dc5919b47c297f4909022daab1bb5c",
+          "name": "Saved"
+        },
+        "ok": true,
+        "nodes": 5,
+        "showing_nodes": 4,
+        "unnamed_nodes": 0,
+        "text_utf8_bytes": 3123,
+        "truncated": true
+      }
+    ],
+    "volume_scope": "UTF-8 text and encoded/decoded image content bytes; not model-token counts or estimates of visual-token processing."
+  }
+}

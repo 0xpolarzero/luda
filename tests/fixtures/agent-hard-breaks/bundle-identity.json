@@ -1,0 +1,9 @@
+{
+  "algorithm": "sha256",
+  "files": {
+    "app.js": "8801cea6c2d177ccccc17413d23423d86d3f47ba97969522cacd2142e812fb7d",
+    "app.bundle.js": "9790eb2b5a1b142215a283c572206e84d49f79c738d0e15709e1adf63c1d2021",
+    "package-lock.json": "ecb8aba7917dbb3dc5ea44666b02d6a0bfaf84ddc8318fdc4aaf04b4d772f90b"
+  },
+  "external_bridge_sha256": "0cfa3ff8221193cea66b8a31dd7f2e16b37d9077f91f60fa91b7e5f5894edb34"
+}

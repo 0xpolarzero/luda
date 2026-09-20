@@ -8,7 +8,15 @@ from agent_trace_metrics import metrics
 from qualify import source_fingerprint
 ROOT=Path(__file__).resolve().parents[1]
 ASSETS=ROOT/'tests/fixtures/agent-rich-clipboard'
+MAX_TIMEOUT=180
+CHILD_SECONDS=220
+TASK_DIRECTORY='agent-rich'
+REQUIRED_OBSERVATIONS=('exact_range_observed','explicit_clipboard_observed')
 PREFIX='Pré 👩🏽‍💻: ';MIDDLE='ancien é';SUFFIX=' / FIN';INSERT='nouveau 日本語\n\tÉté 👩🏽‍💻\n'
+
+
+def task_prompt(url):
+    return 'Use a temporary browser session to open '+url+' and edit Travel note. Replace only the unique middle text '+json.dumps(MIDDLE,ensure_ascii=False)+' with exactly this JSON string: '+json.dumps(INSERT,ensure_ascii=False)+'. Preserve the existing bold prefix and italic suffix, including all their characters and formatting. Save the travel note through its visible Save button and verify the saved result. In your final response mention any clipboard side effect. Use only public Luda desktop MCP tools for this task. Read the installed Luda skill first; you may read .agents/skills/luda/SKILL.md. Do not read application source, hidden files or oracle data, run other programs, modify files directly, or browse other sites.'
 
 
 def grade(actual):
@@ -50,7 +58,7 @@ def child(base):
         service=http.server.ThreadingHTTPServer(('127.0.0.1',0),Handler);threading.Thread(target=service.serve_forever,daemon=True).start()
         keys=('DISPLAY','DBUS_SESSION_BUS_ADDRESS','XAUTHORITY','XDG_RUNTIME_DIR','XDG_CONFIG_HOME','XDG_DATA_HOME','XDG_CACHE_HOME','XDG_CONFIG_DIRS','LANG','LC_ALL','PATH','LUDA_CHROMIUM_EXECUTABLE')
         (base/'ready.json').write_text(json.dumps({'uid':os.getuid(),'url':f'http://127.0.0.1:{service.server_port}/','environment':{k:os.environ[k] for k in keys if k in os.environ}}))
-        end=time.monotonic()+220
+        end=time.monotonic()+CHILD_SECONDS
         while not (base/'stop').exists() and time.monotonic()<end:time.sleep(.05)
     finally:
         if service:service.shutdown();service.server_close()
@@ -60,23 +68,23 @@ def child(base):
 def launch(base):
     with tempfile.TemporaryDirectory(prefix='luda-agent-rich-desktop-') as tmp:
         env=dict(os.environ)
-        for key in ('XDG_CONFIG_HOME','XDG_DATA_HOME','XDG_CACHE_HOME','XDG_RUNTIME_DIR'):
+        for key in ('HOME','XDG_CONFIG_HOME','XDG_DATA_HOME','XDG_CACHE_HOME','XDG_RUNTIME_DIR'):
             path=Path(tmp)/key;path.mkdir(mode=0o700);env[key]=str(path)
         env.update(XDG_CONFIG_DIRS=env['XDG_CONFIG_HOME'],LANG='C.UTF-8',LC_ALL='C.UTF-8',NO_AT_BRIDGE='0',GTK_MODULES='gail:atk-bridge',GSETTINGS_BACKEND='memory')
         process=subprocess.Popen(['xvfb-run','-a','-s','-screen 0 1440x1000x24 -nolisten tcp','dbus-run-session','--',sys.executable,__file__,'--child',str(base)],env=env,start_new_session=True)
-        try:return process.wait(timeout=235)
+        try:return process.wait(timeout=CHILD_SECONDS+15)
         finally:stop(process)
 
 
 def main():
-    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--child',type=Path);parser.add_argument('--launch',type=Path);parser.add_argument('--executable');parser.add_argument('--timeout',type=int,default=180);args=parser.parse_args()
+    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--child',type=Path);parser.add_argument('--launch',type=Path);parser.add_argument('--executable');parser.add_argument('--timeout',type=int,default=MAX_TIMEOUT);args=parser.parse_args()
     if args.child:child(args.child);return 0
     if args.launch:return launch(args.launch)
     if os.getuid()!=0:parser.error('Existing root CLI authentication is used; desktop/MCP drop to the ordinary account.')
-    if not 1<=args.timeout<=180:parser.error('Bound must be1..180 seconds')
+    if not 1<=args.timeout<=MAX_TIMEOUT:parser.error(f'Bound must be1..{MAX_TIMEOUT} seconds')
     codex=shutil.which('codex');account=pwd.getpwnam('silo-desktop')
     if not codex or not args.executable:parser.error('Existing Codex CLI and explicitly provisioned Chromium required')
-    out=ROOT/'artifacts/agent-rich'/('run-'+str(time.time_ns()));out.mkdir(parents=True)
+    out=ROOT/'artifacts'/TASK_DIRECTORY/('run-'+str(time.time_ns()));out.mkdir(parents=True)
     result={'attempt':1,'passed':False,'source_before':source_fingerprint(ROOT),'codex':version([codex,'--version']),'browser':version([args.executable,'--version']),'resolved_model':'unknown unless exposed by CLI JSON','agent_uid':os.getuid(),'desktop_uid':account.pw_uid,'budget_seconds':args.timeout}
     launcher=agent=None
     with tempfile.TemporaryDirectory(prefix='luda-agent-rich-') as directory:
@@ -90,7 +98,7 @@ def main():
                     if launcher.poll() is not None or time.monotonic()>end:raise RuntimeError('Private desktop startup failed')
                     time.sleep(.05)
                 ready=json.loads((desktop/'ready.json').read_text())
-                prompt='Use a temporary browser session to open '+ready['url']+' and edit Travel note. Replace only the unique middle text '+json.dumps(MIDDLE,ensure_ascii=False)+' with exactly this JSON string: '+json.dumps(INSERT,ensure_ascii=False)+'. Preserve the existing bold prefix and italic suffix, including all their characters and formatting. Save the travel note through its visible Save button and verify the saved result. In your final response mention any clipboard side effect. Use only public Luda desktop MCP tools for this task. Read the installed Luda skill first; you may read .agents/skills/luda/SKILL.md. Do not read application source, hidden files or oracle data, run other programs, modify files directly, or browse other sites.'
+                prompt=task_prompt(ready['url'])
                 result['prompt']=prompt
                 server_args=['-u','silo-desktop','--','/usr/bin/env',*[k+'='+v for k,v in ready['environment'].items()],str(ROOT/'.venv/bin/luda')]
                 cmd=[codex,'exec','--ignore-user-config','--ephemeral','--skip-git-repo-check','--json','--sandbox','read-only','-C',str(workspace),'-c','approval_policy="never"','-c','mcp_servers.luda.command="/usr/sbin/runuser"','-c','mcp_servers.luda.args='+json.dumps(server_args),'-c','mcp_servers.luda.default_tools_approval_mode="approve"','-c','mcp_servers.luda.required=true','-c','mcp_servers.luda.startup_timeout_sec=20','-c','mcp_servers.luda.tool_timeout_sec=20',prompt]
@@ -113,7 +121,7 @@ def main():
                 result['explicit_clipboard_observed']=any(c.get('tool')=='desktop_type' and c.get('arguments',{}).get('transport')=='clipboard' for c in calls)
                 result['final_messages']=[e['item']['text'] for e in events if e.get('type')=='item.completed' and e.get('item',{}).get('type')=='agent_message']
                 result['source_after']=source_fingerprint(ROOT);result['source_unchanged']=result['source_before']==result['source_after']
-                result['passed']=result.get('returncode')==0 and all(result['oracle_checks'].values()) and result['source_unchanged'] and all(result[k] for k in ('skill_reads_only','only_public_desktop_tools','no_direct_file_changes','no_other_tools','no_injected_actions','exact_range_observed','explicit_clipboard_observed'))
+                result['passed']=result.get('returncode')==0 and all(result['oracle_checks'].values()) and result['source_unchanged'] and all(result[k] for k in ('skill_reads_only','only_public_desktop_tools','no_direct_file_changes','no_other_tools','no_injected_actions',*REQUIRED_OBSERVATIONS))
         except Exception as exc:result['harness_error']={'type':type(exc).__name__,'message':str(exc)}
         finally:
             (desktop/'stop').touch()
