@@ -383,6 +383,18 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         node=target['node']
         if node['start']!=w['start']:
             raise DesktopError('STALE_TARGET','Process identity changed.')
+        if op == 'invoke':
+            actions = node.get('actions', [])
+            action = kwargs.get('action')
+            if action is None:
+                if not actions:
+                    raise DesktopError('UNSUPPORTED_ACTION','This element exposes no action; inspect another control or use screenshot input.')
+                if len(actions) != 1:
+                    raise DesktopError('ACTION_REQUIRED','This element exposes several actions; choose an exact action from desktop_inspect.',details={'actions':actions})
+                action = actions[0]
+            if not isinstance(action,str) or action not in actions:
+                raise DesktopError('UNSUPPORTED_ACTION','Choose an exact action returned by desktop_inspect.')
+            kwargs['action'] = action
         if op in ('set','insert','secret'):
             validate_text(kwargs['text'])
         return self.ax({'op':op,'pid':w['pid'],'start':w['start'],'target':node,**kwargs},op!='read')

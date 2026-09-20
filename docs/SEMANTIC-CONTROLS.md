@@ -162,3 +162,5 @@ passing one fixture does not qualify every control from that toolkit.
   committed-text verification does not verify a future composition commit.
 - [Accessibility lifecycle](LIFECYCLE-QUALIFICATION.md): some existing providers
   fail to re-register after bus loss; restarting user apps is not automatic.
+
+`desktop_invoke(element_id)` selects the sole action from that observed handle. If there are multiple actions, `ACTION_REQUIRED` asks for an exact observed name; zero actions or an unobserved name are refused before the worker. The worker still revalidates the selected name against the live provider. This avoids guessing whether a toolkit calls its button action `click`, `press`, or `activate`; it does not choose between distinct operations or verify application completion.

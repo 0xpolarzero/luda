@@ -41,6 +41,18 @@ async def main():
     ws,_=await call('desktop_windows');w=next(w for w in ws['windows'] if w['pid']==p.pid);wid=w['window_id']
     await call('desktop_activate',window_id=wid)
     tree,_=await call('desktop_inspect',window_id=wid)
+    button=next(n for n in tree['nodes'] if n['name']=='Record action')
+    invocation=next(t for t in tools if t.name=='desktop_invoke')
+    record('mcp-invoke-action-optional','action' not in invocation.inputSchema.get('required',[]))
+    for count,extra in enumerate(({}, {'action':None}, {'action':button['actions'][0]}),1):
+     invoked,_=await call('desktop_invoke',element_id=button['element_id'],**extra)
+     end=time.monotonic()+2
+     while json.loads((OUT/'state.json').read_text())['clicks']!=count:
+      assert time.monotonic()<end,'Independent invoke counter did not advance'
+      await asyncio.sleep(.02)
+     record('mcp-invoke-exactly-once-'+str(count),invoked['effect']=='dispatched')
+    rejected=await s.call_tool('desktop_invoke',{'element_id':button['element_id'],'action':'unobserved-action'})
+    record('mcp-invoke-unobserved-action-refused',rejected.isError and json.loads(rejected.content[0].text)['code']=='UNSUPPORTED_ACTION' and json.loads((OUT/'state.json').read_text())['clicks']==3)
     n=next(n for n in tree['nodes'] if n['name']=='Contract text');eid=n['element_id']
     payload='MCP literal text\n日本語 👩🏽\u200d💻\n\tindent\n\n'
     value,_=await call('desktop_type',element_id=eid,text=payload,mode='replace')

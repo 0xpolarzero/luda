@@ -175,10 +175,10 @@ Request accessibility focus in the active window. Inspect to confirm focused sta
 ## `desktop_invoke`
 
 ```python
-desktop_invoke(element_id: str, action: str)
+desktop_invoke(element_id: str, action: str | None=None)
 ```
 
-Invoke an exact action name returned by inspect. Completion means dispatch, not verified application outcome.
+Invoke the sole action returned by inspect, or supply its exact action name. Multiple actions require an explicit choice; no click/press naming guess is needed for a single-action button. Completion means dispatch, not verified application outcome.
 
 ## `desktop_select`
 

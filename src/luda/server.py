@@ -284,8 +284,8 @@ async def desktop_focus_element(element_id: str) -> CallToolResult:
 
 
 @mcp.tool()
-async def desktop_invoke(element_id: str, action: str) -> CallToolResult:
-    """Invoke an exact action name returned by inspect. Completion means dispatch, not verified application outcome."""
+async def desktop_invoke(element_id: str, action: str | None = None) -> CallToolResult:
+    """Invoke the sole action returned by inspect, or supply its exact action name. Multiple actions require an explicit choice; no click/press naming guess is needed for a single-action button. Completion means dispatch, not verified application outcome."""
     return await execute_async('element',element_id,'invoke',action=action)
 
 
