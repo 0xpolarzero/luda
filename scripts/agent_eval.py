@@ -36,7 +36,8 @@ def stop(process):
 def allowed_command(command,skill):
     try:
         parts=shlex.split(command)
-        if len(parts)>=3 and parts[-2] in ('-lc','-c'):parts=shlex.split(parts[-1])
+        if len(parts)==3 and parts[0] in ('/bin/bash','/bin/sh','/usr/bin/bash','/usr/bin/sh','bash','sh') and parts[1] in ('-lc','-c'):
+            parts=shlex.split(parts[2])
         return parts in (['cat',str(skill)],['cat',str(skill.relative_to(skill.parents[3]))])
     except (ValueError,TypeError):return False
 

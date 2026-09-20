@@ -12,6 +12,9 @@ class AgentTrace(unittest.TestCase):
     def test_skill_reads_allowed(self):
         self.assertTrue(m.allowed_command("/bin/bash -lc 'cat /tmp/task/workspace/.agents/skills/luda/SKILL.md'",self.skill))
         self.assertTrue(m.allowed_command('cat .agents/skills/luda/SKILL.md',self.skill))
+    def test_arbitrary_program_cannot_masquerade_as_shell_wrapper(self):
+        self.assertFalse(m.allowed_command("/tmp/evil -c 'cat .agents/skills/luda/SKILL.md'",self.skill))
+        self.assertFalse(m.allowed_command("bash unexpected -c 'cat .agents/skills/luda/SKILL.md'",self.skill))
     def test_hidden_reads_and_shell_chaining_refused(self):
         for command in ('cat /tmp/oracle.json','cat .agents/skills/luda/SKILL.md; cat /tmp/oracle.json','python -c "print(1)"'):
             self.assertFalse(m.allowed_command(command,self.skill))
@@ -37,4 +40,3 @@ class AgentTrace(unittest.TestCase):
         self.assertFalse(result['no_injected_actions']);self.assertFalse(result['no_other_tools'])
 
 if __name__=='__main__':unittest.main()
-
