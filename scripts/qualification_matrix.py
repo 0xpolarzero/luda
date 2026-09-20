@@ -27,6 +27,7 @@ def suite(script, ids, *, wm=True, browser=None, electron=None, firefox=None, mo
 
 
 SUITES = {
+    'single-line': suite('live_single_line.py', 'EDIT-05', browser='--executable', modules=('Gtk','Atspi','PyQt5'), artifacts=('single-line',)),
     'tray': suite('live_tray.py', 'MENU-07', wm=False, artifacts=('tray',), gaps=('Observed private XFCE tray screenshot workflow; semantic icon/menu ownership unavailable',)),
     'undo': suite('live_undo.py', 'EDIT-06', artifacts=('undo','files')),
     'rtl': suite('live_rtl.py', 'DATA-10', wm=False, artifacts=('rtl',)),

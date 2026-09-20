@@ -5,6 +5,7 @@ from pathlib import Path
 import sys
 kind=sys.argv[1];out=Path(sys.argv[2]);out.mkdir(parents=True,exist_ok=True)
 def persist(state):
+ state['normal_widget_type']=type(normal).__name__
  (out/'state.tmp').write_text(json.dumps(state));(out/'state.tmp').replace(out/'state.json')
 if kind=='qt':
  from PyQt5 import QtWidgets,QtCore
