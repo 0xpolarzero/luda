@@ -112,6 +112,7 @@ These existing live scripts are not registered in the three inventoried runners.
 - [live_font_rendering.py](../tests/live_font_rendering.py)
 - [live_gtk4_gui.py](../tests/live_gtk4_gui.py)
 - [live_host_plugin_ssh.py](../tests/live_host_plugin_ssh.py)
+- [live_managed_portal_cleanup.py](../tests/live_managed_portal_cleanup.py)
 - [live_mcp_soak.py](../tests/live_mcp_soak.py)
 - [live_private_polkit.py](../tests/live_private_polkit.py)
 - [live_private_portal_cleanup.py](../tests/live_private_portal_cleanup.py)
