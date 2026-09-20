@@ -8,8 +8,6 @@ jobs:
   owned-chromium-x11:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
-    env:
-      PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/luda-playwright
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -18,6 +16,8 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           version: '0.12.17'
+      - name: Select private CI browser cache
+        run: printf 'PLAYWRIGHT_BROWSERS_PATH=%s/luda-playwright\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
       - name: Install private desktop dependencies
         run: |
           sudo apt-get update
