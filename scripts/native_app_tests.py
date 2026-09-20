@@ -19,6 +19,7 @@ SUITES = {
     'thunar-files': 'live_thunar.py',
     'window-states': 'live_interaction.py',
     'mcp-applications': 'live_mcp_applications.py',
+    'terminals': 'live_terminals.py',
 }
 
 
@@ -74,7 +75,7 @@ def main():
                                 'uid': os.getuid(), 'backend': 'one private Xvfb/D-Bus/Xfwm4 session per suite'},
                 'suites': results}
     packages = subprocess.run(['dpkg-query', '-W', 'mousepad', 'thunar', 'xfwm4', 'xvfb',
-                               'at-spi2-core', 'python3-gi', 'dbus-x11'],
+                               'at-spi2-core', 'python3-gi', 'dbus-x11', 'xterm', 'xfce4-terminal'],
                               capture_output=True, text=True, timeout=10)
     evidence['environment']['packages'] = packages.stdout.splitlines()
     try:
