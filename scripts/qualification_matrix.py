@@ -61,8 +61,8 @@ SUITES = {
     'drag': suite('live_drag.py', 'PTR-08'),
     'popup': suite('live_popup.py', 'MENU-04'),
     'resource-stress': suite('live_resource_stress.py', 'AX-06 PERF-06 PERF-09'),
-    'application-launch': suite('live_application_launch.py', 'SEC-01 SEC-03 ERR-02 PERF-05'),
-    'application-services': suite('live_application_services.py', 'ERR-02 ERR-04'),
+    'application-launch': suite('live_application_launch.py', 'SEC-01 SEC-03 ERR-02 PERF-05 WM-09'),
+    'application-services': suite('live_application_services.py', 'ERR-02 ERR-04 WM-09 WM-10'),
 }
 
 
