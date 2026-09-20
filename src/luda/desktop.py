@@ -315,21 +315,29 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
                 'popups':[{**p,'image_bounds':image_bounds(p['bounds'],native,(width,height))} for p in after_popups],
                 'image_base64':base64.b64encode(buf.getvalue()).decode()}
 
+    def retained_snapshot(self, snapshot_id, *, current_layout=True):
+        now = elapsed_time()
+        for key in list(self.snapshots):
+            if now-self.snapshots[key]['time'] >= 15:
+                self.snapshots.pop(key)
+        snapshot = self.snapshots.get(snapshot_id)
+        if not snapshot or elapsed_time()-snapshot['time'] >= 15 or 'png' not in snapshot:
+            raise DesktopError('STALE_OBSERVATION', 'Screenshot expired or was evicted; explicitly observe again.')
+        if not current_layout:
+            generation = snapshot['topology'].get('server_generation')
+            if not generation or self.display().topology().get('server_generation') != generation:
+                raise DesktopError('STALE_OBSERVATION', 'Template screenshot belongs to an unavailable server generation.')
+            return snapshot
+        windows = self.list_windows()
+        if (self.signature(windows) != snapshot['signature']
+                or self.display().topology() != snapshot['topology']
+                or self.popup_signature(self.observe_popups(windows)) != self.popup_signature(snapshot['popups'])):
+            raise DesktopError('STALE_OBSERVATION', 'Screenshot layout or server identity changed; explicitly observe again.')
+        return snapshot
+
     def ocr(self, snapshot_id, language='eng', limit=200):
         def valid():
-            now = elapsed_time()
-            for key in list(self.snapshots):
-                if now-self.snapshots[key]['time'] >= 15:
-                    self.snapshots.pop(key)
-            snapshot = self.snapshots.get(snapshot_id)
-            if not snapshot or elapsed_time()-snapshot['time'] >= 15 or 'png' not in snapshot:
-                raise DesktopError('STALE_OBSERVATION', 'Screenshot expired or was evicted; explicitly observe again.')
-            windows = self.list_windows()
-            if (self.signature(windows) != snapshot['signature']
-                    or self.display().topology() != snapshot['topology']
-                    or self.popup_signature(self.observe_popups(windows)) != self.popup_signature(snapshot['popups'])):
-                raise DesktopError('STALE_OBSERVATION', 'Screenshot layout or server identity changed; explicitly observe again.')
-            return snapshot
+            return self.retained_snapshot(snapshot_id)
         snapshot = valid()
         result = recognize(snapshot['png'], snapshot['image'], language, limit, self.environment)
         valid()
@@ -338,6 +346,21 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
                 'coordinate_space': 'returned screenshot image pixels',
                 'image_size': dict(zip(('width', 'height'), snapshot['image'])),
                 'confidence_semantics': 'Engine score 0–100; uncalibrated, not a probability or proof of exact text.',
+                **result}
+
+    def match_image(self, template_snapshot_id, template_bounds, snapshot_id, threshold=.95, limit=20):
+        from .matching import match
+        source = self.retained_snapshot(template_snapshot_id, current_layout=False)
+        target = self.retained_snapshot(snapshot_id)
+        result = match(source, target, template_bounds, threshold, limit)
+        self.retained_snapshot(template_snapshot_id, current_layout=False)
+        self.retained_snapshot(snapshot_id)
+        return {'template_snapshot_id':template_snapshot_id, 'snapshot_id':snapshot_id,
+                'template_bounds':template_bounds, 'effect':'none', 'engine':'opencv_TM_CCOEFF_NORMED',
+                'threshold':threshold, 'coordinate_space':'target screenshot returned image pixels',
+                'source':'Retained historical pixels only; no new capture, current-state verification or click authorization.',
+                'score_semantics':'Uncalibrated normalized correlation; not a probability, semantic identity or exact color match.',
+                'selection':'Score-ranked non-overlapping placements; overlapping candidates suppressed, at most limit+1 peak searches.',
                 **result}
 
     def recording(self, action, recording_id=None, max_seconds=30):

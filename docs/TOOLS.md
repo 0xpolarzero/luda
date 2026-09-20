@@ -20,6 +20,14 @@ desktop_recording(action: Literal['start', 'status', 'stop', 'delete'], recordin
 
 Explicit temporary screen recording: start, status, stop or delete by ticket. Start records only this X11 display, no audio, at 10fps and at most 1280×720 for 1–60 seconds. Start is not completed-file verification; stop/status return a path only after decoding verifies completion. Files are private, bounded and deleted on backend close/reconnect/server death; explicitly copy elsewhere before closure to save durably. Stop/delete remain usable while paused. Optional local ffmpeg/ffprobe required.
 
+## `desktop_match_image`
+
+```python
+desktop_match_image(template_snapshot_id: str, template_bounds: dict[str, int], snapshot_id: str, threshold: float=0.95, limit: int=20)
+```
+
+Find historical visual candidates from a selected screenshot crop in another retained screenshot. Both IDs must be retained and fresh, from the same server and image scale; only the target must still have its captured layout. Historical source crops may come from a window that moved. Bounds and results use returned-image pixels. Threshold is finite 0–1, limit 1–100; scores are uncalibrated correlation, never semantic identity or click permission. Returns non-overlapping candidates, preserving distinct duplicates; flat templates are refused. No new capture or input. Optional system OpenCV required.
+
 ## `desktop_ocr`
 
 ```python

@@ -32,6 +32,7 @@ SUITES = {
     'cpu-pressure': suite('live_cpu_pressure.py', 'PERF-10', wm=False, artifacts=('cpu-pressure',), gaps=('One CPU, nice15 desktop and two bounded nice0 load workers; no system-wide CPU/OOM qualification',)),
     'recording': suite('live_recording.py', 'MEDIA-01', wm=False, artifacts=('recording',), gaps=('Optional FFmpeg/ffprobe; private Xvfb rendered-frame and temporary retention oracle, no audio',)),
     'recording-faults': suite('live_recording_faults.py', 'MEDIA-01', wm=False, artifacts=('recording-faults',), gaps=('Private Xvfb: cooperative exclusion, actual file-size quota, topology, stopped guardian and owner death; not arbitrary machine failure',)),
+    'image-match': suite('live_matching.py', 'MEDIA-08', wm=False, artifacts=('matching',), gaps=('Optional system OpenCV; owned same-scale GTK patterns, no semantic/general-image recognition or input authorization',)),
     'ocr': suite('live_ocr.py', 'MEDIA-07', wm=False, artifacts=('ocr',), gaps=('Optional Tesseract with English model; high-contrast owned GTK words only, no general recognition accuracy claim',)),
     'mcp': suite('live_mcp.py', 'MCP-02 MCP-03 MCP-04 MCP-05 MCP-06 MCP-07 DIAG-10 SHIP-08', artifacts=('mcp',)),
     'tui': suite('live_tui.py', 'TERM-09', wm=False, artifacts=('tui',)),

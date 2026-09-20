@@ -1262,6 +1262,23 @@
         "test_recording.RecordingTests.test_malformed_supervisor_output_does_not_skip_cleanup"
       ],
       "limits": "Fixed optional local X11 recording contract; unit fault/dispatch/inode checks do not establish arbitrary crash or storage reliability. See RECORDING.md for actual private GUI probes and retention limits."
+    },
+    "MEDIA-08": {
+      "implementation": "implemented",
+      "tests": [
+        "test_matching.MatchingTests.test_bad_threshold_bounds_limits_rejected_before_worker",
+        "test_matching.MatchingTests.test_scale_mismatch_and_pixel_budget_before_worker",
+        "test_matching.MatchingTests.test_optional_absence_and_flat_template_are_precise",
+        "test_matching.MatchingTests.test_malformed_score_box_and_metadata_refused",
+        "test_matching.MatchingTests.test_worker_contract_is_bounded_and_no_paths_from_caller",
+        "test_matching.MatchingTests.test_stale_before_and_changed_during_matching_refused",
+        "test_matching.MatchingTests.test_public_schema_read_only_and_cancellation_before_work",
+        "test_matching.MatchingTests.test_actual_child_cancel_is_reaped_before_late_effect",
+        "test_matching.MatchingTests.test_engine_fault_sanitized_preserving_timeout_and_output_bounds",
+        "test_matching.MatchingTests.test_template_generation_expiry_and_cached_ownership",
+        "test_matching.MatchingTests.test_historical_source_layout_is_not_current_target_requirement"
+      ],
+      "limits": "Optional same-scale local correlation only; historical candidates do not authorize input or establish semantic identity. See IMAGE-MATCHING.md for exact duplicate geometry, moved source and stale target evidence."
     }
   }
 }

@@ -80,7 +80,7 @@ def execute(method, *args, _cancelled=None, **kwargs):
             if not acquired:
                 raise DesktopError('BUSY', 'Another operation is in progress; reconnect does not cancel it.')
         d = get_backend()
-        observation = method in ('reconnect','list_applications','doctor','list_windows','window_overview','observe','ocr','inspect','workspaces','wait_for','wait_condition') or (method=='element' and len(args)>1 and args[1]=='read')
+        observation = method in ('reconnect','list_applications','doctor','list_windows','window_overview','observe','ocr','match_image','inspect','workspaces','wait_for','wait_condition') or (method=='element' and len(args)>1 and args[1]=='read')
         guard = None if observation or method == 'recover_input' or cleanup_recording else d.control.require_active
         with operation_scope(timeout=12, cancelled=_cancelled, guard=guard) as operation:
             try:
@@ -179,6 +179,12 @@ async def desktop_control(action: Literal['status','pause','resume']='status') -
 async def desktop_recording(action: Literal['start', 'status', 'stop', 'delete'], recording_id: str | None = None, max_seconds: int = 30) -> CallToolResult:
     """Explicit temporary screen recording: start, status, stop or delete by ticket. Start records only this X11 display, no audio, at 10fps and at most 1280×720 for 1–60 seconds. Start is not completed-file verification; stop/status return a path only after decoding verifies completion. Files are private, bounded and deleted on backend close/reconnect/server death; explicitly copy elsewhere before closure to save durably. Stop/delete remain usable while paused. Optional local ffmpeg/ffprobe required."""
     return await execute_async('recording', action, recording_id, max_seconds)
+
+
+@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
+async def desktop_match_image(template_snapshot_id: str, template_bounds: dict[str, int], snapshot_id: str, threshold: float = .95, limit: int = 20) -> CallToolResult:
+    """Find historical visual candidates from a selected screenshot crop in another retained screenshot. Both IDs must be retained and fresh, from the same server and image scale; only the target must still have its captured layout. Historical source crops may come from a window that moved. Bounds and results use returned-image pixels. Threshold is finite 0–1, limit 1–100; scores are uncalibrated correlation, never semantic identity or click permission. Returns non-overlapping candidates, preserving distinct duplicates; flat templates are refused. No new capture or input. Optional system OpenCV required."""
+    return await execute_async('match_image', template_snapshot_id, template_bounds, snapshot_id, threshold, limit)
 
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
