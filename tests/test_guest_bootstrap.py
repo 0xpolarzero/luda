@@ -92,6 +92,13 @@ class GuestBootstrap(unittest.TestCase):
         self.assertNotIn('not-forwarded', json.dumps(result))
         self.assertEqual(self.output.stat().st_mode & 0o777, 0o700)
 
+    def test_browser_selection_is_verified_then_forwarded_with_desktop_account(self):
+        browser={'version':'1.2.3.4'};path=self.source/'browser.json'
+        with patch.object(b,'read_browser_config',return_value=browser),patch.object(b,'verify_browser',return_value=browser) as verify,patch.object(b,'desktop_status',return_value=self.status()),patch.object(b,'run_process',return_value=1) as run:
+            self.call(browser_config=path)
+        verify.assert_called_once_with(browser,'desktop')
+        self.assertEqual(run.call_args.args[0],['bash',self.source/'scripts/install.sh',self.prefix,'--browser-config',path,'--user','desktop','--skip-system'])
+
     def test_install_failure_prevents_doctor_and_config(self):
         with patch.object(b, 'desktop_status', return_value=self.status()), patch.object(b, 'run_process', return_value=1), patch.object(b, 'doctor') as doctor, patch.object(b, 'config') as config:
             result = self.call()

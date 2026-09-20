@@ -93,6 +93,15 @@ def main():
         if args.cwd is not None:
             raise SystemExit('The selected working directory is inaccessible to the desktop account.') from None
         os.chdir('/')
+    from .managed_browser import selected
+    try:
+        browser = selected(sys.prefix)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from None
+    if browser:
+        env['LUDA_CHROMIUM_EXECUTABLE'] = browser['executable']
+        env['LUDA_MANAGED_BROWSER_VERSION'] = browser['version']
+        env['LUDA_MANAGED_BROWSER_SHA256'] = browser['sha256']
     os.execvpe(command[0], command, env)
 
 

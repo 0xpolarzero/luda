@@ -18,6 +18,9 @@ import uuid
 
 ROOT = Path(__file__).resolve().parents[1]
 MARKER = '.luda-install.json'
+sys.path.insert(0, str(ROOT / 'src'))
+from luda.managed_browser import read_config as read_browser_config, verify as verify_browser, selected as selected_browser
+
 
 
 class InstallError(Exception):
@@ -98,7 +101,7 @@ def invoke(argv, timeout=300):
         raise
 
 
-def release_identity(source):
+def release_identity(source, browser=None):
     try:
         metadata = tomllib.loads((source / 'pyproject.toml').read_text(encoding='utf-8'))
     except (tomllib.TOMLDecodeError, UnicodeDecodeError):
@@ -112,10 +115,12 @@ def release_identity(source):
     if not re.fullmatch(r'[A-Za-z0-9_.+-]+', version):
         raise InstallError('Package version is not a safe release name.')
     files = [source / p for p in ('pyproject.toml', 'MANIFEST.in', 'requirements.lock', 'build-requirements.lock')]
-    files += [source / name for name in ('.mcp.json', 'README.md', 'build-requirements.in') if (source / name).is_file()]
+    files += [source / name for name in ('requirements-browser.lock', '.mcp.json', 'README.md', 'build-requirements.in') if (source / name).is_file()]
     files += [p for name in ('src', 'skills', 'scripts', 'docs', 'tests', '.codex-plugin', 'integrations') for p in (source / name).rglob('*')
               if p.is_file() and 'node_modules' not in p.parts and '__pycache__' not in p.parts and not any(part.endswith('.egg-info') for part in p.parts)]
     digest = hashlib.sha256()
+    if browser is not None:
+        digest.update(b'browser\0' + json.dumps(browser, sort_keys=True, separators=(',', ':')).encode() + b'\0')
     for path in sorted(files):
         digest.update(str(path.relative_to(source)).encode() + b'\0' + path.read_bytes() + b'\0')
     return version + '-' + digest.hexdigest()[:16]
@@ -133,8 +138,9 @@ def select(prefix, release):
         temporary.unlink(missing_ok=True)
 
 
-def install(prefix, source, runner=invoke):
-    identity = release_identity(source)
+def install(prefix, source, runner=invoke, browser_config=None, user="silo-desktop"):
+    browser = verify_browser(read_browser_config(browser_config), user) if browser_config is not None else None
+    identity = release_identity(source, browser)
     with locked(prefix):
         metadata = state(prefix)
         releases = prefix / 'releases'
@@ -151,7 +157,7 @@ def install(prefix, source, runner=invoke):
         release = releases / identity
         if release.exists() or release.is_symlink():
             if identity in metadata['releases'] and not release.is_symlink() and (release / 'release.json').is_file():
-                verify_release(release, identity)
+                verify_release(release, identity, user)
                 select(prefix, identity)
                 return {'status': 'already_installed', 'release': identity, 'prefix': str(prefix)}
             pending = release / '.luda-release-owner.json'
@@ -168,7 +174,7 @@ def install(prefix, source, runner=invoke):
             # Build at the final path: moving a venv breaks absolute shebangs.
             runner([sys.executable, '-m', 'venv', release / '.venv'])
             python = release / '.venv/bin/python'
-            runner([python, '-m', 'pip', 'install', '--require-hashes', '-r', source / 'requirements.lock'])
+            runner([python, '-m', 'pip', 'install', '--require-hashes', '-r', source / ('requirements-browser.lock' if browser else 'requirements.lock')])
             runner([python, '-m', 'pip', 'install', '--require-hashes', '-r', source / 'build-requirements.lock'])
             runner([python, '-m', 'pip', 'wheel', '--no-build-isolation', '--no-deps', '--wheel-dir', release / 'wheels', source])
             wheels = list((release / 'wheels').glob('luda-*.whl'))
@@ -177,7 +183,11 @@ def install(prefix, source, runner=invoke):
             runner([python, '-m', 'pip', 'install', '--no-deps', wheels[0]])
             runner([python, '-c', 'import luda.server; from importlib.metadata import version; print("Installed Luda", version("luda"))'])
             shutil.copytree(source / 'skills/luda', release / 'skills/luda')
-            if release_identity(source) != identity:
+            if browser is not None:
+                verify_browser(browser, user)
+                atomic_json(release / '.venv/luda-browser.json', browser)
+                (release / '.venv/luda-browser.json').chmod(0o644)
+            if release_identity(source, browser) != identity:
                 raise InstallError('Source changed during installation; previous release remains selected. Retry from an unchanged checkout.')
             atomic_json(release / 'release.json', {'product': 'luda', 'release': identity,
                         'wheel_sha256': hashlib.sha256(wheels[0].read_bytes()).hexdigest(),
@@ -193,17 +203,17 @@ def install(prefix, source, runner=invoke):
         return {'status': 'installed', 'release': identity, 'prefix': str(prefix)}
 
 
-def rollback(prefix, release):
+def rollback(prefix, release, user="silo-desktop"):
     with locked(prefix):
         metadata = state(prefix)
         if release not in metadata['releases'] or (prefix / 'releases').is_symlink() or (prefix / 'releases' / release).is_symlink() or not (prefix / 'releases' / release / 'release.json').is_file():
             raise InstallError('Requested release is not a completed managed installation.')
-        verify_release(prefix / 'releases' / release, release)
+        verify_release(prefix / 'releases' / release, release, user)
         select(prefix, release)
         return {'status': 'selected', 'release': release}
 
 
-def verify_release(directory, identity):
+def verify_release(directory, identity, user="silo-desktop"):
     """Verify owned payloads before reusing a completed release; preserve edits."""
     manifest = directory / 'release.json'
     try:
@@ -226,6 +236,7 @@ def verify_release(directory, identity):
             actual = {'link': str(path.readlink())} if path.is_symlink() else {'sha256': hashlib.sha256(path.read_bytes()).hexdigest()} if path.is_file() else None
             if actual != expected:
                 raise InstallError('Installed release files changed or disappeared; refusing selection and preserving those files.')
+        selected_browser(directory / '.venv', user)
     except (OSError, ValueError, TypeError, AttributeError) as exc:
         raise InstallError('Completed release is unreadable; refusing selection.') from exc
 
@@ -348,6 +359,7 @@ def main():
     parser.add_argument('--prefix', required=True)
     parser.add_argument('--source', type=Path, default=ROOT)
     parser.add_argument('--release')
+    parser.add_argument('--browser-config', type=Path, help='Explicit verified Chromium selection; install only.')
     parser.add_argument('--output', type=Path)
     parser.add_argument('--user', default='silo-desktop')
     parser.add_argument('--tool-approval',choices=['auto','prompt','writes','approve'],default='auto',help='MCP tool approval policy in generated config; approve supports unattended sandbox tasks.')
@@ -355,12 +367,14 @@ def main():
     args = parser.parse_args()
     try:
         prefix = checked_prefix(args.prefix)
+        if args.browser_config is not None and args.action != 'install':
+            raise InstallError('--browser-config is only valid for install.')
         if args.action == 'install':
-            result = install(prefix, args.source.resolve())
+            result = install(prefix, args.source.resolve(), browser_config=args.browser_config, user=args.user)
         elif args.action == 'uninstall':
             result = uninstall(prefix)
         elif args.action == 'rollback':
-            result = rollback(prefix, args.release)
+            result = rollback(prefix, args.release, args.user)
         elif args.action == 'config':
             if args.output is None:
                 parser.error('config requires --output')

@@ -1,4 +1,4 @@
-include requirements.lock uv.lock build-requirements.in build-requirements.lock
+include requirements.lock requirements-browser.lock uv.lock build-requirements.in build-requirements.lock
 recursive-include docs *.md *.json
 recursive-include scripts *.py *.sh *.js *.mjs
 recursive-include skills *.md

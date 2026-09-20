@@ -12,7 +12,7 @@ Protected fields, unregistered rich editors/contenteditable, frames and shadow-r
 
 This capability is optional; default installation does not add Playwright or download a browser. From a trusted pinned source checkout, an operator can provision the exact `uv.lock` environment with `uv sync --locked --extra browser` and run that environment's `luda`. Configure `LUDA_CHROMIUM_EXECUTABLE` as an absolute executable path to an independently provisioned compatible Chromium. The tested pair is Playwright **1.63.0** and Chrome for Testing **153.0.8010.12** on Linux ARM64. Other browser/version pairs need qualification. No browser download or `--no-sandbox` fallback happens at runtime. The ordinary-account sandbox-enabled launch worked in this guest.
 
-For an existing managed installation, this increment does not modify its locked installer or silently add optional packages. Provision an explicitly selected source environment as above and point the MCP command at it. Doctor's `owned_browser.available` reports dependency/executable presence, not successful launch or universal web compatibility. Launch failures are bounded and sanitized.
+Managed installations can explicitly select browser support using [managed browser provisioning](MANAGED-BROWSER.md). The standard installation remains browser-free. A directly launched source-environment `luda` can use the explicit environment variable above; `luda-session` intentionally sanitizes ambient environment and instead reads the verified selection stored inside its managed release. Doctor's `owned_browser.available` reports dependency/executable presence, not successful launch or universal web compatibility. Launch failures are bounded and sanitized.
 
 ## Composition, focus and lifetime limits
 

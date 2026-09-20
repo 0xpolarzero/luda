@@ -1,5 +1,6 @@
 """Optional temporary owned browser provider; private bounded fixed-operation IPC."""
 import importlib.util
+import importlib.metadata
 import json
 import os
 from pathlib import Path
@@ -44,6 +45,10 @@ def capability(environment):
     executable = environment.get('LUDA_CHROMIUM_EXECUTABLE','')
     return {'available':importlib.util.find_spec('playwright') is not None and bool(executable) and Path(executable).is_absolute() and Path(executable).is_file() and os.access(executable,os.X_OK),
             'dependency':'optional browser extra; explicit LUDA_CHROMIUM_EXECUTABLE',
+            'managed_selection_verified':bool(environment.get('LUDA_MANAGED_BROWSER_SHA256')),
+            'verified_executable_version':environment.get('LUDA_MANAGED_BROWSER_VERSION'),
+            'launch_verified':False,
+            'playwright_version':importlib.metadata.version('playwright') if importlib.util.find_spec('playwright') is not None else None,
             'automatic_downloads':False,'lifetime':'temporary_session',
             'unsaved_content_survives_disconnect':False,'field_limit':64000}
 

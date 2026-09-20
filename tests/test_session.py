@@ -75,6 +75,14 @@ class SessionLaunchTests(unittest.TestCase):
         self.assertEqual(argv,['/opt/luda','--flag']);self.assertEqual(env['DISPLAY'],':7')
         self.assertNotIn('TOKEN',env);self.assertNotIn('LD_PRELOAD',env)
         self.assertEqual(env['HOME'],'/home/desktop')
+    def test_browser_selection_checked_after_drop_without_ambient_passthrough(self):
+        self.setup_launch();events=[]
+        with patch('luda.session.os.initgroups'),patch('luda.session.os.setgid'),patch('luda.session.os.setuid',side_effect=lambda uid:events.append('drop')),patch('luda.managed_browser.selected',side_effect=lambda prefix:events.append('verify') or dict(executable='/verified/chrome',version='1.2.3.4',sha256='a'*64)),patch.dict(os.environ,{'LUDA_CHROMIUM_EXECUTABLE':'/ambient/untrusted'}),patch('luda.session.os.execvpe') as execute:
+            session.main()
+        self.assertEqual(events,['drop','verify'])
+        self.assertEqual(execute.call_args.args[2]['LUDA_CHROMIUM_EXECUTABLE'],'/verified/chrome')
+        with patch('luda.session.os.initgroups'),patch('luda.session.os.setgid'),patch('luda.session.os.setuid'),patch('luda.managed_browser.selected',side_effect=ValueError('changed')),patch('luda.session.os.execvpe') as execute,self.assertRaises(SystemExit):session.main()
+        execute.assert_not_called()
     def test_inaccessible_home_uses_accessible_root_before_exec(self):
         self.setup_launch(1001)
         with patch('luda.session.os.chdir',side_effect=[PermissionError(),None]) as cwd,patch('luda.session.os.execvpe') as execute:

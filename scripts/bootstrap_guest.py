@@ -13,7 +13,7 @@ import tempfile
 import time
 import uuid
 
-from manage_install import checked_prefix, config, doctor, InstallError, locked, release_identity
+from manage_install import checked_prefix, config, doctor, InstallError, locked, release_identity, read_browser_config, verify_browser
 
 SILO_HELPER = Path('/usr/local/bin/silo-desktop')
 
@@ -176,14 +176,15 @@ def desktop_status(user):
     return {'installed': True, 'version': '1', 'user': user, 'state': value['state']}
 
 
-def bootstrap(source, prefix, output, user, skip_system=False):
+def bootstrap(source, prefix, output, user, skip_system=False, browser_config=None):
     result = {'ok': False, 'stage': 'validation', 'installation_completed': False,
               'configuration_generated': False, 'codex_settings_modified': False}
     try:
         source, prefix, output = validate(source, prefix, output, user)
         if os.getuid() != 0 and not skip_system:
             raise BootstrapError('System provisioning requires root; use --skip-system only after provisioning dependencies.')
-        expected_release = release_identity(source)
+        browser = verify_browser(read_browser_config(browser_config), user) if browser_config is not None else None
+        expected_release = release_identity(source, browser)
         result['stage'] = 'desktop_preflight'
         result['desktop'] = desktop_status(user)
         if result['desktop']['state'] != 'running':
@@ -193,6 +194,8 @@ def bootstrap(source, prefix, output, user, skip_system=False):
         result['stage'] = 'installation'
         result['installation_completed'] = None
         command = ['bash', source / 'scripts/install.sh', prefix]
+        if browser_config is not None:
+            command += ['--browser-config', Path(browser_config), '--user', user]
         if skip_system:
             command.append('--skip-system')
         if run_process(command, stdout=sys.stderr, stderr=sys.stderr, timeout=1800):
@@ -204,7 +207,7 @@ def bootstrap(source, prefix, output, user, skip_system=False):
         with locked(prefix):
             selected = (prefix / 'current').resolve()
             result['selected_release'] = selected.name
-            if selected != prefix / 'releases' / expected_release or release_identity(source) != expected_release:
+            if selected != prefix / 'releases' / expected_release or release_identity(source, browser) != expected_release:
                 raise BootstrapError('Selected release or source changed; refusing readiness/configuration for an unexpected release.')
             result['stage'] = 'readiness'
             readiness = doctor(prefix, user)
@@ -241,8 +244,9 @@ def main():
     parser.add_argument('--output', required=True, type=Path, help='Fresh bundle directory beneath an owned existing parent')
     parser.add_argument('--user', required=True)
     parser.add_argument('--skip-system', action='store_true')
+    parser.add_argument('--browser-config', type=Path)
     args = parser.parse_args()
-    result = bootstrap(args.source, args.prefix, args.output, args.user, args.skip_system)
+    result = bootstrap(args.source, args.prefix, args.output, args.user, args.skip_system, args.browser_config)
     print(json.dumps(result, indent=2))
     return 0 if result['ok'] else 1
 
