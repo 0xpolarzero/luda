@@ -104,13 +104,20 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
             return None
 
     def list_windows(self):
-        try:
-            rows = run(['wmctrl','-lp']).decode(errors='replace').splitlines()
-        except DesktopError as exc:
-            if exc.code == 'BACKEND_ERROR' and 'Cannot get client list properties' in str(exc):
-                self.windows = {}
-                return []
-            raise
+        for attempt in range(3):
+            try:
+                rows = run(['wmctrl','-lp']).decode(errors='replace').splitlines()
+                break
+            except DesktopError as exc:
+                if exc.code == 'BACKEND_ERROR' and 'Cannot get client list properties' in str(exc):
+                    self.windows = {}
+                    return []
+                if exc.code == 'BACKEND_ERROR' and 'BadWindow' in str(exc) and 'X_GetProperty' in str(exc) and attempt<2:
+                    # A dialog can disappear during wmctrl's read-only walk.
+                    # Restart enumeration only; never retry a mutation.
+                    time.sleep(.02)
+                    continue
+                raise
         active = self.active()
         parsed = [line.split(None, 4) for line in rows]
         xids = [int(fields[0],16) for fields in parsed if len(fields)>=4 and int(fields[2])>0]
