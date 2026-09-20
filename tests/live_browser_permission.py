@@ -3,6 +3,7 @@ import argparse,asyncio,base64,http.server,json,os,threading,time
 from pathlib import Path
 from unittest.mock import patch
 import live_mcp_disconnect as wire
+from permission_oracle import PermissionOracle
 ROOT=Path(__file__).resolve().parents[1]
 OUT=ROOT/'artifacts/browser-permission'
 
@@ -21,9 +22,9 @@ async def main(executable):
     if os.getuid()==0 or os.environ.get('LUDA_ISOLATED_TEST_DISPLAY')!='1':
         raise RuntimeError('An ordinary UID and private display are required')
     OUT.mkdir(parents=True,exist_ok=True);wire.OUT=OUT
-    state={};rows=[];lock=threading.Lock()
+    oracle=PermissionOracle();rows=[];lock=threading.Lock();complete_report=threading.Event()
     def current():
-        with lock:return dict(state)
+        with lock:return dict(oracle.state)
     def record(case,passed,**details):
         rows.append(dict(case=case,passed=bool(passed),**details))
         (OUT/'results.json').write_text(json.dumps(rows,indent=2))
@@ -39,8 +40,16 @@ async def main(executable):
             size=int(self.headers['Content-Length'])
             if not 0<size<2048:self.send_error(400);return
             value=json.loads(self.rfile.read(size))
-            with lock:state.clear();state.update(value)
-            (OUT/'oracle.json').write_text(json.dumps(value,indent=2))
+            # Force the first terminal partial report behind its successor.
+            # This delays observation transport only, never browser permission input.
+            partial=(value.get('permission')=='denied') != (value.get('error')==1)
+            if partial:complete_report.wait(timeout=5)
+            with lock:
+                oracle.accept(value)
+                (OUT/'oracle.json').write_text(json.dumps(oracle.state,indent=2))
+                (OUT/'oracle-reports.json').write_text(json.dumps(oracle.reports,indent=2))
+                if oracle.state.get('permission')=='denied' and oracle.state.get('error')==1:
+                    complete_report.set()
             self.send_response(204);self.end_headers()
     service=http.server.ThreadingHTTPServer(('127.0.0.1',0),Handler)
     threading.Thread(target=service.serve_forever,daemon=True).start()
@@ -92,6 +101,10 @@ async def main(executable):
         record('observed-denial-action','press' in choices[0]['actions'],actions=choices[0]['actions'])
         response=await call('desktop_invoke',element_id=choices[0]['element_id'],action='press')
         record('denied-independent-permission-and-callback',await until(lambda:current().get('permission')=='denied' and current().get('error')==1) and current().get('successes')==0 and current().get('requests')==1,response=response,oracle=current())
+        record('older-partial-report-cannot-erase-denial',
+               await until(lambda:any(not row['applied'] for row in oracle.reports)) and
+               current().get('permission')=='denied' and current().get('error')==1,
+               oracle=current())
         tree=await call('desktop_inspect',window_id=wid,name='denied')
         (OUT/'after-tree.json').write_text(json.dumps(tree,indent=2))
         record('denied-status-publicly-observed',any('denied' in n.get('name','') for n in tree['nodes']))
