@@ -12,6 +12,6 @@ python3 -c 'import sys;sys.path.insert(0,sys.argv[1]);from manage_install import
 if [[ "${2:-}" != '--skip-system' ]]; then
   if [[ $(id -u) != 0 ]]; then echo 'Provision dependencies as root, or use --skip-system after provisioning.' >&2; exit 2; fi
   apt-get update
-  apt-get install -y python3 python3-venv python3-gi gir1.2-atspi-2.0 libx11-6 libxi6 libxtst6 libxrandr2 xdotool wmctrl xclip scrot x11-utils
+  apt-get install -y python3 python3-venv python3-gi gir1.2-atspi-2.0 libx11-6 libxi6 libxtst6 libxrandr2 fonts-noto-core fonts-noto-cjk fonts-noto-color-emoji xdotool wmctrl xclip scrot x11-utils
 fi
 exec python3 "$source_dir/scripts/manage_install.py" install --prefix "$prefix"

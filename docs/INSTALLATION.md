@@ -10,6 +10,8 @@ From the source checkout, provision the declared Ubuntu dependencies and install
 sudo bash scripts/install.sh /opt/luda
 ```
 
+System provisioning includes `fonts-noto-core`, `fonts-noto-cjk` and `fonts-noto-color-emoji` so basic international text is visible to humans and screenshot-driven agents. These are additive distro packages; the installer does not change application or user font settings. `--skip-system` assumes equivalent font coverage was provisioned separately. See [font rendering evidence and limits](FONT-RENDERING.md).
+
 If dependencies were provisioned separately, use `bash scripts/install.sh /absolute/prefix --skip-system`. The prefix must be a dedicated absolute directory owned by the installer account; symlink components, system roots and writable-by-others prefixes are refused. Do not install beneath a private root home if the desktop account must execute the result.
 
 Each release is built in its final `releases/VERSION-SOURCEHASH` directory. This matters because virtual-environment launchers embed absolute paths. Runtime dependencies are installed from `requirements.lock` with mandatory hash checking; the locally built wheel is installed without dependency resolution. Build tools are installed with hashes from the separate `build-requirements.lock`; wheel construction disables build isolation so pip cannot silently fetch a different backend. The lock currently pins setuptools 80.9.0 and wheel 0.45.1. System Python, its bundled pip, and apt packages remain supplied by the selected Ubuntu image/repositories.
