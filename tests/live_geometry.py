@@ -37,6 +37,13 @@ def snapshot(window,width):
     snap=d.observe(width)
     observed=next(v for v in snap['windows'] if v['window_id']==window['window_id'])
     assert observed['bounds']==independent_bounds(window['xid'])
+    assert snap['coordinate_spaces']['bounds']=='native_x11_root_pixels'
+    assert snap['coordinate_spaces']['image_bounds']=='returned_image_pixels'
+    native=snap['desktop_size'];scaled=snap['image_size'];bounds=observed['bounds']
+    columns=[i for i in range(scaled['width']) if bounds['x']<=i*native['width']//scaled['width']<bounds['x']+bounds['width']]
+    rows=[i for i in range(scaled['height']) if bounds['y']<=i*native['height']//scaled['height']<bounds['y']+bounds['height']]
+    expected=None if not columns or not rows else {'x':columns[0],'y':rows[0],'width':len(columns),'height':len(rows)}
+    assert observed['image_bounds']==expected,(observed,expected)
     image=Image.open(io.BytesIO(base64.b64decode(snap['image_base64'])))
     assert image.size==(snap['image_size']['width'],snap['image_size']['height'])
     return snap,observed,image
@@ -58,6 +65,10 @@ try:
                     b=w['bounds'];iw,ih=image.size;nw,nh=snap['desktop_size']['width'],snap['desktop_size']['height']
                     x=(b['x']+b['width']//2)*iw/nw;y=(b['y']+b['height']//2)*ih/nh
                     assert image.getpixel((int(x),int(y)))==(18,52,86)
+                    area=w['image_bounds']
+                    ix=area['x']+area['width']//2;iy=area['y']+area['height']//2
+                    d.hover(window['window_id'],snap['snapshot_id'],ix,iy)
+                    assert pointer()=={'X':ix*nw//iw,'Y':iy*nh//ih}
                     d.hover(window['window_id'],snap['snapshot_id'],x,y)
                     assert pointer()=={'X':int(x*nw/iw),'Y':int(y*nh/ih)}
                     for a,c in ((iw,y),(x,ih),(-.1,y),(x,-.1)):

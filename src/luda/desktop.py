@@ -28,6 +28,7 @@ from .common import environment_scope, subprocess_environment
 from .input_guard import held_button
 from .keyboard import validate_chord, send_chord, keyboard_capabilities, keyboard_recovery_checkpoint
 from .session_state import session_state
+from .coordinates import image_bounds
 from .ime import composition_capability
 from .diagnostics import capability_summary
 from .storage import storage_errors, staged_payload
@@ -266,9 +267,14 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         while len(self.snapshots)>16:self.snapshots.pop(next(iter(self.snapshots)))
         return {'snapshot_id':token,'expires_after_seconds':15,
                 'coordinate_space':'returned image pixels; pass snapshot_id with pointer actions',
+                'coordinate_spaces':{'bounds':'native_x11_root_pixels','frame_bounds':'native_x11_root_pixels',
+                                     'image_bounds':'returned_image_pixels','pointer':'returned_image_pixels'},
+                'image_bounds_semantics':'Half-open rectangles of integer screenshot pixel positions; clipped to image, not an occlusion check.',
                 'image_size':{'width':width,'height':height},
                 'desktop_size':{'width':native[0],'height':native[1]},
-                'windows':after,'popups':after_popups,'image_base64':base64.b64encode(buf.getvalue()).decode()}
+                'windows':[{**w,'image_bounds':image_bounds(w['bounds'],native,(width,height))} for w in after],
+                'popups':[{**p,'image_bounds':image_bounds(p['bounds'],native,(width,height))} for p in after_popups],
+                'image_base64':base64.b64encode(buf.getvalue()).decode()}
 
     def point(self, window_id, snapshot_id, x, y):
         return self._interaction_point(window_id,snapshot_id,x,y)
@@ -345,6 +351,7 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         while len(self.elements)>4000:self.elements.pop(next(iter(self.elements)))
         result['window_id']=window_id
         result['element_expiry_seconds']=60
+        result['bounds_coordinate_space']='unavailable' if result.get('bounds_coordinates')=='unavailable' else 'native_x11_root_pixels'
         return result
 
     def element(self, element_id, op, **kwargs):
