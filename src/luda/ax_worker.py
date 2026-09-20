@@ -573,8 +573,10 @@ def main(req):
         if not roots and len(fallback_roots) == 1 and len(title_size_matches) == 1:
             roots = fallback_roots
             mapping = "unique_title_and_size"
+        if not roots and len(title_size_matches) <= 1:
+            return failure("ACCESSIBILITY_UNAVAILABLE", "No accessible window matches this X11 target. The application may not be registered with the accessibility bus or expose usable window geometry; use screenshot controls.")
         if len(roots) != 1:
-            return {"error":"AMBIGUOUS_ACCESSIBILITY_WINDOW", "message":"Cannot uniquely map X11 client bounds to an accessible top-level; use screenshot controls."}
+            return {"error":"AMBIGUOUS_ACCESSIBILITY_WINDOW", "message":"Multiple accessible windows may match this X11 target; use screenshot controls."}
         root_path = roots[0]
         nodes = []
         errors = 0

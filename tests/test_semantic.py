@@ -157,8 +157,8 @@ class ScopeAndState(unittest.TestCase):
         with patch.object(w,'candidates',side_effect=[[(self.node,1)],[(self.node,0)]]),patch.object(w,'describe',return_value=dict(self.description)):
             return w.main({**self.req,**kw})
     def test_fallback_requires_exact_title(self):
-        self.assertEqual(self.inspect()['error'],'AMBIGUOUS_ACCESSIBILITY_WINDOW')
-        self.assertEqual(self.inspect(window_title='Different')['error'],'AMBIGUOUS_ACCESSIBILITY_WINDOW')
+        self.assertEqual(self.inspect()['error'],'ACCESSIBILITY_UNAVAILABLE')
+        self.assertEqual(self.inspect(window_title='Different')['error'],'ACCESSIBILITY_UNAVAILABLE')
     def test_fallback_removes_unreliable_bounds(self):
         r=self.inspect(window_title='Fixture');self.assertEqual(r['window_mapping'],'unique_title_and_size');self.assertEqual(r['nodes'][0]['bounds_coordinates'],'unavailable');self.assertNotIn('bounds',r['nodes'][0])
     def test_duplicate_fallback_refused(self):
