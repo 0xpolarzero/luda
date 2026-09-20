@@ -15,11 +15,12 @@ def emit(value):
 def release_owned(request,client):
     try:
         cleanup=subprocess.run([sys.executable,'-m','luda._keyboard_native','release'],
-                               input=json.dumps({'keycodes':request['keycodes'],'client':client}).encode()+b'\n',
+                               input=json.dumps({'keycodes':request['keycodes'],'client':client,'server_generation':request['server_generation']}).encode()+b'\n',
                                stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,timeout=2)
-        return cleanup.returncode==0 and json.loads(cleanup.stdout).get('released') is True
+        value=json.loads(cleanup.stdout) if cleanup.returncode==0 else {}
+        return {'cleanup_verified':value.get('released') is True,'session_changed':value.get('session_changed') is True,'cleanup_skipped':value.get('cleanup_skipped') is True}
     except Exception:
-        return False
+        return {'cleanup_verified':False,'session_changed':False,'cleanup_skipped':False}
 
 
 def main():
@@ -78,7 +79,7 @@ def main():
         consume(b'',final=True)
         if armed and (reason or not done or not done.get('done')):
             cleaned=release_owned(request,client)
-            result={'code':reason or 'KEYBOARD_INTERRUPTED','message':'Keyboard operation interrupted; owned key release was attempted. Inspect the application before retrying.','effect':'uncertain','cleanup_verified':cleaned}
+            result={'code':reason or 'KEYBOARD_INTERRUPTED','message':'Keyboard operation interrupted; owned key release was attempted. Inspect the application before retrying.','effect':'uncertain',**cleaned,'cleanup_request':{'keycodes':request['keycodes'],'client':client,'server_generation':request['server_generation']}}
         elif reason:
             result={'code':reason,'message':'Keyboard operation cancelled before key dispatch.','effect':'none'}
         else:
@@ -99,9 +100,10 @@ def main():
         # Protocol errors are private implementation failures. A valid armed
         # record precedes every possible native event; conservatively clean the
         # validated plan if worker output was lost or malformed.
-        cleaned=release_owned(request,client) if request and worker and armed else False
+        cleaned=release_owned(request,client) if request and worker and armed else {'cleanup_verified':False}
         emit({'code':'KEYBOARD_UNAVAILABLE','message':'Keyboard companion failed; inspect state before retrying.',
-              'effect':'uncertain' if worker else 'none','armed':bool(worker),'cleanup_verified':cleaned})
+              'effect':'uncertain' if worker else 'none','armed':bool(worker),**cleaned,
+              'cleanup_request':{'keycodes':request['keycodes'],'client':client,'server_generation':request['server_generation']} if request and armed else None})
     finally:
         if worker and worker.stdout:worker.stdout.close()
 

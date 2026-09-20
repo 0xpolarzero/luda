@@ -56,10 +56,12 @@ class ReconnectTests(unittest.TestCase):
         from luda.input_guard import held_button
         with tempfile.TemporaryDirectory() as directory:
             proof=Path(directory)/'display'
-            executable=Path(directory)/'xdotool'
-            executable.write_text('#!'+sys.executable+'\nimport os,pathlib\npathlib.Path('+repr(str(proof))+').write_text(os.environ["DISPLAY"])\n')
-            executable.chmod(0o700)
-            with environment_scope(dict(os.environ,PATH=directory,DISPLAY=':replacement')),patch('luda.input_guard.run',side_effect=[b'',DesktopError('BACKEND_ERROR','release failed')]):
+            import subprocess
+            original=subprocess.Popen
+            script='import os,sys,json;from pathlib import Path;from types import SimpleNamespace;from luda import _input_guard as guard;guard.subprocess.run=lambda *a,**k:(Path(sys.argv[4]).write_text(os.environ["DISPLAY"]) or None,SimpleNamespace(returncode=0,stdout=json.dumps(dict(released=True)).encode()))[1];raise SystemExit(guard.main())'
+            def spawn(args,**kwargs):
+                return original([args[0],'-c',script,*args[3:],str(proof)],**kwargs)
+            with environment_scope(dict(os.environ,DISPLAY=':replacement')),patch('luda.input_guard._native_input',side_effect=[{'server_generation':'a'*32},{'pressed':True},DesktopError('BACKEND_ERROR','release failed')]),patch('luda.input_guard.subprocess.Popen',side_effect=spawn):
                 with self.assertRaises(DesktopError):
                     with held_button('1'):pass
             self.assertEqual(proof.read_text(),':replacement')

@@ -1,0 +1,97 @@
+"""Restart an owned X server at the exact same DISPLAY and authority path."""
+import ctypes as C
+import json
+import os
+from pathlib import Path
+import select
+import signal
+import subprocess
+import sys
+import tempfile
+import time
+from live_keyboard_guard import Oracle,wait,descendants
+from luda.common import environment_scope
+from luda import keyboard
+
+
+def main():
+    server=None;oracle=None;key_guard=None;mouse_guard=None;mouse_writer=None
+    with tempfile.TemporaryDirectory(prefix='luda-input-generation-') as directory:
+        base=Path(directory);authority=base/'authority';authority.touch(mode=0o600)
+        reader,writer=os.pipe()
+        server=subprocess.Popen(['Xvfb','-displayfd',str(writer),'-screen','0','800x600x24','-nolisten','tcp','-ac','-auth',str(authority)],pass_fds=(writer,),stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+        os.close(writer)
+        assert select.select([reader],[],[],5)[0]
+        number=os.read(reader,32).decode().strip();os.close(reader)
+        env=dict(os.environ,DISPLAY=':'+number,XAUTHORITY=str(authority))
+        original_env=dict(os.environ)
+        def native(request):
+            return json.loads(subprocess.check_output([sys.executable,'-m','luda._input_native'],input=json.dumps(request).encode()+b'\n',env=env,timeout=3))
+        def command(*args):subprocess.run(args,env=env,check=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+        try:
+            os.environ.update(DISPLAY=env['DISPLAY'],XAUTHORITY=env['XAUTHORITY'])
+            oracle=Oracle();x=oracle.x
+            x.XCreateSimpleWindow.argtypes=[C.c_void_p,C.c_ulong,C.c_int,C.c_int,C.c_uint,C.c_uint,C.c_uint,C.c_ulong,C.c_ulong];x.XCreateSimpleWindow.restype=C.c_ulong
+            window=x.XCreateSimpleWindow(oracle.d,x.XDefaultRootWindow(oracle.d),0,0,200,100,0,0,0);x.XSync(oracle.d,False)
+            command('xprop','-root','-f','_NET_ACTIVE_WINDOW','32x','-set','_NET_ACTIVE_WINDOW',hex(window))
+            plan=json.loads(subprocess.check_output([sys.executable,'-m','luda._keyboard_native','plan'],input=json.dumps({'chord':'ctrl+shift+alt+F12','target':window}).encode()+b'\n',env=env,timeout=3))
+            assert 'server_generation' in plan,plan
+            old_generation=plan['server_generation']
+            key_guard=subprocess.Popen([sys.executable,'-m','luda._keyboard_guard'],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,env=env)
+            key_guard.stdin.write(json.dumps(plan).encode()+b'\n');key_guard.stdin.flush()
+            wait(lambda:oracle.code('Control_L') in oracle.pressed())
+            children=descendants(key_guard.pid);assert len(children)==1
+            os.kill(children[0],signal.SIGSTOP);os.kill(key_guard.pid,signal.SIGSTOP)
+            mouse_reader,mouse_writer=os.pipe()
+            mouse_guard=subprocess.Popen([sys.executable,'-m','luda._input_guard',str(mouse_reader),'1',old_generation],pass_fds=(mouse_reader,),stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,env=env)
+            os.close(mouse_reader);assert mouse_guard.stdout.read(1)==b'R';os.write(mouse_writer,b'A')
+            assert native({'operation':'press','button':'1','server_generation':old_generation})['pressed']
+            assert oracle.buttons()
+            oracle.close();oracle=None
+            server.terminate();server.wait(timeout=3)
+            server=subprocess.Popen(['Xvfb',env['DISPLAY'],'-screen','0','800x600x24','-nolisten','tcp','-ac','-auth',str(authority)],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+            wait(lambda:subprocess.run(['xdpyinfo'],env=env,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL).returncode==0)
+            oracle=Oracle();new_generation=native({'operation':'generation'})['server_generation'];assert new_generation!=old_generation
+            command('xdotool','keydown','Control_L');command('xdotool','mousedown','1')
+            held=oracle.pressed();button_state=oracle.buttons();assert held and button_state
+            key_guard.stdin.close();os.kill(key_guard.pid,signal.SIGCONT)
+            assert select.select([key_guard.stdout],[],[],4)[0]
+            key_proof=json.loads(key_guard.stdout.readline());key_guard.wait(timeout=3)
+            assert key_proof['session_changed'] and key_proof['cleanup_skipped'] and not key_proof['cleanup_verified'],key_proof
+            os.close(mouse_writer);mouse_writer=None
+            assert mouse_guard.wait(timeout=3)==2
+            assert oracle.pressed()==held and oracle.buttons()==button_state
+            explicit=native({'operation':'release','button':'1','server_generation':old_generation})
+            assert explicit['session_changed'] and explicit['cleanup_skipped'] and oracle.buttons()==button_state
+            # A failed old cleanup can be explicitly resolved by generation
+            # proof in its ORIGINAL environment, without releasing new keys.
+            fake=subprocess.Popen([sys.executable,'-c','import json;print(json.dumps(dict(armed=True,effect="uncertain",cleanup_verified=False)))'],stdout=subprocess.PIPE)
+            hooks=(keyboard._retain_recovery,keyboard._release_recovery);retained=[];released=[]
+            try:
+                keyboard.set_recovery_hooks(retained.append,released.append)
+                with environment_scope(env):keyboard._retain_guardian(fake,b'',plan)
+                fake.wait(timeout=3);time.sleep(.03)
+                with environment_scope(dict(env,DISPLAY=':invalid-backend')):
+                    proof=keyboard.recover_keyboard_input()
+                assert proof['resolved_count']==1 and proof['pending_count']==0,proof
+                assert proof['recoveries'][0]['proof']=='original_server_replaced'
+                assert retained==released and oracle.pressed()==held and oracle.buttons()==button_state
+            finally:keyboard.set_recovery_hooks(*hooks)
+            command('xdotool','keyup','Control_L');command('xdotool','mouseup','1')
+            print(json.dumps({'same_display':env['DISPLAY'],'same_authority_path':True,'generation_changed':True,
+                              'keyboard_cleanup':'skipped; replacement matching held key preserved',
+                              'mouse_cleanup':'skipped; replacement held button preserved',
+                              'explicit_recovery':'original environment used; replacement proof resolved quarantine without input'},indent=2))
+        finally:
+            if mouse_writer is not None:os.close(mouse_writer)
+            for guard in (key_guard,mouse_guard):
+                if guard:
+                    if guard.stdin and not guard.stdin.closed:guard.stdin.close()
+                    if guard.poll() is None:os.kill(guard.pid,signal.SIGCONT);guard.wait(timeout=4)
+                    if guard.stdout:guard.stdout.close()
+            if oracle:oracle.close()
+            if server and server.poll() is None:server.terminate();server.wait(timeout=3)
+            os.environ.clear();os.environ.update(original_env)
+
+
+if __name__=='__main__':main()

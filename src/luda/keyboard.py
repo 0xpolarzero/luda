@@ -8,7 +8,7 @@ import sys
 import signal
 import threading
 import uuid
-from .common import DesktopError, checkpoint, mark_effect, run, subprocess_environment
+from .common import DesktopError, checkpoint, mark_effect, run, subprocess_environment, environment_scope
 from .timing import elapsed_time
 
 
@@ -33,6 +33,7 @@ def keyboard_recovery_checkpoint():
 
 def _completion_proven(result):
     return bool(result and (result.get('done') is True or result.get('cleanup_verified') is True or
+                (result.get('session_changed') is True and result.get('cleanup_skipped') is True) or
                 (result.get('armed') is False and result.get('effect')=='none')))
 
 
@@ -51,27 +52,84 @@ def _recover_guardian(token,guard,output,release):
                 chunk=os.read(guard.stdout.fileno(),4096)
                 if not chunk:break
                 output+=chunk
+                with _recovery_lock:
+                    if token in _pending_recoveries:_pending_recoveries[token]['output']=output
                 if len(output)>8192:raise ValueError()
             else:return
         guard.wait(timeout=max(.01,deadline-elapsed_time()))
-        proven=_completion_proven(json.loads(output))
+        result=json.loads(output)
+        proven=_completion_proven(result)
+        with _recovery_lock:
+            if token in _pending_recoveries:_pending_recoveries[token]['cleanup_request']=result.get('cleanup_request')
     except Exception:
         pass
     finally:
         if guard.poll() is not None:guard.stdout.close()
         if proven:
-            with _recovery_lock:_pending_recoveries.pop(token,None)
-            if release:release(token)
+            _resolve_recovery(token)
         # Unknown/failed cleanup retains its ownership token. Returning an error
         # must never reopen the input gate while an old injector can still act.
 
 
-def _retain_guardian(guard,output):
+def _resolve_recovery(token):
+    with _recovery_lock:record=_pending_recoveries.pop(token,None)
+    if record and record['release']:record['release'](token)
+    return record is not None
+
+
+def _start_watcher(token,record):
+    with _recovery_lock:
+        if record.get('watcher') and record['watcher'].is_alive():return
+        thread=threading.Thread(target=_recover_guardian,args=(token,record['guard'],record['output'],record['release']),daemon=True,name='luda-keyboard-recovery')
+        record['watcher']=thread
+        thread.start()
+
+
+def _retain_guardian(guard,output,plan=None):
     token='keyboard:'+uuid.uuid4().hex
-    with _recovery_lock:_pending_recoveries[token]=guard
+    record={'guard':guard,'output':output,'plan':plan,'environment':dict(subprocess_environment() or os.environ),
+            'release':_release_recovery,'cleanup_request':None}
+    with _recovery_lock:_pending_recoveries[token]=record
     if _retain_recovery:_retain_recovery(token)
-    thread=threading.Thread(target=_recover_guardian,args=(token,guard,output,_release_recovery),daemon=True,name='luda-keyboard-recovery')
-    thread.start()
+    _start_watcher(token,record)
+
+
+def recover_keyboard_input():
+    """Retry owned cleanup only, in each interrupted command's original environment."""
+    with _recovery_lock:records=list(_pending_recoveries.items())
+    results=[];resolved=0;effect='none'
+    for token,record in records:
+        plan=record['plan']
+        row={'resolved':False}
+        if not plan or not plan.get('server_generation'):
+            results.append({**row,'reason':'ownership_metadata_unavailable'});continue
+        try:
+            with environment_scope(record['environment']):
+                proof=json.loads(run([sys.executable,'-m','luda._input_native'],
+                    data=json.dumps({'operation':'check','server_generation':plan['server_generation']}).encode()+b'\n',timeout=2,max_output_bytes=4096))
+                if proof.get('code'):
+                    row['reason']=proof['code']
+                elif proof.get('session_changed') and proof.get('cleanup_skipped'):
+                    resolved+=int(_resolve_recovery(token));row.update(resolved=True,proof='original_server_replaced',cleanup_skipped=True)
+                elif record['guard'].poll() is None:
+                    os.kill(record['guard'].pid,signal.SIGCONT)
+                    _start_watcher(token,record);row['reason']='guardian_still_recovering'
+                elif record.get('cleanup_request') and record['cleanup_request'].get('server_generation')==plan['server_generation']:
+                    effect='uncertain'
+                    proof=json.loads(run([sys.executable,'-m','luda._keyboard_native','release'],
+                        data=json.dumps(record['cleanup_request']).encode()+b'\n',timeout=2,max_output_bytes=4096,effect='uncertain'))
+                    if proof.get('released') or (proof.get('session_changed') and proof.get('cleanup_skipped')):
+                        resolved+=int(_resolve_recovery(token));row.update(resolved=True,proof='original_server_replaced' if proof.get('session_changed') else 'owned_keys_released',cleanup_skipped=bool(proof.get('cleanup_skipped')))
+                    else:row['reason']=proof.get('code','cleanup_not_verified')
+                else:row['reason']='cleanup_metadata_not_available'
+        except DesktopError as exc:
+            if exc.code=='CANCELLED':raise
+            row['reason']=exc.code
+        except (ValueError,OSError,TypeError):row['reason']='cleanup_not_verified'
+        results.append(row)
+    with _recovery_lock:pending=len(_pending_recoveries)
+    return {'effect':effect,'resolved_count':resolved,'pending_count':pending,'recoveries':results,
+            'next_step':('Reconnect to the new desktop session, then observe again.' if any(row.get('proof')=='original_server_replaced' for row in results) else 'Observe again before acting.') if not pending else 'No chord was replayed. Restore or restart the original desktop session, then retry input recovery; unresolved ownership stays blocked.'}
 
 
 def validate_chord(chord):
@@ -150,18 +208,18 @@ def send_chord(chord,target):
         if result and result.get('armed'):mark_effect()
         if failure:
             if result and result.get('armed'):failure.effect='uncertain'
-            if result and 'cleanup_verified' in result:failure.details['cleanup_verified']=result['cleanup_verified']
+            if result:failure.details.update({k:result[k] for k in ('cleanup_verified','session_changed','cleanup_skipped') if k in result})
             raise failure
         if not result:raise DesktopError('KEYBOARD_UNAVAILABLE','Keyboard companion returned no result.',effect='uncertain')
         if result.get('code'):
-            raise DesktopError(result['code'],result['message'],effect=result.get('effect','uncertain'),details={k:result[k] for k in ('cleanup_verified',) if k in result})
+            raise DesktopError(result['code'],result['message'],effect=result.get('effect','uncertain'),details={k:result[k] for k in ('cleanup_verified','session_changed','cleanup_skipped') if k in result})
         return {'effect':'dispatched','group_unchanged':result['group_unchanged'],'locks_unchanged':result['locks_unchanged'],'verification':'Key delivery does not prove application outcome.'}
     except BaseException as exc:
         if not proven:
             mark_effect()
             if isinstance(exc,DesktopError):exc.effect='uncertain'
             if guard.stdin and not guard.stdin.closed:guard.stdin.close()
-            _retain_guardian(guard,output)
+            _retain_guardian(guard,output,plan)
             retained=True
         raise
     finally:

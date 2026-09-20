@@ -13,7 +13,7 @@ class FakeKeyboard(Keyboard):
     def __init__(self):
         self.current=SimpleNamespace(base_mods=0,latched_mods=0,latched_group=0,group=0,locked_mods=0)
         self.keys=[];self.pointer=[]
-        self.x=SimpleNamespace(root=1,_property=Mock(return_value=(33,32,[99],0)))
+        self.x=SimpleNamespace(root=1,_property=Mock(return_value=(33,32,[99],0)),window_tokens=lambda ids:{1:'a'*32})
     def state(self):return self.current
     def pressed(self):return self.keys
     def buttons(self):return self.pointer

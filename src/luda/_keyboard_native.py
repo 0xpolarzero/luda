@@ -5,6 +5,7 @@ import sys
 import time
 from ._x11_helper import _NativeX11, _decode_window_token
 from .common import DesktopError
+from ._input_native import generation
 
 
 class State(C.Structure):
@@ -112,7 +113,7 @@ class Keyboard:
         codes.append(code)
         if len(codes)!=len(set(codes)) or not 1<=len(codes)<=5:
             raise DesktopError('UNSUPPORTED_KEYMAP','Chord has overlapping keycodes.')
-        return {'chord':chord,'target':target,'keycodes':codes,'group':state.group,'locked_mods':state.locked_mods}
+        return {'chord':chord,'target':target,'keycodes':codes,'group':state.group,'locked_mods':state.locked_mods,'server_generation':generation(self.x)}
     def client_resource(self):
         resource=self.x.lib.XCreateSimpleWindow(self.x.display,self.x.root,0,0,1,1,0,0,0)
         token=self.x.window_tokens([resource])[resource]
@@ -157,10 +158,14 @@ def main():
         elif sys.argv[1]=='release':
             codes=request['keycodes']
             if not isinstance(codes,list) or not 1<=len(codes)<=5 or any(type(c) is not int or not 8<=c<=255 for c in codes):raise ValueError()
+            if generation(keyboard.x)!=request['server_generation']:
+                emit({'released':False,'session_changed':True,'cleanup_skipped':True});return
             keyboard.disconnect_injector(request['client'])
             for code in reversed(codes):keyboard.event(code,False)
             emit({'released':not set(codes).intersection(keyboard.pressed())})
         elif sys.argv[1]=='inject':
+            if generation(keyboard.x)!=request['server_generation']:
+                raise DesktopError('SESSION_CHANGED','X server changed before injection; no keys pressed.')
             if keyboard.plan(request['chord'],request['target'])!=request:
                 raise DesktopError('KEYMAP_CHANGED','Keyboard state changed before dispatch; no input sent.')
             emit({'armed':True,'client':keyboard.client_resource()})

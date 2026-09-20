@@ -1,20 +1,30 @@
 """A disposable companion releases a held input if its controlling process dies."""
 from contextlib import contextmanager
 import os
+import json
 import selectors
 import subprocess
 import sys
 from .common import DesktopError, run, stop_process, subprocess_environment
 
 
+def _native_input(operation,button=None,generation=None,cleanup=False):
+    request={'operation':operation,'button':button,'server_generation':generation}
+    result=json.loads(run([sys.executable,'-m','luda._input_native'],data=json.dumps(request).encode()+b'\n',
+                         timeout=2,cleanup=cleanup,effect='none' if operation=='generation' else 'uncertain',max_output_bytes=4096))
+    if result.get('code'):raise DesktopError(result['code'],result['message'],effect=result.get('effect','none'))
+    return result
+
+
 @contextmanager
 def held_button(button):
     if button not in ('1','2','3'):
         raise DesktopError('INVALID_ARGUMENT','Unsupported held mouse button.')
+    generation=_native_input('generation')['server_generation']
     reader,writer=os.pipe()
     child=None
     try:
-        child=subprocess.Popen([sys.executable,'-m','luda._input_guard',str(reader),button],
+        child=subprocess.Popen([sys.executable,'-m','luda._input_guard',str(reader),button,generation],
                                pass_fds=(reader,),stdin=subprocess.DEVNULL,stdout=subprocess.PIPE,
                                stderr=subprocess.DEVNULL,start_new_session=True,env=subprocess_environment())
         os.close(reader);reader=None
@@ -26,14 +36,19 @@ def held_button(button):
         failure=None
         try:
             os.write(writer,b'A')
-            run(['xdotool','mousedown',button],effect='uncertain')
+            _native_input('press',button,generation)
             yield
         except BaseException as exc:
             failure=exc
             raise
         finally:
             try:
-                run(['xdotool','mouseup',button],effect='uncertain',cleanup=True)
+                result=_native_input('release',button,generation,cleanup=True)
+                if not result.get('released') and not result.get('session_changed'):
+                    raise DesktopError('INPUT_RELEASE_UNVERIFIED','Owned pointer button release was not verified.',effect='uncertain')
+                if result.get('session_changed'):
+                    if isinstance(failure,DesktopError):failure.details.update(session_changed=True,cleanup_skipped=True)
+                    elif failure is None:raise DesktopError('SESSION_CHANGED','X server changed; cleanup input was skipped on the replacement session.',effect='uncertain',details={'cleanup_skipped':True})
             except DesktopError as exc:
                 if isinstance(failure,DesktopError):
                     failure.details['button_release_failed']=exc.code
