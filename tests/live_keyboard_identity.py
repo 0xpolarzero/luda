@@ -86,7 +86,13 @@ try:
             assert observed==[2,3],observed
             checked(x.xcb_destroy_window_checked(connection,xid));create()
             replacement=driver.window_tokens([xid])[xid];assert replacement!=new
-            result=json.loads(injector.stdout.read());injector.wait(timeout=3)
+            receipts=[json.loads(line) for line in injector.stdout.read().splitlines()]
+            injector.wait(timeout=3)
+            # The native stream now includes internal per-chord acknowledgments.
+            # Keep this independent event oracle strict about the exact first
+            # dispatch and the terminal stale-generation refusal.
+            assert receipts[:-1]==[{'dispatch_started':1},{'dispatch_completed':1}],receipts
+            result=receipts[-1]
             assert result['code']=='STALE_TARGET' and 'dispatched_count' not in result,result
             assert events()==[],'repeated keys reached recreated target'
         finally:
