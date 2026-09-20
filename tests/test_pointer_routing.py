@@ -1,16 +1,26 @@
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, call
 from luda.desktop import Desktop
 from luda.interaction import InteractionMixin
 from luda.common import DesktopError
 
 
 class PointerRouting(unittest.TestCase):
+    def prepare(self, desktop, generation='generation'):
+        desktop.private_input=Mock(environment=Mock(return_value={}))
+        desktop.focus_input=Mock()
+        desktop._interaction_point=Mock(return_value=(12,34))
+        desktop.list_windows=Mock(return_value=[])
+        desktop.signature=Mock(return_value=[])
+        desktop.observe_popups=Mock(return_value=[])
+        desktop.display=Mock(return_value=Mock(topology=Mock(return_value={'server_generation':generation})))
+        desktop.snapshots['s']={'topology':{'server_generation':generation},'signature':[],'popups':[]}
+
     def test_restart_between_snapshot_check_and_preflight_cannot_rebind_click(self):
         desktop=Desktop();self.addCleanup(desktop.close)
         desktop.point=Mock(return_value=(12,34))
         desktop.target_window=Mock(return_value={'xid':42,'window_id':'observed:window-token'})
-        desktop.snapshots['s']={'topology':{'server_generation':'original'}}
+        self.prepare(desktop,'original')
         with patch('luda.interaction.check_pointer_ready',return_value={'server_generation':'replacement'}),patch('luda.desktop.click_button') as click:
             with self.assertRaises(DesktopError) as caught:desktop.pointer('w','s',1,2)
             self.assertEqual(caught.exception.code,'STALE_OBSERVATION')
@@ -20,27 +30,29 @@ class PointerRouting(unittest.TestCase):
         desktop=Desktop();self.addCleanup(desktop.close)
         desktop.point=Mock(return_value=(12,34))
         desktop.target_window=Mock(return_value={'xid':42,'window_id':'observed:window-token'})
-        desktop.snapshots['s']={'topology':{'server_generation':'generation'}}
+        self.prepare(desktop)
         for kind,kwargs,button in [('click',{},'1'),('click',{'button':'right'},'3'),('scroll',{'direction':'left'},'6')]:
             with patch('luda.desktop.run') as run,patch('luda.desktop.click_button') as click,patch('luda.interaction.check_pointer_ready',return_value={'server_generation':'generation'}) as ready:
                 result=desktop.pointer('w','s',1,2,kind=kind,count=2,**kwargs)
                 self.assertEqual(result['effect'],'dispatched')
                 run.assert_not_called()
                 click.assert_called_once_with(button,2,target=42,position=(12,34),server_generation='generation',target_generation='window-token')
-                ready.assert_called_once_with(42,target_generation='window-token')
+                ready.assert_has_calls([call(),call(42,target_generation='window-token')])
+                self.assertEqual(ready.call_count,2)
 
     def test_popup_click_and_wheel_use_owner_focus(self):
         driver=Desktop();self.addCleanup(driver.close)
         driver._popup_point=Mock(return_value=(12,34))
         driver.target_window=Mock(return_value={'xid':42,'window_id':'observed:window-token'})
-        driver.snapshots['s']={'topology':{'server_generation':'generation'}}
+        self.prepare(driver)
         for kind,button in [('click','1'),('scroll','5')]:
             with patch('luda.interaction.run') as run,patch('luda.interaction.click_button') as click,patch('luda.interaction.check_pointer_ready',return_value={'server_generation':'generation'}) as ready:
                 result=InteractionMixin.pointer_popup(driver,'w','p','s',1,2,kind=kind,count=2)
                 self.assertEqual(result['effect'],'dispatched')
                 run.assert_not_called()
                 click.assert_called_once_with(button,2,target=42,position=(12,34),server_generation='generation',target_generation='window-token')
-                ready.assert_called_once_with(42,target_generation='window-token')
+                ready.assert_has_calls([call(),call(42,target_generation='window-token')])
+                self.assertEqual(ready.call_count,2)
 
     def test_held_input_refused_before_any_initial_movement(self):
         desktop=Desktop();self.addCleanup(desktop.close)
@@ -48,7 +60,7 @@ class PointerRouting(unittest.TestCase):
         desktop._interaction_point=Mock(return_value=(12,34))
         desktop._popup_point=Mock(return_value=(12,34))
         desktop.target_window=Mock(return_value={'xid':42,'window_id':'observed:window-token'})
-        desktop.snapshots['s']={'topology':{'server_generation':'generation'}}
+        self.prepare(desktop)
         calls=[lambda:desktop.pointer('w','s',1,2),
                lambda:desktop.pointer('w','s',1,2,kind='scroll'),
                lambda:desktop.pointer('w','s',1,2,kind='drag',end_x=4,end_y=5),

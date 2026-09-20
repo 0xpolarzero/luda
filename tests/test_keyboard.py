@@ -13,7 +13,10 @@ class FakeKeyboard(Keyboard):
     def __init__(self):
         self.current=SimpleNamespace(base_mods=0,latched_mods=0,latched_group=0,group=0,locked_mods=0)
         self.keys=[];self.pointer=[]
-        self.x=SimpleNamespace(root=1,_property=Mock(return_value=(33,32,[99],0)),window_tokens=lambda ids:{xid:'a'*32 for xid in ids})
+        self._grab_depth=0
+        self.private=SimpleNamespace(validate=Mock(),focus_window=Mock(return_value=99),focus=Mock())
+        self.test=Mock()
+        self.x=SimpleNamespace(root=1,lib=Mock(),display=123,_property=Mock(return_value=(33,32,[99],0)),window_tokens=lambda ids:{xid:'a'*32 for xid in ids})
     def state(self):return self.current
     def pressed(self):return self.keys
     def buttons(self):return self.pointer
@@ -28,10 +31,43 @@ class FakeKeyboard(Keyboard):
 
 
 class KeyboardContract(unittest.TestCase):
+    def test_changed_private_binding_refuses_key_before_dispatch(self):
+        keyboard=FakeKeyboard()
+        keyboard.private.validate.side_effect=DesktopError('INPUT_UNAVAILABLE','binding changed')
+        with self.assertRaises(DesktopError):keyboard.event(38,True)
+        keyboard.test.XTestFakeKeyEvent.assert_not_called()
+        keyboard.x.lib.XUngrabServer.assert_called_once_with(123)
+        self.assertEqual(keyboard._grab_depth,0)
+
+    def test_nested_input_guard_validates_without_early_unlock(self):
+        keyboard=FakeKeyboard()
+        with keyboard.guard():
+            with keyboard.guard():
+                self.assertEqual(keyboard._grab_depth,2)
+                keyboard.x.lib.XUngrabServer.assert_not_called()
+            keyboard.x.lib.XUngrabServer.assert_not_called()
+        self.assertEqual(keyboard.private.validate.call_count,2)
+        keyboard.x.lib.XGrabServer.assert_called_once_with(123)
+        keyboard.x.lib.XUngrabServer.assert_called_once_with(123)
+
+    def test_private_focus_accepts_child_without_consulting_human_activation(self):
+        keyboard=FakeKeyboard()
+        keyboard.private.focus_window.return_value=101
+        keyboard.x._property.return_value=(33,32,[777],0)
+        def tree(display,window,root,parent,children,count):
+            parent._obj.value=99
+            return True
+        keyboard.x.lib.XQueryTree.side_effect=tree
+        keyboard.require_focus(99)
+        keyboard.x._property.assert_not_called()
+        keyboard.private.focus.assert_not_called()
+
     def test_desktop_passes_observed_window_generation_to_native_planner(self):
         from luda.desktop import Desktop
         desktop=Desktop();self.addCleanup(desktop.close)
         desktop.target_window=Mock(return_value={'xid':99,'window_id':'epoch:63:123:456:'+('a'*32)})
+        desktop.private_input=Mock(environment=Mock(return_value={}))
+        desktop.focus_input=Mock()
         with patch('luda.desktop.send_chord',return_value={'effect':'dispatched'}) as send:
             self.assertEqual(desktop.key('observed','Return')['effect'],'dispatched')
         send.assert_called_once_with('Return',99,target_generation='a'*32,count=1)

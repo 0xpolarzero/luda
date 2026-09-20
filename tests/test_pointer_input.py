@@ -2,13 +2,23 @@ import json
 import unittest
 from unittest.mock import patch,Mock
 from test_keyboard import FakeKeyboard
-from luda._pointer_native import plan_pointer,move_pointer as native_move,target_guard
+from luda._pointer_native import plan_pointer,move_pointer as native_move,target_guard,motion,event
 from luda._keyboard_guard import cleanup_request, native_module
 from luda.common import DesktopError
 from luda.pointer_input import click_button,check_pointer_ready
 
 
 class PointerContract(unittest.TestCase):
+    def test_changed_private_binding_refuses_motion_and_button_events(self):
+        for action in (lambda native:motion(native,[10,20]),lambda native:event(native,1,True)):
+            native=FakeKeyboard()
+            native.private.validate.side_effect=DesktopError('INPUT_UNAVAILABLE','binding changed')
+            with self.assertRaises(DesktopError):action(native)
+            native.test.XTestFakeMotionEvent.assert_not_called()
+            native.test.XTestFakeButtonEvent.assert_not_called()
+            native.x.lib.XUngrabServer.assert_called_once_with(123)
+            self.assertEqual(native._grab_depth,0)
+
     def test_invalid_arguments_never_start_helper(self):
         cases=[(True,1,None),(1,1,None),('8',1,None),('1',True,None),('1',0,None),('1',21,None),('1',1,True),('1',1,0)]
         for button,count,target in cases:
