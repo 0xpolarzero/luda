@@ -5,8 +5,73 @@ import re
 import selectors
 import subprocess
 import sys
+import signal
+import threading
+import uuid
 from .common import DesktopError, checkpoint, mark_effect, run, subprocess_environment
 from .timing import elapsed_time
+
+
+_recovery_lock=threading.Lock()
+_pending_recoveries={}
+_retain_recovery=None
+_release_recovery=None
+
+
+def set_recovery_hooks(retain,release):
+    """MCP registers synchronous quarantine ownership callbacks at startup."""
+    global _retain_recovery,_release_recovery
+    _retain_recovery,_release_recovery=retain,release
+
+
+def keyboard_recovery_checkpoint():
+    with _recovery_lock:
+        pending=bool(_pending_recoveries)
+    if pending:
+        raise DesktopError('BUSY','A previous keyboard operation has unresolved cleanup; no new input sent.',details={'keyboard_recovery_pending':True})
+
+
+def _completion_proven(result):
+    return bool(result and (result.get('done') is True or result.get('cleanup_verified') is True or
+                (result.get('armed') is False and result.get('effect')=='none')))
+
+
+def _recover_guardian(token,guard,output,release):
+    proven=False
+    try:
+        if guard.poll() is None:
+            # Resume only our unreaped child. A stopped companion must be able
+            # to kill/wait its injector and complete its own bounded cleanup.
+            os.kill(guard.pid,signal.SIGCONT)
+        deadline=elapsed_time()+12
+        with selectors.DefaultSelector() as ready:
+            ready.register(guard.stdout,selectors.EVENT_READ)
+            while elapsed_time()<deadline:
+                if not ready.select(.05):continue
+                chunk=os.read(guard.stdout.fileno(),4096)
+                if not chunk:break
+                output+=chunk
+                if len(output)>8192:raise ValueError()
+            else:return
+        guard.wait(timeout=max(.01,deadline-elapsed_time()))
+        proven=_completion_proven(json.loads(output))
+    except Exception:
+        pass
+    finally:
+        if guard.poll() is not None:guard.stdout.close()
+        if proven:
+            with _recovery_lock:_pending_recoveries.pop(token,None)
+            if release:release(token)
+        # Unknown/failed cleanup retains its ownership token. Returning an error
+        # must never reopen the input gate while an old injector can still act.
+
+
+def _retain_guardian(guard,output):
+    token='keyboard:'+uuid.uuid4().hex
+    with _recovery_lock:_pending_recoveries[token]=guard
+    if _retain_recovery:_retain_recovery(token)
+    thread=threading.Thread(target=_recover_guardian,args=(token,guard,output,_release_recovery),daemon=True,name='luda-keyboard-recovery')
+    thread.start()
 
 
 def validate_chord(chord):
@@ -37,6 +102,7 @@ def keyboard_capabilities():
 
 def send_chord(chord,target):
     validate_chord(chord)
+    keyboard_recovery_checkpoint()
     if type(target) is not int or not 0<target<=0xffffffff:
         raise DesktopError('INVALID_ARGUMENT','Invalid native target window.')
     request={'chord':chord,'target':target}
@@ -44,7 +110,7 @@ def send_chord(chord,target):
     if plan.get('code'):raise DesktopError(plan['code'],plan['message'])
     checkpoint()
     guard=subprocess.Popen([sys.executable,'-m','luda._keyboard_guard'],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,start_new_session=True,env=subprocess_environment())
-    failure=None;output=b'';result=None
+    failure=None;output=b'';result=None;retained=False;proven=False
     try:
         guard.stdin.write(json.dumps(plan).encode()+b'\n');guard.stdin.flush()
         with selectors.DefaultSelector() as ready:
@@ -78,6 +144,7 @@ def send_chord(chord,target):
                 if len(output)>8192:raise DesktopError('KEYBOARD_UNAVAILABLE','Keyboard companion response exceeded its bound.',effect='uncertain')
         guard.wait(timeout=max(.01,cleanup_deadline-elapsed_time()))
         if output:result=json.loads(output)
+        proven=_completion_proven(result)
         if result and result.get('armed'):mark_effect()
         if failure:
             if result and result.get('armed'):failure.effect='uncertain'
@@ -87,6 +154,14 @@ def send_chord(chord,target):
         if result.get('code'):
             raise DesktopError(result['code'],result['message'],effect=result.get('effect','uncertain'),details={k:result[k] for k in ('cleanup_verified',) if k in result})
         return {'effect':'dispatched','group_unchanged':result['group_unchanged'],'locks_unchanged':result['locks_unchanged'],'verification':'Key delivery does not prove application outcome.'}
+    except BaseException as exc:
+        if not proven:
+            mark_effect()
+            if isinstance(exc,DesktopError):exc.effect='uncertain'
+            if guard.stdin and not guard.stdin.closed:guard.stdin.close()
+            _retain_guardian(guard,output)
+            retained=True
+        raise
     finally:
         if guard.stdin and not guard.stdin.closed:guard.stdin.close()
-        guard.stdout.close()
+        if not retained:guard.stdout.close()

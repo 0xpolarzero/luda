@@ -13,8 +13,19 @@ def emit(value):
 
 
 def main():
-    worker=None;armed=False;client=None;done=None;buffer=b'';request=None
+    worker=None;armed=False;client=None;done=None;buffer=b'';partial=b'';request=None
     reason=None
+    def consume(chunk,final=False):
+        nonlocal armed,client,done,partial
+        partial+=chunk
+        lines=partial.split(b'\n')
+        partial=lines.pop()
+        if final and partial:lines.append(partial);partial=b''
+        for line in lines:
+            if not line:continue
+            message=json.loads(line)
+            if message.get('armed'):armed=True;client=message['client']
+            elif message.get('done') or message.get('code'):done=message
     try:
         deadline=elapsed_time()+6
         with selectors.DefaultSelector() as watch:
@@ -40,7 +51,7 @@ def main():
                         if not os.read(sys.stdin.fileno(),4096):reason='CANCELLED';break
                     else:
                         chunk=os.read(worker.stdout.fileno(),4096)
-                        if chunk:buffer+=chunk
+                        if chunk:buffer+=chunk;consume(chunk)
                         else:watch.unregister(worker.stdout)
                 if len(buffer)>8192:reason='KEYBOARD_UNAVAILABLE';break
                 if reason or worker.poll() is not None:break
@@ -52,12 +63,9 @@ def main():
             try:chunk=os.read(worker.stdout.fileno(),4096)
             except BlockingIOError:break
             if not chunk:break
-            buffer+=chunk
+            buffer+=chunk;consume(chunk)
             if len(buffer)>8192:break
-        for line in buffer.splitlines():
-            message=json.loads(line)
-            if message.get('armed'):armed=True;client=message['client']
-            elif message.get('done') or message.get('code'):done=message
+        consume(b'',final=True)
         if armed and (reason or not done or not done.get('done')):
             try:
                 cleanup=subprocess.run([sys.executable,'-m','luda._keyboard_native','release'],input=json.dumps({'keycodes':request['keycodes'],'client':client}).encode()+b'\n',stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,timeout=2)
@@ -73,6 +81,14 @@ def main():
     except Exception:
         if worker and worker.poll() is None:
             worker.kill();worker.wait(timeout=1)
+        if worker and worker.stdout:
+            try:
+                while True:
+                    chunk=os.read(worker.stdout.fileno(),4096)
+                    if not chunk:break
+                    consume(chunk)
+                consume(b'',final=True)
+            except Exception:pass
         # Protocol errors are private implementation failures. A valid armed
         # record precedes every possible native event; conservatively clean the
         # validated plan if worker output was lost or malformed.

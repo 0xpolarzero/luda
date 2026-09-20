@@ -101,4 +101,50 @@ class KeyboardContract(unittest.TestCase):
         self.assertEqual(ctypes.sizeof(State),18)
 
 
+class PendingKeyboardRecovery(unittest.TestCase):
+    def test_recovery_retains_gate_before_resuming_stopped_guardian(self):
+        import os,signal,subprocess,sys,time
+        from luda import keyboard
+        child=subprocess.Popen([sys.executable,'-c','import os,signal,json;os.kill(os.getpid(),signal.SIGSTOP);print(json.dumps({"done":True,"armed":True}))'],stdout=subprocess.PIPE)
+        history=[];released=threading.Event()
+        previous=(keyboard._retain_recovery,keyboard._release_recovery)
+        def retain(token):history.append(('retained',token))
+        def release(token):history.append(('released',token));released.set()
+        try:
+            deadline=time.monotonic()+2
+            while time.monotonic()<deadline:
+                from pathlib import Path
+                if Path(f'/proc/{child.pid}/stat').read_text().rsplit(')',1)[1].split()[0]=='T':break
+                time.sleep(.005)
+            else:self.fail('owned fake guardian did not stop')
+            keyboard.set_recovery_hooks(retain,release)
+            keyboard._retain_guardian(child,b'')
+            self.assertTrue(released.wait(3))
+            self.assertEqual([item[0] for item in history],['retained','released'])
+            self.assertEqual(history[0][1],history[1][1])
+            keyboard.keyboard_recovery_checkpoint()
+        finally:
+            keyboard.set_recovery_hooks(*previous)
+            if child.poll() is None:child.kill();child.wait(timeout=2)
+            if not child.stdout.closed:child.stdout.close()
+    def test_unverified_cleanup_cannot_reopen_input_gate(self):
+        import subprocess,sys,time
+        from luda import keyboard
+        child=subprocess.Popen([sys.executable,'-c','import json;print(json.dumps(dict(armed=True,cleanup_verified=False,effect="uncertain")))'],stdout=subprocess.PIPE)
+        retained=[];released=[];previous=(keyboard._retain_recovery,keyboard._release_recovery)
+        try:
+            keyboard.set_recovery_hooks(retained.append,released.append)
+            keyboard._retain_guardian(child,b'')
+            child.wait(timeout=2)
+            time.sleep(.02)
+            self.assertEqual(len(retained),1);self.assertEqual(released,[])
+            with self.assertRaises(DesktopError) as error:keyboard.keyboard_recovery_checkpoint()
+            self.assertEqual(error.exception.code,'BUSY')
+        finally:
+            keyboard.set_recovery_hooks(*previous)
+            with keyboard._recovery_lock:
+                for token in retained:keyboard._pending_recoveries.pop(token,None)
+            if not child.stdout.closed:child.stdout.close()
+
+
 if __name__=='__main__':unittest.main()
