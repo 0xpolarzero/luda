@@ -11,6 +11,7 @@ import uuid
 
 import anyio
 from .protocol import DesktopMCP
+from .identity import version_identity
 from mcp.types import CallToolResult, ImageContent, TextContent, ToolAnnotations
 
 from .common import DesktopError, operation_scope, checkpoint, environment_scope
@@ -205,8 +206,13 @@ async def desktop_reconnect(session_pid: int | None = None) -> CallToolResult:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
 async def desktop_doctor() -> CallToolResult:
-    """Check actual display access, desktop session, dependencies and accessibility availability."""
-    return await execute_async('doctor')
+    """Check actual display access, desktop session, dependencies and accessibility availability. Reports driver version and content identities for tool declarations and the server-bundled skill; the latter does not identify the skill loaded by your agent."""
+    response = await execute_async('doctor')
+    if not response.isError:
+        payload = json.loads(response.content[0].text)
+        payload['versions'] = version_identity([tool.model_dump(mode='json', exclude_none=True) for tool in await mcp.list_tools()])
+        response.content[0].text = json.dumps(payload, ensure_ascii=False, separators=(',', ':'))
+    return response
 
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))

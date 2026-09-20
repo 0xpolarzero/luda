@@ -50,7 +50,7 @@ Reconnect this MCP connection to a running XFCE session owned by this account af
 desktop_doctor()
 ```
 
-Check actual display access, desktop session, dependencies and accessibility availability.
+Check actual display access, desktop session, dependencies and accessibility availability. Reports driver version and content identities for tool declarations and the server-bundled skill; the latter does not identify the skill loaded by your agent.
 
 ## `desktop_applications`
 
