@@ -71,6 +71,12 @@ def bounded_name_identity(node, protected):
     return name[:300], hashlib.sha256(encoded).hexdigest()
 
 
+def finite_provider_number(value):
+    if type(value) not in (int, float) or not math.isfinite(value):
+        raise ValueError('Invalid provider number')
+    return value
+
+
 def describe(node, pid):
     interfaces = node.get_interfaces()
     state = node.get_state_set()
@@ -88,9 +94,17 @@ def describe(node, pid):
         action = node.get_action_iface()
         r["actions"] = [action.get_action_name(i) for i in range(action.get_n_actions())]
     if "Value" in interfaces and not protected:
-        value = node.get_value_iface()
-        r["value"] = {"current": value.get_current_value(), "minimum": value.get_minimum_value(),
-                      "maximum": value.get_maximum_value(), "increment": value.get_minimum_increment()}
+        try:
+            value = node.get_value_iface()
+            numbers = {"current": finite_provider_number(value.get_current_value()),
+                       "minimum": finite_provider_number(value.get_minimum_value()),
+                       "maximum": finite_provider_number(value.get_maximum_value()),
+                       "increment": finite_provider_number(value.get_minimum_increment())}
+            if numbers["minimum"] > numbers["maximum"]:
+                raise ValueError('Invalid provider range')
+            r["value"] = numbers
+        except Exception:
+            r["value_error"] = "VALUE_UNVERIFIABLE"
     if "EditableText" in interfaces:
         r["native_text_mutation_supported"] = native_text_mutation_supported(node, r)
     return r
@@ -979,7 +993,12 @@ def semantic(node, current, req):
         # this separately from public code-point positions to avoid NUL padding.
         if text:
             accepted = bool(edit.insert_text(t.provider_offset(start), text, t.insertion_length(text)))
-        matched = verify(lambda: t.get_text(0, -1) == expected)
+        observed_text = None
+        def text_matches():
+            nonlocal observed_text
+            observed_text = t.get_text(0, -1)
+            return observed_text == expected
+        matched = verify(text_matches)
         representation_error = text_representation_error(t, mutation_started=True)
         if representation_error:
             return representation_error
@@ -1000,9 +1019,10 @@ def semantic(node, current, req):
                     caret_verified = False
         return {"effect": "verified" if matched else "uncertain", "accepted": accepted,
                 "exact_match": matched, "expected_characters": len(expected),
-                "actual_characters": t.get_character_count(),
+                "actual_characters": len(observed_text),
                 "replaced_characters": end-start, "inserted_characters": len(text),
-                "caret_verified": caret_verified, "caret_offset": t.get_caret_offset()}
+                "caret_verified": caret_verified, "caret_offset": wanted_caret if caret_verified else t.get_caret_offset(),
+                "verification": "Text and character count describe the same observed readback; caret verification is a separate observation. Later application changes are not excluded."}
     if op == "value":
         value = req.get("value")
         if type(value) not in (int, float) or not math.isfinite(value):
@@ -1010,15 +1030,25 @@ def semantic(node, current, req):
         if "Value" not in current["interfaces"]:
             return failure("UNSUPPORTED", "Element has no Value interface.")
         v = node.get_value_iface()
-        if not v.get_minimum_value() <= value <= v.get_maximum_value():
+        try:
+            minimum = finite_provider_number(v.get_minimum_value())
+            maximum = finite_provider_number(v.get_maximum_value())
+            if minimum > maximum:
+                raise ValueError('Invalid provider range')
+        except Exception:
+            return {"error": "VALUE_UNVERIFIABLE", "message": "Provider numeric range is unavailable or invalid; no value change sent.", "effect": "none"}
+        if not minimum <= value <= maximum:
             return failure("OUT_OF_BOUNDS", "Value is outside the reported range.")
         accepted = bool(v.set_current_value(value))
         observed_value = None
         def value_matches():
             nonlocal observed_value
-            observed_value = v.get_current_value()
+            observed_value = finite_provider_number(v.get_current_value())
             return observed_value == value
-        matched = verify(value_matches)
+        try:
+            matched = verify(value_matches)
+        except Exception:
+            return {"error": "VALUE_UNVERIFIABLE", "message": "Provider numeric readback is unavailable or invalid after input; inspect before retrying.", "effect": "uncertain"}
         return {"effect": "verified" if matched else "uncertain", "accepted": accepted,
                 "exact_match": matched, "actual_value": observed_value}
     if op in ("check", "expand"):
