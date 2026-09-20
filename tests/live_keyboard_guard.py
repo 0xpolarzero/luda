@@ -285,7 +285,10 @@ def main():
         for key,name in (('XDG_CONFIG_HOME','config'),('XDG_DATA_HOME','data'),('XDG_CACHE_HOME','cache'),('XDG_RUNTIME_DIR','runtime')):
             path=Path(directory)/name;path.mkdir(mode=0o700);env[key]=str(path)
         env['XDG_CONFIG_DIRS']=env['XDG_CONFIG_HOME']
-        result=subprocess.run(['xvfb-run','-a','-s','-screen 0 1000x750x24 -nolisten tcp','dbus-run-session','--',sys.executable,str(Path(__file__).resolve()),'--child'],env=env,timeout=45)
+        # Allow the full sequence (including the intentional 13-second pending
+        # recovery wait) on hosted runners. Per-action/oracle deadlines above
+        # remain strict; the headless runner additionally bounds this at 120s.
+        result=subprocess.run(['xvfb-run','-a','-s','-screen 0 1000x750x24 -nolisten tcp','dbus-run-session','--',sys.executable,str(Path(__file__).resolve()),'--child'],env=env,timeout=90)
     raise SystemExit(result.returncode)
 
 if __name__=='__main__':main()
