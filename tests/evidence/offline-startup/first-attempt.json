@@ -1,0 +1,15 @@
+{
+  "passed": false,
+  "stage": "network preflight before GUI/MCP",
+  "cause": "Fixture initially allowed only ENETUNREACH/ECONNREFUSED. IPv6 with down loopback and no addresses instead returned EADDRNOTAVAIL99. Corrected acceptance explicitly allows99 only for IPv6; accessible or timeout canaries still fail.",
+  "log": "Traceback (most recent call last):\n  File \"/workspace/luda-offline-startup/tests/evidence/offline-startup/probe.py\", line 89, in <module>\n    asyncio.run(main(p.parse_args()))\n  File \"/usr/lib/python3.12/asyncio/runners.py\", line 194, in run\n    return runner.run(main)\n           ^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/asyncio/runners.py\", line 118, in run\n    return self._loop.run_until_complete(task)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/asyncio/base_events.py\", line 687, in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\n  File \"/workspace/luda-offline-startup/tests/evidence/offline-startup/probe.py\", line 42, in main\n    proof=network_proof(args.host_namespace,args.host_port);(output/'network.json').write_text(json.dumps(proof,indent=2)+'\\n')\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/workspace/luda-offline-startup/tests/evidence/offline-startup/probe.py\", line 30, in network_proof\n    assert all(code in (errno.ENETUNREACH,errno.ECONNREFUSED) for code in probes.values()),probes\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: {'host-loopback': 101, 'external-v4': 101, 'external-v6': 99}\n",
+  "cleanup": {
+    "reason": "completed",
+    "signal": null,
+    "exit_code": 1,
+    "cleanup_confirmed": true,
+    "owned_processes_seen": 6,
+    "survivors": [],
+    "cleanup_seconds": 0.026
+  }
+}

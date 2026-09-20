@@ -1,0 +1,16 @@
+{
+  "passed": true,
+  "uid": 1001,
+  "release": "0.1.0-1fd079f0094942e5",
+  "mcp_version": "0.1.0",
+  "checks": [
+    "initialize-and-tools",
+    "actual-doctor-ready",
+    "native-exact-independent-text",
+    "native-independent-action",
+    "screenshot-valid"
+  ],
+  "network_boundary_preserved": true,
+  "credential_environment": "fresh allowlist; no model/vendor credentials copied",
+  "scope": "installed ordinary launcher/MCP and native GUI; no cloud agent, downloads, or optional browser launch qualified"
+}

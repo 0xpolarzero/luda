@@ -1,0 +1,13 @@
+{
+  "namespace_differs_from_host": true,
+  "interfaces": [
+    "lo"
+  ],
+  "ipv4_routes": [],
+  "canary_errno": {
+    "host-loopback": 101,
+    "external-v4": 101,
+    "external-v6": 99
+  },
+  "boundary": "private kernel network namespace; loopback remains down; no external interfaces/routes; Unix sockets remain available"
+}

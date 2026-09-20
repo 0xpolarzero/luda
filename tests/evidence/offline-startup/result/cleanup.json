@@ -1,0 +1,9 @@
+{
+  "reason": "completed",
+  "signal": null,
+  "exit_code": 0,
+  "cleanup_confirmed": true,
+  "owned_processes_seen": 51,
+  "survivors": [],
+  "cleanup_seconds": 0.049
+}
