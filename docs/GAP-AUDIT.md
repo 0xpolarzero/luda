@@ -10,11 +10,11 @@ source-bound findings.
 
 ## Evidence now available
 
-The [current unit record](UNIT-COVERAGE-CURRENT.md) now contains 688 passing root
-tests and the matching ordinary-account run (680 passed, eight unavailable Codex
-CLI tests skipped). Its map names 137 requirements and 307 distinct unit methods.
-These subsequent results retain their own source revision and fingerprint. The [live inventory](LIVE-COVERAGE.md) registers 75 fixtures and
-160 distinct requirement associations. These overlap and are not a reliability
+The [current unit record](UNIT-COVERAGE-CURRENT.md) now contains 704 passing root
+tests and the matching ordinary-account run (696 passed, eight unavailable Codex
+CLI tests skipped). Its map names 138 requirements and 318 distinct unit methods.
+These subsequent results retain their own source revision and fingerprint. The [live inventory](LIVE-COVERAGE.md) registers 76 fixtures and
+162 distinct requirement associations. These overlap and are not a reliability
 percentage or evidence that all associated requirements passed.
 
 Both hosted workflows passed at `8dd8aef`, including independent AMD64 unit,
@@ -114,3 +114,5 @@ explicitly permits unsupported behavior still needs evidence for that refusal;
 its requested application effect must not be described as successful.
 
 [Optional local OCR](OCR.md) is now implemented, with bounded historical screenshot storage, uncertain word candidates and real GTK/MCP geometry evidence. [Temporary silent screen recording](RECORDING.md) is implemented with bounded storage and lifecycle/fault evidence. Audio, camera input and other richer media capabilities remain separate work.
+
+[Optional image matching](IMAGE-MATCHING.md) now returns bounded historical visual candidates, with private ARM64 and hosted AMD64 evidence. A [fresh-agent media workflow](../tests/evidence/media-usability/README.md) records first-use behavior and the subsequently corrected rectangle schema. Native Silo inspection now reconciles uncertain registration, removal and update states through explicit actions without installation replay.

@@ -152,4 +152,6 @@ The [Silo integration](../integrations/silo/README.md) provides native registrat
 
 [OCR](OCR.md) passed its integrated private MCP workflow, and the ordinary guest MCP suite passed 23 checks. [Rich text](OWNED-RICH-EDITOR-PROTOTYPE.md), [native composition provenance](OWNED-RICH-EDITOR-PROTOTYPE.md) and [explicit cancellation](OWNED-BROWSER-CANCEL-PROTOTYPE.md) remain scoped prototypes with retained failures and uncertain cases. They do not extend the production text support claim.
 
-The subsequent [688-test snapshot](UNIT-COVERAGE-CURRENT.md) and [temporary recording](RECORDING.md) qualify the named local assertions with matching unchanged source fingerprints. The ten-patch integration also synchronizes the recording skill; fresh Silo and macOS acceptance remain outstanding.
+The subsequent [688-test snapshot](UNIT-COVERAGE-ED4EDCB.md) and [temporary recording](RECORDING.md) qualify the named local assertions with matching unchanged source fingerprints. The ten-patch integration also synchronizes the recording skill; fresh Silo and macOS acceptance remain outstanding.
+
+The [704-test snapshot](UNIT-COVERAGE-CURRENT.md) adds image matching and accurate pre-spawn storage errors, with matching ordinary-account evidence and 23 live MCP checks. Subsequent targeted tests cover the schema improvement found by a fresh agent. Native recovery now covers registration, removal and update uncertainty; all thirteen integration patches apply together to the pinned Silo source.
