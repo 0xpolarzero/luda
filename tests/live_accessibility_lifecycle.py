@@ -15,7 +15,7 @@ from luda.desktop import Desktop
 from luda.common import DesktopError
 from luda.session import discover
 ROOT=Path(__file__).resolve().parents[1]
-OUT=ROOT/'artifacts/accessibility-lifecycle';OUT.mkdir(parents=True,exist_ok=True)
+OUT=ROOT/'artifacts/accessibility-lifecycle'
 
 def gdbus(destination,path,method,*args):
  r=subprocess.run(['gdbus','call','--session','--dest',destination,'--object-path',path,'--method',method,*map(str,args)],capture_output=True,text=True,timeout=4,check=True)
@@ -138,6 +138,7 @@ def kill_owned(token):
  return matched
 
 def main():
+ OUT.mkdir(parents=True,exist_ok=True)
  parser=argparse.ArgumentParser();parser.add_argument('--child',type=Path);parser.add_argument('--restart',action='store_true');args=parser.parse_args()
  if args.child:
   rows=child(args.child,args.restart);raise SystemExit(0 if all(x['passed'] for x in rows) else 1)
