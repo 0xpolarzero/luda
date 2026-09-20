@@ -312,10 +312,12 @@ owned host key under the same alias is refused without rewriting the old pins.
 
 A private dependency seam tests key-derivation timeout and output overflow without
 adding a production executable override. Production remains the fixed system
-ssh-keygen with a five-second deadline; output is capped at 4096 bytes, and timeout
+ssh-keygen with a five-second deadline; accepted output is limited to 4096 bytes, and timeout
 or overflow terminates the owned process group before returning. The timeout test
 proves a delayed child marker is never written. Existing SSH config preservation,
 public-key parsing, quoting and file-mode/symlink tests also pass. Exact logs,
 binary versions/hashes and cleanup evidence are in
 `artifacts/silo-native-registration/native-ssh.json`. This closes Linux native
 helper execution, not real Silo routing or macOS application acceptance.
+
+The eighth patch polls its temporary output size; that is an acceptance bound, not a hard disk-write quota. Follow-up review is tightening capture and cleanup when a successful parent leaves a child behind.
