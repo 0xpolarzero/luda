@@ -44,3 +44,15 @@ Named chords accept `count=1` through `20` (default `1`), useful for navigation 
 Live checks cover 20 exact text characters, repeated line navigation, repeated Shift+A, cancellation after several characters with no later input, exact native event counts for three Return chords and twenty maximum-size five-key chords, and same-process target recreation after the first repetition. The replacement receives no remaining key events.
 
 `tests/live_mcp_keyboard.py` qualifies the public stdio MCP count schema/default, invalid-count rejection without application events, 20-character exact output, line navigation, explicit protocol cancellation midway through a repeat, no later text, and successful subsequent input on the same MCP connection. It owns a private Xvfb/D-Bus/XDG desktop and GTK fixture.
+
+A hosted AMD64 run at `568c9ab` failed the repeated-key cancellation assertion
+before the test recorded the returned error details. That artifact alone cannot
+establish the exact failing conjunct. Review found a missing fixture precondition:
+Clear dispatched input, but the independently published GTK state could still
+contain the preceding `AAA`. A length-only threshold could therefore cancel
+before new repeat input began. The harness now waits for independently observed
+empty text after Clear and requires the new `111` prefix before cancellation.
+Failure output includes thread state, error code/effect and synthetic text.
+The corrected full private-display keyboard suite passed locally on ARM64; the
+original CI failure remains retained (run `35485896308`). This is a test-oracle
+correction, not evidence of a production keyboard defect or its repair.

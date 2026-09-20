@@ -75,7 +75,11 @@ def run_child():
             wait(lambda:(output/'state.json').exists())
             def text():return json.loads((output/'state.json').read_text())['text']
             def key(chord):return desktop.key(window['window_id'],chord)
-            def clear():key('ctrl+a');key('BackSpace')
+            def clear():
+                key('ctrl+a');key('BackSpace')
+                # Dispatch can precede the fixture's periodic independent snapshot.
+                # A prior three-character value must not trigger early cancellation.
+                wait(lambda:text()=='')
             for chord in ('A','a','1'):
                 result=key(chord);assert result['group_unchanged'] and result['locks_unchanged']
             wait(lambda:text()=='Aa1')
@@ -92,8 +96,8 @@ def run_child():
                 try:
                     with operation_scope(cancelled=repeat_cancel):send_chord('1',window['xid'],count=20)
                 except DesktopError as exc:repeat_errors.append(exc)
-            repeating=threading.Thread(target=repeat_case);repeating.start();wait(lambda:len(text())>=3);repeat_cancel.set();repeating.join(4)
-            assert not repeating.is_alive() and repeat_errors[0].code=='CANCELLED' and repeat_errors[0].effect=='uncertain'
+            repeating=threading.Thread(target=repeat_case);repeating.start();wait(lambda:text().startswith('111'));repeat_cancel.set();repeating.join(4)
+            assert not repeating.is_alive() and repeat_errors and repeat_errors[0].code=='CANCELLED' and repeat_errors[0].effect=='uncertain', {'thread_alive':repeating.is_alive(),'errors':[(e.code,e.effect) for e in repeat_errors],'text':text()}
             after=text();assert 3<=len(after)<20 and not oracle.pressed();time.sleep(.1);assert text()==after
             assert 'dispatched_count' not in repeat_errors[0].details
             rows.append('bounded-repeats-exact-text-navigation-full-chords-and-cancellation-no-replay')
