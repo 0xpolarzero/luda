@@ -98,7 +98,7 @@ Inspect a window or find controls by name/role substring and required states. Re
 desktop_read_text(element_id: str, limit: int=16000)
 ```
 
-Read exact accessible text, preserving whitespace. Protected fields are unsupported. Maximum 1 MB.
+Read accessible text and representation metadata, preserving whitespace. limit counts Unicode code points (default 16000, maximum 1000000), not bytes. Opaque embedded objects are not exact logical plain text: check plain_text_verification_supported. Normalization reads the bounded full field; a smaller limit does not enable streaming. Protected fields are refused.
 
 ## `desktop_type`
 

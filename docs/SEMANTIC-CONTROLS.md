@@ -60,6 +60,22 @@ not make this a streaming reader. Larger fields produce `VERIFICATION_LIMIT`;
 inconsistent or changing provider counts are refused rather than guessed.
 Same-length concurrent edits and edits after observation remain possible.
 
+Native EditableText insertion and full-field replacement now apply the same opaque
+Hypertext boundary as the clipboard route. Actual embedded objects are refused
+before any text mutation, including before deleting a selected range. A provider
+that introduces objects during deletion, insertion, or replacement produces
+`TEXT_REPRESENTATION_UNSUPPORTED` with an uncertain effect; no second insertion or
+automatic retry follows that detection. A literal U+FFFC without an associated
+Hypertext link remains ordinary text. Whole-field replacement of preexisting
+opaque objects is conservatively refused: no qualified native-provider evidence
+currently establishes safe elimination and exact logical plaintext readback.
+
+This guard closes a deterministic provider-contract gap: native insertion formerly
+returned verified placeholder-text readback without consulting representation
+metadata. The regression uses protocol doubles with actual Hypertext link metadata;
+it does not claim a newly qualified live rich-text provider.
+
+
 ## Provider text conventions
 
 Qt uses UTF-16 offsets and insertion lengths, including when the existing text is

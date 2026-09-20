@@ -393,6 +393,16 @@ class TextAccess:
         return Atspi.Text.remove_selection(self.raw, index)
 
 
+def text_representation_error(text_access, mutation_started=False):
+    if text_access.representation()['plain_text_verification_supported']:
+        return None
+    return {'error': 'TEXT_REPRESENTATION_UNSUPPORTED',
+            'message': ('Input may already have occurred; embedded objects prevent exact plain-text verification. Inspect before retrying.'
+                        if mutation_started else
+                        'Embedded objects prevent exact plain-text verification; no text input sent. Use deliberate paste with application-specific verification.'),
+            'effect': 'uncertain' if mutation_started else 'none'}
+
+
 def choice_identity(node, observed=None):
     """Bounded option identity, shared by each supported selection provider."""
     role = observed["role"] if observed is not None else node.get_role_name()
@@ -730,6 +740,9 @@ def semantic(node, current, req):
             return failure("UNSUPPORTED_TEXT", "Text must be valid Unicode without NUL or CR and at most one million characters.")
         if "EditableText" not in current["interfaces"] or "editable" not in current["states"]:
             return failure("NOT_EDITABLE", "Insertion requires editable Text and EditableText interfaces.")
+        representation_error = text_representation_error(t)
+        if representation_error:
+            return representation_error
         count = t.get_n_selections()
         if count > 1:
             return failure("UNSUPPORTED", "Multiple selections cannot be replaced safely.")
@@ -756,6 +769,9 @@ def semantic(node, current, req):
             range_now = None
         if t.get_text(0, -1) != before or range_now != (start, end):
             return failure("STALE_TARGET", "Text changed before insertion; inspect again.")
+        representation_error = text_representation_error(t)
+        if representation_error:
+            return representation_error
         accepted = True
         req["_mutation_started"] = True
         if end > start:
@@ -763,11 +779,19 @@ def semantic(node, current, req):
             if not accepted or not verify(lambda: t.get_text(0, -1) == before[:start] + before[end:]):
                 return {"effect": "uncertain", "accepted": accepted, "exact_match": False,
                         "verification": "Selection deletion was rejected; inspect before retrying."}
+        # Deletion is itself a provider mutation. Do not send the insertion
+        # if the remaining field has become an opaque representation.
+        representation_error = text_representation_error(t, mutation_started=True)
+        if representation_error:
+            return representation_error
         # GTK consumes UTF-8 length; Qt bridge consumes UTF-16 units. Normalize
         # this separately from public code-point positions to avoid NUL padding.
         if text:
             accepted = bool(edit.insert_text(t.provider_offset(start), text, t.insertion_length(text)))
         matched = verify(lambda: t.get_text(0, -1) == expected)
+        representation_error = text_representation_error(t, mutation_started=True)
+        if representation_error:
+            return representation_error
         caret_verified = False
         if matched:
             for _ in range(min(t.get_n_selections(), 100)):
@@ -958,9 +982,15 @@ def main(req):
             # Qualify complete existing text before mutation; bounded independent
             # readback also refuses a provider that grows unexpectedly afterward.
             t = TextAccess(node.get_text_iface())
+            representation_error = text_representation_error(t)
+            if representation_error:
+                return representation_error
             req["_mutation_started"] = True
             accepted = node.get_editable_text_iface().set_text_contents(text)
             actual = t.get_text(0, -1)
+            representation_error = text_representation_error(t, mutation_started=True)
+            if representation_error:
+                return representation_error
             return {"effect": "verified" if actual == text else "uncertain", "accepted": accepted,
                     "exact_match": actual == text, "expected_characters": len(text),
                     "actual_characters": len(actual)}
