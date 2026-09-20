@@ -22,3 +22,21 @@ The projection excludes screenshots, window/control titles, input and protected 
 When reporting a bug, provide a separate minimal synthetic reproduction: the intended action, synthetic application/fixture setup, relevant operation ID and observed outcome. Do not silently retain or attach private documents, credentials, screenshots or raw doctor output as reproduction context. A caller can explicitly save the returned JSON, or redirect CLI stdout to a chosen file, then explicitly share or delete that file. Luda creates no report archive and has no automatic retention, upload, deletion or replay mechanism.
 
 `tests/test_report.py` covers injected sensitive fields, malformed metadata, bounded history, diagnostic exceptions, public read-only schema and an actual fresh CLI invocation without desktop environment variables. These tests do not qualify a fresh Mac/SSH installation or every provider's diagnostics.
+
+## Live integration evidence
+
+At `bfa9440`, the full unit suite passed 621 tests as root and 620 with one
+explicit unavailable-Codex-CLI skip as UID 1001. Both evidence records have
+unchanged identical source fingerprint `2387d33d303df00535fc5f3bea773bab3d14d45429f2fec004aba9155a849559`.
+The ordinary-account first attempt passed its tests but could not write its
+report to a root-owned output directory; that failed runner log is retained.
+Repeating with an owned output directory produced the complete evidence record.
+
+Actual stdio MCP passed all 22 checks on both a private Xvfb desktop
+(`run-1789879878542042287`) and the selected KasmVNC desktop under the shared
+desktop lease (`artifacts/report-identity/bfa9440-kasm/`). The report correlated
+the prior paste operation, excluded the synthetic text, control name, checkout
+path and target IDs, returned only JSON, reported ready health, and left
+independently persisted widget text unchanged. Doctor’s tool-schema fingerprint
+matched canonical actual `tools/list` declarations. This tests the source checkout
+in the guest, not a new installed release or Mac SSH discovery.
