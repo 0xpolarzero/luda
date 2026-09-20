@@ -9,7 +9,7 @@ catalog qualification.
 
 | Check | Result |
 | --- | --- |
-| Public background routing | 7 passed, including simultaneous foreground user typing, minimized target fallback, and application-requested foreground |
+| Public background routing | 7 passed, including simultaneous foreground user typing, minimized-target text input, and application-requested foreground |
 | GTK3 native semantic operations | 35 passed |
 | GTK3 list/table ranges through MCP | 24 passed, including stale/disabled/partial-failure refusals and background selection preserving foreground |
 | Nested GTK3 menu | Passed: callback wrote exact file proof; cancelled, occluded, and vanished targets refused |
@@ -22,7 +22,8 @@ The toolkit suite exited 1. A separate worktree and virtual environment at
 baseline `385f1c7` reproduced **the same per-case statuses and error codes**:
 Qt accessibility scope unavailable and GTK4 `select`, `caret-zero`, and
 `astral-select` returning `ACCESSIBILITY_ERROR`. Both complete JSON reports are
-retained. This establishes these observed limitations also exist on the
+retained. Larger reports use gzip without changing their contents; historical
+source fingerprints inside them describe the original run paths. This establishes these observed limitations also exist on the
 baseline; it does not establish the cause of Qt's unavailable provider.
 
 Initial run evidence is retained under `initial/`. The existing range test

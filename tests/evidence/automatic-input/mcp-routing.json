@@ -1,0 +1,22 @@
+{
+  "scope": "real MCP on private Xvfb/XFWM, GTK independent event files",
+  "uid": 0,
+  "passed": [
+    "MCP inactive click activates once, app receives one click, cursor pixels visible",
+    "original screenshot is not relabelled after automatic activation",
+    "consecutive same-point click is not blocked by the agent cursor",
+    "MCP inactive scroll activates and delivers exactly three ticks",
+    "MCP inactive drag reaches endpoint and releases owned button",
+    "MCP inactive hover activates without a button event",
+    "MCP background text preserves desktop and marker follows moved control",
+    "MCP background invoke changes independent app counter exactly once",
+    "disabled background control refuses without unnecessary foreground activation",
+    "external layout change refuses input without activation",
+    "covered pixel target refuses input without activation",
+    "MCP exit leaves no held pointer input"
+  ],
+  "limits": [
+    "Foreground pointer routes intentionally use the shared pointer.",
+    "No broad toolkit or remote viewer qualification."
+  ]
+}

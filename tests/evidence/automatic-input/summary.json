@@ -1,0 +1,86 @@
+{
+  "tested_revision": "ab101e7a3fb22dde6035513aa6293d740bd6832b",
+  "runtime_sha256": {
+    "src/luda/desktop.py": "987801202562beed4c109aeb684ffd0dc19c9780e273f589454d01f6c147eb57",
+    "src/luda/interaction.py": "f8902746ec7b8564cc0de15b820eb5e6c40640db3ae644522c4466d9bb8dc336",
+    "src/luda/cursor.py": "f770f123f32c624fe578cc61ca1deb78584b55285527657e3e8d91c7e0e00a61",
+    "src/luda/_cursor_overlay.py": "f8665187b136f2d6e3204fedced3fbcc55781aa713d197efdf230a194cdc5c2d",
+    "src/luda/ax_worker.py": "49b14ac9ea64b0d1cffc9482dc9f01334774491b3b90759cc12164001ddf24a0",
+    "src/luda/browser.py": "d7a6633f0900cf7f6baa77840170ac336b0ecd9eb8642ea120194a53ac63c3c2",
+    "src/luda/_browser_worker.py": "23772f55beecf06b9528ce7eb320e85d2699aa668bca7ed1a5965cf97e70ae6d",
+    "src/luda/server.py": "450b0255ecd1e083e2a7debe190b7e21bc08d21a7ed3b4e79339ad297ce02d16"
+  },
+  "unit": {
+    "run": 921,
+    "passed": 920,
+    "skipped": 1,
+    "failed": 0,
+    "skip": "Optional actual wheel-build regression: build-requirements.lock not installed in test venv."
+  },
+  "mcp_routing": {
+    "passed": 12,
+    "scope": "Private Xvfb/XFWM with independent GTK files and actual desktop pixels"
+  },
+  "headless": {
+    "source_unchanged": true,
+    "suites": [
+      {
+        "suite": "mcp",
+        "status": "passed",
+        "returncode": 0,
+        "seconds": 3.475
+      },
+      {
+        "suite": "cancellation",
+        "status": "passed",
+        "returncode": 0,
+        "seconds": 1.867
+      },
+      {
+        "suite": "menus",
+        "status": "passed",
+        "returncode": 0,
+        "seconds": 2.973
+      },
+      {
+        "suite": "input-guard",
+        "status": "passed",
+        "returncode": 0,
+        "seconds": 0.271
+      },
+      {
+        "suite": "keyboard-guard",
+        "status": "passed",
+        "returncode": 0,
+        "seconds": 21.268
+      }
+    ]
+  },
+  "pointer_guard": {
+    "passed": 5,
+    "cases": [
+      "exact click and wheel file oracles",
+      "owned motion generation and release checks",
+      "held input refusal",
+      "controller kill releases owned buttons",
+      "mid-wheel cancellation stops repetition"
+    ]
+  },
+  "cursor": {
+    "passed": true,
+    "checks": [
+      "root-capture pixels",
+      "focus and pointer preservation",
+      "click-through",
+      "synchronous hide",
+      "stale auto-hide",
+      "EOF cleanup",
+      "restart"
+    ]
+  },
+  "limits": [
+    "Foreground input intentionally uses shared mouse and keyboard.",
+    "Native QT accessibility unavailable and GTK4 provider errors reproduced on baseline.",
+    "No arbitrary remote-viewer, minimized-rendering or production catalog qualification."
+  ]
+}

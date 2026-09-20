@@ -32,6 +32,10 @@ feedback after 1.5 seconds. Luda hides it before pointer validation so the marke
 does not obscure target checks. EOF ends the helper; cleanup and acknowledgement
 waits are bounded. The marker indicates an action target, not application success.
 A missing renderer must not prevent an otherwise valid action.
+Semantic feedback uses a short, read-only lookup of current control bounds; if
+geometry is unavailable, it marks the current window instead of using stale
+inspection coordinates. Feedback is not a claim that the application accepted
+the action.
 
 Screenshots still capture the visible desktop. This implementation does not add
 covered-window capture or independent X11 keyboard/pointer devices. Foreground
@@ -40,9 +44,21 @@ Native Wayland and Xwayland remain unsupported.
 
 ## Validation and evidence
 
-Integration qualification is pending. The focused renderer checks below passed
-on an owned private Xvfb; they are not broad application or concurrent-user
-qualification.
+The [integrated evidence](../tests/evidence/automatic-input/README.md) records
+920 passing unit tests and one optional package-build test skipped. Live tests
+used private Xvfb/XFWM/D-Bus sessions; no shared desktop was controlled.
+
+| Check | Observed result |
+| --- | --- |
+| Real MCP automatic routing | 12 checks passed: foreground pointer actions, background text/invoke, exact cursor pixels, moved-control feedback, disabled-control refusal, stale/covered protection and released input |
+| Background native actions | 7 checks passed, including independent foreground typing while background text and button actions run |
+| Existing MCP/cancellation/menu/input guards | Five suites passed; five additional pointer-guard cases passed, including injector termination and mid-wheel cancellation |
+| GTK3 semantics/ranges/menus, GTK4 GUI alternatives | Passed; full scoped [native evidence](../tests/evidence/automatic-input-native/README.md) retained |
+| Owned Chromium fields | 44 live checks and 8 scope checks passed, including automatic type/select foreground fallback; [browser evidence](../tests/evidence/automatic-browser/README.md) |
+
+Qt accessibility was unavailable in this environment, and three GTK4 semantic
+provider failures remained. The original runtime reproduced the same per-case
+outcomes. These are limitations, not passing cases or newly qualified support.
 
 - [`tests/test_cursor.py`](../tests/test_cursor.py): invalid coordinates, failed
   helper startup, bounded terminate/kill cleanup, and failed hide acknowledgement.
@@ -58,10 +74,10 @@ Run from an installed development checkout:
 .venv/bin/python tests/live_cursor.py
 ```
 
-Final integration evidence must cover the existing public MCP tools, independent
-application effects, background focus/pointer preservation, automatic foreground
-activation, stale/covered target refusals, focus races, timeouts, and cancellation.
-No catalog case is qualified solely by the cursor checks.
+No catalog case is qualified solely by these checks. The actual foreground retry
+for an explicitly hidden provider is covered by unit tests; the minimized GTK
+fixture can also accept direct background text, so its successful live result is
+not proof that it exercised that retry.
 
 ## Earlier feasibility research
 
@@ -83,6 +99,8 @@ describes macOS background operation and a preview, but does not establish which
 native APIs it uses or what equivalent Linux guarantees are possible.
 [AT-SPI editable text](https://gnome.pages.gitlab.gnome.org/at-spi2-core/libatspi/method.EditableText.set_text_contents.html)
 provides directly addressed mutations, while application callbacks control their
-side effects. [X.Org MPX](https://www.x.org/Development/Documentation/MPX/) and
-[XComposite window capture](https://xorg.freedesktop.org/archive/X11R7.5/doc/man/man3/Xcomposite.3.html)
-remain possible future mechanisms, not features included in this change.
+side effects. [X.Org MPX](https://www.x.org/Development/Documentation/MPX/) was
+[tested](../tests/evidence/independent-input/README.md): a separate pointer still
+stole foreground focus, and covered-window clicks reached the covering app.
+It was therefore left out of production input routing. XComposite window capture
+is also outside this implementation.
