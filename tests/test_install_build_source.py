@@ -26,6 +26,10 @@ class BuildSource(unittest.TestCase):
         initial = installer.release_identity(self.source)
         (self.source / 'uv.lock').write_text('changed lock')
         self.assertNotEqual(initial, installer.release_identity(self.source))
+        (self.source / 'LICENSE').write_text('original license')
+        initial = installer.release_identity(self.source)
+        (self.source / 'LICENSE').write_text('fixture license')
+        self.assertNotEqual(initial, installer.release_identity(self.source))
         self.source.chmod(0o555)
         stages = []
         def run(command):
@@ -35,6 +39,7 @@ class BuildSource(unittest.TestCase):
                 self.assertFalse((stage / 'build').exists())
                 self.assertFalse((stage / 'src/luda.egg-info').exists())
                 self.assertEqual((stage / 'uv.lock').read_text(), 'changed lock')
+                self.assertEqual((stage / 'LICENSE').read_text(), 'fixture license')
                 self.assertEqual(installer.release_identity(stage), installer.release_identity(self.source))
             self.runner(command)
         installer.install(self.prefix, self.source, run)
@@ -67,6 +72,7 @@ class BuildSource(unittest.TestCase):
         (self.source / 'pyproject.toml').write_text('[build-system]\nrequires=["setuptools>=68"]\nbuild-backend="setuptools.build_meta"\n[project]\nname="luda"\nversion="1.0.0"\n[tool.setuptools.packages.find]\nwhere=["src"]\n')
         (self.source / 'MANIFEST.in').write_text('include uv.lock\n')
         (self.source / 'uv.lock').write_text('owned fixture lock')
+        (self.source / 'LICENSE').write_text('exact fixture license\n')
         package = self.source / 'src/luda'; package.mkdir()
         (package / '__init__.py').write_text('')
         (package / 'current.py').write_text('CURRENT = True\n')
@@ -77,6 +83,9 @@ class BuildSource(unittest.TestCase):
             result = subprocess.run([sys.executable, '-c', 'import setuptools.build_meta,sys;setuptools.build_meta.build_wheel(sys.argv[1])', str(output)], cwd=directory, capture_output=True, timeout=30)
             self.assertEqual(result.returncode, 0, result.stderr.decode(errors='replace'))
             with zipfile.ZipFile(next(output.glob('*.whl'))) as wheel:
+                licenses = [name for name in wheel.namelist() if name.endswith('/LICENSE')]
+                self.assertEqual(len(licenses), 1)
+                self.assertEqual(wheel.read(licenses[0]), b'exact fixture license\n')
                 return {name for name in wheel.namelist() if name.startswith('luda/')}
         # Independent baseline reproduces setuptools reuse of stale build/lib.
         self.assertIn('luda/_input_guard.py', build(self.source, 'baseline'))

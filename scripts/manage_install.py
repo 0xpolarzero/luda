@@ -106,7 +106,7 @@ def invoke(argv, timeout=300):
 def source_files(source):
     """Declared build inputs, shared by release identity and clean staging."""
     files = [source / p for p in ('pyproject.toml', 'MANIFEST.in', 'requirements.lock', 'build-requirements.lock')]
-    files += [source / name for name in ('uv.lock', 'requirements-browser.lock', '.mcp.json', 'README.md', 'build-requirements.in') if (source / name).is_file()]
+    files += [source / name for name in ('uv.lock', 'requirements-browser.lock', '.mcp.json', 'README.md', 'LICENSE', 'build-requirements.in') if (source / name).is_file()]
     files += [p for name in ('src', 'skills', 'scripts', 'docs', 'tests', '.codex-plugin', 'integrations') for p in (source / name).rglob('*')
               if p.is_file() and 'node_modules' not in p.parts and '__pycache__' not in p.parts and not any(part.endswith('.egg-info') for part in p.parts)]
     return sorted(files)
