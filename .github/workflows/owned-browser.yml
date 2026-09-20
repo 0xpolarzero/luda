@@ -1,0 +1,63 @@
+name: Optional owned browser
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  owned-chromium-x11:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/luda-playwright
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: '0.12.17'
+      - name: Install private desktop dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb xfwm4 dbus-x11 at-spi2-core python3-gi gir1.2-atspi-2.0 gir1.2-gtk-3.0 xdotool wmctrl scrot xclip x11-utils x11-xserver-utils libxrandr2 fonts-dejavu-core apparmor-utils
+      - name: Assert default installation excludes the browser extra
+        run: |
+          uv sync --locked --no-default-groups
+          .venv/bin/python - <<'PY'
+          import importlib.util
+          from luda.browser import capability
+          assert importlib.util.find_spec('playwright') is None
+          assert capability({'LUDA_CHROMIUM_EXECUTABLE':'/bin/true'})['available'] is False
+          PY
+      - name: Explicitly provision pinned optional browser in CI
+        run: |
+          uv sync --locked --no-default-groups --extra browser
+          .venv/bin/python -m playwright install --with-deps --no-shell chromium
+          .venv/bin/python scripts/check_owned_browser_ci.py
+      - name: Allow this exact CI browser to create its Linux sandbox
+        run: |
+          # Ubuntu 24.04 may restrict user namespaces for downloaded executables.
+          # Follow Chromium's per-executable AppArmor recommendation; never disable
+          # sandboxing or change the runner's global userns sysctl.
+          if sudo aa-enabled; then
+            sudo install -m 0644 artifacts/owned-browser-provision/apparmor.profile /etc/apparmor.d/luda-ci-owned-browser
+            sudo apparmor_parser -r /etc/apparmor.d/luda-ci-owned-browser
+          fi
+      - name: Real sandboxed browser text, IME and cleanup qualification
+        run: |
+          browser=$(cat artifacts/owned-browser-provision/browser-path.txt)
+          .venv/bin/python scripts/qualification_matrix.py --suites owned-browser --executable "$browser"
+      - name: Remove the CI-only AppArmor attachment
+        if: always()
+        run: |
+          if test -f /etc/apparmor.d/luda-ci-owned-browser; then
+            sudo apparmor_parser -R /etc/apparmor.d/luda-ci-owned-browser
+            sudo rm /etc/apparmor.d/luda-ci-owned-browser
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: owned-browser-evidence
+          path: artifacts/
