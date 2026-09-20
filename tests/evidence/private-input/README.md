@@ -31,3 +31,11 @@ These are bounded application/device checks, not qualification of every Linux
 application, toolkit, window manager, viewer, or browser. Five-millisecond focus
 sampling cannot prove the absence of a shorter transition. Browser behavior and
 legacy core-only applications require separate evidence.
+
+`cleanup.json` records the private-pair disappearance regression check. With
+matching human Control and pointer-button input held, keyboard and pointer release
+helpers prove old ownership ended without emitting releases. The old injector’s
+nonce-owned X resource is independently confirmed destroyed before cleanup is
+acknowledged. A different generation is checked before private binding or client
+disconnection. This last case supplies a different generation; it is not itself
+a full X-server restart test.

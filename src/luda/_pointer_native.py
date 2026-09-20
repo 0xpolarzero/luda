@@ -92,7 +92,13 @@ def event(native,button,pressed):
 def main():
     native=None
     try:
-        request=json.loads(sys.stdin.buffer.readline(4097));native=Keyboard()
+        request=json.loads(sys.stdin.buffer.readline(4097))
+        if sys.argv[1]=='release':
+            from ._private_cleanup import ended_ownership
+            receipt=ended_ownership(request)
+            if receipt is not None:
+                emit(receipt);return
+        native=Keyboard()
         if sys.argv[1]=='plan':emit(plan_pointer(native,request))
         elif sys.argv[1]=='move':emit(move_pointer(native,request))
         elif sys.argv[1]=='release':

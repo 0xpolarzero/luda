@@ -1,0 +1,1 @@
+{"passed": true, "checks": ["removed-pair keyboard cleanup", "removed-pair pointer cleanup", "old nonce injector disconnected", "matching human key/button retained", "different-server proof before binding"]}

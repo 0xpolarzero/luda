@@ -29,7 +29,8 @@ def release_owned(request,client):
                                input=json.dumps(cleanup_request(request,client)).encode()+b'\n',
                                stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,timeout=2)
         value=json.loads(cleanup.stdout) if cleanup.returncode==0 else {}
-        return {'cleanup_verified':value.get('released') is True,'session_changed':value.get('session_changed') is True,'cleanup_skipped':value.get('cleanup_skipped') is True}
+        return {'cleanup_verified':value.get('released') is True,'session_changed':value.get('session_changed') is True,'cleanup_skipped':value.get('cleanup_skipped') is True,
+                **({'private_devices_removed':True} if value.get('private_devices_removed') is True else {})}
     except Exception:
         return {'cleanup_verified':False,'session_changed':False,'cleanup_skipped':False}
 

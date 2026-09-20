@@ -120,7 +120,7 @@ def recover_keyboard_input():
                     proof=json.loads(run([sys.executable,'-m','luda._pointer_native' if record['cleanup_request'].get('kind')=='pointer' else 'luda._keyboard_native','release'],
                         data=json.dumps(record['cleanup_request']).encode()+b'\n',timeout=2,max_output_bytes=4096,effect='uncertain'))
                     if proof.get('released') or (proof.get('session_changed') and proof.get('cleanup_skipped')):
-                        resolved+=int(_resolve_recovery(token));row.update(resolved=True,proof='original_server_replaced' if proof.get('session_changed') else ('owned_buttons_released' if record['cleanup_request'].get('kind')=='pointer' else 'owned_keys_released'),cleanup_skipped=bool(proof.get('cleanup_skipped')))
+                        resolved+=int(_resolve_recovery(token));row.update(resolved=True,proof='original_server_replaced' if proof.get('session_changed') else ('private_devices_removed' if proof.get('private_devices_removed') else ('owned_buttons_released' if record['cleanup_request'].get('kind')=='pointer' else 'owned_keys_released')),cleanup_skipped=bool(proof.get('cleanup_skipped')))
                     else:row['reason']=proof.get('code','cleanup_not_verified')
                 else:row['reason']='cleanup_metadata_not_available'
         except DesktopError as exc:
@@ -239,12 +239,12 @@ def _dispatch_plan(plan):
         if result and result.get('armed'):mark_effect()
         if failure:
             if result and result.get('armed'):failure.effect='uncertain'
-            if result:failure.details.update({k:result[k] for k in ('cleanup_verified','session_changed','cleanup_skipped') if k in result})
+            if result:failure.details.update({k:result[k] for k in ('cleanup_verified','session_changed','cleanup_skipped','private_devices_removed') if k in result})
             if progress is not None:failure.details['progress']=progress
             raise failure
         if not result:raise DesktopError('KEYBOARD_UNAVAILABLE','Input companion returned no result.',effect='uncertain')
         if result.get('code'):
-            raise DesktopError(result['code'],result['message'],effect=result.get('effect','uncertain'),details={**{k:result[k] for k in ('cleanup_verified','session_changed','cleanup_skipped') if k in result},**({'progress':progress} if progress is not None else {})})
+            raise DesktopError(result['code'],result['message'],effect=result.get('effect','uncertain'),details={**{k:result[k] for k in ('cleanup_verified','session_changed','cleanup_skipped','private_devices_removed') if k in result},**({'progress':progress} if progress is not None else {})})
         return {'effect':'dispatched',**({'progress':progress} if progress is not None else {}),**{key:result[key] for key in ('group_unchanged','locks_unchanged','dispatched_count') if key in result},'verification':result.get('verification','Key delivery does not prove application outcome.')}
     except BaseException as exc:
         if not proven:
