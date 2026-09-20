@@ -1,0 +1,810 @@
+{
+  "base_commit": "dc4dc70",
+  "calls": [
+    {
+      "request": {
+        "name": "desktop_doctor"
+      },
+      "result": {
+        "ok": true,
+        "operation_id": "c4a3926c370c472ba4a9266fad33e0da",
+        "elapsed_ms": 194,
+        "version": "0.1.0",
+        "backend": "X11 + AT-SPI",
+        "dependencies": {
+          "xdotool": true,
+          "wmctrl": true,
+          "scrot": true,
+          "xclip": true,
+          "xprop": true
+        },
+        "display": ":143",
+        "session_bus": true,
+        "uid": 1001,
+        "transport": "stdio",
+        "support": "experimental X11; Wayland unsupported",
+        "ime_composition": {
+          "state": "unknown",
+          "detection_supported": false,
+          "explicit_commit_supported": false,
+          "explicit_cancel_supported": false,
+          "conflicting_input_guard_supported": false,
+          "text_verification_scope": "Exposed text at readback; pending IME composition is not verified.",
+          "guidance": "If composition is active or suspected, preserve it and have it explicitly completed or cancelled before focus, selection, typing or paste. Do not send Escape or Return as automatic cleanup."
+        },
+        "limitations": [
+          "Human viewer input is not locked out.",
+          "No automatic clipboard restoration.",
+          "Accessibility mapping requires a uniquely identified application window.",
+          "No automatic retry of mutations."
+        ],
+        "geometry": {
+          "x": 0,
+          "y": 0,
+          "width": 900,
+          "height": 650
+        },
+        "display_available": true,
+        "display_topology": {
+          "layout_id": "2f5b2fa9d89505a93820bc9cdf9e7c9b375f9f324152eb3116cf0c2a1d23d613",
+          "root": {
+            "x": 0,
+            "y": 0,
+            "width": 900,
+            "height": 650
+          },
+          "monitor_source": "RandR logical monitors",
+          "monitors": [
+            {
+              "bounds": {
+                "x": 0,
+                "y": 0,
+                "width": 900,
+                "height": 650
+              },
+              "primary": false
+            }
+          ],
+          "bounds_coordinate_space": "native_x11_root_pixels"
+        },
+        "topology_available": true,
+        "accessible_applications": 2,
+        "accessibility_available": true,
+        "font_coverage": {
+          "available": true,
+          "status": "covered",
+          "pango_version": "1.52.1",
+          "samples": [
+            {
+              "sample": "Japanese",
+              "unknown_glyphs": 0
+            },
+            {
+              "sample": "Simplified Chinese",
+              "unknown_glyphs": 0
+            },
+            {
+              "sample": "Traditional Chinese",
+              "unknown_glyphs": 0
+            },
+            {
+              "sample": "Korean",
+              "unknown_glyphs": 0
+            },
+            {
+              "sample": "Emoji ZWJ and skin tone",
+              "unknown_glyphs": 0
+            },
+            {
+              "sample": "Combining marks",
+              "unknown_glyphs": 0
+            },
+            {
+              "sample": "Arabic",
+              "unknown_glyphs": 0
+            },
+            {
+              "sample": "Devanagari",
+              "unknown_glyphs": 0
+            }
+          ],
+          "missing_samples": [],
+          "scope": "Fixed sample glyph coverage only; not universal Unicode coverage, typography, or application-specific font validation.",
+          "blocks_input": false,
+          "next_step": "These samples have glyphs; verify the actual application when font rendering matters."
+        },
+        "ocr": {
+          "available": true,
+          "engine": "tesseract",
+          "scope": "Optional executable availability only; requested language and recognition checked by desktop_ocr."
+        },
+        "recording": {
+          "available": true,
+          "scope": "Optional executables only; start validates capture support. No audio."
+        },
+        "session_state": {
+          "state": "unknown",
+          "input_ready": null,
+          "providers": [
+            {
+              "provider": "org.xfce.ScreenSaver",
+              "kind": "screensaver",
+              "available": false,
+              "reason": "unavailable"
+            },
+            {
+              "provider": "org.gnome.ScreenSaver",
+              "kind": "screensaver",
+              "available": false,
+              "reason": "unavailable"
+            },
+            {
+              "provider": "org.freedesktop.ScreenSaver",
+              "kind": "screensaver",
+              "available": false,
+              "reason": "unavailable"
+            }
+          ],
+          "verification": "Reported desktop-service hints only; inactive or unavailable providers do not prove the display is unlocked."
+        },
+        "keyboard": {
+          "available": true,
+          "backend": "XKB + XTest + XI2",
+          "group": 0,
+          "locked_mods": 0,
+          "input_held": false,
+          "latched_input": false,
+          "mapping": "Current group, named keys with ordinary Shift; unsupported symbols are refused.",
+          "cleanup": "Owned injector termination and planned-key release; concurrent same-key human input remains indistinguishable."
+        },
+        "control": {
+          "available": true,
+          "paused": false,
+          "revision": 2,
+          "updated_at": 1789886282.2581673
+        },
+        "capabilities": {
+          "screen_observation": "backend_available",
+          "pointer_input": "backend_available",
+          "keyboard_input": "backend_available",
+          "clipboard_paste": "backend_available",
+          "accessibility_read": "backend_available",
+          "verified_text_editing": "application_dependent",
+          "ime_composition": "unsupported"
+        },
+        "capability_scope": "Backend availability only; target focus, current input state and application support are checked per action.",
+        "ready": true,
+        "versions": {
+          "identity_format": 1,
+          "driver_version": "0.1.0",
+          "tool_schema": {
+            "sha256": "e54a42782ce99e2b5ca833cac1ff67d63c2305f4ec25c4a6e85f9a70ef59493d",
+            "algorithm": "sha256-canonical-tools-list-v1",
+            "scope": "Complete tools/list declarations, including descriptions and annotations."
+          },
+          "bundled_skill": {
+            "status": "identified",
+            "sha256": "e177b705f00057d1c2750d3eea2f543db0b319a78a5a6bea5fcd1746111421e6",
+            "scope": "Server installation artifact; does not identify the skill loaded by an agent."
+          }
+        }
+      },
+      "isError": false
+    },
+    {
+      "request": {
+        "name": "desktop_observe"
+      },
+      "result": {
+        "ok": true,
+        "operation_id": "f9b91b402a164cde8c253b37d7cf1fe1",
+        "elapsed_ms": 291,
+        "snapshot_id": "9745120ae1df4bbea561478c8842f102",
+        "expires_after_seconds": 15,
+        "coordinate_space": "returned image pixels; pass snapshot_id with pointer actions",
+        "coordinate_spaces": {
+          "bounds": "native_x11_root_pixels",
+          "frame_bounds": "native_x11_root_pixels",
+          "image_bounds": "returned_image_pixels",
+          "pointer": "returned_image_pixels"
+        },
+        "image_bounds_semantics": "Half-open rectangles of integer screenshot pixel positions; clipped to image, not an occlusion check.",
+        "image_size": {
+          "width": 900,
+          "height": 650
+        },
+        "desktop_size": {
+          "width": 900,
+          "height": 650
+        },
+        "display_topology": {
+          "layout_id": "2f5b2fa9d89505a93820bc9cdf9e7c9b375f9f324152eb3116cf0c2a1d23d613",
+          "root": {
+            "x": 0,
+            "y": 0,
+            "width": 900,
+            "height": 650
+          },
+          "monitor_source": "RandR logical monitors",
+          "monitors": [
+            {
+              "bounds": {
+                "x": 0,
+                "y": 0,
+                "width": 900,
+                "height": 650
+              },
+              "primary": false,
+              "image_bounds": {
+                "x": 0,
+                "y": 0,
+                "width": 900,
+                "height": 650
+              }
+            }
+          ],
+          "bounds_coordinate_space": "native_x11_root_pixels"
+        },
+        "windows": [
+          {
+            "window_id": "aa79520972d64483bde10d41c215e011:400003:27178:2691048:d74195a699ae6002b439add02ccb6e9a",
+            "xid": 4194307,
+            "pid": 27178,
+            "start": "2691048",
+            "title": "Owned Media Usability Fixture",
+            "workspace": 0,
+            "bounds": {
+              "x": 65,
+              "y": 89,
+              "width": 680,
+              "height": 420
+            },
+            "frame_bounds": {
+              "x": 60,
+              "y": 60,
+              "width": 690,
+              "height": 454
+            },
+            "active": true,
+            "wm_class": [
+              "fixture.py",
+              "Fixture.py"
+            ],
+            "unavailable_properties": [],
+            "image_bounds": {
+              "x": 65,
+              "y": 89,
+              "width": 680,
+              "height": 420
+            }
+          }
+        ],
+        "popups": []
+      },
+      "isError": false
+    },
+    {
+      "request": {
+        "name": "desktop_ocr",
+        "arguments": {
+          "snapshot_id": "9745120ae1df4bbea561478c8842f102"
+        }
+      },
+      "result": {
+        "ok": true,
+        "operation_id": "ffecdce61d254de0aaf2465896d69d21",
+        "elapsed_ms": 301,
+        "snapshot_id": "9745120ae1df4bbea561478c8842f102",
+        "effect": "none",
+        "engine": "tesseract",
+        "language": "eng",
+        "source": "retained screenshot; historical pixels, not a new capture or current text verification",
+        "coordinate_space": "returned screenshot image pixels",
+        "image_size": {
+          "width": 900,
+          "height": 650
+        },
+        "confidence_semantics": "Engine score 0\u2013100; uncalibrated, not a probability or proof of exact text.",
+        "candidates": [
+          {
+            "text": "Owned",
+            "image_bounds": {
+              "x": 279,
+              "y": 70,
+              "width": 41,
+              "height": 10
+            },
+            "engine_confidence": 91.304619
+          },
+          {
+            "text": "Media",
+            "image_bounds": {
+              "x": 325,
+              "y": 70,
+              "width": 35,
+              "height": 10
+            },
+            "engine_confidence": 96.929504
+          },
+          {
+            "text": "Usability",
+            "image_bounds": {
+              "x": 365,
+              "y": 70,
+              "width": 53,
+              "height": 13
+            },
+            "engine_confidence": 96.065926
+          },
+          {
+            "text": "Fixture",
+            "image_bounds": {
+              "x": 422,
+              "y": 71,
+              "width": 42,
+              "height": 9
+            },
+            "engine_confidence": 88.418671
+          },
+          {
+            "text": "ox",
+            "image_bounds": {
+              "x": 684,
+              "y": 71,
+              "width": 55,
+              "height": 9
+            },
+            "engine_confidence": 8.767118
+          },
+          {
+            "text": "MEDIA",
+            "image_bounds": {
+              "x": 128,
+              "y": 164,
+              "width": 84,
+              "height": 20
+            },
+            "engine_confidence": 96.925537
+          },
+          {
+            "text": "CHECK",
+            "image_bounds": {
+              "x": 223,
+              "y": 164,
+              "width": 91,
+              "height": 20
+            },
+            "engine_confidence": 95.887199
+          },
+          {
+            "text": "86727",
+            "image_bounds": {
+              "x": 325,
+              "y": 164,
+              "width": 81,
+              "height": 20
+            },
+            "engine_confidence": 96.359444
+          },
+          {
+            "text": "BA",
+            "image_bounds": {
+              "x": 163,
+              "y": 259,
+              "width": 56,
+              "height": 56
+            },
+            "engine_confidence": 48.098774
+          },
+          {
+            "text": "BA",
+            "image_bounds": {
+              "x": 526,
+              "y": 259,
+              "width": 56,
+              "height": 56
+            },
+            "engine_confidence": 48.098774
+          }
+        ],
+        "truncated": false
+      },
+      "isError": false
+    },
+    {
+      "request": {
+        "name": "desktop_match_image",
+        "arguments": {
+          "template_snapshot_id": "9745120ae1df4bbea561478c8842f102",
+          "snapshot_id": "9745120ae1df4bbea561478c8842f102",
+          "template_bounds": {
+            "x": 163,
+            "y": 259,
+            "width": 56,
+            "height": 56
+          }
+        }
+      },
+      "result": {
+        "ok": true,
+        "operation_id": "bb91f279bb8f4b008cef567e83b3bc59",
+        "elapsed_ms": 491,
+        "template_snapshot_id": "9745120ae1df4bbea561478c8842f102",
+        "snapshot_id": "9745120ae1df4bbea561478c8842f102",
+        "template_bounds": {
+          "x": 163,
+          "y": 259,
+          "width": 56,
+          "height": 56
+        },
+        "effect": "none",
+        "engine": "opencv_TM_CCOEFF_NORMED",
+        "threshold": 0.95,
+        "coordinate_space": "target screenshot returned image pixels",
+        "source": "Retained historical pixels only; no new capture, current-state verification or click authorization.",
+        "score_semantics": "Uncalibrated normalized correlation; not a probability, semantic identity or exact color match.",
+        "selection": "Score-ranked non-overlapping placements; overlapping candidates suppressed, at most limit+1 peak searches.",
+        "candidates": [
+          {
+            "image_bounds": {
+              "x": 163,
+              "y": 259,
+              "width": 56,
+              "height": 56
+            },
+            "score": 1.0
+          },
+          {
+            "image_bounds": {
+              "x": 526,
+              "y": 259,
+              "width": 56,
+              "height": 56
+            },
+            "score": 1.0
+          }
+        ],
+        "truncated": false
+      },
+      "isError": false
+    },
+    {
+      "request": {
+        "name": "desktop_recording",
+        "arguments": {
+          "action": "start",
+          "max_seconds": 30
+        }
+      },
+      "result": {
+        "ok": true,
+        "operation_id": "20faee4e964b4ef1878c632b2ecb143e",
+        "elapsed_ms": 497,
+        "recording_id": "44dbfbd376a248feadcd9414f072a3fe",
+        "effect": "dispatched",
+        "state": "recording",
+        "frames_captured": 1,
+        "retention": "Temporary until explicit delete, backend close/reconnect or server death; copy elsewhere explicitly for durable saving."
+      },
+      "isError": false
+    },
+    {
+      "request": {
+        "name": "desktop_recording",
+        "arguments": {
+          "action": "stop",
+          "recording_id": "44dbfbd376a248feadcd9414f072a3fe"
+        }
+      },
+      "result": {
+        "ok": true,
+        "operation_id": "d0725ba7f5a3428b8010785915e47cf4",
+        "elapsed_ms": 326,
+        "recording_id": "44dbfbd376a248feadcd9414f072a3fe",
+        "effect": "none",
+        "state": "complete",
+        "bytes": 719940,
+        "image_size": {
+          "width": 900,
+          "height": 650
+        },
+        "end_reason": "requested_stop",
+        "playable_verified": true,
+        "retention": "Temporary until explicit delete, backend close/reconnect or server death; copy elsewhere explicitly for durable saving.",
+        "path": "/tmp/silo-desktop-1001/recording-vj0ha5hr/recording.mp4"
+      },
+      "isError": false
+    },
+    {
+      "request": {
+        "name": "desktop_recording",
+        "arguments": {
+          "action": "status",
+          "recording_id": "44dbfbd376a248feadcd9414f072a3fe"
+        }
+      },
+      "result": {
+        "ok": true,
+        "operation_id": "630428deda4a4e0ca150d4996614bcf7",
+        "elapsed_ms": 0,
+        "recording_id": "44dbfbd376a248feadcd9414f072a3fe",
+        "effect": "none",
+        "state": "complete",
+        "bytes": 719940,
+        "image_size": {
+          "width": 900,
+          "height": 650
+        },
+        "end_reason": "requested_stop",
+        "playable_verified": true,
+        "retention": "Temporary until explicit delete, backend close/reconnect or server death; copy elsewhere explicitly for durable saving.",
+        "path": "/tmp/silo-desktop-1001/recording-vj0ha5hr/recording.mp4"
+      },
+      "isError": false
+    },
+    {
+      "request": {
+        "name": "desktop_recording",
+        "arguments": {
+          "action": "delete",
+          "recording_id": "44dbfbd376a248feadcd9414f072a3fe"
+        }
+      },
+      "result": {
+        "ok": true,
+        "operation_id": "dccf3bd40c7f441abf0722a0e557306e",
+        "elapsed_ms": 12,
+        "recording_id": "44dbfbd376a248feadcd9414f072a3fe",
+        "effect": "verified",
+        "state": "deleted",
+        "verification": "Owned supervisor exited; original artifact path removed if still owned. Any replacement or added files were preserved."
+      },
+      "isError": false
+    },
+    {
+      "request": {
+        "name": "desktop_ocr",
+        "arguments": {
+          "snapshot_id": "9745120ae1df4bbea561478c8842f102"
+        }
+      },
+      "result": {
+        "ok": false,
+        "code": "STALE_OBSERVATION",
+        "message": "Screenshot expired or was evicted; explicitly observe again.",
+        "effect": "none",
+        "details": {},
+        "operation_id": "78c56f50b24e4639a21ee2367e9059f1",
+        "elapsed_ms": 26
+      },
+      "isError": true
+    },
+    {
+      "request": {
+        "name": "desktop_observe"
+      },
+      "result": {
+        "ok": true,
+        "operation_id": "a479516074c04138b0bfb57fc1c7c1ff",
+        "elapsed_ms": 273,
+        "snapshot_id": "b9668e583b2d4b1a88dc67468ef8c24e",
+        "expires_after_seconds": 15,
+        "coordinate_space": "returned image pixels; pass snapshot_id with pointer actions",
+        "coordinate_spaces": {
+          "bounds": "native_x11_root_pixels",
+          "frame_bounds": "native_x11_root_pixels",
+          "image_bounds": "returned_image_pixels",
+          "pointer": "returned_image_pixels"
+        },
+        "image_bounds_semantics": "Half-open rectangles of integer screenshot pixel positions; clipped to image, not an occlusion check.",
+        "image_size": {
+          "width": 900,
+          "height": 650
+        },
+        "desktop_size": {
+          "width": 900,
+          "height": 650
+        },
+        "display_topology": {
+          "layout_id": "2f5b2fa9d89505a93820bc9cdf9e7c9b375f9f324152eb3116cf0c2a1d23d613",
+          "root": {
+            "x": 0,
+            "y": 0,
+            "width": 900,
+            "height": 650
+          },
+          "monitor_source": "RandR logical monitors",
+          "monitors": [
+            {
+              "bounds": {
+                "x": 0,
+                "y": 0,
+                "width": 900,
+                "height": 650
+              },
+              "primary": false,
+              "image_bounds": {
+                "x": 0,
+                "y": 0,
+                "width": 900,
+                "height": 650
+              }
+            }
+          ],
+          "bounds_coordinate_space": "native_x11_root_pixels"
+        },
+        "windows": [
+          {
+            "window_id": "aa79520972d64483bde10d41c215e011:400003:27178:2691048:d74195a699ae6002b439add02ccb6e9a",
+            "xid": 4194307,
+            "pid": 27178,
+            "start": "2691048",
+            "title": "Owned Media Usability Fixture",
+            "workspace": 0,
+            "bounds": {
+              "x": 65,
+              "y": 89,
+              "width": 680,
+              "height": 420
+            },
+            "frame_bounds": {
+              "x": 60,
+              "y": 60,
+              "width": 690,
+              "height": 454
+            },
+            "active": true,
+            "wm_class": [
+              "fixture.py",
+              "Fixture.py"
+            ],
+            "unavailable_properties": [],
+            "image_bounds": {
+              "x": 65,
+              "y": 89,
+              "width": 680,
+              "height": 420
+            }
+          }
+        ],
+        "popups": []
+      },
+      "isError": false
+    },
+    {
+      "request": {
+        "name": "desktop_match_image",
+        "arguments": {
+          "template_snapshot_id": "b9668e583b2d4b1a88dc67468ef8c24e",
+          "snapshot_id": "b9668e583b2d4b1a88dc67468ef8c24e",
+          "template_bounds": {
+            "x": 163,
+            "y": 259,
+            "width": 56,
+            "height": 56
+          },
+          "limit": 1
+        }
+      },
+      "result": {
+        "ok": true,
+        "operation_id": "3d340c262de8429bb602d237a621f651",
+        "elapsed_ms": 510,
+        "template_snapshot_id": "b9668e583b2d4b1a88dc67468ef8c24e",
+        "snapshot_id": "b9668e583b2d4b1a88dc67468ef8c24e",
+        "template_bounds": {
+          "x": 163,
+          "y": 259,
+          "width": 56,
+          "height": 56
+        },
+        "effect": "none",
+        "engine": "opencv_TM_CCOEFF_NORMED",
+        "threshold": 0.95,
+        "coordinate_space": "target screenshot returned image pixels",
+        "source": "Retained historical pixels only; no new capture, current-state verification or click authorization.",
+        "score_semantics": "Uncalibrated normalized correlation; not a probability, semantic identity or exact color match.",
+        "selection": "Score-ranked non-overlapping placements; overlapping candidates suppressed, at most limit+1 peak searches.",
+        "candidates": [
+          {
+            "image_bounds": {
+              "x": 163,
+              "y": 259,
+              "width": 56,
+              "height": 56
+            },
+            "score": 1.0
+          }
+        ],
+        "truncated": true
+      },
+      "isError": false
+    },
+    {
+      "request": {
+        "name": "desktop_match_image",
+        "arguments": {
+          "template_snapshot_id": "b9668e583b2d4b1a88dc67468ef8c24e",
+          "snapshot_id": "b9668e583b2d4b1a88dc67468ef8c24e",
+          "template_bounds": {
+            "x": 350,
+            "y": 350,
+            "width": 30,
+            "height": 30
+          }
+        }
+      },
+      "result": {
+        "ok": false,
+        "code": "MATCH_FLAT_TEMPLATE",
+        "message": "Template lacks spatial texture; select a crop containing distinct visual structure.",
+        "effect": "none",
+        "details": {},
+        "operation_id": "a3064c5c26134de5aabbb565c2d040c2",
+        "elapsed_ms": 363
+      },
+      "isError": true
+    },
+    {
+      "request": {
+        "name": "desktop_match_image",
+        "arguments": {
+          "template_snapshot_id": "b9668e583b2d4b1a88dc67468ef8c24e",
+          "snapshot_id": "b9668e583b2d4b1a88dc67468ef8c24e",
+          "template_bounds": {
+            "left": 163,
+            "top": 259,
+            "width": 56,
+            "height": 56
+          }
+        }
+      },
+      "result": {
+        "ok": false,
+        "code": "INVALID_ARGUMENT",
+        "message": "template_bounds requires integer x, y, width and height in source image pixels.",
+        "effect": "none",
+        "details": {},
+        "operation_id": "5d6b9bfab3c642ed915859255865c002",
+        "elapsed_ms": 146
+      },
+      "isError": true
+    }
+  ],
+  "oracle_revealed_after_call": 7,
+  "oracle": {
+    "label": "MEDIA CHECK 86727",
+    "icons": [
+      {
+        "x": 163,
+        "y": 259,
+        "width": 56,
+        "height": 56
+      },
+      {
+        "x": 526,
+        "y": 259,
+        "width": 56,
+        "height": 56
+      }
+    ]
+  },
+  "durable_copy_verification": {
+    "bytes": 719940,
+    "sha256": "85ef54137617090b31878499926402982a6d0f96c4225f4decd3f24b2763cc94",
+    "ffprobe": {
+      "programs": [],
+      "streams": [
+        {
+          "codec_name": "mpeg4",
+          "width": 900,
+          "height": 650
+        }
+      ],
+      "format": {
+        "duration": "19.168831"
+      }
+    }
+  },
+  "original_removed_after_delete": true
+}
