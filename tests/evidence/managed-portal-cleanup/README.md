@@ -20,3 +20,5 @@ runuser -u silo-desktop -- env PATH=/path/to/extracted/fuse3/bin:/usr/bin:/bin \
 ```
 
 Requires Linux user/mount namespaces, `/dev/fuse` and `fusermount3`. Here the existing test-only official Ubuntu `fuse3_3.14.0-5build1_arm64.deb` was extracted without installation/postinst; package SHA256 `133c0e1c1fd0ce655b8f15c693f3ee6d2aeb22b2675512ccc6bef82de8a88d09`. Hosted browser CI already explicitly provisions fuse3. No new runtime dependency or production cleanup policy is introduced.
+
+At integrated source `f515806`, the revised runner also passed a real ordinary-account private Xvfb/D-Bus browser workflow against existing installed release `0.1.0-2d841f3b6d26f20e`: independent Unicode content matched, owned-browser EOF cleanup completed, and the private directory was removed. No portal mount needed detachment in that run. The `actual-installed-*.gz` receipts qualify the revised runner against that existing release, not a newly installed source package. The separate disconnected-FUSE proof above exercises the mount-detachment branch.
