@@ -5,7 +5,7 @@ from luda.common import DesktopError
 
 class Dummy(InteractionMixin):
     snapshots={'s':{'topology':{'server_generation':'generation'}}}
-    def target_window(self,*args): return {'xid':42}
+    def target_window(self,*args): return {'xid':42,'window_id':'observed:window-token'}
     def _interaction_point(self, window,*args): return (10,20) if window == 'a' else (40,50)
     def list_windows(self): return []
 
@@ -29,7 +29,7 @@ class InteractionTests(unittest.TestCase):
     def test_drag_guard_exits_after_motion_failure(self, run, sleep, guard, ready):
         guard.return_value.__enter__.return_value.move.side_effect=DesktopError('TIMEOUT','test')
         with self.assertRaises(DesktopError): Dummy().drag_between('a','b','s',1,2,3,4)
-        guard.assert_called_once_with('1',target=42,position=(10,20),server_generation='generation')
+        guard.assert_called_once_with('1',target=42,position=(10,20),server_generation='generation',target_generation='window-token')
         self.assertIs(guard.return_value.__exit__.call_args.args[0],DesktopError)
     @patch('luda.interaction.run')
     def test_destination_validated_before_input(self, run):

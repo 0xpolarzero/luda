@@ -304,17 +304,18 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         buttons = {'left':'1','middle':'2','right':'3'}
         if button not in buttons or not 1 <= count <= 20:
             raise DesktopError('INVALID_ARGUMENT','Invalid button or count.')
-        target = self.target_window(window_id)['xid']
-        ready = self.pointer_readiness(snapshot_id,target)
+        window = self.target_window(window_id)
+        target = window['xid']
+        ready = self.pointer_readiness(snapshot_id,window)
         if kind=='click':
-            click_button(buttons[button], count, target=target, position=(px,py), server_generation=ready['server_generation'])
+            click_button(buttons[button], count, target=target, position=(px,py), server_generation=ready['server_generation'],target_generation=ready['target_generation'])
         elif kind=='scroll':
             mapping={'up':'4','down':'5','left':'6','right':'7'}
             if direction not in mapping:
                 raise DesktopError('INVALID_ARGUMENT','Invalid scroll direction.')
-            click_button(mapping[direction], count, target=target, position=(px,py), server_generation=ready['server_generation'])
+            click_button(mapping[direction], count, target=target, position=(px,py), server_generation=ready['server_generation'],target_generation=ready['target_generation'])
         elif kind=='drag':
-            with held_button(buttons[button],target=target,position=(px,py),server_generation=ready['server_generation']) as pointer:
+            with held_button(buttons[button],target=target,position=(px,py),server_generation=ready['server_generation'],target_generation=ready['target_generation']) as pointer:
                 for step in range(1,11):
                     ax=round(px+(end[0]-px)*step/10);ay=round(py+(end[1]-py)*step/10)
                     pointer.move(ax,ay);time.sleep(.02)
