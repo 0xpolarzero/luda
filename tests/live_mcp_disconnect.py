@@ -9,10 +9,10 @@ from live_keyboard_guard import Oracle,descendants
 ROOT=Path(__file__).resolve().parents[1];OUT=ROOT/'artifacts/mcp-disconnect'
 
 class Client:
- def __init__(self,label):self.label=label;self.pending={};self.next_id=0;self.process=None;self.task=None;self.forced_shutdown=False
+ def __init__(self,label,command=None):self.command=command;self.label=label;self.pending={};self.next_id=0;self.process=None;self.task=None;self.forced_shutdown=False
  async def start(self):
   self.log=(OUT/(self.label+'-stderr.log')).open('w')
-  self.process=await asyncio.create_subprocess_exec(str(ROOT/'.venv/bin/luda'),stdin=asyncio.subprocess.PIPE,stdout=asyncio.subprocess.PIPE,stderr=self.log,start_new_session=True)
+  self.process=await asyncio.create_subprocess_exec(self.command or str(ROOT/'.venv/bin/luda'),stdin=asyncio.subprocess.PIPE,stdout=asyncio.subprocess.PIPE,stderr=self.log,start_new_session=True)
   self.task=asyncio.create_task(self.read())
   await self.request('initialize',{'protocolVersion':'2025-03-26','capabilities':{},'clientInfo':{'name':'luda-eof-fixture','version':'1'}})
   await self.send({'jsonrpc':'2.0','method':'notifications/initialized'})

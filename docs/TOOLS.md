@@ -90,7 +90,7 @@ Find installed desktop applications by name, description or ID. Returns applicat
 desktop_open_browser(url: str, lifetime: Literal['temporary_session'])
 ```
 
-Open a fresh owned Chromium with explicit temporary_session lifetime. Browser/profile and unsaved content are deleted on server disconnect, backend close or reconnect. Requires optional browser dependencies and configured executable; never downloads automatically or attaches existing profiles. Inspect text_fields for ordinary HTML fields, cooperating paragraph editors and explicit password-only secret entry. Ordinary protected-field operations, unregistered rich editors and frames are unsupported.
+Open a fresh owned Chromium with explicit temporary_session lifetime. Browser/profile and unsaved content are deleted on server disconnect, backend close or reconnect. Requires optional browser dependencies and configured executable; never downloads automatically or attaches existing profiles. Inspect text_fields for ordinary HTML fields and explicit password-only secret entry. Ordinary protected-field operations, contenteditable editors and frames are unsupported.
 
 ## `desktop_launch`
 
@@ -130,7 +130,7 @@ Return screenshot plus window layout and a 15-second snapshot ID. Pointer coordi
 desktop_inspect(window_id: str, limit: int=150, name: str | None=None, role: str | None=None, states: list[str] | None=None, max_depth: int=30)
 ```
 
-Inspect a window or find controls by name/role substring and required states. Returns bounded tree, parent IDs, supported actions and 60-second element IDs. Owned browser text_fields have distinct provider-bound IDs for ordinary HTML fields and explicitly cooperating paragraph editors; role="entry" filters for fields. Field metadata describes line breaks and write scope. When extra owned pages/windows or frames make the owned provider unavailable, native nodes remain independently inspected; owned_browser reports unavailable/code and text_fields is empty. Cached owned fields still refuse unsupported scope; no mutation fallback. Empty matches and unavailable accessibility are distinct.
+Inspect a window or find controls by name/role substring and required states. Returns bounded tree, parent IDs, supported actions and 60-second element IDs. Owned browser text_fields have distinct provider-bound IDs for ordinary HTML fields; role="entry" filters for fields. Field metadata describes line breaks and write scope. When extra owned pages/windows or frames make the owned provider unavailable, native nodes remain independently inspected; owned_browser reports unavailable/code and text_fields is empty. Cached owned fields still refuse unsupported scope; no mutation fallback. Empty matches and unavailable accessibility are distinct.
 
 ## `desktop_read_text`
 
@@ -143,10 +143,10 @@ Read accessible text and representation metadata, preserving whitespace. limit c
 ## `desktop_type`
 
 ```python
-desktop_type(element_id: str, text: str, mode: Literal['insert', 'replace']='insert', line_breaks: Literal['paragraph', 'hard_break'] | None=None, transport: Literal['native', 'clipboard']='native')
+desktop_type(element_id: str, text: str, mode: Literal['insert', 'replace']='insert')
 ```
 
-Type into an editable element and verify exact readback. Owned browser-native insertion refuses positions inside a grapheme; offsets still count code points. For a cooperating rich editor, LF requires an explicit supported line_breaks policy: paragraph, or hard_break only when the app declares its Shift+Enter binding. Readback distinguishes those node types even though both contribute logical LF. Native input supports whole-field replace or append at the end. Explicit transport="clipboard" supports selected code-point ranges and leaves the final nonempty segment in CLIPBOARD until another owner replaces it or the temporary session closes. Empty text deletes the selection without replacing CLIPBOARD; actual new formatting is reported. Default insert preserves surrounding text and replaces the selection; replace changes the entire field. Preserves Unicode/LF/tabs, never adds a submit key. Exact readback does not prove application commit or guarantee autocomplete events; inspect the result before an explicit commit or suggestion selection. Rich-editor final receipts may report verified, uncertain and not-started segment counts; these are not save confirmation or instructions to replay the remainder.
+Type into an editable element and verify exact readback. Insert replaces the selection; replace changes the entire field. Preserves Unicode, LF and tabs without submitting. Owned HTML fields require complete grapheme boundaries. Exact readback does not confirm saving or application commit; inspect before an explicit commit or suggestion selection.
 
 ## `desktop_type_secret`
 
@@ -226,7 +226,7 @@ Invoke the sole action returned by inspect, or supply its exact action name. Mul
 desktop_select(element_id: str, start_offset: int, end_offset: int)
 ```
 
-Select a text range using Unicode code-point offsets, or place the caret when equal; verify the result. For owned-browser fields, call desktop_focus_element first. Cooperating paragraph editors with the updated bridge accept code-point ranges; writing at a middle range or caret requires desktop_type with explicit transport="clipboard". Their default native typing supports whole-field replacement or append at the end. Ordinary HTML fields support code-point ranges; native edits inside graphemes can be refused.
+Select a text range using Unicode code-point offsets, or place the caret when equal; verify the result. For owned-browser HTML fields, call desktop_focus_element first. Native edits inside graphemes can be refused.
 
 ## `desktop_set_value`
 

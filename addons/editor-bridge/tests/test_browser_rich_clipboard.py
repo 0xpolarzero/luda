@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import Mock
 from test_browser_rich import value
-from luda._browser_worker import Worker,Refused
+from luda_editor_bridge.worker import Worker,Refused
 from luda.common import DesktopError
 
 
@@ -97,23 +97,23 @@ class RichClipboardTests(unittest.TestCase):
 class ClipboardOwnerTests(unittest.TestCase):
     def test_missing_dependency_fails_before_keyboard_probe(self):
         from unittest.mock import patch
-        from luda._browser_clipboard import Clipboard
-        with patch('luda._browser_clipboard.shutil.which',return_value=None),patch('luda._browser_clipboard.keyboard_capabilities') as keyboard:
+        from luda_editor_bridge.clipboard import Clipboard
+        with patch('luda_editor_bridge.clipboard.shutil.which',return_value=None),patch('luda_editor_bridge.clipboard.keyboard_capabilities') as keyboard:
             with self.assertRaises(DesktopError) as caught:Clipboard('unused').preflight()
             self.assertEqual(caught.exception.code,'DEPENDENCY_MISSING');keyboard.assert_not_called()
 
     def test_existing_owner_exit_refuses_verify_without_clipboard_read(self):
         from unittest.mock import patch
-        from luda._browser_clipboard import Clipboard
+        from luda_editor_bridge.clipboard import Clipboard
         c=Clipboard('unused');c.owner=Mock();c.owner.poll.return_value=0
-        with patch('luda._browser_clipboard.run') as read:
+        with patch('luda_editor_bridge.clipboard.run') as read:
             with self.assertRaises(DesktopError) as caught:c.verify('payload')
             self.assertEqual(caught.exception.code,'CLIPBOARD_CHANGED');read.assert_not_called()
 
     def test_latched_input_is_not_cleared_implicitly(self):
         from unittest.mock import patch
-        from luda._browser_clipboard import Clipboard
-        with patch('luda._browser_clipboard.shutil.which',return_value='/usr/bin/xclip'),patch('luda._browser_clipboard.keyboard_capabilities',return_value={'available':True,'latched_input':True}):
+        from luda_editor_bridge.clipboard import Clipboard
+        with patch('luda_editor_bridge.clipboard.shutil.which',return_value='/usr/bin/xclip'),patch('luda_editor_bridge.clipboard.keyboard_capabilities',return_value={'available':True,'latched_input':True}):
             with self.assertRaises(DesktopError) as caught:Clipboard('unused').preflight()
             self.assertEqual(caught.exception.code,'UNSUPPORTED_INPUT_STATE')
 
@@ -121,9 +121,9 @@ class ClipboardOwnerTests(unittest.TestCase):
     def test_staging_disk_failure_preserves_existing_owner(self):
         import errno
         from unittest.mock import patch
-        from luda._browser_clipboard import Clipboard
+        from luda_editor_bridge.clipboard import Clipboard
         c=Clipboard('unused');c.owner=Mock();publishing=Mock()
-        with patch('luda._browser_clipboard.staged_payload',side_effect=OSError(errno.ENOSPC,'synthetic')),patch('luda._browser_clipboard.stop_process') as stop:
+        with patch('luda_editor_bridge.clipboard.staged_payload',side_effect=OSError(errno.ENOSPC,'synthetic')),patch('luda_editor_bridge.clipboard.stop_process') as stop:
             with self.assertRaises(DesktopError) as caught:c.stage('payload',publishing)
             self.assertEqual(caught.exception.code,'STORAGE_UNAVAILABLE');self.assertEqual(caught.exception.effect,'none')
             publishing.assert_not_called();stop.assert_not_called()

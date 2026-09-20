@@ -42,7 +42,7 @@ def replace(worker, token, text, Refused):
         worker.snapshot(token,mutation=True,focus=True,secret=True)
     def plan(chord):
         if not worker.native_target:raise Refused('FOCUS_CHANGED')
-        try:worker.clipboard.prepare_key(worker.native_target,chord)
+        try:worker.input.prepare_key(worker.native_target,chord)
         except DesktopError as exc:raise Refused(exc.code) from None
         # Native plan can block: recheck the exact node after it, before CDP.
         return worker.snapshot(token,mutation=True,focus=True,secret=True)[1]
@@ -57,7 +57,7 @@ def replace(worker, token, text, Refused):
     if current['selection_all'] is not True:raise Refused('SELECTION_UNVERIFIED')
     worker.effect='uncertain'
     if text:worker.protocol.send('Input.insertText',{'text':text})
-    else:worker.rich_key('Backspace','Backspace',8)
+    else:worker.send_key('Backspace','Backspace',8)
     # Detect masking/type/focus/identity changes without reading entered text.
     worker.snapshot(token,mutation=True,focus=True,secret=True)
     return {'effect':'dispatched','secret_dispatched':True}

@@ -8,7 +8,7 @@ from luda.common import DesktopError
 
 class BrowserSecretTests(unittest.TestCase):
  def worker(self):
-  w=Worker.__new__(Worker);w.effect='none';w.protocol=Mock();w.clipboard=Mock();w.native_target={'xid':42,'generation':'owned'};w.page=Mock()
+  w=Worker.__new__(Worker);w.effect='none';w.protocol=Mock();w.input=Mock();w.clipboard=Mock();w.native_target={'xid':42,'generation':'owned'};w.page=Mock()
   node=Mock();node.evaluate.return_value={'selected':True};w.snapshot=Mock(return_value=({'node':node},{'focused':True,'selection_all':True}))
   return w
  def test_dispatch_only_without_clipboard_or_content_readback(self):

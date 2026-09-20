@@ -39,7 +39,7 @@ def child(base):
     class Handler(http.server.BaseHTTPRequestHandler):
         def log_message(self,*args):pass
         def do_GET(self):
-            routes={'/':ASSETS/'index.html','/app.js':ASSETS/'app.bundle.js','/bridge.mjs':ROOT/'integrations/prosemirror/luda-prosemirror.mjs'}
+            routes={'/':ASSETS/'index.html','/app.js':ASSETS/'app.bundle.js','/bridge.mjs':ROOT/'addons/editor-bridge/application/luda-prosemirror.mjs'}
             path=routes.get(self.path)
             if path is None:self.send_error(404);return
             self.send_response(200);self.send_header('Content-Type','text/html; charset=utf-8' if self.path=='/' else 'text/javascript');self.end_headers();self.wfile.write(path.read_bytes())

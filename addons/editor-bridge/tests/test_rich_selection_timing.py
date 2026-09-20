@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import Mock,patch
 from test_browser_rich import value
-from luda._browser_worker import Worker,Refused
+from luda_editor_bridge.worker import Worker,Refused
 
 class RichSelectionTimingTests(unittest.TestCase):
     def test_whole_end_and_empty_ranges_preserve_native_route(self):
@@ -22,7 +22,7 @@ class RichSelectionTimingTests(unittest.TestCase):
 
     def test_selection_sync_diagnostic_is_fixed_and_no_text(self):
         before=value('synthetic text must not leak');w=Worker('unused');w.protocol=Mock();w.snapshot=Mock(return_value=({},before))
-        with patch('luda._browser_worker.time.monotonic',side_effect=[0,1]):
+        with patch('luda_editor_bridge.worker.time.monotonic',side_effect=[0,1]):
             with self.assertRaises(Refused) as exc:w.select('field',0,len(before['text']))
         self.assertEqual(exc.exception.code,'SELECTION_UNVERIFIED');self.assertEqual(exc.exception.stage,'selection_sync')
         self.assertNotIn(before['text'],str(exc.exception))
@@ -35,7 +35,7 @@ class RichSelectionTimingTests(unittest.TestCase):
 
     def test_public_protocol_projects_only_fixed_diagnostic_stages(self):
         import json,subprocess,sys
-        from luda.browser import OwnedBrowser
+        from luda_editor_bridge.browser import OwnedBrowser
         from luda.common import DesktopError
         for stage in ('selection_sync','caret_readback','SYNTHETIC_PRIVATE_TEXT',{'secret':'SYNTHETIC_PRIVATE_TEXT'}):
             response={'error':'SELECTION_UNVERIFIED','effect':'uncertain','provider_stage':stage}

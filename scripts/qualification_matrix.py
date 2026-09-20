@@ -33,7 +33,6 @@ SUITES = {
     'range-selection': suite('live_range_selection.py', 'DATA-03', artifacts=('range-selection',), gaps=('Observed visible same-inspection GTK ranges; no virtualized or implicit range inference',)),
     'restore-comparison': suite('live_restore_comparison.py', 'WM-03', wm=False, artifacts=('restore-comparison',), gaps=('Observed pre-maximize geometry comparison; unobserved external change-and-revert is not detectable',)),
     'window-geometry': suite('live_window_geometry.py', 'WM-02 WM-03', wm=False, artifacts=('window-geometry',), gaps=('Observed GTK/XFWM client/frame geometry; no automatic pre-maximize history tracking',)),
-    'rich-progress': suite('live_rich_progress.py', 'ERR-05', browser='--executable', artifacts=('rich-progress',), gaps=('Final error receipt after one verified rich segment and a rejected paragraph action; not lost-receipt cancellation progress',)),
     'browser-permission': suite('live_browser_permission.py', 'WEB-07', browser='--executable', artifacts=('browser-permission',), gaps=('Real geolocation denial in a fresh owned Chromium; not every browser permission type',)),
     'password-manager': suite('live_password_manager.py', 'AUTH-03', wm=False, artifacts=('password-manager',), gaps=('Actual native KeePassXC entry menu through Desktop methods; no GUI unlock or browser extension qualification',)),
     'dead-compose': suite('live_dead_compose.py', 'KEY-10', wm=False, artifacts=('dead-compose',), gaps=('Explicit no-input refusal of named dead-key and Compose requests; not composition support',)),
@@ -74,9 +73,6 @@ SUITES = {
     'browser': suite('live_browser.py', 'WEB-01 WEB-02 WEB-03 WEB-05 WEB-06', browser='--browser', artifacts=('browser',), gaps=('Rich contenteditable exact verification is unsupported',)),
     'browser-offsets': suite('live_browser_offsets.py', 'EDIT-09 WEB-02 WEB-03', browser='--executable', artifacts=('browser-offset',)),
     'pm-selection-prototype': suite('live_pm_selection.py', 'WEB-03 DATA-07', browser='--executable', artifacts=('pm-selection',), gaps=('Test-only public EditorView DOM range mapping, not production arbitrary selection support',)),
-    'owned-rich-clipboard': suite('live_owned_rich_clipboard.py', 'WEB-03 DATA-07', browser='--executable', artifacts=('owned-rich-clipboard',), gaps=('Explicit clipboard transport; cooperating basic ProseMirror only',), timeout=300),
-    'owned-hard-breaks': suite('live_owned_hard_breaks.py', 'DATA-07 WEB-03', browser='--executable', artifacts=('owned-hard-breaks',), gaps=('Explicit cooperating ProseMirror hard-break schema; not generic rich editors',)),
-    'owned-rich': suite('live_owned_rich.py', 'WEB-03 DATA-07', browser='--executable', artifacts=('owned-rich',), gaps=('Cooperating basic ProseMirror paragraphs only; not arbitrary rich editors',)),
     'owned-secret': suite('live_owned_secret.py', 'AUTH-01 AUTH-07', browser='--executable', artifacts=('owned-secret',), gaps=('Password-only explicit route; application-controlled masking is not atomic',)),
     'owned-browser': suite('live_owned_browser.py', 'WEB-01 WEB-02 MCP-08', browser='--executable', artifacts=('owned-browser',), gaps=('Owned Chromium HTML fields; generic rich editors/frames unsupported',)),
     'rich-editor-protocol': suite('live_rich_protocol.py', 'WEB-03 DATA-07', browser='--executable', artifacts=('rich-editor-protocol',), gaps=('Test-only owned browser-native text input; explicit paragraph semantics; no generic rich editor adapter',)),
@@ -262,7 +258,7 @@ def inside(name, executable, electron=None, firefox=None):
             Path(path).write_text(json.dumps(startup, indent=2) + '\n')
 
 
-def main():
+def main(entrypoint=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--list', action='store_true')
     group = parser.add_mutually_exclusive_group()
@@ -312,7 +308,7 @@ def main():
                         env = private_environment(Path(directory), token)
                         env['LUDA_MATRIX_STARTUP_REPORT'] = str(destination / 'startup.json')
                         command = ['xvfb-run', '-a', '-e', str(destination / 'xserver.log'), '-s', '-screen 0 1440x1000x24 -nolisten tcp',
-                                   'dbus-run-session', '--', sys.executable, str(Path(__file__).resolve()), '--inside', name]
+                                   'dbus-run-session', '--', sys.executable, str(entrypoint or Path(__file__).resolve()), '--inside', name]
                         if args.executable:
                             command.extend(['--executable', args.executable])
                         if args.firefox_executable:

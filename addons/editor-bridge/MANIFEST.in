@@ -1,0 +1,8 @@
+include README.md LICENSE .mcp.json
+recursive-include .codex-plugin *.json
+recursive-include skills *.md
+recursive-include application *.mjs *.md
+recursive-include tests *.py *.json *.html *.js *.md
+prune tests/fixtures/owned-rich-editor/node_modules
+prune tests/fixtures/owned-rich-hard-breaks/node_modules
+prune tests/fixtures/pm-selection/node_modules

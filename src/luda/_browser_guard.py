@@ -90,7 +90,7 @@ def clear_profile(directory, descriptor, identity):
         return False
 
 
-def main():
+def main(worker_module='luda._browser_worker'):
     if ctypes.CDLL(None).prctl(36, 1, 0, 0, 0) != 0:  # PR_SET_CHILD_SUBREAPER
         return 1
     # Chromium creates Unix sockets below TMPDIR (108-byte pathname limit).
@@ -113,7 +113,7 @@ def main():
         temporary = directory / '.luda-temporary'
         temporary.mkdir(mode=0o700)
         child_environment = dict(os.environ, TMPDIR=str(temporary), TMP=str(temporary), TEMP=str(temporary))
-        child = subprocess.Popen([sys.executable, '-m', 'luda._browser_worker', str(directory)],
+        child = subprocess.Popen([sys.executable, '-m', worker_module, str(directory)],
                                  stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                  stderr=subprocess.DEVNULL, start_new_session=True, env=child_environment)
         selector = selectors.DefaultSelector()

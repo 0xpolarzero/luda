@@ -50,7 +50,7 @@ class SelectionProbe:
         if len(expected)>64000 or len(expected.split('\n'))>128 or len(text.split('\n'))>27:raise Refused('VERIFICATION_LIMIT')
         current=before;inserted='';steps=[];self.trace=[]
         if delete_first and start!=end:
-            self.worker.rich_key('Backspace','Backspace',8)
+            self.worker.send_key('Backspace','Backspace',8)
             current=self.read()
             self.trace.append({'action':'initial-delete','actual':current['text'],'model':current['model']})
             if current['text']!=prefix+suffix or current['styled'][:start]!=styles_before or current['styled'][start:]!=styles_after:raise Refused('TEXT_MISMATCH')
@@ -63,8 +63,8 @@ class SelectionProbe:
                 dom=self.worker.page.evaluate('window.ludaSelectionProbe.current()')
                 boundaries=self.worker.page.evaluate("text=>[0,...Array.from(new Intl.Segmenter(undefined,{granularity:'grapheme'}).segment(text),s=>Array.from(text.slice(0,s.index+s.segment.length)).length)]",fresh['text'])
                 self.trace.append({'action':action,'dom_before':dom,'model_selection':fresh['selection'],'grapheme_boundaries':boundaries,'endpoints_are_grapheme_boundaries':fresh['start'] in boundaries and fresh['end'] in boundaries})
-                if action=='return':self.worker.rich_key('Enter','Enter',13);inserted+='\n'
-                elif action=='delete':self.worker.rich_key('Backspace','Backspace',8)
+                if action=='return':self.worker.send_key('Enter','Enter',13);inserted+='\n'
+                elif action=='delete':self.worker.send_key('Backspace','Backspace',8)
                 else:
                     if clipboard:self.desktop.paste(self.window,payload)
                     else:self.worker.protocol.send('Input.insertText',{'text':payload})

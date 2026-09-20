@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import Mock
-from luda._browser_rich import decode,RichInvalid,unchanged_prefix
-from luda._browser_worker import Worker,Refused
+from luda_editor_bridge.model import decode,RichInvalid,unchanged_prefix
+from luda_editor_bridge.worker import Worker,Refused
 
 CONTRACT='basic-paragraphs-hard-breaks-v1'
 def value(parts,caret=None):
@@ -38,17 +38,17 @@ class HardBreaks(unittest.TestCase):
   w.focus.assert_not_called();w.protocol.send.assert_not_called()
  def test_native_shift_enter_exact_hard_break_and_caret(self):
   before=value([['A']]);after=value([['A',None]])
-  w=Worker('unused');w.protocol=Mock();w.rich_key=Mock();w.require_text_boundaries=Mock();w.snapshot=Mock(side_effect=[({},before),({},before),({},after)])
+  w=Worker('unused');w.protocol=Mock();w.send_key=Mock();w.require_text_boundaries=Mock();w.snapshot=Mock(side_effect=[({},before),({},before),({},after)])
   result=w.rich_type('t','\n','insert','hard_break',before)
-  self.assertTrue(result['exact_match']);self.assertEqual(result['model'],after['model']);w.rich_key.assert_called_once_with('Enter','Enter',13,8)
+  self.assertTrue(result['exact_match']);self.assertEqual(result['model'],after['model']);w.send_key.assert_called_once_with('Enter','Enter',13,8)
  def test_wrong_key_binding_same_lf_never_verifies_or_retries(self):
   before=value([['A']]);wrong=value([['A'],[]])
-  w=Worker('unused');w.protocol=Mock();w.rich_key=Mock();w.require_text_boundaries=Mock();w.snapshot=Mock(side_effect=[({},before),({},before),({},wrong)])
+  w=Worker('unused');w.protocol=Mock();w.send_key=Mock();w.require_text_boundaries=Mock();w.snapshot=Mock(side_effect=[({},before),({},before),({},wrong)])
   with self.assertRaises(Refused) as caught:w.rich_type('t','\nB','insert','hard_break',before)
-  self.assertEqual(caught.exception.code,'TEXT_MISMATCH');self.assertEqual(w.rich_key.call_count,1);w.protocol.send.assert_not_called()
+  self.assertEqual(caught.exception.code,'TEXT_MISMATCH');self.assertEqual(w.send_key.call_count,1);w.protocol.send.assert_not_called()
  def test_hard_break_does_not_consume_paragraph_budget(self):
   before=value([[]]*127+[['A']]);after=value([[]]*127+[['A',None]])
-  w=Worker('unused');w.protocol=Mock();w.rich_key=Mock();w.require_text_boundaries=Mock();w.snapshot=Mock(side_effect=[({},before),({},before),({},after)])
+  w=Worker('unused');w.protocol=Mock();w.send_key=Mock();w.require_text_boundaries=Mock();w.snapshot=Mock(side_effect=[({},before),({},before),({},after)])
   self.assertTrue(w.rich_type('t','\n','insert','hard_break',before)['exact_match'])
 
  def test_known_structural_node_overflow_refuses_before_focus_and_clipboard(self):
@@ -74,4 +74,4 @@ class HardBreaks(unittest.TestCase):
   import hashlib,json
   root=Path(__file__).resolve().parents[1];fixture=root/'tests/fixtures/owned-rich-hard-breaks';identity=json.loads((fixture/'bundle-identity.json').read_text())
   for name,digest in identity['files'].items():self.assertEqual(hashlib.sha256((fixture/name).read_bytes()).hexdigest(),digest,name)
-  self.assertEqual(hashlib.sha256((root/'integrations/prosemirror/luda-prosemirror.mjs').read_bytes()).hexdigest(),identity['bridge_sha256'])
+  self.assertEqual(hashlib.sha256((root/'application/luda-prosemirror.mjs').read_bytes()).hexdigest(),identity['bridge_sha256'])

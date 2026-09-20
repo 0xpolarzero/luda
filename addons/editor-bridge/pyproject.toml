@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "luda-editor-bridge"
+version = "0.1.0"
+description = "Optional ProseMirror editing tools and skill for applications you control"
+readme = "README.md"
+requires-python = ">=3.12"
+license = "MIT"
+dependencies = ["luda[browser]==0.1.0"]
+
+[project.scripts]
+luda-editor-bridge = "luda_editor_bridge.server:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.data-files]
+"share/luda-editor-bridge/skills/luda-editor-bridge" = ["skills/luda-editor-bridge/SKILL.md"]
+"share/luda-editor-bridge/skills/luda-editor-bridge/references" = ["skills/luda-editor-bridge/references/editing.md"]
+"share/luda-editor-bridge/application" = ["application/luda-prosemirror.mjs", "application/README.md"]
+"share/luda-editor-bridge/.codex-plugin" = [".codex-plugin/plugin.json"]
+"share/luda-editor-bridge" = [".mcp.json"]

@@ -134,11 +134,11 @@ raise SystemExit(0 if ready['ready'] and not refused['ready'] else 1)
             wm.assert_not_called()
 class SuiteTimeoutTests(unittest.TestCase):
     def test_clipboard_only_larger_default(self):
-        self.assertEqual(m.suite_timeout(m.SUITES['owned-rich-clipboard']),300)
+        self.assertEqual(m.suite_timeout(m.suite('optional.py','',timeout=300)),300)
         for name,spec in m.SUITES.items():
             if name!='owned-rich-clipboard':self.assertEqual(m.suite_timeout(spec),180,name)
     def test_explicit_override_preserved(self):
-        self.assertEqual(m.suite_timeout(m.SUITES['owned-rich-clipboard'],17),17)
+        self.assertEqual(m.suite_timeout(m.suite('optional.py','',timeout=300),17),17)
         for invalid in (0,301,True):
             with self.assertRaises(ValueError):m.suite_timeout({},invalid)
     def test_default_metadata_clamped(self):

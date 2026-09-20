@@ -35,4 +35,3 @@ where = ["src"]
 "share/luda/skills/luda" = ["skills/luda/SKILL.md"]
 "share/luda/skills/luda/references" = ["skills/luda/references/*.md"]
 
-"share/luda/integrations/prosemirror" = ["integrations/prosemirror/luda-prosemirror.mjs"]

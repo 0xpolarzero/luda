@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import Mock
-from luda._browser_rich import decode, RichInvalid, unchanged_prefix
-from luda._browser_worker import Worker,Refused
+from luda_editor_bridge.model import decode, RichInvalid, unchanged_prefix
+from luda_editor_bridge.worker import Worker,Refused
 
 
 def model(text,marks=None):
@@ -66,7 +66,7 @@ class BrowserRichTests(unittest.TestCase):
         root=Path(__file__).resolve().parents[1];fixture=root/'tests/fixtures/owned-rich-editor'
         identity=json.loads((fixture/'bundle-identity.json').read_text())
         for name,digest in identity['files'].items():self.assertEqual(hashlib.sha256((fixture/name).read_bytes()).hexdigest(),digest,name)
-        self.assertEqual(hashlib.sha256((root/'integrations/prosemirror/luda-prosemirror.mjs').read_bytes()).hexdigest(),identity['bridge_sha256'])
+        self.assertEqual(hashlib.sha256((root/'application/luda-prosemirror.mjs').read_bytes()).hexdigest(),identity['bridge_sha256'])
 
     def test_known_final_paragraph_overflow_refuses_before_focus_or_keys(self):
         before=value('\n'*127);before['focused']=False

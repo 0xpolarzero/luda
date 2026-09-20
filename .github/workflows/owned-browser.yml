@@ -50,12 +50,19 @@ jobs:
       - name: Real sandboxed browser text, IME and cleanup qualification
         run: |
           browser=$(cat artifacts/owned-browser-provision/browser-path.txt)
-          .venv/bin/python scripts/qualification_matrix.py --suites owned-browser owned-secret owned-pages-probe owned-hard-breaks owned-rich owned-rich-clipboard browser-permission rich-progress --executable "$browser"
+          .venv/bin/python scripts/qualification_matrix.py --suites owned-browser owned-secret owned-pages-probe browser-permission --executable "$browser"
       - name: Qualify the installed managed wheel and launcher
         if: ${{ !cancelled() && steps.provision_browser.outcome == 'success' && steps.sandbox_policy.outcome == 'success' }}
         run: |
           browser=$(cat artifacts/owned-browser-provision/browser-path.txt)
           python3 scripts/check_managed_browser_ci.py --prefix "$RUNNER_TEMP/luda-managed-install" --executable "$browser" --output artifacts/managed-browser-installed
+      - name: Explicitly install and qualify the separate editor bridge add-on
+        if: ${{ !cancelled() && steps.provision_browser.outcome == 'success' && steps.sandbox_policy.outcome == 'success' }}
+        run: |
+          uv pip install --no-deps ./addons/editor-bridge
+          .venv/bin/python -m unittest discover -s addons/editor-bridge/tests -p 'test_*.py'
+          browser=$(cat artifacts/owned-browser-provision/browser-path.txt)
+          .venv/bin/python addons/editor-bridge/scripts/qualify.py --suites owned-hard-breaks owned-rich owned-rich-clipboard rich-progress --executable "$browser"
       - name: Remove the CI-only AppArmor attachment
         if: always()
         run: |

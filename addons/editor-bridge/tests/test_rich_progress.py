@@ -4,10 +4,10 @@ from contextlib import nullcontext
 from types import SimpleNamespace
 from unittest.mock import Mock,patch
 from luda import server,reporting
-from luda._browser_worker import Worker,Refused
-from luda.browser import OwnedBrowser
+from luda_editor_bridge.worker import Worker,Refused
+from luda_editor_bridge.browser import OwnedBrowser
 from luda.common import DesktopError
-from luda.progress import RichProgress,rich_text_progress
+from luda_editor_bridge.progress import RichProgress,rich_text_progress,operation_progress
 from test_browser_rich import value
 import test_browser_rich_clipboard as clipboard_tests
 
@@ -59,10 +59,10 @@ class RichProgressTests(unittest.TestCase):
             type_text=Mock(side_effect=DesktopError('TEXT_MISMATCH','Mismatch.',effect='uncertain',details={'progress':progress})))
         history=deque()
         with patch.object(server,'get_backend',return_value=backend),patch.object(server,'require_session_input'),patch.object(server,'_history',history):
-            response=server.execute('type_text','observed','PRIVATE\nPAYLOAD')
+            response=server.execute('type_text','observed','PRIVATE\nPAYLOAD',_progress_parser=operation_progress)
         self.assertEqual(json.loads(response.content[0].text)['details']['progress'],progress)
         self.assertEqual(history[-1]['progress'],progress)
-        self.assertEqual(reporting.project_history(history)[-1]['progress'],progress)
+        self.assertEqual(reporting.project_history(history,progress_parser=operation_progress)[-1]['progress'],progress)
         self.assertNotIn('PRIVATE',response.content[0].text+json.dumps(list(history)))
         self.assertNotIn('progress',reporting.project_history([dict(history[-1],progress={**progress,'text':'PRIVATE'})])[-1])
     def test_actual_receipt_transport_filters_untrusted_progress(self):
@@ -107,9 +107,10 @@ class RichProgressTests(unittest.TestCase):
             worker.progress=RichProgress(1);worker.progress.complete()
             return {'effect':'verified'}
         worker.dispatch.side_effect=dispatch
+        worker.receipt_progress.side_effect=lambda:rich_text_progress(worker.progress.value) if worker.progress is not None else None
         output=io.StringIO()
         with patch.object(module,'Worker',return_value=worker),patch.object(module.sys,'argv',['worker','unused']),patch.object(module.sys,'stdin',SimpleNamespace(buffer=io.BytesIO(b'{}\ninvalid\n'))),patch.object(module.sys,'stdout',output):
-            module.main()
+            module.main(lambda profile:worker)
         replies=[json.loads(row) for row in output.getvalue().splitlines()]
         self.assertEqual(replies[0]['progress']['verified_completed'],1)
         self.assertNotIn('progress',replies[1])

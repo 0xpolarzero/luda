@@ -5,12 +5,15 @@ import shutil
 import subprocess
 import time
 from pathlib import Path
-from .common import DesktopError, run, stop_process
-from .storage import staged_payload, storage_errors
-from .keyboard import keyboard_capabilities
+from luda.common import DesktopError, run, stop_process
+from luda.storage import staged_payload, storage_errors
+from luda.keyboard import keyboard_capabilities
 
 
-class Clipboard:
+from luda._browser_input import NativeInput
+
+
+class Clipboard(NativeInput):
     def __init__(self, directory):
         self.directory=Path(directory)
         self.owner=None
@@ -42,12 +45,6 @@ class Clipboard:
         if not self.owner or self.owner.poll() is not None or run(['xclip','-selection','clipboard','-out'],timeout=.3,max_output_bytes=256001)!=text.encode('utf-8'):
             raise DesktopError('CLIPBOARD_CHANGED','Clipboard changed before paste; no shortcut sent.')
 
-    def prepare_key(self, target, chord):
-        # Read-only native target/generation, focus, held and latched state check.
-        # Do not start an XTest injector inside the killable browser owner.
-        request={'chord':chord,'target':target['xid'],'target_generation':target['generation']}
-        result=json.loads(run([sys.executable,'-m','luda._keyboard_native','plan'],data=json.dumps(request).encode()+b'\n',timeout=1,max_output_bytes=16384))
-        if result.get('code'):raise DesktopError(result['code'],'Native clipboard input preflight failed.')
 
 
     def close(self):

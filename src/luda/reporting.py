@@ -88,8 +88,9 @@ def project_versions(health):
     return result
 
 
-def project_history(history):
+def project_history(history, *, progress_parser=None):
     from .progress import operation_progress
+    if progress_parser is None:progress_parser=operation_progress
     result = []
     for value in list(history)[-32:]:
         if not isinstance(value, dict):
@@ -115,14 +116,14 @@ def project_history(history):
             row['elapsed_ms'] = round(elapsed, 3)
         if type(value.get('ok')) is bool:
             row['ok'] = value['ok']
-        progress=operation_progress(value.get('progress'))
+        progress=progress_parser(value.get('progress'))
         if progress is not None:row['progress']=progress
         if row:
             result.append(row)
     return result
 
 
-def build_report(health, history, *, cli=False, recovering=False):
+def build_report(health, history, *, cli=False, recovering=False, progress_parser=None):
     try:
         environment = environment_summary()
     except Exception:
@@ -131,7 +132,7 @@ def build_report(health, history, *, cli=False, recovering=False):
     return {'schema_version': 1, 'effect': 'none', 'environment': environment,
             'health': project_health(health), 'versions': project_versions(health), 'recovering': recovering is True,
             'history_scope': 'fresh_cli_process' if cli else 'current_mcp_process',
-            'history_limit': 32, 'operations': project_history(history),
+            'history_limit': 32, 'operations': project_history(history, progress_parser=progress_parser),
             'omitted': ['screenshots', 'window_titles', 'input_text', 'clipboard', 'paths',
                         'environment_variables', 'exception_messages', 'exception_details',
                         'action_arguments', 'reproduction_steps'],

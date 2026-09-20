@@ -27,7 +27,7 @@ class Fixture(http.server.BaseHTTPRequestHandler):
 
     def do_GET(self):
         routes = {'/app.js': ROOT / 'artifacts/prosemirror-usability/app.bundle.js',
-                  '/bridge.mjs': ROOT / 'integrations/prosemirror/luda-prosemirror.mjs'}
+                  '/bridge.mjs': ROOT / 'addons/editor-bridge/application/luda-prosemirror.mjs'}
         self.send_response(200)
         self.send_header('Content-Type', 'application/javascript' if self.path in routes else 'text/html; charset=utf-8')
         self.end_headers()

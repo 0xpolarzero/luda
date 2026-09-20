@@ -40,6 +40,7 @@ from .storage import storage_errors, staged_payload
 
 
 class Desktop(InteractionMixin, ConditionWaitsMixin):
+    browser_class = OwnedBrowser
     def __init__(self, environment=None):
         self.environment = MappingProxyType(dict(os.environ if environment is None else environment))
         self.identity_epoch = uuid.uuid4().hex
@@ -53,7 +54,7 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         self.window_history = WindowHistory()
         self.clipboard_owner = None
         self.recordings = Recordings(self)
-        self.browser = OwnedBrowser(self)
+        self.browser = self.browser_class(self)
         self.local_lock = threading.Lock()
         name = hashlib.sha256(display_identity(self.environment.get('DISPLAY','')).encode()).hexdigest()[:12]
         self.lockfd = None
@@ -527,18 +528,15 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         result=self.ax({'op':op,'pid':w['pid'],'start':w['start'],'target':node,**kwargs},op!='read')
         return native_text_readback(result) if op in ('read','set','insert') else result
 
-    def type_text(self, element_id, text, mode='insert', line_breaks=None, transport='native'):
+    def type_text(self, element_id, text, mode='insert'):
         validate_text(text)
-        if transport not in ('native','clipboard'):raise DesktopError('INVALID_ARGUMENT','Choose native or clipboard transport.')
         if mode not in ('insert','replace'):
             raise DesktopError('INVALID_ARGUMENT','Text mode must be insert or replace.')
         target = self.elements.get(element_id)
         if not target or elapsed_time()-target['time']>=60:
             raise DesktopError('STALE_TARGET','Element expired; inspect again.')
         if target.get('provider') == 'owned_browser':
-            return self.browser.element(target,'type',text=text,mode=mode,line_breaks=line_breaks,transport=transport)
-        if line_breaks is not None or transport!='native':
-            raise DesktopError('UNSUPPORTED_ACTION','Explicit line-break policies and clipboard transport require a cooperating owned-browser editor.')
+            return self.browser.element(target,'type',text=text,mode=mode)
         node = target['node']
         if node.get('protected'):
             raise DesktopError('PROTECTED_FIELD','Ordinary typing does not write protected fields.')

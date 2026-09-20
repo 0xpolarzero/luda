@@ -13,7 +13,6 @@ from urllib.parse import urlsplit
 import uuid
 from .common import DesktopError, checkpoint, mark_effect, process_identity
 from .timing import elapsed_time
-from .progress import rich_text_progress
 
 MESSAGES = {
     'STORAGE_UNAVAILABLE':'Cannot stage clipboard input; check temporary storage space and permissions.',
@@ -28,9 +27,6 @@ MESSAGES = {
     'UNSUPPORTED_TEXT_BOUNDARY':'Browser-native input cannot split a grapheme (such as a joined emoji or combining sequence); choose complete boundaries. Offsets remain Unicode code points.',
     'TEXT_BOUNDARY_UNAVAILABLE':'Cannot verify native browser input boundaries; no input sent at this boundary.',
     'BROWSER_TIMEOUT':'Owned browser operation exceeded its deadline; inspect before retrying.',
-    'LINE_BREAK_SEMANTICS_REQUIRED':'Specify one supported line_breaks policy for LF (paragraph or explicitly declared hard_break); no input sent.',
-    'FORMATTING_CHANGED':'Existing rich-text formatting changed after input; inspect before retrying.',
-    'TEXT_REPRESENTATION_UNSUPPORTED':'This editor contains unsupported structure or marks; no exact text route is available.',
     'STALE_TARGET':'Browser document or field changed or expired; inspect again.',
     'NOT_PROTECTED_FIELD':'Explicit secret entry requires the same observed password input; no ordinary field is accepted.',
     'PROTECTED_FIELD':'Owned browser ordinary text operations refuse protected fields.',
@@ -72,6 +68,13 @@ def capability(environment):
 
 
 class OwnedBrowser:
+    guard_module = 'luda._browser_guard'
+    messages = MESSAGES
+    supported_fields = 'ordinary HTML text inputs and textareas; inspect text_fields'
+
+    def receipt_progress(self, value, args):
+        return None
+
     def __init__(self, desktop):
         self.desktop=desktop
         self.process=None
@@ -84,11 +87,11 @@ class OwnedBrowser:
     def request(self, op, **args):
         process=self.process
         if not process or process.poll() is not None:
-            raise DesktopError('BROWSER_CLOSED',MESSAGES['BROWSER_CLOSED'])
+            raise DesktopError('BROWSER_CLOSED',self.messages['BROWSER_CLOSED'])
         mutation=op not in ('inspect','read')
         packet=(json.dumps({'op':op,**args},ensure_ascii=False,separators=(',',':'))+'\n').encode()
         if len(packet)>1024*1024:
-            raise DesktopError('VERIFICATION_LIMIT',MESSAGES['VERIFICATION_LIMIT'])
+            raise DesktopError('VERIFICATION_LIMIT',self.messages['VERIFICATION_LIMIT'])
         deadline=time.monotonic()+9
         received=b''
         selector=selectors.DefaultSelector()
@@ -124,7 +127,7 @@ class OwnedBrowser:
                         if op=='secret' and 'error' not in value and set(value)!={'effect','secret_dispatched'}:
                             raise ValueError('secret response keys')
                         raw_progress=value.pop('progress',None)
-                        progress=rich_text_progress(raw_progress,len(args['text'].split('\n'))) if op=='type' and isinstance(args.get('text'),str) else None
+                        progress=self.receipt_progress(raw_progress,args) if op=='type' else None
                         if progress is not None:value['progress']=progress
                         if op=='secret' and 'error' not in value:
                             if set(value)!={'effect','secret_dispatched'} or effect!='dispatched' or value.get('secret_dispatched') is not True:
@@ -136,10 +139,10 @@ class OwnedBrowser:
                             details={'clipboard_may_have_changed':value.get('clipboard_may_have_changed') is True}
                             if progress is not None:details['progress']=progress
                             if value.get('provider_stage') in ('selection_sync','caret_readback'):details['provider_stage']=value['provider_stage']
-                            raise DesktopError(code if code in MESSAGES else 'BROWSER_OPERATION_FAILED',MESSAGES.get(code,MESSAGES['BROWSER_OPERATION_FAILED']),effect=effect,details=details)
+                            raise DesktopError(code if code in self.messages else 'BROWSER_OPERATION_FAILED',self.messages.get(code,self.messages['BROWSER_OPERATION_FAILED']),effect=effect,details=details)
                         return value
         except DesktopError as exc:
-            if exc.code not in MESSAGES or exc.code in ('BROWSER_CLOSED','BROWSER_TIMEOUT'):
+            if exc.code not in self.messages or exc.code in ('BROWSER_CLOSED','BROWSER_TIMEOUT'):
                 self.close()
                 if sent and mutation:exc.effect='uncertain';mark_effect()
             raise
@@ -162,7 +165,7 @@ class OwnedBrowser:
         if self.process and (self.process.poll() is not None or self.pid is not None and not any(w['pid']==self.pid for w in self.desktop.list_windows())):
             self.close()
         if self.process:
-            raise DesktopError('BROWSER_ALREADY_OPEN',MESSAGES['BROWSER_ALREADY_OPEN'])
+            raise DesktopError('BROWSER_ALREADY_OPEN',self.messages['BROWSER_ALREADY_OPEN'])
         if not capability(self.desktop.environment)['available']:
             raise DesktopError('BROWSER_ADAPTER_UNAVAILABLE','Install the optional locked browser dependencies and configure LUDA_CHROMIUM_EXECUTABLE; Luda never downloads a browser automatically.')
         from .managed_browser import verify_environment
@@ -174,7 +177,7 @@ class OwnedBrowser:
         proof_read, proof_write = os.pipe2(os.O_CLOEXEC | os.O_NONBLOCK)
         self.cleanup_proof = proof_read
         try:
-            self.process=subprocess.Popen([sys.executable,'-m','luda._browser_guard',str(self.desktop.runtime),str(proof_write)],
+            self.process=subprocess.Popen([sys.executable,'-m',self.guard_module,str(self.desktop.runtime),str(proof_write)],
                                       stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,
                                       env=dict(self.desktop.environment),start_new_session=True,pass_fds=(proof_write,))
         except BaseException:
@@ -197,7 +200,7 @@ class OwnedBrowser:
             self.window_id=windows[0]['window_id']
             return {'window_id':self.window_id,'effect':'dispatched','browser_version':value['version'],
                     'lifetime':'temporary_session','profile':'temporary','unsaved_content_survives_disconnect':False,
-                    'supported_fields':'ordinary HTML fields and cooperating paragraph editors; inspect text_fields',
+                    'supported_fields':self.supported_fields,
                     'retention':'Browser and profile are deleted on backend close, reconnect or server disconnect; unsaved content is lost.'}
         except BaseException:
             self.close()
@@ -205,13 +208,13 @@ class OwnedBrowser:
 
     def scoped(self, window_id, active=False):
         if window_id!=self.window_id or self.pid is None or process_identity(self.pid)!=self.start:
-            raise DesktopError('STALE_TARGET',MESSAGES['STALE_TARGET'])
+            raise DesktopError('STALE_TARGET',self.messages['STALE_TARGET'])
         window=self.desktop.target_window(window_id,active)
         if self.desktop.display().topology()!=self.topology:
             raise DesktopError('STALE_TARGET','Display topology changed; reopen the temporary browser provider.')
         windows=[w for w in self.desktop.list_windows() if w['pid']==self.pid]
         if len(windows)!=1 or windows[0]['window_id']!=window_id:
-            raise DesktopError('BROWSER_SCOPE_UNSUPPORTED',MESSAGES['BROWSER_SCOPE_UNSUPPORTED'])
+            raise DesktopError('BROWSER_SCOPE_UNSUPPORTED',self.messages['BROWSER_SCOPE_UNSUPPORTED'])
         return window
 
     def inspect(self, window_id, limit, name, role, states):

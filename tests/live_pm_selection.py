@@ -5,7 +5,7 @@ from unittest.mock import patch
 from luda._browser_worker import Worker,Refused
 from luda.desktop import Desktop
 from pm_selection_probe import SelectionProbe
-ROOT=Path(__file__).resolve().parents[1];OUT=ROOT/'artifacts/pm-selection';ASSETS=ROOT/'tests/fixtures/pm-selection'
+ROOT=Path(__file__).resolve().parents[1];OUT=ROOT/'artifacts/pm-selection';ASSETS=ROOT/'addons/editor-bridge/tests/fixtures/pm-selection'
 CASES=[
  ('astral','plain',1,5,'日本語',False),('combining-only','plain',8,9,'x',False),
  ('inside-zwj','plain',2,4,'Z',False),('middle-caret','plain',6,6,'MID',False),
@@ -30,7 +30,7 @@ def main(executable):
         def log_message(self,*args):pass
         def do_GET(self):
             if self.path=='/bridge.mjs':
-                body=(ROOT/'integrations/prosemirror/luda-prosemirror.mjs').read_bytes();self.send_response(200);self.send_header('Content-Type','text/javascript');self.end_headers();self.wfile.write(body)
+                body=(ROOT/'addons/editor-bridge/application/luda-prosemirror.mjs').read_bytes();self.send_response(200);self.send_header('Content-Type','text/javascript');self.end_headers();self.wfile.write(body)
             else:super().do_GET()
         def do_POST(self):
             data=json.loads(self.rfile.read(int(self.headers['Content-Length'])));oracle.clear();oracle.update(data)

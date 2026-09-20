@@ -72,7 +72,7 @@ def result_error(code, message, effect='none', **details):
         {'ok':False, 'code':code, 'message':message, 'effect':effect, **details}, ensure_ascii=False,separators=(',',':')))])
 
 
-def execute(method, *args, _cancelled=None, **kwargs):
+def execute(method, *args, _cancelled=None, _progress_parser=operation_progress, **kwargs):
     global backend
     acquired = False
     started = time.monotonic()
@@ -137,7 +137,7 @@ def execute(method, *args, _cancelled=None, **kwargs):
         image = result.pop('image_base64',None)
         result={'ok':True,'operation_id':operation_id,'elapsed_ms':round((time.monotonic()-started)*1000),**result}
         event.update(ok=True, effect=result.get('effect','none'))
-        progress=operation_progress(result.pop('progress',None))
+        progress=_progress_parser(result.pop('progress',None))
         if progress is not None:
             event['progress']=progress
             result['progress']=progress
@@ -147,7 +147,7 @@ def execute(method, *args, _cancelled=None, **kwargs):
         return CallToolResult(content=content,isError=False)
     except DesktopError as exc:
         event.update(ok=False, code=exc.code, effect=exc.effect)
-        progress=operation_progress(exc.details.get('progress'))
+        progress=_progress_parser(exc.details.get('progress'))
         if progress is not None:event['progress']=progress
         details=dict(exc.details)
         details.pop('progress',None)
@@ -277,7 +277,7 @@ async def desktop_applications(query: str = '', limit: int = 50) -> CallToolResu
 
 @mcp.tool()
 async def desktop_open_browser(url: str, lifetime: Literal['temporary_session']) -> CallToolResult:
-    """Open a fresh owned Chromium with explicit temporary_session lifetime. Browser/profile and unsaved content are deleted on server disconnect, backend close or reconnect. Requires optional browser dependencies and configured executable; never downloads automatically or attaches existing profiles. Inspect text_fields for ordinary HTML fields, cooperating paragraph editors and explicit password-only secret entry. Ordinary protected-field operations, unregistered rich editors and frames are unsupported."""
+    """Open a fresh owned Chromium with explicit temporary_session lifetime. Browser/profile and unsaved content are deleted on server disconnect, backend close or reconnect. Requires optional browser dependencies and configured executable; never downloads automatically or attaches existing profiles. Inspect text_fields for ordinary HTML fields and explicit password-only secret entry. Ordinary protected-field operations, contenteditable editors and frames are unsupported."""
     return await execute_async('open_browser',url,lifetime)
 
 
@@ -307,7 +307,7 @@ async def desktop_observe(max_width: int = 1280) -> CallToolResult:
 
 @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
 async def desktop_inspect(window_id: str, limit: int = 150, name: str | None = None, role: str | None = None, states: list[str] | None = None, max_depth: int = 30) -> CallToolResult:
-    """Inspect a window or find controls by name/role substring and required states. Returns bounded tree, parent IDs, supported actions and 60-second element IDs. Owned browser text_fields have distinct provider-bound IDs for ordinary HTML fields and explicitly cooperating paragraph editors; role="entry" filters for fields. Field metadata describes line breaks and write scope. When extra owned pages/windows or frames make the owned provider unavailable, native nodes remain independently inspected; owned_browser reports unavailable/code and text_fields is empty. Cached owned fields still refuse unsupported scope; no mutation fallback. Empty matches and unavailable accessibility are distinct."""
+    """Inspect a window or find controls by name/role substring and required states. Returns bounded tree, parent IDs, supported actions and 60-second element IDs. Owned browser text_fields have distinct provider-bound IDs for ordinary HTML fields; role="entry" filters for fields. Field metadata describes line breaks and write scope. When extra owned pages/windows or frames make the owned provider unavailable, native nodes remain independently inspected; owned_browser reports unavailable/code and text_fields is empty. Cached owned fields still refuse unsupported scope; no mutation fallback. Empty matches and unavailable accessibility are distinct."""
     return await execute_async('inspect',window_id,limit,name=name,role=role,states=states,max_depth=max_depth)
 
 
@@ -320,9 +320,9 @@ async def desktop_read_text(element_id: str, limit: int = 16000) -> CallToolResu
 
 
 @mcp.tool()
-async def desktop_type(element_id: str, text: str, mode: Literal["insert", "replace"] = "insert", line_breaks: Literal["paragraph", "hard_break"] | None = None, transport: Literal["native", "clipboard"] = "native") -> CallToolResult:
-    """Type into an editable element and verify exact readback. Owned browser-native insertion refuses positions inside a grapheme; offsets still count code points. For a cooperating rich editor, LF requires an explicit supported line_breaks policy: paragraph, or hard_break only when the app declares its Shift+Enter binding. Readback distinguishes those node types even though both contribute logical LF. Native input supports whole-field replace or append at the end. Explicit transport="clipboard" supports selected code-point ranges and leaves the final nonempty segment in CLIPBOARD until another owner replaces it or the temporary session closes. Empty text deletes the selection without replacing CLIPBOARD; actual new formatting is reported. Default insert preserves surrounding text and replaces the selection; replace changes the entire field. Preserves Unicode/LF/tabs, never adds a submit key. Exact readback does not prove application commit or guarantee autocomplete events; inspect the result before an explicit commit or suggestion selection. Rich-editor final receipts may report verified, uncertain and not-started segment counts; these are not save confirmation or instructions to replay the remainder."""
-    return await execute_async('type_text',element_id,text,mode,line_breaks=line_breaks,transport=transport)
+async def desktop_type(element_id: str, text: str, mode: Literal["insert", "replace"] = "insert") -> CallToolResult:
+    """Type into an editable element and verify exact readback. Insert replaces the selection; replace changes the entire field. Preserves Unicode, LF and tabs without submitting. Owned HTML fields require complete grapheme boundaries. Exact readback does not confirm saving or application commit; inspect before an explicit commit or suggestion selection."""
+    return await execute_async('type_text',element_id,text,mode)
 
 
 @mcp.tool()
@@ -381,7 +381,7 @@ async def desktop_invoke(element_id: str, action: str | None = None) -> CallTool
 
 @mcp.tool()
 async def desktop_select(element_id: str, start_offset: int, end_offset: int) -> CallToolResult:
-    """Select a text range using Unicode code-point offsets, or place the caret when equal; verify the result. For owned-browser fields, call desktop_focus_element first. Cooperating paragraph editors with the updated bridge accept code-point ranges; writing at a middle range or caret requires desktop_type with explicit transport="clipboard". Their default native typing supports whole-field replacement or append at the end. Ordinary HTML fields support code-point ranges; native edits inside graphemes can be refused."""
+    """Select a text range using Unicode code-point offsets, or place the caret when equal; verify the result. For owned-browser HTML fields, call desktop_focus_element first. Native edits inside graphemes can be refused."""
     return await execute_async('element',element_id,'select',start_offset=start_offset,end_offset=end_offset)
 
 

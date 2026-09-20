@@ -1,0 +1,27 @@
+{
+  "name": "editor-bridge",
+  "version": "0.1.0",
+  "description": "Optional ProseMirror editor tools for applications you control. Separate installation; application bridge required.",
+  "author": {
+    "name": "polarzero",
+    "url": "https://github.com/0xpolarzero"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Luda Editor Bridge",
+    "shortDescription": "Verify rich-text edits in your app.",
+    "longDescription": "Separate optional MCP tools and skill for supported ProseMirror editors whose developers register the application bridge. Reads document text, structure and marks, verifies native edits, and uses its own temporary browser.",
+    "developerName": "polarzero",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Open my compatible editor and verify a document edit."
+    ]
+  },
+  "mcpServers": "./.mcp.json",
+  "repository": "https://github.com/0xpolarzero/luda",
+  "license": "MIT"
+}
