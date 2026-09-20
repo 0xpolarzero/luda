@@ -1,0 +1,9 @@
+# Selection identity review
+
+Generic AT-SPI Selection providers could report a selected index after changing the option at that position. The old verifier checked the index and selected count rather than the option's complete identity. Reusing a path with a changed name/provider could therefore produce false `verified` results. An `extend` operation also failed to verify that prior selections survived. These are distinct from the separately implemented TableCell row checks.
+
+The generic selection path now binds the parent provider/path and target provider/path/role/full bounded name. It rechecks identity before mutation, while normalizing selection, and before accepting readback. It only deselects previously observed option identities; a new replacement is not silently cleared. Exact selected identities must match the desired replace/add result, including prior selections for add. A provider exceeding the name budget after mutation produces uncertain identity failure.
+
+`tests/test_selection_identity.py` exercises changed object paths, changed provider identity at the same path, recycled names, loss of previous selections and oversized names after mutation. The first baseline run preserved actual false-verification failures. Existing option tests use explicit provider/name identities so passing tests do not rely on missing identity metadata.
+
+All 508 unit tests passed. The private ordinary-UID semantic GUI suite also passed on the changed implementation, with source unchanged during the run and no surviving tagged processes (`artifacts/qualification-matrix/run-1789871614846749388/results.json`). These checks establish the stated assertions, not atomic cross-process GUI transactions: provider state can still change after the final observation. Broader combo/action-based/table selection implementations require their own corresponding evidence.

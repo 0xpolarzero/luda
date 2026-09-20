@@ -208,8 +208,8 @@ class ProtectedInput(unittest.TestCase):
 
 class SelectionProvider:
     def __init__(self):
-        self.selected=set();self.ignore_deselect=False
-        self.nodes=[types.SimpleNamespace(path='/option/'+str(i),get_index_in_parent=lambda i=i:i) for i in range(3)]
+        self.selected=set();self.ignore_deselect=False;self.path="/list";self.app=types.SimpleNamespace(bus_name=":1.42")
+        self.nodes=[types.SimpleNamespace(path='/option/'+str(i),get_index_in_parent=lambda i=i:i,app=self.app,get_role_name=lambda:'list item',get_name=lambda i=i:'Option '+str(i)) for i in range(3)]
     def get_interfaces(self):return ['Selection']
     def get_role_name(self):return 'list box'
     def get_parent(self):return None
@@ -229,7 +229,7 @@ class OptionSelection(unittest.TestCase):
     def setUp(self):
         self.old=w.Atspi;w.Atspi=types.SimpleNamespace(Selection=SelectionProvider)
         self.parent=SelectionProvider();self.node=self.parent.nodes[1];self.node.get_parent=lambda:self.parent
-        self.current={'protected':False,'role':'list item','states':[]}
+        self.current={'protected':False,'role':'list item','states':[],'name':self.node.get_name(),'name_fingerprint':w.bounded_name_identity(self.node,False)[1]}
         self.states=patch.object(w,'states_of',return_value={'sensitive','showing'});self.states.start()
         self.verifier=patch.object(w,'verify',lambda fn,**_:fn());self.verifier.start()
     def tearDown(self):w.Atspi=self.old;self.states.stop();self.verifier.stop()

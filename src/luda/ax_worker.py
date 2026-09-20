@@ -528,15 +528,39 @@ def semantic(node, current, req):
         if "Selection" not in parent.get_interfaces():
             return choose_by_action(node, parent, current, extend)
         selection = parent.get_selection_iface()
+        parent_identity = (provider_identity(parent), parent.path)
+        expected_identity = (provider_identity(node), node.path, current["role"],
+                             current["name"], current.get("name_fingerprint"))
+        def option_identity(option):
+            role = option.get_role_name()
+            name, fingerprint = bounded_name_identity(option, "password" in role.lower())
+            return (provider_identity(option), option.path, role, name, fingerprint)
+        def same_option():
+            actual = parent.get_child_at_index(index)
+            return (actual is not None and node.get_index_in_parent() == index
+                    and (provider_identity(parent), parent.path) == parent_identity
+                    and option_identity(actual) == expected_identity
+                    and option_identity(node) == expected_identity)
+        def selected_identities():
+            count = Atspi.Selection.get_n_selected_children(selection)
+            if count > 500:
+                return None
+            return {option_identity(Atspi.Selection.get_selected_child(selection, i))
+                    for i in range(count)}
+        previous = selected_identities()
+        if previous is None:
+            return failure("SELECTION_TOO_LARGE", "Selection normalization exceeds the 500-option budget.")
+        expected = previous | {expected_identity} if extend else {expected_identity}
         def chosen():
-            return (Atspi.Selection.is_child_selected(selection, index)
-                    and (extend or Atspi.Selection.get_n_selected_children(selection) == 1))
+            return (same_option() and Atspi.Selection.is_child_selected(selection, index)
+                    and selected_identities() == expected and same_option())
         if chosen():
             return {"effect": "verified", "accepted": True, "selected": True, "changed": False}
-        if Atspi.Selection.get_n_selected_children(selection) > 500:
-            return failure("SELECTION_TOO_LARGE", "Selection normalization exceeds the 500-option budget.")
+        if not same_option():
+            return failure("STALE_TARGET", "Option identity changed before selection; inspect again.")
         # Some GTK containers omit multiselectable even when multiple selections
-        # are enabled. Select first, then remove other actual selected children.
+        # are enabled. Select first, then remove only previously observed options.
+        req["_mutation_started"] = True
         accepted = (True if Atspi.Selection.is_child_selected(selection, index)
                     else bool(Atspi.Selection.select_child(selection, index)))
         if not extend and accepted:
@@ -546,14 +570,19 @@ def semantic(node, current, req):
                         "verification": "Selection grew beyond the normalization budget."}
             others = [Atspi.Selection.get_selected_child(selection, i) for i in range(count)]
             for selected_index in range(len(others) - 1, -1, -1):
+                if not same_option():
+                    return {"effect": "uncertain", "accepted": accepted, "selected": False,
+                            "verification": "Option identity changed while selecting; inspect again."}
                 other = others[selected_index]
-                if other.path == node.path:
+                other_identity = option_identity(other)
+                if other_identity == expected_identity:
                     continue
                 other_index = other.get_index_in_parent()
-                if other_index < 0 or parent.get_child_at_index(other_index).path != other.path:
+                if (other_identity not in previous or other_index < 0
+                        or option_identity(parent.get_child_at_index(other_index)) != other_identity):
                     return {"effect": "uncertain", "accepted": accepted, "selected": False,
                             "verification": "Selected options changed while normalizing selection."}
-                if Atspi.Selection.get_selected_child(selection, selected_index).path != other.path:
+                if option_identity(Atspi.Selection.get_selected_child(selection, selected_index)) != other_identity:
                     return {"effect": "uncertain", "accepted": accepted, "selected": False,
                             "verification": "Selected option order changed; inspect again."}
                 accepted = bool(Atspi.Selection.deselect_selected_child(selection, selected_index)) and accepted
