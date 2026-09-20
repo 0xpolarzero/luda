@@ -3,6 +3,7 @@ import asyncio
 import argparse
 import base64
 import io
+from importlib.metadata import version
 import json
 import os
 from pathlib import Path
@@ -27,7 +28,8 @@ async def main():
   params=StdioServerParameters(command=args.server,env=dict(os.environ))
   async with stdio_client(params) as streams:
    async with ClientSession(*streams) as s:
-    await s.initialize()
+    initialization=await s.initialize()
+    record('mcp-product-version',initialization.serverInfo.name=='luda' and initialization.serverInfo.version==version('luda'))
     tools=(await s.list_tools()).tools
     (OUT/'tools.json').write_text(json.dumps([t.model_dump() for t in tools],indent=2))
     record('mcp-discovery',{'desktop_type','desktop_paste','desktop_press_keys','desktop_observe'} <= {t.name for t in tools})

@@ -18,7 +18,7 @@ from .session_reconnect import prepare_reconnect
 from .desktop import Desktop
 from .apps import list_applications, launch_application
 
-mcp = DesktopMCP('luda', instructions='Local desktop: observe, select a window, inspect its controls, then act. Screenshot coordinates use the returned image, with its snapshot ID. Text replacement and insertion are distinct. Verify dispatched actions before repeating them; cancellation or timeout can leave effects. Use desktop_status to inspect recent operation outcomes.')
+mcp = DesktopMCP('luda', product_version=version('luda'), instructions='Local desktop: observe, select a window, inspect its controls, then act. Screenshot coordinates use the returned image, with its snapshot ID. Text replacement and insertion are distinct. Verify dispatched actions before repeating them; cancellation or timeout can leave effects. Use desktop_status to inspect recent operation outcomes.')
 backend = None
 _backend_lock = threading.Lock()
 _operation_gate = threading.Lock()

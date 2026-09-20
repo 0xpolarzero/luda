@@ -39,6 +39,12 @@ class ProtocolValidation(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn('secret-value',text);self.assertNotIn('secret_field',text);self.assertNotIn('private',text)
         self.assertIn('element_id',text)
 
+    async def test_protocol_advertises_product_version_not_sdk_version(self):
+        from importlib.metadata import version
+        options=mcp._mcp_server.create_initialization_options()
+        self.assertEqual(options.server_name,'luda')
+        self.assertEqual(options.server_version,version('luda'))
+
     async def test_schemas_refuse_unknown_properties(self):
         for tool in await mcp.list_tools():
             self.assertIs(tool.inputSchema.get('additionalProperties'),False,tool.name)

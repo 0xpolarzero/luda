@@ -7,6 +7,12 @@ from mcp.types import CallToolResult, TextContent
 
 
 class DesktopMCP(FastMCP):
+    def __init__(self, *args, product_version, **kwargs):
+        super().__init__(*args, **kwargs)
+        # FastMCP 1.30 has no public version argument and otherwise advertises
+        # the MCP SDK package version as this application's server version.
+        self._mcp_server.version = product_version
+
     async def list_tools(self):
         tools = await super().list_tools()
         for tool in tools:
