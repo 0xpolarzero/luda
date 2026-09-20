@@ -51,8 +51,8 @@ def cleanup(directory):
 
 
 @contextlib.contextmanager
-def private_directory(report):
-    directory=tempfile.mkdtemp(prefix='luda-matrix-')
+def private_directory(report, *, prefix='luda-matrix-'):
+    directory=tempfile.mkdtemp(prefix=prefix)
     try:
         yield directory
     finally:

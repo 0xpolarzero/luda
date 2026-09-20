@@ -1,0 +1,2 @@
+{"caller_uid": 1001, "isolation": "private user/mount namespace"}
+{"uid": 0, "original_endpoint": "ENOTCONN", "managed_wrapper": {"status": "passed", "returncode": 0, "fixture_status": "passed", "private_directory_cleanup": {"status": "removed", "owned_portal_mounts_detached": 1}}, "mount_absent": true, "unrelated_preserved": true}
