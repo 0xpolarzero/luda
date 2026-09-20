@@ -10,7 +10,7 @@ const documentId = crypto.randomUUID();
 const events = [];
 let generation = 0, revision = 0, view = null, root;
 let persistTail = Promise.resolve();
-let spoofNextComposition = false;
+let spoofNextComposition = false, spoofNextKey = false;
 const allowed = new Set(['doc', 'paragraph', 'text', 'hard_break']);
 
 function snapshot() {
@@ -67,6 +67,14 @@ function mount() {
   }
   root.id = 'editor';
   root.addEventListener('compositionstart', event => {
+    if (event.isTrusted && spoofNextKey) {
+      spoofNextKey = false;
+      setTimeout(() => {
+        root.dispatchEvent(new KeyboardEvent('keydown', {key:'Escape', code:'Escape', isComposing:true, bubbles:true}));
+        root.dispatchEvent(new KeyboardEvent('keyup', {key:'Escape', code:'Escape', isComposing:false, bubbles:true}));
+        persist();
+      }, 1000);
+    }
     if (event.isTrusted && spoofNextComposition) {
       spoofNextComposition = false;
       setTimeout(() => { root.dispatchEvent(new CompositionEvent('compositionend', {data: '', bubbles: true})); persist(); }, 1500);
@@ -83,6 +91,7 @@ function mount() {
 }
 mount();
 document.querySelector('#replace').onclick = mount;
+document.querySelector('#spoof-key').onclick = () => { spoofNextKey = true; };
 document.querySelector('#spoof').onclick = () => { spoofNextComposition = true; };
 document.querySelector('#reload').onclick = () => location.reload();
 document.querySelector('#composition').onclick = () => {

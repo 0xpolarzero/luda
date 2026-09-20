@@ -34,7 +34,7 @@ SAMPLES = [
 def main(executable, native_composition_only=False):
     global OUT
     if native_composition_only:
-        OUT = ROOT / "artifacts/rich-editor-ime"
+        OUT = ROOT / ('artifacts/rich-editor-cancel' if native_composition_only == 'cancel' else 'artifacts/rich-editor-ime')
     if os.getuid() == 0 or os.environ.get('LUDA_ISOLATED_TEST_DISPLAY') != '1':
         raise RuntimeError('Requires ordinary UID and private matrix desktop.')
     OUT.mkdir(parents=True, exist_ok=True)
@@ -87,7 +87,11 @@ def main(executable, native_composition_only=False):
                 context = browser.new_context(viewport={'width':1000,'height':760}, service_workers='block')
                 if native_composition_only:
                     from rich_editor_probe import NATIVE_COMPOSITION_MONITOR
-                    context.add_init_script(NATIVE_COMPOSITION_MONITOR)
+                    if native_composition_only == 'cancel':
+                        from rich_cancel_probe import CANCEL_MONITOR
+                        context.add_init_script(CANCEL_MONITOR)
+                    else:
+                        context.add_init_script(NATIVE_COMPOSITION_MONITOR)
                 else:
                     context.add_init_script(COMPOSITION_MONITOR)
                 page = context.new_page()
@@ -128,7 +132,10 @@ def main(executable, native_composition_only=False):
                         if time.monotonic()>until:return value
                         page.wait_for_timeout(30)
                 if native_composition_only:
-                    from live_rich_ime import exercise
+                    if native_composition_only == 'cancel':
+                        from live_rich_cancel import exercise
+                    else:
+                        from live_rich_ime import exercise
                     exercise(page, desktop, browser_pid, wid, load, focus, persisted, record, button)
                     return 0 if rows and all(row['passed'] for row in rows) else 1
                 for mode in ('prosemirror','generic-normal','generic-prewrap'):

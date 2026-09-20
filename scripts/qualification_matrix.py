@@ -62,6 +62,7 @@ SUITES = {
     'combos': suite('live_combo.py', 'SEM-05', modules=('Gtk', 'Atspi', 'PyQt5'), artifacts=('combo',), gaps=('Qt combo commit is explicitly unsupported',)),
     'browser': suite('live_browser.py', 'WEB-01 WEB-02 WEB-03 WEB-05 WEB-06', browser='--browser', artifacts=('browser',), gaps=('Rich contenteditable exact verification is unsupported',)),
     'browser-offsets': suite('live_browser_offsets.py', 'EDIT-09 WEB-02 WEB-03', browser='--executable', artifacts=('browser-offset',)),
+    'rich-editor-cancel': suite('live_rich_cancel.py', 'WEB-03 DATA-07', browser='--executable', artifacts=('rich-editor-cancel',), gaps=('Test-only explicit native IME cancellation candidate; no generic recovery',)),
     'rich-editor-ime': suite('live_rich_ime.py', 'WEB-03 DATA-07', browser='--executable', artifacts=('rich-editor-ime',), gaps=('Owned ProseMirror native GTK simple IME only; no production adapter',)),
     'rich-editor-prototype': suite('live_rich_editor.py', 'WEB-03 DATA-07', browser='--executable', artifacts=('rich-editor',), gaps=('Test-only cooperating ProseMirror readback; no production adapter; exact serialization failures retained',)),
     'rich-copy': suite('live_rich_copy.py', 'WEB-03 CLIP-09', browser='--executable', artifacts=('rich-copy',), gaps=('Rich clipboard serialization and caret restoration lose information',)),

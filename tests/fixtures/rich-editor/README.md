@@ -35,3 +35,8 @@ untrusted compositionend during the next trusted native composition; it is
 used to test spoof resistance without refocusing an active preedit. It does
 not represent a real IME completion. The driver still uses native keys for
 actual commit/cancel.
+
+The explicit-cancel follow-up's “Arm synthetic Escape” button schedules an
+untrusted Escape keydown/keyup pair during the next native composition. It
+never injects a native key or changes the model through a setter. The candidate
+must ignore those events even when a cancellation ticket is armed.

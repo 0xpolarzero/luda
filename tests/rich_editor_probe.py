@@ -43,7 +43,7 @@ class Readback:
         self.initial = self.read(require_focus=False)
         self.content = content_identity(self.initial)
 
-    def read(self, require_focus=True):
+    def read(self, require_focus=True, allow_composition=False):
         if self.page.is_closed() or len(self.page.context.pages) != 1:
             raise Refused('PAGE_IDENTITY_CHANGED')
         if process_start(self.browser_pid) != self.pid_start:
@@ -72,7 +72,7 @@ class Readback:
             raise Refused('FOCUS_CHANGED')
         if not self.monitored or not value['composition']['known']:
             raise Refused('COMPOSITION_UNKNOWN')
-        if value['composition']['active']:
+        if value['composition']['active'] and not allow_composition:
             raise Refused('COMPOSITION_PENDING')
         snapshot = value['snapshot']
         if snapshot['unsupported']:
@@ -99,7 +99,7 @@ NATIVE_COMPOSITION_MONITOR = """(() => {
     window.addEventListener(type, event => {
       events.push({type, trusted: event.isTrusted, inputType: event.inputType ?? null,
         isComposing: event.isComposing ?? null, data: event.data ?? null,
-        key: event.key ?? null, target: event.target?.id ?? null});
+        key: event.key ?? null, code: event.code ?? null, target: event.target?.id ?? null});
       if (events.length > 160) events.shift();
     }, true);
   }

@@ -118,7 +118,7 @@
       "format": "esm"
     },
     "fixture.js": {
-      "bytes": 4457,
+      "bytes": 4936,
       "imports": [
         {
           "path": "node_modules/prosemirror-state/dist/index.js",
@@ -183,10 +183,10 @@
           "bytesInOutput": 9038
         },
         "fixture.js": {
-          "bytesInOutput": 2893
+          "bytesInOutput": 3208
         }
       },
-      "bytes": 199532
+      "bytes": 199847
     }
   }
 }
