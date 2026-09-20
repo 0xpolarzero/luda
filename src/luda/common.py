@@ -3,6 +3,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 import os
 import re
+import selectors
 import signal
 import subprocess
 import tempfile
@@ -71,15 +72,18 @@ def stop_process(process, timeout=1):
         process.wait(timeout=timeout)
 
 
-def run(args, *, data=None, timeout=3, effect="none", cleanup=False):
-    """No shell; honor both command and overall deadlines and cancellation.
+def run(args, *, data=None, timeout=3, effect="none", cleanup=False,
+        max_output_bytes=16 * 1024 * 1024):
+    """Run argv with bounded combined output, deadline and cancellation.
 
-    Input-release cleanup is allowed after cancellation, with its own short timeout.
+    Private seekable stdin avoids partial-write loss. Output is drained in fixed
+    chunks; exceeding the bound kills the owned process group without returning
+    captured data. Input-release cleanup may run after cancellation.
     """
+    if type(max_output_bytes) is not int or max_output_bytes < 0:
+        raise DesktopError("INVALID_ARGUMENT", "Output byte limit must be a nonnegative integer.")
     if not cleanup:
         checkpoint()
-    # A seekable private input file lets communicate() be polled without losing
-    # partially written stdin after TimeoutExpired (CPython only resumes reads).
     source = tempfile.TemporaryFile() if data is not None else None
     try:
         if source:
@@ -95,35 +99,53 @@ def run(args, *, data=None, timeout=3, effect="none", cleanup=False):
             source.close()
     mark_effect(effect)
     deadline = time.monotonic() + timeout
+    streams = selectors.DefaultSelector()
+    output, error = bytearray(), bytearray()
+    total = 0
     try:
-        while True:
+        for pipe, buffer in ((process.stdout, output), (process.stderr, error)):
+            os.set_blocking(pipe.fileno(), False)
+            streams.register(pipe, selectors.EVENT_READ, buffer)
+        while streams.get_map() or process.poll() is None:
             if not cleanup:
                 checkpoint()
             remaining = deadline - time.monotonic()
             if remaining <= 0:
                 raise DesktopError("TIMEOUT", "Command timed out. Inspect before retrying.", effect=effect)
-            try:
-                output, error = process.communicate(timeout=min(remaining, .05))
-                break
-            except subprocess.TimeoutExpired:
-                continue
+            for key, _ in streams.select(timeout=min(remaining, .05)):
+                try:
+                    # Read at most one byte beyond the allowance to detect an
+                    # overflow without allocating a large temporary payload.
+                    chunk = os.read(key.fd, min(65536, max_output_bytes - total + 1))
+                except BlockingIOError:
+                    continue
+                if not chunk:
+                    streams.unregister(key.fileobj)
+                    continue
+                total += len(chunk)
+                if total > max_output_bytes:
+                    raise DesktopError("OUTPUT_LIMIT", "Backend output exceeded the configured byte limit; inspect state before retrying.",
+                                       effect=effect, details={"limit_bytes": max_output_bytes})
+                key.data.extend(chunk)
         if process.returncode:
-            raise DesktopError("BACKEND_ERROR", error.decode(errors="replace")[:600], effect=effect)
-        return output
+            raise DesktopError("BACKEND_ERROR", error[:600].decode(errors="replace"), effect=effect)
+        return bytes(output)
     except BaseException:
         try:
             os.killpg(process.pid, signal.SIGKILL)
         except ProcessLookupError:
             pass
         try:
-            process.communicate(timeout=1)
-        except subprocess.TimeoutExpired:
-            # A descendant could have detached while retaining stdout. Do not
-            # let an inherited pipe defeat the overall cancellation bound.
-            process.stdout.close()
-            process.stderr.close()
             process.wait(timeout=1)
+        except subprocess.TimeoutExpired:
+            # Do not let cleanup conceal the original error. The owned group
+            # was signalled, and inherited pipes are closed below independently.
+            pass
         raise
+    finally:
+        streams.close()
+        process.stdout.close()
+        process.stderr.close()
 
 
 def process_identity(pid):
