@@ -16,6 +16,11 @@ class Cleanup(unittest.TestCase):
   with patch.object(m,'mounts',side_effect=[[record],[record],[]]),patch.object(m.shutil,'which',return_value='/test/fusermount3'),patch.object(m.subprocess,'run',return_value=subprocess.CompletedProcess([],0)) as run:
    result=m.cleanup(self.base)
   self.assertEqual(result['owned_portal_mounts_detached'],1);self.assertEqual(run.call_args.args[0][-1],str(record['path']))
+ def test_portal_already_detached_is_success_only_after_mount_table_check(self):
+  record=self.mount()
+  with patch.object(m,'mounts',side_effect=[[record],[record],[]]),patch.object(m.shutil,'which',return_value='/test/fusermount3'),patch.object(m.subprocess,'run',return_value=subprocess.CompletedProcess([],1)):
+   result=m.cleanup(self.base)
+  self.assertFalse(self.base.exists());self.assertTrue(result['mount_absence_confirmed']);self.assertEqual(result['unmount_exit'],1)
  def test_foreign_wrong_type_nested_or_changed_mounts_preserved(self):
   original=self.mount()
   for records in ([{**original,'options':['user_id=999999']}],[{**original,'type':'tmpfs'}],[{**original,'path':self.base/'another'}],[original,{**original,'id':'13'}]):
@@ -34,7 +39,7 @@ class Cleanup(unittest.TestCase):
   self.assertEqual(report['fixture_status'],'passed');self.assertEqual(report['private_directory_cleanup']['status'],'unconfirmed')
  def test_failed_or_unconfirmed_unmount_never_deletes(self):
   record=self.mount()
-  for code,final in [(1,[]),(0,[record])]:
+  for code,final in [(1,[record]),(0,[record]),(0,[{**record,"id":"replacement"}])]:
    with patch.object(m,'mounts',side_effect=[[record],[record],final]),patch.object(m.shutil,'which',return_value='/test/fusermount3'),patch.object(m.subprocess,'run',return_value=subprocess.CompletedProcess([],code)):
     with self.assertRaises(RuntimeError):m.cleanup(self.base)
     self.assertTrue(self.base.exists())

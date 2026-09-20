@@ -44,10 +44,17 @@ def cleanup(directory):
             raise RuntimeError('Private portal mount changed before cleanup; retained for review.')
         completed=subprocess.run([utility,'-u','-z','--',str(expected)],stdin=subprocess.DEVNULL,
                                  stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=3)
-        if completed.returncode or any(inside(entry) for entry in mounts()):
-            raise RuntimeError('Private portal detach was not confirmed; retained for review.')
+        remaining=[entry for entry in mounts() if inside(entry)]
+        # A terminating portal may detach itself between our identity check and
+        # fusermount. Confirm the desired state even when the utility lost that race.
+        if remaining:
+            raise RuntimeError(f'Private portal detach was not confirmed (unmount_exit={completed.returncode}, remaining_mounts={len(remaining)}); retained for review.')
     shutil.rmtree(base)
-    return {'status':'removed','owned_portal_mounts_detached':len(found)}
+    result={'status':'removed','owned_portal_mounts_detached':len(found)}
+    if found and completed.returncode:
+        result['unmount_exit']=completed.returncode
+        result['mount_absence_confirmed']=True
+    return result
 
 
 @contextlib.contextmanager
@@ -59,6 +66,6 @@ def private_directory(report, *, prefix='luda-matrix-'):
         # Keep the fixture verdict even if cleanup separately fails.
         if 'status' in report:report['fixture_status']='passed' if report.get('returncode')==0 else report['status']
         try:report['private_directory_cleanup']=cleanup(directory)
-        except Exception:
-            report['private_directory_cleanup']={'status':'unconfirmed','directory_retained':True,'directory':directory}
+        except Exception as exc:
+            report['private_directory_cleanup']={'status':'unconfirmed','directory_retained':True,'directory':directory,'reason':str(exc)}
             raise

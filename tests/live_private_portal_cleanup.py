@@ -11,6 +11,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
 from private_directory_cleanup import cleanup,mounts
 
@@ -35,7 +36,16 @@ def inside():
             # Demonstrate the exact original failure without removing state first.
             try:shutil.rmtree(root);raise AssertionError('Expected original cleanup failure')
             except OSError as exc:assert exc.errno==errno.ENOTCONN,exc
-            outcome=cleanup(root)
+            if '--detach-race' in sys.argv:
+                actual_run=subprocess.run
+                def lose_detach_race(argv, **kwargs):
+                    actual_run(argv, **kwargs).check_returncode()
+                    return actual_run(argv, **kwargs)
+                with patch('private_directory_cleanup.subprocess.run',side_effect=lose_detach_race):
+                    outcome=cleanup(root)
+                assert outcome.pop('mount_absence_confirmed') and outcome.pop('unmount_exit')!=0
+            else:
+                outcome=cleanup(root)
             assert outcome=={'status':'removed','owned_portal_mounts_detached':1}
             assert not root.exists() and not any(entry['path']==endpoint for entry in mounts())
             assert (other/'marker').read_text()=='preserve'
@@ -49,4 +59,4 @@ if __name__=='__main__':
     else:
         assert os.getuid()!=0,'Start as an ordinary user; namespace maps only that user.'
         print(json.dumps({'caller_uid':os.getuid(),'isolation':'new user and mount namespaces'}),flush=True)
-        raise SystemExit(subprocess.call(['unshare','--user','--map-root-user','--mount',sys.executable,__file__,'--inside']))
+        raise SystemExit(subprocess.call(['unshare','--user','--map-root-user','--mount',sys.executable,__file__,'--inside',*sys.argv[1:]]))
