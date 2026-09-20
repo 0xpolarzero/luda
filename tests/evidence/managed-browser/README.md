@@ -44,3 +44,10 @@ the installed wheel. Hashes/result are retained at
 focused checks include the independently reproduced FIFO, replacement and
 unmanifested-configuration regressions. This is distinct from the earlier result,
 which did not test replacement after startup.
+
+The owned-browser GitHub workflow also runs `scripts/check_managed_browser_ci.py`
+after its explicit pinned browser provisioning. This installs a wheel into a
+separate prefix, compares every installed runtime module to source, runs the
+ordinary-account launcher fixture, and records unchanged qualification inputs.
+The digest is calculated from the CI-provisioned executable; it is not independent
+artifact authenticity evidence. That job does not exercise executable replacement.

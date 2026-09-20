@@ -21,7 +21,7 @@ jobs:
       - name: Install private desktop dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y xvfb xfwm4 dbus-x11 at-spi2-core python3-gi gir1.2-atspi-2.0 gir1.2-gtk-3.0 xdotool wmctrl scrot xclip x11-utils x11-xserver-utils libxrandr2 fonts-dejavu-core apparmor-utils
+          sudo apt-get install -y xvfb xauth xfwm4 xfce4-session dbus-x11 at-spi2-core python3-gi gir1.2-atspi-2.0 gir1.2-gtk-3.0 xdotool wmctrl scrot xclip x11-utils x11-xserver-utils libxrandr2 fonts-dejavu-core apparmor-utils
       - name: Assert default installation excludes the browser extra
         run: |
           uv sync --locked --no-default-groups
@@ -49,6 +49,10 @@ jobs:
         run: |
           browser=$(cat artifacts/owned-browser-provision/browser-path.txt)
           .venv/bin/python scripts/qualification_matrix.py --suites owned-browser owned-rich --executable "$browser"
+      - name: Qualify the installed managed wheel and launcher
+        run: |
+          browser=$(cat artifacts/owned-browser-provision/browser-path.txt)
+          python3 scripts/check_managed_browser_ci.py --prefix "$RUNNER_TEMP/luda-managed-install" --executable "$browser" --output artifacts/managed-browser-installed
       - name: Remove the CI-only AppArmor attachment
         if: always()
         run: |
