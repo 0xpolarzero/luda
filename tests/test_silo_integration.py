@@ -49,6 +49,46 @@ class SiloIntegrationTests(unittest.TestCase):
         return tools.ensure(release or RELEASE, self.state, fetch=self.fetch,
                             install=self.install, running=lambda: True, **kwargs)
 
+    def test_optional_browser_explicit_enable_disable_and_identity(self):
+        candidate=dict(schema_version=1,executable='/opt/trusted/chrome',sha256='a'*64,version='153.0.8010.12',architecture='aarch64')
+        release={**RELEASE,'browser':candidate}
+        # Extend the authored archive with the actual capability files expected
+        # by the wrapper, without pretending this mocked installer launches UI.
+        def fetch(value,path):
+            with tarfile.open(path,'w:gz') as output:
+                for name in (*REQUIRED,'requirements-browser.lock','src/luda/managed_browser.py'):
+                    info=tarfile.TarInfo('luda-'+COMMIT+'/'+name);info.size=7;output.addfile(info,io.BytesIO(b'fixture'))
+        base=tools.ensure(release,self.state,fetch=fetch,install=self.install,running=lambda:True)
+        self.assertFalse(base['browser_requested']);self.assertFalse(base['browser_configured'])
+        count=self.install.call_count
+        self.assertTrue(tools.status(release,self.state)['browser_available']);self.assertEqual(self.install.call_count,count)
+        enabled=tools.set_browser(release,self.state,True,fetch=fetch,install=self.install,running=lambda:True)
+        self.assertTrue(enabled['browser_configured']);self.assertNotEqual(base['browser_config_sha256'],enabled['browser_config_sha256'])
+        config=self.install.call_args.kwargs['browser_config'];self.assertEqual(json.loads(config.read_text()),candidate)
+        changed={**release,'browser':{**candidate,'version':'154.0.0.0'}}
+        self.assertEqual(tools.status(changed,self.state)['state'],'update_available')
+        self.assertEqual(tools.status(RELEASE,self.state)['reason'],'browser_candidate_unavailable')
+        disabled=tools.set_browser(RELEASE,self.state,False,fetch=fetch,install=self.install,running=lambda:True)
+        self.assertFalse(disabled['browser_configured']);self.assertEqual(disabled['browser_config_sha256'],base['browser_config_sha256'])
+        self.assertEqual(self.install.call_args.kwargs,{})
+    def test_browser_source_without_managed_api_refuses_without_install_or_retry(self):
+        candidate=dict(schema_version=1,executable='/opt/trusted/chrome',sha256='a'*64,version='153.0.8010.12',architecture='aarch64')
+        release={**RELEASE,'browser':candidate}
+        value=tools.set_browser(release,self.state,True,fetch=self.fetch,install=self.install,running=lambda:True)
+        self.assertEqual(value['reason'],'browser_source_unsupported')
+        self.assertIs(value['installation_completed'],False)
+        self.assertTrue(value['browser_requested']);self.install.assert_not_called()
+        again=tools.ensure(release,self.state,fetch=self.fetch,install=self.install,running=lambda:True)
+        self.assertEqual(again['state'],'attention');self.install.assert_not_called()
+
+    def test_optional_browser_missing_bad_candidate_and_uncertainty_refuse(self):
+        with self.assertRaises(tools.OnboardingError):tools.set_browser(RELEASE,self.state,True)
+        self.assertFalse((self.state/'browser-selection.json').exists())
+        with self.assertRaises(tools.OnboardingError):tools.browser_candidate({'schema_version':True})
+        tools.atomic(self.state/'status.json',{'state':'unconfirmed'})
+        with self.assertRaises(tools.OnboardingError):tools.set_browser(RELEASE,self.state,False)
+        self.install.assert_not_called()
+
     def test_manifest_disabled_by_default_and_strictly_validated(self):
         self.assertFalse(tools.manifest(ASSETS / 'guest/agent-tools-release.json')['enabled'])
         candidates = [dict(RELEASE, source_commit='main'), dict(RELEASE, source_sha256='bad'),
@@ -299,7 +339,10 @@ class SiloIntegrationTests(unittest.TestCase):
     def test_guest_patch_applies_and_matches_canonical_assets(self):
         checkout = self.state / 'checkout';checkout.mkdir()
         subprocess.run(['git', 'init', '-q', str(checkout)], check=True)
-        subprocess.run(['git', '-C', str(checkout), 'apply', str(ASSETS / '0001-guest-onboarding.patch')], check=True)
+        spec = importlib.util.spec_from_file_location('silo_guest_apply', ASSETS / 'apply.py')
+        module = importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+        for name in module.PATCHES:
+            subprocess.run(['git', '-C', str(checkout), 'apply', '--allow-empty', '--include=app/SiloUI/src-tauri/guest/agent-tools*', str(ASSETS / name)], check=True)
         for name in ('agent-tools.py', 'agent-tools-release.json'):
             self.assertEqual((checkout / 'app/SiloUI/src-tauri/guest' / name).read_bytes(),
                              (ASSETS / 'guest' / name).read_bytes())

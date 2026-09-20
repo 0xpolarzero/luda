@@ -446,3 +446,69 @@ layout measurements and test logs are retained in
 `artifacts/silo-native-registration/panel/`.
 
 Patch 0017 refreshes agent guidance for native browser insertion at Unicode grapheme boundaries. Offsets remain code points; unsupported interior boundaries are refused without silently widening a selection.
+
+### Explicit optional browser provisioning (eighteenth patch)
+
+`0018-managed-browser-onboarding.patch` adds **Browser tools** to the running
+sandbox's desktop actions. Opening the panel does not provision anything. With a
+trusted candidate present, Enable/Disable requires a separate confirmation. An
+uncertain attempt cannot be replaced by another choice; **Review setup retry…**
+requires explicit confirmation after reviewing the failed guest setup. It reuses
+the existing reviewed retry path, never automatically repeats installation or
+replays agent actions. Disabling selects a browser-free Luda release; external
+Chromium and already running MCP processes are preserved. New conversations use
+the selected release.
+
+The shipped `guest/agent-tools-release.json` remains disabled. Maintainers must
+first supply an actual verified Luda source archive as described above. That source
+must contain managed browser provisioning (`requirements-browser.lock` and
+`src/luda/managed_browser.py`). A configured release may additionally carry a
+`browser` object with exactly these fields:
+
+```json
+{
+  "schema_version": 1,
+  "executable": "/opt/trusted-chromium/chrome",
+  "sha256": "EXPECTED_64_LOWERCASE_HEX_DIGEST",
+  "version": "153.0.8010.12",
+  "architecture": "aarch64"
+}
+```
+
+This is a fragment to add to the existing trusted source manifest, not a release
+URL or complete manifest. Replace the illustrative digest with independently
+verified metadata. The executable/distribution must already exist in the guest;
+no browser download, default-on choice, sandbox-policy change or host credential
+is added. The digest identifies the executable file, not its complete distribution.
+The managed installer validates the actual path, ELF architecture, SHA and bounded
+version response as the selected ordinary `silo-desktop` account. The wrapper passes
+an owned JSON file to the existing bootstrap's `browser_config` parameter, which
+forwards the explicit installer option and account. Older sources lacking this
+capability refuse before installation.
+
+Desired selection is recorded separately under the guest's private tools state.
+Its normalized digest participates in cached readiness identity alongside source
+commit/archive hash. Changing or removing a candidate invalidates old readiness.
+Read-only status never installs. The public projection exposes only candidate
+availability, requested enablement and the last completed installation choice;
+uncertain completion remains null. It does not expose paths, hashes or arbitrary
+metadata to the UI, and does not claim a current browser launch or host registration.
+A missing candidate explains why enabling is unavailable; a previously requested
+candidate can still be disabled after its removal. Candidate changes or an old
+unconfirmed attempt require review, not automatic repair.
+
+Guest actions share the existing nonblocking operation lock. Native commands map
+only fixed enable/disable/reviewed-retry names, require a running sandbox and use
+the existing bounded provisioning timeout (up to65 minutes). A lost reply leaves
+status for inspection; it is not proof of success. Desktop startup/viewing remains
+independent of the optional browser outcome.
+
+Validation:26 guest-wrapper tests,34 frontend tests and full TypeScript checking
+passed. The actual patched Linux Rust module passed17 filtered desktop/registration
+tests including five real Codex CLI cases with no skips. The new native test checks
+fixed action mapping and strict status projection; guest install callbacks and Tauri
+calls are mocked at their stated boundaries. All18 patches applied to a fresh
+pinned Silo checkout, and final guest bytes matched the canonical helper. Logs and
+patch hashes are retained in `artifacts/silo-managed-browser/`. The separately
+qualified managed installer/browser flow does not turn this result into a real
+Silo VM, macOS app or browser-artifact provisioning pass.
