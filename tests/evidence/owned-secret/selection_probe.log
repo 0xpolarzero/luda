@@ -1,0 +1,37 @@
+dbus-daemon[10556]: [session uid=1001 pid=10556] Activating service name='org.a11y.Bus' requested by ':1.1' (uid=1001 pid=10572 comm="/workspace/silo-desktop-research/browsers/chromium")
+dbus-daemon[10556]: [session uid=1001 pid=10556] Successfully activated service 'org.a11y.Bus'
+[
+  {
+    "method": "virtual_ctrl_a",
+    "before_marker": true,
+    "selected_unchanged": false,
+    "selected_old_secret": true,
+    "selected_bytes": 22,
+    "after_old_secret": true,
+    "after_new_secret": false,
+    "after_bytes": 22,
+    "value_matches_new": true
+  },
+  {
+    "method": "dom_range",
+    "before_marker": true,
+    "selected_unchanged": true,
+    "selected_old_secret": false,
+    "selected_bytes": 22,
+    "after_old_secret": false,
+    "after_new_secret": false,
+    "after_bytes": 22,
+    "value_matches_new": true
+  },
+  {
+    "method": "dom_select",
+    "before_marker": true,
+    "selected_unchanged": true,
+    "selected_old_secret": false,
+    "selected_bytes": 22,
+    "after_old_secret": false,
+    "after_new_secret": false,
+    "after_bytes": 22,
+    "value_matches_new": true
+  }
+]

@@ -1,0 +1,102 @@
+[
+  {
+    "case": "ordinary-desktop_read_text-refused",
+    "passed": true,
+    "detail": {
+      "ok": false,
+      "code": "PROTECTED_FIELD",
+      "message": "Owned browser ordinary text operations refuse protected fields.",
+      "effect": "none",
+      "details": {
+        "clipboard_may_have_changed": false
+      },
+      "operation_id": "d735f55df9504a09ac0e0d2b573e41a6",
+      "elapsed_ms": 104
+    }
+  },
+  {
+    "case": "ordinary-desktop_type-refused",
+    "passed": true,
+    "detail": {
+      "ok": false,
+      "code": "PROTECTED_FIELD",
+      "message": "Owned browser ordinary text operations refuse protected fields.",
+      "effect": "none",
+      "details": {
+        "clipboard_may_have_changed": false
+      },
+      "operation_id": "7def9fda61e74a679e74a617e9e53a04",
+      "elapsed_ms": 121
+    }
+  },
+  {
+    "case": "explicit-native-secret-no-submit",
+    "passed": true,
+    "detail": {
+      "response": {
+        "ok": true,
+        "operation_id": "9dc18c29c40d414bac6df9fb16915c8e",
+        "elapsed_ms": 201,
+        "effect": "dispatched",
+        "verification": "Protected value is never read back. Input dispatch does not verify contents; submission is separate."
+      },
+      "oracle": {
+        "sequence": 13,
+        "document": 1,
+        "hash": "2b3edcf85815f66af520a729ebd811e8c9f345c82df5b4872fa56dcebb365bc3",
+        "decoy_hash": "d59c2a5f721ce135ce54628b1ad8ad8b8eb26c8bbe2e2abe1cdca97e2d6ab446",
+        "active": "password",
+        "type": "password",
+        "mode": "normal",
+        "submits": 0,
+        "pastes": 0,
+        "inputs": 1,
+        "buttons": {
+          "submit": {
+            "x": 61.3671875,
+            "y": 130.5
+          },
+          "normal": {
+            "x": 63.3203125,
+            "y": 187.5
+          },
+          "focus": {
+            "x": 193.609375,
+            "y": 187.5
+          },
+          "replace": {
+            "x": 369.7109375,
+            "y": 187.5
+          },
+          "reveal": {
+            "x": 567.71875,
+            "y": 187.5
+          },
+          "plain": {
+            "x": 752.5859375,
+            "y": 187.5
+          },
+          "reload": {
+            "x": 897,
+            "y": 187.5
+          }
+        }
+      }
+    }
+  },
+  {
+    "case": "secret-preserves-clipboard-primary",
+    "passed": false,
+    "detail": {
+      "unchanged": {
+        "clipboard": true,
+        "primary": false
+      },
+      "contains_secret": false,
+      "primary_is_initial_secret": true,
+      "primary_is_empty": false,
+      "primary_is_decoy": false,
+      "primary_is_page_text": false
+    }
+  }
+]

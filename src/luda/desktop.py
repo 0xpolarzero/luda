@@ -470,6 +470,7 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         if not target or elapsed_time()-target['time']>=60:
             raise DesktopError('STALE_TARGET','Element expired or belongs to another server; inspect again.')
         if target.get('provider') == 'owned_browser':
+            if op=='secret':validate_text(kwargs['text'])
             return self.browser.element(target,op,**kwargs)
         w=self.target_window(target['window_id'],op!='read')
         node=target['node']

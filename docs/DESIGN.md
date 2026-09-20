@@ -61,7 +61,7 @@ Application transformation is possible: single-line fields, formatting, clipboar
 
 CLIPBOARD is overwritten. PRIMARY is unchanged. The owned clipboard process lives until replaced or server exit; automatic restoration is deliberately not implemented because early restoration can corrupt asynchronous paste or overwrite a newer human copy. Shift+Insert can read PRIMARY. Terminal pasted newlines can execute commands; the tool does not automatically accept paste confirmation dialogs.
 
-`desktop_type_secret` explicitly replaces an observed protected EditableText field. It never reads the value, uses no clipboard, redacts provider exceptions and reports dispatched only. Ordinary reads/typing/selection refuse protected fields. The MCP client still supplies the tool argument; Luda cannot control client-side transcript retention. Screenshots reflect application masking. Submission remains separate.
+`desktop_type_secret` explicitly replaces an observed protected EditableText field or a scoped owned-browser password input ([contract](OWNED-BROWSER-SECRET.md)). It never reads the value, uses no clipboard, redacts provider exceptions and reports dispatched only. Ordinary reads/typing/selection refuse protected fields. The MCP client still supplies the tool argument; Luda cannot control client-side transcript retention. Screenshots reflect application masking. Submission remains separate.
 
 ## Timing, concurrency and recovery
 

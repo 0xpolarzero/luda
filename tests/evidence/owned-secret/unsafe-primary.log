@@ -1,0 +1,61 @@
+dbus-daemon[8764]: [session uid=1001 pid=8764] Activating service name='org.a11y.Bus' requested by ':1.0' (uid=1001 pid=8767 comm="xfwm4 --compositor=off")
+dbus-daemon[8764]: [session uid=1001 pid=8764] Successfully activated service 'org.a11y.Bus'
+dbus-daemon[8777]: Activating service name='org.a11y.atspi.Registry' requested by ':1.0' (uid=1001 pid=8767 comm="xfwm4 --compositor=off")
+dbus-daemon[8764]: [session uid=1001 pid=8764] Activating service name='org.xfce.Xfconf' requested by ':1.2' (uid=1001 pid=8767 comm="xfwm4 --compositor=off")
+dbus-daemon[8777]: Successfully activated service 'org.a11y.atspi.Registry'
+SpiRegistry daemon is running with well-known name - org.a11y.atspi.Registry
+dbus-daemon[8764]: [session uid=1001 pid=8764] Successfully activated service 'org.xfce.Xfconf'
+
+(xfwm4:8767): xfwm4-WARNING **: 09:39:17.494: Failed to connect to session manager: Failed to connect to the session manager: SESSION_MANAGER environment variable not defined
+Processing request of type CallToolRequest
+Processing request of type ListToolsRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+  + Exception Group Traceback (most recent call last):
+  |   File "/workspace/luda-owned-secret/tests/live_owned_secret.py", line 135, in <module>
+  |     p=argparse.ArgumentParser();p.add_argument('--executable',required=True);args=p.parse_args();asyncio.run(main(args.executable))
+  |                                                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |   File "/usr/lib/python3.12/asyncio/runners.py", line 194, in run
+  |     return runner.run(main)
+  |            ^^^^^^^^^^^^^^^^
+  |   File "/usr/lib/python3.12/asyncio/runners.py", line 118, in run
+  |     return self._loop.run_until_complete(task)
+  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |   File "/usr/lib/python3.12/asyncio/base_events.py", line 687, in run_until_complete
+  |     return future.result()
+  |            ^^^^^^^^^^^^^^^
+  |   File "/workspace/luda-owned-secret/tests/live_owned_secret.py", line 64, in main
+  |     async with stdio_client(params) as streams:
+  |   File "/usr/lib/python3.12/contextlib.py", line 231, in __aexit__
+  |     await self.gen.athrow(value)
+  |   File "/workspace/luda-owned-secret/.venv/lib/python3.12/site-packages/mcp/client/stdio/__init__.py", line 182, in stdio_client
+  |     async with (
+  |   File "/workspace/luda-owned-secret/.venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 847, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Exception Group Traceback (most recent call last):
+    |   File "/workspace/luda-owned-secret/.venv/lib/python3.12/site-packages/mcp/client/stdio/__init__.py", line 189, in stdio_client
+    |     yield read_stream, write_stream
+    |   File "/workspace/luda-owned-secret/tests/live_owned_secret.py", line 65, in main
+    |     async with ClientSession(*streams) as session:
+    |   File "/workspace/luda-owned-secret/.venv/lib/python3.12/site-packages/mcp/shared/session.py", line 238, in __aexit__
+    |     return await self._task_group.__aexit__(exc_type, exc_val, exc_tb)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/workspace/luda-owned-secret/.venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 847, in __aexit__
+    |     raise BaseExceptionGroup(
+    | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+    +-+---------------- 1 ----------------
+      | Traceback (most recent call last):
+      |   File "/workspace/luda-owned-secret/tests/live_owned_secret.py", line 96, in main
+      |     record('secret-preserves-clipboard-primary',clip_before==clip_after,{'unchanged':{key:clip_before[key]==clip_after[key] for key in clip_before},'contains_secret':any(secret.encode() in value for value in clip_after.values()),'primary_is_initial_secret':clip_after['primary']==b'initial','primary_is_empty':clip_after['primary']==b'','primary_is_decoy':clip_after['primary']==b'untouched','primary_is_page_text':b'Normal' in clip_after['primary']})
+      |   File "/workspace/luda-owned-secret/tests/live_owned_secret.py", line 51, in record
+      |     cases.append({'case':name,'passed':bool(okay),'detail':detail});(OUT/'results.json').write_text(json.dumps(cases,indent=2)+'\n');assert okay,name
+      |                                                                                                                                             ^^^^
+      | AssertionError: secret-preserves-clipboard-primary
+      +------------------------------------
+
+(xfconfd:8785): xfconfd-WARNING **: 09:39:20.027: Name org.xfce.Xfconf lost on the message dbus, exiting.

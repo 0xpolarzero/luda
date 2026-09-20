@@ -90,7 +90,7 @@ Find installed desktop applications by name, description or ID. Returns applicat
 desktop_open_browser(url: str, lifetime: Literal['temporary_session'])
 ```
 
-Open a fresh owned Chromium with explicit temporary_session lifetime. Browser/profile and unsaved content are deleted on server disconnect, backend close or reconnect. Requires optional browser dependencies and configured executable; never downloads automatically or attaches existing profiles. Inspect text_fields for ordinary HTML fields and cooperating paragraph editors; protected fields, unregistered rich editors and frames are unsupported.
+Open a fresh owned Chromium with explicit temporary_session lifetime. Browser/profile and unsaved content are deleted on server disconnect, backend close or reconnect. Requires optional browser dependencies and configured executable; never downloads automatically or attaches existing profiles. Inspect text_fields for ordinary HTML fields, cooperating paragraph editors and explicit password-only secret entry. Ordinary protected-field operations, unregistered rich editors and frames are unsupported.
 
 ## `desktop_launch`
 
@@ -154,7 +154,7 @@ Type into an editable element and verify exact readback. Owned browser-native in
 desktop_type_secret(element_id: str, text: str)
 ```
 
-Replace an observed protected field. Never reads back or echoes the value, uses no clipboard, and reports dispatched only. Requires protected EditableText support; submission is a separate action.
+Replace an observed protected field. Never reads back or echoes the value, uses no clipboard, and reports dispatched only. Requires native protected EditableText or an owned password input with known inactive composition. Owned input rejects LF/CR and declared maxlength overflow; submission is separate. Applications control their own masking, which can change during input.
 
 ## `desktop_choose`
 

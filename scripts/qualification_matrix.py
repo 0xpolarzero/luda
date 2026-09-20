@@ -71,6 +71,7 @@ SUITES = {
     'pm-selection-prototype': suite('live_pm_selection.py', 'WEB-03 DATA-07', browser='--executable', artifacts=('pm-selection',), gaps=('Test-only public EditorView DOM range mapping, not production arbitrary selection support',)),
     'owned-rich-clipboard': suite('live_owned_rich_clipboard.py', 'WEB-03 DATA-07', browser='--executable', artifacts=('owned-rich-clipboard',), gaps=('Explicit clipboard transport; cooperating basic ProseMirror only',), timeout=300),
     'owned-rich': suite('live_owned_rich.py', 'WEB-03 DATA-07', browser='--executable', artifacts=('owned-rich',), gaps=('Cooperating basic ProseMirror paragraphs only; not arbitrary rich editors',)),
+    'owned-secret': suite('live_owned_secret.py', 'AUTH-01 AUTH-07', browser='--executable', artifacts=('owned-secret',), gaps=('Password-only explicit route; application-controlled masking is not atomic',)),
     'owned-browser': suite('live_owned_browser.py', 'WEB-01 WEB-02 MCP-08', browser='--executable', artifacts=('owned-browser',), gaps=('Owned Chromium HTML fields; generic rich editors/frames unsupported',)),
     'rich-editor-protocol': suite('live_rich_protocol.py', 'WEB-03 DATA-07', browser='--executable', artifacts=('rich-editor-protocol',), gaps=('Test-only owned browser-native text input; explicit paragraph semantics; no generic rich editor adapter',)),
     'rich-editor-cancel': suite('live_rich_cancel.py', 'WEB-03 DATA-07', browser='--executable', artifacts=('rich-editor-cancel',), gaps=('Test-only explicit native IME cancellation candidate; no generic recovery',)),

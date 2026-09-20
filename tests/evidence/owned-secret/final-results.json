@@ -1,0 +1,351 @@
+[
+  {
+    "case": "line-break-refused-10",
+    "passed": true,
+    "detail": {
+      "ok": false,
+      "code": "UNSUPPORTED_TEXT",
+      "message": "Requested text is unsupported for this HTML field; no text sent.",
+      "effect": "none",
+      "details": {
+        "clipboard_may_have_changed": false
+      },
+      "operation_id": "ec610d968e174d1f976536de713a0f08",
+      "elapsed_ms": 108
+    }
+  },
+  {
+    "case": "line-break-refused-13",
+    "passed": true,
+    "detail": {
+      "ok": false,
+      "code": "UNSUPPORTED_TEXT",
+      "message": "Control characters including CR, NUL and Escape are rejected; LF and Tab are allowed. No normalization is performed.",
+      "effect": "none",
+      "details": {},
+      "operation_id": "7354aa73ae2b4a3bb7c4b783b24223bc",
+      "elapsed_ms": 52
+    }
+  },
+  {
+    "case": "ordinary-desktop_read_text-refused",
+    "passed": true,
+    "detail": {
+      "ok": false,
+      "code": "PROTECTED_FIELD",
+      "message": "Owned browser ordinary text operations refuse protected fields.",
+      "effect": "none",
+      "details": {
+        "clipboard_may_have_changed": false
+      },
+      "operation_id": "91275411d06c433aa353b3554091aba6",
+      "elapsed_ms": 92
+    }
+  },
+  {
+    "case": "ordinary-desktop_type-refused",
+    "passed": true,
+    "detail": {
+      "ok": false,
+      "code": "PROTECTED_FIELD",
+      "message": "Owned browser ordinary text operations refuse protected fields.",
+      "effect": "none",
+      "details": {
+        "clipboard_may_have_changed": false
+      },
+      "operation_id": "ed4dd03424e443aab6bc6e780c3dee56",
+      "elapsed_ms": 112
+    }
+  },
+  {
+    "case": "explicit-native-secret-no-submit",
+    "passed": true,
+    "detail": {
+      "response": {
+        "ok": true,
+        "operation_id": "19d44aa378e248aa9afe97f327b6aa46",
+        "elapsed_ms": 178,
+        "effect": "dispatched",
+        "verification": "Protected value is never read back. Input dispatch does not verify contents; submission is separate."
+      },
+      "oracle": {
+        "sequence": 20,
+        "document": 1,
+        "hash": "0d63d57f5c1d2e33beaeee6d998f5dbac916b8618c38e4916eb89b1ad8648cfc",
+        "decoy_hash": "d59c2a5f721ce135ce54628b1ad8ad8b8eb26c8bbe2e2abe1cdca97e2d6ab446",
+        "active": "password",
+        "type": "password",
+        "max_length": -1,
+        "mode": "normal",
+        "submits": 0,
+        "pastes": 0,
+        "inputs": 1,
+        "composition": false,
+        "composition_events": 0,
+        "buttons": {
+          "submit": {
+            "x": 61.3671875,
+            "y": 130.5
+          },
+          "limit": {
+            "x": 71.8359375,
+            "y": 187.5
+          },
+          "unlimit": {
+            "x": 220.9296875,
+            "y": 187.5
+          },
+          "normal": {
+            "x": 361.5078125,
+            "y": 187.5
+          },
+          "focus": {
+            "x": 491.796875,
+            "y": 187.5
+          },
+          "replace": {
+            "x": 667.8984375,
+            "y": 187.5
+          },
+          "reveal": {
+            "x": 865.90625,
+            "y": 187.5
+          },
+          "plain": {
+            "x": 95.9921875,
+            "y": 244.5
+          },
+          "reload": {
+            "x": 240.40625,
+            "y": 244.5
+          }
+        }
+      }
+    }
+  },
+  {
+    "case": "secret-preserves-clipboard-primary",
+    "passed": true,
+    "detail": {
+      "unchanged": {
+        "clipboard": true,
+        "primary": true
+      },
+      "contains_secret": false,
+      "primary_is_initial_secret": false,
+      "primary_is_empty": false,
+      "primary_is_decoy": false,
+      "primary_is_page_text": false,
+      "primary_bytes": 15
+    }
+  },
+  {
+    "case": "entered-secret-still-refuses-ordinary-read",
+    "passed": true,
+    "detail": {
+      "ok": false,
+      "code": "PROTECTED_FIELD",
+      "message": "Owned browser ordinary text operations refuse protected fields.",
+      "effect": "none",
+      "details": {
+        "clipboard_may_have_changed": false
+      },
+      "operation_id": "92dba0a2a52e4f5195b5a15452991a51",
+      "elapsed_ms": 92
+    }
+  },
+  {
+    "case": "password-paste-blocked",
+    "passed": true,
+    "detail": {
+      "sequence": 25,
+      "document": 1,
+      "hash": "0d63d57f5c1d2e33beaeee6d998f5dbac916b8618c38e4916eb89b1ad8648cfc",
+      "decoy_hash": "d59c2a5f721ce135ce54628b1ad8ad8b8eb26c8bbe2e2abe1cdca97e2d6ab446",
+      "active": "password",
+      "type": "password",
+      "max_length": -1,
+      "mode": "normal",
+      "submits": 0,
+      "pastes": 1,
+      "inputs": 1,
+      "composition": false,
+      "composition_events": 0,
+      "buttons": {
+        "submit": {
+          "x": 61.3671875,
+          "y": 130.5
+        },
+        "limit": {
+          "x": 71.8359375,
+          "y": 187.5
+        },
+        "unlimit": {
+          "x": 220.9296875,
+          "y": 187.5
+        },
+        "normal": {
+          "x": 361.5078125,
+          "y": 187.5
+        },
+        "focus": {
+          "x": 491.796875,
+          "y": 187.5
+        },
+        "replace": {
+          "x": 667.8984375,
+          "y": 187.5
+        },
+        "reveal": {
+          "x": 865.90625,
+          "y": 187.5
+        },
+        "plain": {
+          "x": 95.9921875,
+          "y": 244.5
+        },
+        "reload": {
+          "x": 240.40625,
+          "y": 244.5
+        }
+      }
+    }
+  },
+  {
+    "case": "explicit-empty-secret-clear",
+    "passed": true,
+    "detail": {
+      "ok": true,
+      "operation_id": "477a58800e4745079e08ae612b493fd1",
+      "elapsed_ms": 188,
+      "effect": "dispatched",
+      "verification": "Protected value is never read back. Input dispatch does not verify contents; submission is separate."
+    }
+  },
+  {
+    "case": "empty-clear-preserves-both-clipboard-selections",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "case": "declared-utf16-maxlength-refuses-before-focus",
+    "passed": true,
+    "detail": {
+      "ok": false,
+      "code": "UNSUPPORTED_TEXT",
+      "message": "Requested text is unsupported for this HTML field; no text sent.",
+      "effect": "none",
+      "details": {
+        "clipboard_may_have_changed": false
+      },
+      "operation_id": "22646a58bf6f401a91645d1f2d324340",
+      "elapsed_ms": 116
+    }
+  },
+  {
+    "case": "focus-theft-refuses-secret",
+    "passed": true,
+    "detail": {
+      "ok": false,
+      "code": "FOCUS_CHANGED",
+      "message": "The exact browser field is not focused; inspect before acting.",
+      "effect": "uncertain",
+      "details": {
+        "clipboard_may_have_changed": false
+      },
+      "operation_id": "0d2a37bae0f44d6b85133b88d0c48124",
+      "elapsed_ms": 118
+    }
+  },
+  {
+    "case": "replacement-on-selection-refuses-content",
+    "passed": true,
+    "detail": {
+      "ok": false,
+      "code": "STALE_TARGET",
+      "message": "Browser document or field changed or expired; inspect again.",
+      "effect": "uncertain",
+      "details": {
+        "clipboard_may_have_changed": false
+      },
+      "operation_id": "92e6550f647c47729d76ff2d7dcb311c",
+      "elapsed_ms": 166
+    }
+  },
+  {
+    "case": "ordinary-type-rejected-before-focus",
+    "passed": true,
+    "detail": {
+      "ok": false,
+      "code": "NOT_PROTECTED_FIELD",
+      "message": "Explicit secret entry requires the same observed password input; no ordinary field is accepted.",
+      "effect": "none",
+      "details": {
+        "clipboard_may_have_changed": false
+      },
+      "operation_id": "653fff9f150947249281effcd1b3ed47",
+      "elapsed_ms": 111
+    }
+  },
+  {
+    "case": "document-change-refuses-old-handle",
+    "passed": true,
+    "detail": {
+      "ok": false,
+      "code": "STALE_TARGET",
+      "message": "Browser document or field changed or expired; inspect again.",
+      "effect": "none",
+      "details": {
+        "clipboard_may_have_changed": false
+      },
+      "operation_id": "69be5cbc54f54963973f703397433a8f",
+      "elapsed_ms": 116
+    }
+  },
+  {
+    "case": "app-reveal-after-input-is-uncertain",
+    "passed": true,
+    "detail": {
+      "response": {
+        "ok": false,
+        "code": "NOT_PROTECTED_FIELD",
+        "message": "Explicit secret entry requires the same observed password input; no ordinary field is accepted.",
+        "effect": "uncertain",
+        "details": {
+          "clipboard_may_have_changed": false
+        },
+        "operation_id": "9d22a80d62974d5cbee12b59d773118e",
+        "elapsed_ms": 180
+      },
+      "limitation": "Application changed its own masking while handling native input; this cannot be prevented atomically."
+    }
+  },
+  {
+    "case": "native-composition-refuses-before-focus",
+    "passed": true,
+    "detail": {
+      "response": {
+        "ok": false,
+        "code": "IME_COMPOSITION_ACTIVE",
+        "message": "Composition is active or its completion is uncertain; no automatic cancellation.",
+        "effect": "none",
+        "details": {
+          "clipboard_may_have_changed": false
+        },
+        "operation_id": "f0aac39714794917aee3fd6bef297aca",
+        "elapsed_ms": 123
+      },
+      "composition_events": 1
+    }
+  },
+  {
+    "case": "desktop_status-no-secret",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "case": "desktop_report-no-secret",
+    "passed": true,
+    "detail": null
+  }
+]

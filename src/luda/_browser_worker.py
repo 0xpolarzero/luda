@@ -120,7 +120,7 @@ class Worker:
                 token = uuid.uuid4().hex
                 self.elements[token] = {'node':node,'document':self.page.evaluate_handle('document'),'time':now,'type':meta['type'],'tag':meta['tag']}
                 rows.append({'token':token,'name':meta['name'],'role':role,'states':state,'protected':meta['protected'],
-                             'supported':supported and not meta['protected'],'provider':'owned_browser',
+                             'supported':supported and not meta['protected'],'secret_entry_supported':meta['protected'] and meta['tag']=='INPUT','provider':'owned_browser',
                              'text_representation':'html_value','multiline':meta['tag']=='TEXTAREA','line_break_semantics':'LF' if meta['tag']=='TEXTAREA' else None,'actions':['focus','read','select','type'] if supported and not meta['protected'] else [],
                              'interfaces':['Text'],'unsupported_reason':'PROTECTED_FIELD' if meta['protected'] else None if supported else 'UNSUPPORTED_FIELD'})
             kept = {id(v['node']) for v in self.elements.values()}
@@ -169,7 +169,7 @@ class Worker:
             try:item[name].dispose()
             except Exception:pass
 
-    def snapshot(self, token, mutation=False, focus=False):
+    def snapshot(self, token, mutation=False, focus=False, secret=False):
         self.scope()
         item = self.elements.get(token)
         if not item or time.monotonic()-item['time'] >= 60:
@@ -181,7 +181,11 @@ class Worker:
         if not current:
             raise Refused('STALE_TARGET')
         self.protocol.send('Emulation.setFocusEmulationEnabled', {'enabled':False})
-        if 'bridge' in item:
+        if secret:
+            if 'bridge' in item:raise Refused('NOT_PROTECTED_FIELD')
+            from ._browser_secret import SNAPSHOT as SECRET_SNAPSHOT
+            value=item['node'].evaluate(SECRET_SNAPSHOT)
+        elif 'bridge' in item:
             value=item['bridge'].evaluate("entry => window.__ludaProseMirror?.get(entry.id)===entry ? entry.read() : {error:'STALE_TARGET'}")
             if 'error' not in value:
                 try:value=decode_rich(value)
@@ -473,6 +477,9 @@ class Worker:
         if op=='read':return self.read(token,request.get('limit',16000))
         if op=='focus':return self.focus(token)
         if op=='select':return self.select(token,request['start_offset'],request['end_offset'])
+        if op=='secret':
+            from ._browser_secret import replace
+            return replace(self,token,request.get('text'),Refused)
         if op=='type':return self.type(token,request['text'],request['mode'],request.get('line_breaks'),request.get('transport','native'))
         raise Refused('UNSUPPORTED_ACTION')
 

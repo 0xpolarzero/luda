@@ -32,6 +32,7 @@ MESSAGES = {
     'FORMATTING_CHANGED':'Existing rich-text formatting changed after input; inspect before retrying.',
     'TEXT_REPRESENTATION_UNSUPPORTED':'This editor contains unsupported structure or marks; no exact text route is available.',
     'STALE_TARGET':'Browser document or field changed or expired; inspect again.',
+    'NOT_PROTECTED_FIELD':'Explicit secret entry requires the same observed password input; no ordinary field is accepted.',
     'PROTECTED_FIELD':'Owned browser ordinary text operations refuse protected fields.',
     'UNSUPPORTED_FIELD':'Only ordinary HTML text inputs and textareas are supported.',
     'BROWSER_SCOPE_UNSUPPORTED':'Owned text control requires one top-level page with no frames.',
@@ -120,9 +121,15 @@ class OwnedBrowser:
                         if not isinstance(value,dict):raise ValueError('shape')
                         effect=value.get('effect','uncertain' if mutation else 'none')
                         if effect not in ('none','verified','dispatched','uncertain'):raise ValueError('effect')
+                        if op=='secret' and 'error' not in value and set(value)!={'effect','secret_dispatched'}:
+                            raise ValueError('secret response keys')
                         raw_progress=value.pop('progress',None)
                         progress=rich_text_progress(raw_progress,len(args['text'].split('\n'))) if op=='type' and isinstance(args.get('text'),str) else None
                         if progress is not None:value['progress']=progress
+                        if op=='secret' and 'error' not in value:
+                            if set(value)!={'effect','secret_dispatched'} or effect!='dispatched' or value.get('secret_dispatched') is not True:
+                                raise ValueError('secret response')
+                            value={'effect':'dispatched','verification':'Protected value is never read back. Input dispatch does not verify contents; submission is separate.'}
                         mark_effect(effect)
                         if 'error' in value:
                             code=value['error']
