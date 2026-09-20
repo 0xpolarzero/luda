@@ -12,7 +12,7 @@ import time
 
 from luda.desktop import Desktop
 
-OUT = Path(__file__).resolve().parents[1] / 'artifacts/files'
+OUT = Path(__file__).resolve().parents[1] / 'artifacts/files' / f'run-{time.time_ns()}'
 OUT.mkdir(parents=True, exist_ok=True)
 results = []
 d = Desktop()
@@ -38,7 +38,13 @@ class Editor:
         self.p = subprocess.Popen(['mousepad', '--disable-server', str(path)],
                                   env={**os.environ, 'GSETTINGS_BACKEND': 'memory'})
         try:
-            self.wid = until(lambda: next((w['window_id'] for w in self.windows() if w['active']), None))
+            # Window-manager focus-stealing policy need not auto-activate a new app.
+            # Observe one owned window first, then explicitly request activation.
+            def sole_owned_window():
+                windows = self.windows()
+                (OUT / 'startup-windows.json').write_text(json.dumps(windows, indent=2))
+                return windows[0]['window_id'] if len(windows) == 1 else None
+            self.wid = until(sole_owned_window)
             d.activate(self.wid)
             until(lambda: self.nodes(self.wid))
         except Exception:

@@ -60,12 +60,14 @@ def inside(suite):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--inside', choices=SUITES, help=argparse.SUPPRESS)
+    parser.add_argument('--suite', choices=SUITES, action='append', help='Run only this suite; repeat for several.')
     args = parser.parse_args()
     if os.geteuid() == 0:
         parser.error('Run as an ordinary user; root bypasses the read-only fixture.')
     if args.inside:
         return inside(args.inside)
-    output = ROOT / 'artifacts/native-apps'
+    selected = list(dict.fromkeys(args.suite or SUITES))
+    output = ROOT / 'artifacts/native-apps' / f'run-{time.time_ns()}'
     output.mkdir(parents=True, exist_ok=True)
     results = []
     evidence = {'schema_version': 1, 'source': source_fingerprint(ROOT),
@@ -79,7 +81,7 @@ def main():
                               capture_output=True, text=True, timeout=10)
     evidence['environment']['packages'] = packages.stdout.splitlines()
     try:
-        for suite in SUITES:
+        for suite in selected:
             began = time.monotonic()
             with tempfile.TemporaryDirectory(prefix='luda-native-ci-') as directory:
                 private = Path(directory)
@@ -102,7 +104,8 @@ def main():
         evidence['source_unchanged'] = evidence['source'] == evidence['source_after']
         (output / 'results.json').write_text(json.dumps(evidence, indent=2) + '\n')
     print(json.dumps(results, indent=2))
-    return 0 if evidence['source_unchanged'] and len(results) == len(SUITES) and all(r['status'] == 'passed' for r in results) else 1
+    print(f"Evidence: {output}")
+    return 0 if evidence['source_unchanged'] and len(results) == len(selected) and all(r['status'] == 'passed' for r in results) else 1
 
 
 if __name__ == '__main__':
