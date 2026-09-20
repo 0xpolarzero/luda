@@ -11,6 +11,7 @@ import tempfile
 import time
 
 from luda.desktop import Desktop
+from luda.common import DesktopError
 from window_oracles import application_target
 
 OUT = Path(__file__).resolve().parents[1] / 'artifacts/files' / f'run-{time.time_ns()}'
@@ -162,7 +163,19 @@ def readonly(root):
         e.save_as(target)
         e.button('Replace')
         # The error must be observed, not inferred from unchanged bytes alone.
-        until(lambda: any(any(word in n.get('name', '').lower() for word in ('permission', 'denied', 'read-only')) for n in e.nodes()))
+        def permission_error_visible():
+            try:
+                nodes = e.nodes()
+            except DesktopError as exc:
+                # The chooser/overwrite alert disappears before its replacement
+                # error is registered on AT-SPI. Retry only this read-only probe;
+                # the Replace action above is never replayed.
+                if exc.code in ('ACCESSIBILITY_UNAVAILABLE', 'STALE_TARGET') and exc.effect == 'none':
+                    return False
+                raise
+            return any(any(word in n.get('name', '').lower()
+                           for word in ('permission', 'denied', 'read-only')) for n in nodes)
+        until(permission_error_visible)
         record('readonly-save-refusal-preserves-bytes', target.read_bytes() == b'protected\n' and source.read_bytes() == b'source\n')
     finally:
         e.cleanup()
