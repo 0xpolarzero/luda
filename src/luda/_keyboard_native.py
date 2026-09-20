@@ -124,13 +124,26 @@ class Keyboard:
         # so any still-buffered injector requests are discarded first.
         if not isinstance(client,dict) or type(client.get('xid')) is not int or not 0<client['xid']<=0xffffffff:
             raise ValueError()
+        # Serialize the nonce check and disconnect against other clients. One
+        # X connection orders our requests but alone cannot prevent an XID
+        # being reassigned between the property reply and XKillClient.
+        x=self.x.lib
+        x.XGrabServer.argtypes=[C.c_void_p]
+        x.XUngrabServer.argtypes=[C.c_void_p]
+        x.XGrabServer(self.x.display)
         try:
-            prop=self.x._property(client['xid'],'_LUDA_WINDOW_TOKEN',9)
-            if prop and _decode_window_token(*prop)==client.get('generation'):
-                self.x.lib.XKillClient(self.x.display,client['xid'])
-                self.x.lib.XSync(self.x.display,False)
-        except DesktopError as exc:
-            if exc.code!='STALE_TARGET':raise
+            try:
+                prop=self.x._property(client['xid'],'_LUDA_WINDOW_TOKEN',9)
+                if prop and _decode_window_token(*prop)==client.get('generation'):
+                    x.XKillClient(self.x.display,client['xid'])
+                    x.XSync(self.x.display,False)
+            except DesktopError as exc:
+                if exc.code!='STALE_TARGET':raise
+        finally:
+            # Cancellation kills this isolated process and closes its X
+            # connection, which also releases the grab if normal cleanup fails.
+            x.XUngrabServer(self.x.display)
+            x.XSync(self.x.display,False)
 
     def event(self,code,down):
         if not self.test.XTestFakeKeyEvent(self.x.display,code,down,0):

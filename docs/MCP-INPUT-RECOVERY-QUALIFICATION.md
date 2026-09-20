@@ -21,3 +21,9 @@ The local X11 run passed 15 checks:
 Evidence is written under `artifacts/mcp-input-recovery` and copied into the immutable per-run matrix directory with source fingerprints and process-cleanup outcome. The first complete run took approximately 15 seconds, with no tagged survivors.
 
 This qualifies the tested Xvfb lifecycle, not arbitrary remote X proxies, Wayland, a hostile client modifying Luda's root properties, or separation of concurrent human presses of the exact same key on one unchanged server. A same-server client-resource reuse review is separate from server-generation replacement.
+
+## Same-server resource reuse
+
+`tests/live_injector_reuse.py` separately exercises real client-resource reuse under Xvfb. The old injector's XID is actually reallocated to a replacement with a different nonce; cleanup leaves that replacement alive. A controlled barrier after reading the nonce proves that a competing replacement cannot finish connecting until the disconnect completes. Killing the cleanup helper at that barrier proves its closed X connection releases the server grab and the replacement can proceed.
+
+The implementation holds `XGrabServer` across nonce read and `XKillClient`, and always ungrabs/flushes in `finally`. A single connection alone would order only its own requests and would not prevent another client reusing an XID between those operations. Three deterministic tests cover matching/mismatching nonces and exceptional cleanup; three real Xvfb checks cover reuse, exclusion and helper death. Run the independent live check with `--suites injector-reuse`; the public MCP recovery suite also passes with this change.

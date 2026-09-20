@@ -27,6 +27,7 @@ def suite(script, ids, *, wm=True, browser=None, electron=None, modules=('Gtk', 
 
 
 SUITES = {
+    'injector-reuse': suite('live_injector_reuse.py', 'KEY-07 LIFE-04', wm=False, artifacts=('injector-reuse',)),
     'mcp-input-recovery': suite('live_mcp_input_recovery.py', 'KEY-07 CONC-01', wm=False, artifacts=('mcp-input-recovery',)),
     'electron': suite('live_electron.py', 'AX-04 APPS-04 EDIT-01 EDIT-02 AX-09 SEM-04', electron='--executable', artifacts=('electron',), gaps=('Electron 44.4.3 embedded Chromium152 cannot verify non-BMP selections; required replacement remains failing', 'Protected secret input lacks EditableText')),
     'semantic': suite('live_semantic.py', 'AX-01 EDIT-01 EDIT-02 EDIT-03 EDIT-09 SEM-04 SEM-06 SEM-07 SEM-08', artifacts=('semantic',)),
