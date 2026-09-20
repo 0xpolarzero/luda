@@ -16,7 +16,7 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
 ROOT=Path(__file__).resolve().parents[1]
-OUT=ROOT/'artifacts'/'mcp';OUT.mkdir(exist_ok=True)
+OUT=Path(os.environ.get('LUDA_TEST_ARTIFACT_ROOT', ROOT/'artifacts'))/'mcp'/f'run-{time.time_ns()}';OUT.mkdir(parents=True)
 results=[]
 
 def record(name,ok,details=None):
