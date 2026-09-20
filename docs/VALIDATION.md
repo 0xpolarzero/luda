@@ -77,13 +77,17 @@ fingerprint. The newer scoped records include [locale forms](DATA-ENTRY-QUALIFIC
 [nested pane scrolling](NESTED-SCROLL-QUALIFICATION.md),
 [native full-disk save](DISK-FULL-SAVE-QUALIFICATION.md),
 [MCP disconnects](MCP-DISCONNECT-QUALIFICATION.md),
+[actual local SSH loss](SSH-LOSS-QUALIFICATION.md),
+[Thunar drag choices](THUNAR-DRAG-QUALIFICATION.md),
+[tray menus](TRAY-QUALIFICATION.md),
+[undo grouping](UNDO-QUALIFICATION.md),
 [RTL navigation](RTL-QUALIFICATION.md),
 [ten-minute sustained use](MCP-SOAK-QUALIFICATION.md),
 and [authentication boundaries](AUTH-QUALIFICATION.md). These have distinct source
 snapshots and supported scopes; they are not a single universal acceptance pass.
 
-The integrated `6c8dcb6` unit run passed 565 tests with unchanged source
-(`artifacts/qualification/expanded-live-unit.json`). Later live-only additions
+The integrated `ade1e43` unit run passed 570 tests with unchanged source
+(`artifacts/qualification/current-gui-workflows-unit.json`). Later live-only additions
 have their own recorded runs. The [live inventory](LIVE-COVERAGE.md) distinguishes
 registered fixtures from standalone experiments; its associations are not passes.
 
@@ -94,6 +98,18 @@ only, so FILE-06’s no-false-success criterion held, but the failed preservatio
 diagnostic remains visible. Browser auth menu repetition also found a varying
 last menu item; a screenshot-reviewed route passed two fresh runs after correction.
 Neither finding is hidden by a suite count.
+
+The later hosted `696e9d4` run passed native workflows and all input-generation
+assertions, but failed while terminating its disposable Xvfb. The bounded fixture
+teardown correction is independently tested, including a deliberately stopped
+owned server; see [the retained CI investigation](CI-INPUT-GENERATION-CLEANUP.md).
+That failure is not hidden by the earlier passing hosted run.
+
+[System authentication preflight](SYSTEM-AUTH-ENVIRONMENT.md) remains blocked by
+the absent authority/agent stack in this guest. In contrast, isolated test-only
+OpenSSH binaries allowed an actual generated-key loopback transport-loss test,
+without changing global authentication configuration. This still does not prove
+fresh Mac Codex discovery.
 
 ## Confirmed unresolved issues
 
