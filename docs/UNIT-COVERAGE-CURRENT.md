@@ -1,10 +1,11 @@
-# Unit mapping coverage: 602-test snapshot
+# Unit mapping coverage: 607-test snapshot
 
-This scoped audit uses source snapshot `e7fea80` and its immutable unit evidence (`artifacts/qualification/bootstrap-cleanup-unit.json`). It preserves the [earlier 489-test snapshot](UNIT-COVERAGE.md) as historical evidence. Counts are not release qualification.
+This scoped audit uses source snapshot `6bba43b` and its immutable unit evidence (`artifacts/qualification/bootstrap-schema-unit.json`). It preserves the [earlier 489-test snapshot](UNIT-COVERAGE.md) as historical evidence. Counts are not release qualification.
 
 - Catalog: 346 cases (296 P0, 30 P1, 20 P2); all remain release-unqualified.
 - Mapped: 131 requirements, 264 distinct exact unit IDs.
-- Actual discovery/execution: 602 tests, all passed; every mapped test exists.
+- Actual root discovery/execution: 607 tests, all passed; every mapped test exists.
+- Same-source UID 1001 run: 606 passed, one Codex CLI registration test explicitly skipped because the CLI was unavailable to that account.
 - Evidence statuses: 131 local-tests-passed; 215 cases without mapped unit evidence.
 
 | Cases | Added evidence | Limit |

@@ -91,8 +91,11 @@ fingerprint. The newer scoped records include [locale forms](DATA-ENTRY-QUALIFIC
 and [authentication boundaries](AUTH-QUALIFICATION.md). These have distinct source
 snapshots and supported scopes; they are not a single universal acceptance pass.
 
-The integrated `e7fea80` unit run passed **602 tests** with unchanged source
-(`artifacts/qualification/bootstrap-cleanup-unit.json`). Earlier `bba9c45` passed
+The integrated `6bba43b` unit run passed **607 tests as root** with unchanged
+source (`artifacts/qualification/bootstrap-schema-unit.json`). The same source
+passed 606 tests as UID 1001, with the unavailable Codex CLI registration test
+explicitly skipped. [The bootstrap evidence](GUEST-BOOTSTRAP.md) preserves the
+hosted account-assumption failure that led to this dual-account check. Earlier `bba9c45` passed
 the ordinary-account actual MCP suite after native representation guards and
 compact JSON responses were added, including elapsed time on a real error.
 [Error privacy](ERROR-PRIVACY.md) specifies the timing boundary.

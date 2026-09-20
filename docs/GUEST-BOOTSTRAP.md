@@ -124,3 +124,22 @@ unchanged source fingerprint
 This wrapper includes the ordinary-user unreadable-process regression above,
 but the actual upgrade itself ran as root. Records are retained under
 `artifacts/guest-bootstrap/root-upgrade-e7fea80/`.
+
+## Hosted account assumption correction
+
+Hosted run `35488889420` at `5a44009` exposed five failing bootstrap tests and
+two errors: fixtures using the default system-provisioning mode reached the
+ordinary account's root-required check before their intended mocked install
+stages. The same 13-test fixture reproduced five failures and two errors locally
+as UID 1001, despite passing as root. The fixture helper now explicitly requests
+`--skip-system` for preprovisioned scenarios; the non-root provisioning refusal
+test explicitly requests system provisioning. No runtime permission check was
+weakened. Both accounts then passed all 13 bootstrap tests. The failed hosted run
+and local reproduction remain evidence under
+`artifacts/guest-bootstrap/ci-account-correction/`.
+
+After source-metadata validation was added, immutable `6bba43b` passed all **607
+unit tests as root**. The same source passed **606 tests with one explicit skip
+as UID 1001**: Codex CLI registration requires a CLI available to that account.
+Both runs retained unchanged source fingerprints. The ordinary-account result
+is not silently presented as 607 executed passes.
