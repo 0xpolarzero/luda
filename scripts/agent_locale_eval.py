@@ -6,6 +6,23 @@ from agent_eval import grade_trace,stop,version
 from qualify import source_fingerprint
 
 
+def tool_failures(events):
+    """CLI events may omit MCP isError; inspect the public structured payload."""
+    failures=[]
+    for event in events:
+        item=event.get('item',{})
+        if event.get('type')!='item.completed' or item.get('type')!='mcp_tool_call':continue
+        result=item.get('result') or {}
+        failed=bool(item.get('error') or result.get('isError'))
+        for content in result.get('content',[]):
+            if content.get('type')!='text':continue
+            try:value=json.loads(content.get('text',''))
+            except (ValueError,TypeError):continue
+            if isinstance(value,dict) and value.get('ok') is False:failed=True
+        if failed:failures.append(item)
+    return failures
+
+
 def desktop_child(base,backend):
     envkeys=('DISPLAY','DBUS_SESSION_BUS_ADDRESS','XAUTHORITY','XDG_RUNTIME_DIR','XDG_CONFIG_HOME','XDG_DATA_HOME','XDG_CACHE_HOME','XDG_CONFIG_DIRS','LOCPATH','LANG','LC_ALL','TZ','PATH')
     wm=fixture=None
@@ -98,7 +115,7 @@ def main():
                 result['oracle']=state
                 expected={'utc':'2027-11-18T15:45:00+00:00','amount':12.35,'amount_text':'12,35','destination':'Bergen, Norway','selected_suggestion':'Bergen, Norway'}
                 result['oracle_exact']=bool(state and state['committed']==expected and state['submits']==1 and state['accepted']==1 and state['selection_count']==1)
-                result['tool_errors']=[event['item'] for event in events if event.get('type')=='item.completed' and event.get('item',{}).get('type')=='mcp_tool_call' and (event['item'].get('error') or (event['item'].get('result') or {}).get('isError'))]
+                result['tool_errors']=tool_failures(events)
                 result['source_after']=source_fingerprint(backend);result['source_unchanged']=result['source_before']==result['source_after']
                 result['passed']=result.get('returncode')==0 and result['oracle_exact'] and result['source_unchanged'] and all(result[key] for key in ('skill_reads_only','only_public_desktop_tools','no_direct_file_changes','no_other_tools','no_injected_actions')) and bool(result['tool_calls'])
         except Exception as exc:result['harness_error']={'type':type(exc).__name__,'message':str(exc)}
