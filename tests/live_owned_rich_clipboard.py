@@ -29,7 +29,8 @@ async def main(executable):
         end=time.monotonic()+2
         while not predicate() and time.monotonic()<end:await asyncio.sleep(.02)
         return predicate()
-    with patch.dict(os.environ,LUDA_CHROMIUM_EXECUTABLE=executable,GTK_IM_MODULE='simple'):
+    # GTK's canonical built-in ID; 'simple' can fall back to an installed IBus module.
+    with patch.dict(os.environ,LUDA_CHROMIUM_EXECUTABLE=executable,GTK_IM_MODULE='gtk-im-context-simple'):
         client=await wire.Client('mcp').start()
         async def call(tool,**arguments):
             response=(await client.request('tools/call',{'name':tool,'arguments':arguments}))['result']

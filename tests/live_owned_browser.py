@@ -57,7 +57,8 @@ async def main(executable):
             if value.get('text')==expected:return value
             if time.monotonic()>deadline:return value
             await asyncio.sleep(.03)
-    params=StdioServerParameters(command=str(ROOT/'.venv/bin/luda'),env=dict(os.environ,LUDA_CHROMIUM_EXECUTABLE=executable,GTK_IM_MODULE="simple"))
+    # GTK's canonical built-in ID; 'simple' can fall back to an installed IBus module.
+    params=StdioServerParameters(command=str(ROOT/'.venv/bin/luda'),env=dict(os.environ,LUDA_CHROMIUM_EXECUTABLE=executable,GTK_IM_MODULE="gtk-im-context-simple"))
     browser_pid=None;profile=None
     try:
         async with stdio_client(params) as streams:
@@ -170,7 +171,7 @@ async def main(executable):
         # Record exact descendants before injecting the fault; no name-based kills.
         import live_mcp_disconnect as wire
         wire.OUT=OUT
-        with patch.dict(os.environ,LUDA_CHROMIUM_EXECUTABLE=executable,GTK_IM_MODULE='simple'):
+        with patch.dict(os.environ,LUDA_CHROMIUM_EXECUTABLE=executable,GTK_IM_MODULE='gtk-im-context-simple'):
             for fault in ('guardian-stopped','server-killed','worker-killed'):
                 client=await wire.Client(fault).start()
                 guardian=worker=None

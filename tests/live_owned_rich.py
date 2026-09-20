@@ -29,7 +29,8 @@ async def main(executable):
         end=time.monotonic()+2
         while not predicate() and time.monotonic()<end:await asyncio.sleep(.02)
         return predicate()
-    with patch.dict(os.environ,LUDA_CHROMIUM_EXECUTABLE=executable,GTK_IM_MODULE='simple'):
+    # GTK's canonical built-in ID; 'simple' can fall back to an installed IBus module.
+    with patch.dict(os.environ,LUDA_CHROMIUM_EXECUTABLE=executable,GTK_IM_MODULE='gtk-im-context-simple'):
         client=await wire.Client('mcp').start()
         async def call(tool,**arguments):
             response=(await client.request('tools/call',{'name':tool,'arguments':arguments}))['result']
@@ -90,6 +91,8 @@ async def main(executable):
             await call('desktop_press_keys',window_id=wid,chord='ctrl+shift+u')
             for key in ('3','0','6','b'):await call('desktop_press_keys',window_id=wid,chord=key)
             await asyncio.sleep(.1);before=json.loads(json.dumps(state))
+            preedit=await call('desktop_read_text',element_id=eid)
+            record('native-ime-precondition',preedit['composition']['active'] and any(e['type']=='compositionstart' and e['trusted'] for e in before['events']),read=preedit,oracle=before)
             await denied('desktop_type','IME_COMPOSITION_ACTIVE',element_id=eid,text='do not replace preedit',mode='replace')
             record('native-preedit-preserved',state['model']==before['model'] and any(e['type']=='compositionstart' and e['trusted'] for e in before['events']),oracle=before)
             # Explicitly abandon this fixture document after the preedit probe.
