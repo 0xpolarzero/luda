@@ -61,6 +61,7 @@ SUITES = {
     'combos': suite('live_combo.py', 'SEM-05', modules=('Gtk', 'Atspi', 'PyQt5'), artifacts=('combo',), gaps=('Qt combo commit is explicitly unsupported',)),
     'browser': suite('live_browser.py', 'WEB-01 WEB-02 WEB-03 WEB-05 WEB-06', browser='--browser', artifacts=('browser',), gaps=('Rich contenteditable exact verification is unsupported',)),
     'browser-offsets': suite('live_browser_offsets.py', 'EDIT-09 WEB-02 WEB-03', browser='--executable', artifacts=('browser-offset',)),
+    'rich-editor-prototype': suite('live_rich_editor.py', 'WEB-03 DATA-07', browser='--executable', artifacts=('rich-editor',), gaps=('Test-only cooperating ProseMirror readback; no production adapter; exact serialization failures retained',)),
     'rich-copy': suite('live_rich_copy.py', 'WEB-03 CLIP-09', browser='--executable', artifacts=('rich-copy',), gaps=('Rich clipboard serialization and caret restoration lose information',)),
     'ime': suite('live_ime.py', 'EDIT-10', wm=False, artifacts=('ime',), gaps=('Generic backend cannot detect pending composition',)),
     'ime-browser': suite('live_ime_browser.py', 'EDIT-10', wm=False, browser='--executable', artifacts=('ime-browser',), gaps=('Browser preedit conflicts are not guarded',)),

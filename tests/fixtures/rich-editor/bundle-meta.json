@@ -1,0 +1,192 @@
+{
+  "inputs": {
+    "node_modules/orderedmap/dist/index.js": {
+      "bytes": 4433,
+      "imports": [],
+      "format": "esm"
+    },
+    "node_modules/prosemirror-model/dist/index.js": {
+      "bytes": 123816,
+      "imports": [
+        {
+          "path": "node_modules/orderedmap/dist/index.js",
+          "kind": "import-statement",
+          "original": "orderedmap"
+        }
+      ],
+      "format": "esm"
+    },
+    "node_modules/prosemirror-transform/dist/index.js": {
+      "bytes": 84584,
+      "imports": [
+        {
+          "path": "node_modules/prosemirror-model/dist/index.js",
+          "kind": "import-statement",
+          "original": "prosemirror-model"
+        }
+      ],
+      "format": "esm"
+    },
+    "node_modules/prosemirror-state/dist/index.js": {
+      "bytes": 36248,
+      "imports": [
+        {
+          "path": "node_modules/prosemirror-model/dist/index.js",
+          "kind": "import-statement",
+          "original": "prosemirror-model"
+        },
+        {
+          "path": "node_modules/prosemirror-transform/dist/index.js",
+          "kind": "import-statement",
+          "original": "prosemirror-transform"
+        }
+      ],
+      "format": "esm"
+    },
+    "node_modules/prosemirror-view/dist/index.js": {
+      "bytes": 240814,
+      "imports": [
+        {
+          "path": "node_modules/prosemirror-state/dist/index.js",
+          "kind": "import-statement",
+          "original": "prosemirror-state"
+        },
+        {
+          "path": "node_modules/prosemirror-model/dist/index.js",
+          "kind": "import-statement",
+          "original": "prosemirror-model"
+        },
+        {
+          "path": "node_modules/prosemirror-transform/dist/index.js",
+          "kind": "import-statement",
+          "original": "prosemirror-transform"
+        }
+      ],
+      "format": "esm"
+    },
+    "node_modules/prosemirror-schema-basic/dist/index.js": {
+      "bytes": 5799,
+      "imports": [
+        {
+          "path": "node_modules/prosemirror-model/dist/index.js",
+          "kind": "import-statement",
+          "original": "prosemirror-model"
+        }
+      ],
+      "format": "esm"
+    },
+    "node_modules/w3c-keyname/index.js": {
+      "bytes": 2630,
+      "imports": [],
+      "format": "esm"
+    },
+    "node_modules/prosemirror-keymap/dist/index.js": {
+      "bytes": 4909,
+      "imports": [
+        {
+          "path": "node_modules/w3c-keyname/index.js",
+          "kind": "import-statement",
+          "original": "w3c-keyname"
+        },
+        {
+          "path": "node_modules/prosemirror-state/dist/index.js",
+          "kind": "import-statement",
+          "original": "prosemirror-state"
+        }
+      ],
+      "format": "esm"
+    },
+    "node_modules/prosemirror-commands/dist/index.js": {
+      "bytes": 34515,
+      "imports": [
+        {
+          "path": "node_modules/prosemirror-transform/dist/index.js",
+          "kind": "import-statement",
+          "original": "prosemirror-transform"
+        },
+        {
+          "path": "node_modules/prosemirror-model/dist/index.js",
+          "kind": "import-statement",
+          "original": "prosemirror-model"
+        },
+        {
+          "path": "node_modules/prosemirror-state/dist/index.js",
+          "kind": "import-statement",
+          "original": "prosemirror-state"
+        }
+      ],
+      "format": "esm"
+    },
+    "fixture.js": {
+      "bytes": 3874,
+      "imports": [
+        {
+          "path": "node_modules/prosemirror-state/dist/index.js",
+          "kind": "import-statement",
+          "original": "prosemirror-state"
+        },
+        {
+          "path": "node_modules/prosemirror-view/dist/index.js",
+          "kind": "import-statement",
+          "original": "prosemirror-view"
+        },
+        {
+          "path": "node_modules/prosemirror-schema-basic/dist/index.js",
+          "kind": "import-statement",
+          "original": "prosemirror-schema-basic"
+        },
+        {
+          "path": "node_modules/prosemirror-keymap/dist/index.js",
+          "kind": "import-statement",
+          "original": "prosemirror-keymap"
+        },
+        {
+          "path": "node_modules/prosemirror-commands/dist/index.js",
+          "kind": "import-statement",
+          "original": "prosemirror-commands"
+        }
+      ],
+      "format": "esm"
+    }
+  },
+  "outputs": {
+    "editor.bundle.js": {
+      "imports": [],
+      "exports": [],
+      "entryPoint": "fixture.js",
+      "inputs": {
+        "node_modules/orderedmap/dist/index.js": {
+          "bytesInOutput": 1439
+        },
+        "node_modules/prosemirror-model/dist/index.js": {
+          "bytesInOutput": 44279
+        },
+        "node_modules/prosemirror-transform/dist/index.js": {
+          "bytesInOutput": 30415
+        },
+        "node_modules/prosemirror-state/dist/index.js": {
+          "bytesInOutput": 11694
+        },
+        "node_modules/prosemirror-view/dist/index.js": {
+          "bytesInOutput": 94947
+        },
+        "node_modules/prosemirror-schema-basic/dist/index.js": {
+          "bytesInOutput": 2104
+        },
+        "node_modules/w3c-keyname/index.js": {
+          "bytesInOutput": 1495
+        },
+        "node_modules/prosemirror-keymap/dist/index.js": {
+          "bytesInOutput": 1216
+        },
+        "node_modules/prosemirror-commands/dist/index.js": {
+          "bytesInOutput": 9038
+        },
+        "fixture.js": {
+          "bytesInOutput": 2522
+        }
+      },
+      "bytes": 199161
+    }
+  }
+}
