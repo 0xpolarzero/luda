@@ -104,7 +104,8 @@ def release_identity(source):
     if not re.fullmatch(r'[A-Za-z0-9_.+-]+', version):
         raise InstallError('Package version is not a safe release name.')
     files = [source / p for p in ('pyproject.toml', 'MANIFEST.in', 'requirements.lock', 'build-requirements.lock')]
-    files += [p for name in ('src', 'skills') for p in (source / name).rglob('*')
+    files += [source / name for name in ('.mcp.json', 'README.md', 'build-requirements.in') if (source / name).is_file()]
+    files += [p for name in ('src', 'skills', 'scripts', 'docs', 'tests', '.codex-plugin') for p in (source / name).rglob('*')
               if p.is_file() and '__pycache__' not in p.parts and not any(part.endswith('.egg-info') for part in p.parts)]
     digest = hashlib.sha256()
     for path in sorted(files):
@@ -167,6 +168,8 @@ def install(prefix, source, runner=invoke):
             runner([python, '-m', 'pip', 'install', '--no-deps', wheels[0]])
             runner([python, '-c', 'import luda.server; from importlib.metadata import version; print("Installed Luda", version("luda"))'])
             shutil.copytree(source / 'skills/luda', release / 'skills/luda')
+            if release_identity(source) != identity:
+                raise InstallError('Source changed during installation; previous release remains selected. Retry from an unchanged checkout.')
             atomic_json(release / 'release.json', {'product': 'luda', 'release': identity,
                         'wheel_sha256': hashlib.sha256(wheels[0].read_bytes()).hexdigest(),
                         'files': inventory(release)})

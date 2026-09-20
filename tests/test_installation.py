@@ -61,6 +61,27 @@ class Installation(unittest.TestCase):
         self.assertIn('--require-hashes', self.commands[2])
         self.assertIn('--no-build-isolation', self.commands[3])
 
+    def test_packaged_source_changes_alter_release_identity(self):
+        previous=installer.release_identity(self.source)
+        for name in ('.mcp.json','.codex-plugin/plugin.json','scripts/manage_install.py','docs/example.md','tests/fixtures/page.html'):
+            path=self.source/name;path.parent.mkdir(parents=True,exist_ok=True);path.write_text('package content')
+            current=installer.release_identity(self.source)
+            self.assertNotEqual(previous,current);previous=current
+        cache=self.source/'src/__pycache__/generated.pyc';cache.parent.mkdir();cache.write_bytes(b'cache')
+        self.assertEqual(previous,installer.release_identity(self.source))
+
+    def test_source_mutation_during_build_preserves_prior_release(self):
+        first=installer.install(self.prefix,self.source,self.runner)
+        (self.source/'src/file.py').write_text('upgrade')
+        def changing(command):
+            self.runner(command)
+            if 'wheel' in list(map(str,command)):
+                (self.source/'skills/luda/SKILL.md').write_text('changed during build')
+        with self.assertRaisesRegex(installer.InstallError,'Source changed'):
+            installer.install(self.prefix,self.source,changing)
+        self.assertEqual((self.prefix/'current').readlink().name,first['release'])
+        self.assertEqual(len(list((self.prefix/'releases').iterdir())),1)
+
     def test_failed_upgrade_preserves_selected_release_and_retry(self):
         first = installer.install(self.prefix, self.source, self.runner)
         (self.source / 'src/file.py').write_text('new release')
