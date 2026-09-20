@@ -129,6 +129,35 @@ class SiloIntegrationTests(unittest.TestCase):
         self.assertEqual(result['state'], 'update_available')
         self.install.assert_called_once()
 
+    def test_status_always_compares_current_manifest_without_install(self):
+        self.ensure()
+        changed = dict(RELEASE, source_sha256='3' * 64)
+        self.assertEqual(tools.status(changed, self.state)['state'], 'update_available')
+        self.assertEqual(tools.status({'enabled': False}, self.state)['state'], 'unconfigured')
+        self.assertEqual(tools.status(RELEASE, self.state)['state'], 'ready')
+        self.install.assert_called_once()
+
+    def test_extracted_skill_modes_survive_installer_copytree(self):
+        import shutil
+        path = self.state / 'source.tar.gz';archive(path)
+        source = tools.extract(path, self.state / 'extract', COMMIT)
+        installed = self.state / 'release' / 'skills'
+        shutil.copytree(source / 'skills', installed)
+        self.assertEqual((installed / 'luda').stat().st_mode & 0o777, 0o755)
+        self.assertEqual((installed / 'luda/SKILL.md').stat().st_mode & 0o777, 0o644)
+        self.assertEqual((self.state / 'extract').stat().st_mode & 0o777, 0o700)
+
+    def test_wrapper_nonblocking_lock_prevents_concurrent_install(self):
+        import contextlib
+        import fcntl
+        lock = (self.state / 'operation.lock').open('w')
+        self.addCleanup(lock.close)
+        fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        with patch.object(tools, 'STATE', self.state), patch.object(tools.os, 'geteuid', return_value=0), patch.object(tools, 'manifest', return_value=RELEASE), patch.object(tools, 'ensure') as ensure, patch.object(tools.sys, 'argv', ['agent-tools.py', 'ensure']), contextlib.redirect_stdout(io.StringIO()) as output:
+            tools.main()
+        ensure.assert_not_called()
+        self.assertEqual(json.loads(output.getvalue())['state'], 'attention')
+
     def test_download_checksum_and_https_redirect(self):
         data = b'archive bytes'
         response = io.BytesIO(data)
@@ -145,6 +174,33 @@ class SiloIntegrationTests(unittest.TestCase):
         opener.open.return_value = response
         with patch.object(tools.urllib.request, 'build_opener', return_value=opener):
             tools.download(dict(RELEASE, source_sha256=hashlib.sha256(data).hexdigest()), self.state / 'valid.tar.gz')
+
+    def test_whole_download_deadline_interrupts_trickled_http_body(self):
+        import http.client
+        import socket
+        import threading
+        import time
+        client, server = socket.socketpair()
+        client.settimeout(.2)
+        stopped = threading.Event()
+        def trickle():
+            try:
+                server.sendall(b'HTTP/1.1 200 OK\r\nContent-Length: 100000\r\n\r\n')
+                while not stopped.wait(.02):
+                    server.sendall(b'x')
+            except OSError:
+                pass
+        thread = threading.Thread(target=trickle, daemon=True);thread.start()
+        response = http.client.HTTPResponse(client);response.begin()
+        response.geturl = lambda: RELEASE['source_url']
+        opener = Mock();opener.open.return_value = response
+        began = time.monotonic()
+        try:
+            with patch.object(tools.urllib.request, 'build_opener', return_value=opener), self.assertRaisesRegex(tools.OnboardingError, 'download_timeout'):
+                tools.download(RELEASE, self.state / 'slow.tar.gz', timeout=.15)
+            self.assertLess(time.monotonic()-began, 1)
+        finally:
+            stopped.set();client.close();server.close();thread.join(timeout=1)
 
     def test_archive_rejects_traversal_links_duplicates_and_missing_locks(self):
         cases = []

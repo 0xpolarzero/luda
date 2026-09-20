@@ -35,8 +35,7 @@ executes trusted source/build code and can access package repositories using the
 existing locked installer. It is not an offline installation.
 
 URLs cannot contain credentials, query strings or fragments. Redirects must
-remain HTTPS and satisfy the same rule. Download limits are 32 MiB and 120 seconds
-plus a bounded final socket read; extraction limits are 128 MiB and 10,000 members.
+remain HTTPS and satisfy the same rule. Download limits are 32 MiB and 120 wall-clock seconds enforced by a Linux process alarm covering headers and body; extraction limits are 128 MiB and 10,000 members.
 Only ordinary files/directories under `luda-COMMIT/` are accepted, with no links,
 traversal or duplicate paths. These are safety bounds, not a source trust sandbox.
 
@@ -83,7 +82,7 @@ git -C /path/to/silo apply /path/to/luda/integrations/silo/0001-guest-onboarding
 
 Canonical guest assets are also retained alongside the patch for review. Luda's
 `tests/test_silo_integration.py` checks manifest validation, checksum/HTTPS policy,
-archive restrictions, pending/start sequencing, durable interruption state,
+archive restrictions, copied skill permissions, current manifest comparison, pending/start sequencing, durable interruption state,
 no automatic retries/upgrades, sanitization and byte-identical patch application.
 Run `python3 -m unittest discover -s tests -p test_silo_integration.py` from Luda.
 Qualification fingerprints include `integrations/`.

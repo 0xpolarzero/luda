@@ -10,6 +10,7 @@ import os
 from pathlib import Path, PurePosixPath
 import re
 import shutil
+import signal
 import subprocess
 import sys
 import tarfile
@@ -87,17 +88,37 @@ class HttpsRedirect(urllib.request.HTTPRedirectHandler):
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 
 
-def download(release, destination):
-    deadline = time.monotonic() + 120
+@contextlib.contextmanager
+def download_deadline(seconds):
+    # This Linux guest CLI runs on the main thread. A wall-clock alarm also
+    # interrupts a peer trickling headers/body below the socket idle timeout.
+    if signal.getitimer(signal.ITIMER_REAL)[0]:
+        raise OnboardingError('download_timer_in_use')
+    previous = signal.getsignal(signal.SIGALRM)
+    def expired(signum, frame):
+        raise OnboardingError('download_timeout')
+    signal.signal(signal.SIGALRM, expired)
+    signal.setitimer(signal.ITIMER_REAL, seconds)
+    try:
+        yield
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0)
+        signal.signal(signal.SIGALRM, previous)
+
+
+def download(release, destination, timeout=120):
+    with download_deadline(timeout):
+        _download(release, destination)
+
+
+def _download(release, destination):
     digest = hashlib.sha256()
     size = 0
     opener = urllib.request.build_opener(HttpsRedirect())
     with opener.open(release['source_url'], timeout=10) as response, destination.open('xb') as output:
         valid_url(response.geturl())
         while True:
-            if time.monotonic() > deadline:
-                raise OnboardingError('download_timeout')
-            chunk = response.read(65536)
+            chunk = response.read1(65536)
             if not chunk:
                 break
             size += len(chunk)
@@ -128,12 +149,12 @@ def extract(archive, destination, commit):
                 raise OnboardingError('expanded_limit')
             target = destination.joinpath(*path.parts)
             if member.isdir():
-                target.mkdir(mode=0o700, parents=True, exist_ok=True)
+                target.mkdir(mode=0o755, parents=True, exist_ok=True)
             else:
-                target.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+                target.parent.mkdir(mode=0o755, parents=True, exist_ok=True)
                 with source.extractfile(member) as incoming, target.open('xb') as output:
                     shutil.copyfileobj(incoming, output, length=65536)
-                target.chmod(0o600)
+                target.chmod(0o755 if member.mode & 0o111 else 0o644)
     root = destination / root_name
     for name in ('pyproject.toml', 'MANIFEST.in', 'requirements.lock', 'build-requirements.lock',
                  'scripts/bootstrap_guest.py', 'scripts/manage_install.py', 'scripts/install.sh',
@@ -188,16 +209,25 @@ def project(value):
     return result
 
 
+def status(release, state):
+    previous = read_json(state / 'status.json') if (state / 'status.json').exists() else {}
+    value = project(previous)
+    if not release['enabled']:
+        value['state'] = 'unconfigured'
+    elif not previous:
+        value['state'] = 'pending'
+    elif value['state'] == 'ready' and (value.get('source_sha256'), value.get('source_commit')) != (release['source_sha256'], release['source_commit']):
+        value['state'] = 'update_available'
+    return value
+
+
 def ensure(release, state, *, running=desktop_running, fetch=download, install=bootstrap, reviewed=False):
     """Caller owns state lock. Existing ambiguous/failed attempts never auto-retry."""
     previous = read_json(state / 'status.json') if (state / 'status.json').exists() else {}
     if not release['enabled']:
-        return project({**previous, 'state': 'unconfigured'})
+        return status(release, state)
     if previous and previous.get('state') not in ('pending', 'unconfigured') and not reviewed:
-        value = project(previous)
-        if value['state'] == 'ready' and (value.get('source_sha256'), value.get('source_commit')) != (release['source_sha256'], release['source_commit']):
-            value['state'] = 'update_available'
-        return value
+        return status(release, state)
     identity = {key: release[key] for key in ('source_commit', 'source_sha256')}
     if not running():
         value = project({**previous, **identity, 'state': 'pending'})
@@ -221,7 +251,9 @@ def ensure(release, state, *, running=desktop_running, fetch=download, install=b
         value.update(installation_completed=completed if type(completed) is bool else None,
                      configuration_generated=result.get('configuration_generated') is True,
                      last_ready=result.get('tools', {}).get('ready') if isinstance(result.get('tools'), dict) else None,
-                     checked_at=int(time.time()), selected_release=result.get('selected_release'))
+                     selected_release=result.get('selected_release'))
+        if type(value['last_ready']) is bool:
+            value['checked_at'] = int(time.time())
         value['state'] = 'ready' if result.get('ok') is True and value['installation_completed'] is True and value['configuration_generated'] and value['last_ready'] is True else 'attention' if value['installation_completed'] is not None else 'unconfirmed'
     except Exception:
         value['state'] = 'attention' if value['installation_completed'] is False else 'unconfirmed'
@@ -243,7 +275,7 @@ def main():
         STATE.mkdir(mode=0o700, parents=True, exist_ok=True)
         release = manifest(MANIFEST)
         if args.action == 'status':
-            value = read_json(STATE / 'status.json') if (STATE / 'status.json').exists() else {'state': 'unconfigured' if not release['enabled'] else 'pending'}
+            value = status(release, STATE)
         else:
             fd = os.open(STATE / 'operation.lock', os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
             try:
