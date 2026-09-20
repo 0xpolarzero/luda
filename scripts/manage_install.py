@@ -103,7 +103,7 @@ def release_identity(source):
     version = metadata['project']['version']
     if not re.fullmatch(r'[A-Za-z0-9_.+-]+', version):
         raise InstallError('Package version is not a safe release name.')
-    files = [source / p for p in ('pyproject.toml', 'MANIFEST.in', 'requirements.lock')]
+    files = [source / p for p in ('pyproject.toml', 'MANIFEST.in', 'requirements.lock', 'build-requirements.lock')]
     files += [p for name in ('src', 'skills') for p in (source / name).rglob('*')
               if p.is_file() and '__pycache__' not in p.parts and not any(part.endswith('.egg-info') for part in p.parts)]
     digest = hashlib.sha256()
@@ -159,7 +159,8 @@ def install(prefix, source, runner=invoke):
             runner([sys.executable, '-m', 'venv', release / '.venv'])
             python = release / '.venv/bin/python'
             runner([python, '-m', 'pip', 'install', '--require-hashes', '-r', source / 'requirements.lock'])
-            runner([python, '-m', 'pip', 'wheel', '--no-deps', '--wheel-dir', release / 'wheels', source])
+            runner([python, '-m', 'pip', 'install', '--require-hashes', '-r', source / 'build-requirements.lock'])
+            runner([python, '-m', 'pip', 'wheel', '--no-build-isolation', '--no-deps', '--wheel-dir', release / 'wheels', source])
             wheels = list((release / 'wheels').glob('luda-*.whl'))
             if len(wheels) != 1:
                 raise InstallError('Build did not produce exactly one Luda wheel.')

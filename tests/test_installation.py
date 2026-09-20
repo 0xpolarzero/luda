@@ -21,6 +21,7 @@ class Installation(unittest.TestCase):
         self.source.mkdir()
         (self.source / 'pyproject.toml').write_text('[project]\nname="luda"\nversion="1.0.0"\n')
         (self.source / 'requirements.lock').write_text('fixture lock')
+        (self.source / 'build-requirements.lock').write_text('fixture build lock')
         (self.source / 'MANIFEST.in').write_text('fixture manifest')
         (self.source / 'src').mkdir()
         (self.source / 'src/file.py').write_text('fixture')
@@ -57,6 +58,8 @@ class Installation(unittest.TestCase):
         self.assertEqual(second['status'], 'already_installed')
         self.assertEqual(len(self.commands), commands)
         self.assertIn('--require-hashes', self.commands[1])
+        self.assertIn('--require-hashes', self.commands[2])
+        self.assertIn('--no-build-isolation', self.commands[3])
 
     def test_failed_upgrade_preserves_selected_release_and_retry(self):
         first = installer.install(self.prefix, self.source, self.runner)

@@ -56,7 +56,8 @@ def source_fingerprint(root):
              for p in (root / folder).rglob('*')
              if p.is_file() and '__pycache__' not in p.parts and p.suffix not in ('.pyc', '.pyo')]
     paths += [root / name for name in ('pyproject.toml', 'requirements.lock', 'uv.lock',
-                                      'README.md', 'MANIFEST.in', '.mcp.json', 'AGENTS.md')]
+                                      'README.md', 'MANIFEST.in', '.mcp.json', 'AGENTS.md',
+                                      'build-requirements.in', 'build-requirements.lock')]
     files = {str(p.relative_to(root)): hashlib.sha256(p.read_bytes()).hexdigest()
              for p in sorted(paths) if p.exists()}
     digest = hashlib.sha256(json.dumps(files, sort_keys=True).encode()).hexdigest()
