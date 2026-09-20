@@ -10,21 +10,21 @@ The [346-case catalog](REQUIREMENTS.md) defines acceptance targets. [Qualificati
 |---|---|---|
 | Attachment and reconnect | Privilege drop, explicit same-account XFCE selection, bounded readiness; one MCP connection survives actual private display/bus/session replacement | Fresh Mac SSH onboarding and fresh microsandbox provisioning remain external |
 | Agent protocol | Actual stdio initialization/tools/images/errors/cancellation; strict raw schema validation; safe repair hints | Client timeout need not cancel; acknowledgment may precede cleanup |
-| Targeting | Process/start identity plus native X-resource generation; actual same-XID reuse; scoped semantic identities | UI content and human input can change between checks; identical semantic-object reuse remains a limitation |
-| Observation and pointer | Decorated/borderless/offscreen/fullscreen geometry, scaled screenshot pixel/pointer oracles, covered-target refusal and nested menus | Mixed-DPI, rotation, multiple monitors and same-root-size topology changes unqualified |
+| Targeting | Process/start identity plus native X-resource generation; actual same-XID reuse; private provider and authenticated accessibility-bus generation identities | UI content and human input can change between checks; identical semantic-object reuse remains a limitation |
+| Observation and pointer | Decorated/borderless/offscreen/fullscreen geometry, scaled screenshot pixel/pointer oracles, covered-target refusal and nested menus | Logical-monitor changes, same-root controller movement and panning tested separately; physical mixed-DPI/rotation/transform coverage remains incomplete |
 | Text and controls | GTK3 and Qt exact widget readback; Qt UTF-16 normalization; Chromium authoritative selection endpoints; protected input, lists, radio/checkbox/value/expansion | Opaque rich text cannot always supply exact plaintext; GTK4 and Qt combo provider limits remain |
 | Clipboard and terminals | Actual competing owners, slow consumers, Clipman, PRIMARY preservation, 300 KB transfer; xterm/XFCE terminal framing and real confirmation cancel/accept | Clipboard transfer is not atomic; dispatched input still needs destination verification |
-| Applications and files | Gio discovery/launch, singleton/D-Bus/terminal activation; Mousepad save/overwrite/unsaved decisions; Thunar conflicts/copy/delete with file oracles | Additional application families and failure paths remain unqualified |
+| Applications and files | Gio discovery/launch; Mousepad save/overwrite/unsaved and symlink/renamed destinations; Thunar file oracles; Chromium download completion; GIMP exported-pixel oracles | Additional application families and failure paths remain unqualified |
 | Coordination and cleanup | Shared pause, cooperative FIFO, cancellation/quarantine, owned key/button injectors, explicit cleanup recovery, replacement-server protection, bounded output/caches | Human input is not locked out; arbitrary layouts, OS fault combinations and long-duration soak remain incomplete |
 | Installation and packaging | Hash-locked runtime/build tools, atomic release selection, payload integrity, rollback, preservation of modified files, installable Codex plugin tested in temporary registry | Guest image/apt supply chain and host-side remote plugin placement require separate qualification |
 | Storage failures | Injected resource failures plus actual private 64 KiB tmpfs ENOSPC/read-only tests; staged clipboard preserves prior owner and cleans failed writes | Not every filesystem/device failure or power-loss point is covered; uninstall is not rollback-atomic |
-| Agent usability | Independent fresh agents complete forms, exact Unicode Save As, screenshot-only canvas, nested-menu/unsaved-dialog recovery and one untrusted-document task; repeated form/canvas first attempts pass | Small local sample, unknown resolved default model, significant cumulative input usage; no broad success-rate or injection-resistance claim |
+| Agent usability | Independent fresh agents complete forms, exact Unicode Save As, screenshot-only canvas, nested-menu/unsaved-dialog recovery and one untrusted-document task; repeated form/canvas first attempts pass | Small local sample and unknown resolved default model; no broad success-rate or injection-resistance claim |
 
 ## Reproducible evidence
 
 - `scripts/qualify.py`: named unit evidence linked to requirements. Unit success alone never grants release qualification.
-- `scripts/headless_tests.py`: fourteen isolated suites covering native/MCP input, cancellation, controls, menus, geometry, repeated resources, waits, keyboard/pointer cleanup, same-address server replacement and session-state hints. All fourteen passed locally at `1295f91`; subsequent changes require their own affected checks.
-- `scripts/native_app_tests.py`: five isolated ordinary-account suites for Mousepad, Thunar, window states, MCP launches and terminals. The initial four passed hosted AMD64 CI; subsequent terminal coverage also passed locally and is now registered in that workflow.
+- `scripts/headless_tests.py`: sixteen isolated suites covering native/MCP input, cancellation, controls, menus, geometry, resources, waits, keyboard identity/repetition, input cleanup, server replacement and session-state hints. All sixteen passed locally at `8792f28`; subsequent changes require their own affected checks.
+- `scripts/native_app_tests.py`: five isolated ordinary-account suites for Mousepad, Thunar, window states, MCP launches and terminals. Both hosted AMD64 workflows completed successfully at `48a409b`, including these suites and desktop contracts.
 - Provider suites: `live_semantic.py`, `live_toolkits.py`, `live_controls.py`, `live_combo.py`, and browser suites retain independent widget/DOM oracles and failures. See [toolkits](TOOLKIT-QUALIFICATION.md), [browser](BROWSER-QUALIFICATION.md) and [browser text](BROWSER-TEXT-CONTRACT.md).
 - [Reconnect](RECONNECT.md), [clipboard](CLIPBOARD-QUALIFICATION.md), [terminals](TERMINAL-QUALIFICATION.md), [geometry](GEOMETRY-QUALIFICATION.md), [resources](RESOURCE-QUALIFICATION.md) and [storage](STORAGE-FAULT-QUALIFICATION.md) document exact local assertions and limits.
 - `scripts/agent_eval.py` requires an already authenticated CLI and explicit private-display opt-in. [Agent evaluation](AGENT-EVALUATION.md) records every retained attempt, independent oracles, trace grading, source hashes and usage.
@@ -53,6 +53,28 @@ The same ordinary-account actual KasmVNC desktop passed all 31 native and
 13 MCP assertions again. This wheel includes native pointer movement, compact
 monitor metadata, Firefox normalization and table-row selection. Later target
 identity and accessible-name changes were not part of that installed revision.
+
+### Installed generation-guard regression, 2026-09-20
+
+Source `f4b23e8` produced release `0.1.0-4bb8f7d8793d6359`, wheel SHA-256
+`2134429857071f81713daaa407770dfe6fd41b00ddcad88602287b900da522e3`.
+The installed package and launcher passed **31 native and 18 actual MCP checks**
+on the ordinary-account KasmVNC `:1` desktop under the shared test lease.
+This build includes provider/bus generations, exact selection identities, session
+blocking-hint preflight, optional sole-action invocation and redacted unexpected
+errors. Doctor reported all eight fixed font samples covered; lock hints remained
+unknown, not proof of an unlocked desktop. This is another installed-guest proof,
+not fresh provisioning or Mac onboarding.
+
+The integrated unit run at `a58441a` passed **551 tests** with an unchanged source
+fingerprint. The newer scoped records include [locale forms](DATA-ENTRY-QUALIFICATION.md),
+[fresh-agent locale use](AGENT-LOCALE-USABILITY.md), [tables](DATA-CONTROLS.md),
+[overlays](OVERLAY-QUALIFICATION.md), [image editing](IMAGE-EDITOR-QUALIFICATION.md),
+[download completion](BROWSER-DOWNLOAD-QUALIFICATION.md),
+[resource limits](RESOURCE-LIMIT-QUALIFICATION.md),
+[bus generations](BUS-GENERATION.md), [selection identities](SELECTION-IDENTITY-REVIEW.md),
+and [authentication boundaries](AUTH-QUALIFICATION.md). These have distinct source
+snapshots and supported scopes; they are not a single universal acceptance pass.
 
 ## Confirmed unresolved issues
 
