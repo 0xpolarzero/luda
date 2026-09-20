@@ -137,6 +137,7 @@ class Admission:
         complete = False
         queue = None
         try:
+            self._check_file(display_fd)
             directory, lock = self._open()
             now = elapsed_time()
             queue = [ticket for ticket in self._read(directory) if self._live(ticket, now)]

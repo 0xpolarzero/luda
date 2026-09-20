@@ -1,6 +1,5 @@
 import base64
 from contextlib import contextmanager
-import fcntl
 import hashlib
 import io
 import json
@@ -20,6 +19,7 @@ from .common import DesktopError, display_identity, checkpoint, mark_effect, pro
 from .x11 import X11
 from .interaction import InteractionMixin
 from .control import Control
+from .admission import Admission
 from .timing import elapsed_time, suspend_offset
 from .waits import ConditionWaitsMixin
 from types import MappingProxyType
@@ -48,19 +48,21 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         self.lockfd = os.open(directory/f'{name}.lock', os.O_CREAT|os.O_RDWR|os.O_NOFOLLOW, 0o600)
         self.runtime = directory
         self.control = Control(directory, name)
+        self.admission = Admission(directory, name)
 
     @contextmanager
     def transaction(self):
         if self.closed:
             raise DesktopError('CLOSED', 'Server backend has been closed.')
-        checkpoint()
+        try:
+            checkpoint()
+        except DesktopError:
+            self.admission.cancel()
+            raise
         if not self.local_lock.acquire(blocking=False):
             raise DesktopError('BUSY', 'Another operation is in progress; no input sent.')
         try:
-            try:
-                fcntl.flock(self.lockfd, fcntl.LOCK_EX|fcntl.LOCK_NB)
-            except BlockingIOError as exc:
-                raise DesktopError('BUSY', 'Another tool server controls this display; no input sent.') from exc
+            self.admission.acquire(self.lockfd)
             try:
                 offset = suspend_offset()
                 if abs(offset-self._suspend_offset) > .05:
@@ -70,7 +72,7 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
                 with environment_scope(self.environment):
                     yield
             finally:
-                fcntl.flock(self.lockfd, fcntl.LOCK_UN)
+                self.admission.release(self.lockfd)
         finally:
             self.local_lock.release()
 
@@ -490,6 +492,7 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         errors = []
         for cleanup in (lambda: stop_process(self.clipboard_owner) if self.clipboard_owner else None,
                         lambda: self.x.close() if self.x else None,
+                        lambda: self.admission.cancel() if getattr(self, 'admission', None) else None,
                         lambda: os.close(self.lockfd)):
             try:
                 cleanup()
