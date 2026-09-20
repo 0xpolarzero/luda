@@ -1,0 +1,32 @@
+name: Codex host registration
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  pinned-cli-registration:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: tests/tools/codex-cli/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install locked test-only CLI and Python dependencies
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund --prefix tests/tools/codex-cli
+          python -m pip install --require-hashes -r requirements.lock
+          python -m pip install --no-deps -e .
+      - name: Require exact CLI version and execute real registration contracts
+        run: python tests/tools/codex-cli/run_registration_tests.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: codex-cli-registration-evidence
+          path: artifacts/codex-cli-registration/

@@ -1,0 +1,9 @@
+{
+  "name": "luda-codex-cli-qualification",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Test-only pinned Codex CLI for isolated host plugin registration",
+  "dependencies": {
+    "@openai/codex": "0.155.1"
+  }
+}

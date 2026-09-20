@@ -13,6 +13,18 @@ spec.loader.exec_module(qualify)
 class QualificationContracts(unittest.TestCase):
     catalog = {'features': [{'cases': [{'id': 'A-01', 'acceptance': 'Example'}]}]}
 
+    def test_fingerprint_keeps_npm_lock_but_excludes_installed_dependencies(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);tool=root/'tests/tools/codex-cli';tool.mkdir(parents=True)
+            lock=tool/'package-lock.json';lock.write_text('locked-v1')
+            initial=qualify.source_fingerprint(root)
+            binary=tool/'node_modules/@openai/codex/bin/codex';binary.parent.mkdir(parents=True);binary.write_bytes(b'installed-platform-binary')
+            self.assertEqual(qualify.source_fingerprint(root),initial)
+            binary.write_bytes(b'changed-platform-binary')
+            self.assertEqual(qualify.source_fingerprint(root),initial)
+            lock.write_text('locked-v2')
+            self.assertNotEqual(qualify.source_fingerprint(root),initial)
+
     def test_fingerprint_includes_fixture_skill_and_plugin_changes(self):
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory)
