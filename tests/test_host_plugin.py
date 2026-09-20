@@ -79,6 +79,25 @@ class HostRegistration(unittest.TestCase):
         conflict=self.bundle(1,'different-location')
         with self.assertRaisesRegex(registration.RegistrationError,'registration_conflict'):registration.register(conflict,self.codex,self.home)
         self.assertEqual((self.home/'config.toml').read_bytes(),before)
+    def test_same_argv_with_effective_transport_overrides_is_refused(self):
+        bundle=self.bundle(21);registration.register(bundle,self.codex,self.home)
+        meta=json.loads((bundle/'host-registration.json').read_text())
+        expected=json.loads((bundle/'plugins'/meta['plugin']/'.mcp.json').read_text())['mcpServers'][meta['server_name']]
+        config=self.home/'config.toml';original=config.read_text()
+        base='\n[mcp_servers.'+meta['server_name']+']\ncommand = '+json.dumps(expected['command'])+'\nargs = '+json.dumps(expected['args'])+'\n'
+        for override in ('cwd = "/tmp"\n', 'env = { SYNTHETIC_OVERRIDE = "changed" }\n', 'env_vars = ["SYNTHETIC_OVERRIDE"]\n'):
+            with self.subTest(override=override):
+                config.write_text(original+base+override)
+                before=config.read_bytes()
+                effective=registration.cli(self.codex,self.home,'mcp','list')[0]['transport']
+                self.assertEqual(effective['command'],expected['command'])
+                self.assertEqual(effective['args'],expected['args'])
+                with self.assertRaisesRegex(registration.RegistrationError,'effective_server_conflict'):
+                    registration.register(bundle,self.codex,self.home)
+                self.assertEqual(config.read_bytes(),before)
+        config.write_text(original)
+        self.assertEqual(registration.register(bundle,self.codex,self.home)['status'],'already_registered')
+
     def test_partial_cli_failure_preserves_marketplace_and_refuses_blind_retry(self):
         bundle=self.bundle(3);calls=[]
         def failing(executable,home,*args):

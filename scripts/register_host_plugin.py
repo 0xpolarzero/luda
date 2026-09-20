@@ -107,7 +107,16 @@ def register(market,codex_executable,codex_home,runner=cli):
                 if hashlib.sha256((cached/file).read_bytes()).hexdigest()!=meta[key]:raise RegistrationError('cached_content_mismatch')
             effective=[entry for entry in run('mcp','list') if entry.get('name')==meta['server_name']]
             expected=read_json(cached/'.mcp.json')['mcpServers'][meta['server_name']]
-            if len(effective)!=1 or effective[0].get('enabled') is not True or any(effective[0].get('transport',{}).get(key)!=expected[key] for key in ('command','args')):
+            if len(effective)!=1 or effective[0].get('enabled') is not True:
+                raise RegistrationError('effective_server_conflict')
+            transport=effective[0].get('transport',{})
+            # Codex profile overrides can retain argv while changing the process
+            # context. Verify the actual stdio launch, not only cached bytes.
+            if (transport.get('type')!='stdio'
+                    or any(transport.get(key)!=expected[key] for key in ('command','args'))
+                    or ({} if transport.get('env') is None else transport['env'])!=({} if expected.get('env') is None else expected['env'])
+                    or ([] if transport.get('env_vars') is None else transport['env_vars'])!=([] if expected.get('env_vars') is None else expected['env_vars'])
+                    or transport.get('cwd')!=expected.get('cwd')):
                 raise RegistrationError('effective_server_conflict')
         if entries:
             verify(entries)
