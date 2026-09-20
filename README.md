@@ -45,7 +45,9 @@ For other Linux distributions, existing dependencies, updates, and removal, see 
 - **Use the screen:** screenshots, clicks, drags, scrolling, and keyboard shortcuts. Optional OCR, image matching, and recording provide additional ways to observe.
 - **Handle interruptions:** wait for changes, cancel work, pause agent input, and recover owned input after a disconnect.
 
-Luda automatically chooses background actions or independent input where supported, and uses ordinary foreground mouse/keyboard control when needed for compatibility. The agent uses the same tools with no mode selection. A distinct agent cursor appears in desktop pixels when available, so ordinary desktop viewers can display it. Foreground fallback can move your pointer and change focus; application callbacks can also bring windows forward. See [input routing and evidence](docs/BACKGROUND-EXPERIENCE.md).
+**Watch the agent work with as little disruption as possible.** Luda shows a distinct agent cursor where supported and tries to leave your mouse, keyboard, and foreground windows undisturbed. The cursor is drawn into the desktop image, so ordinary desktop viewers can display it.
+
+Luda automatically chooses background actions or independent input where supported. When compatibility requires it, Luda uses ordinary foreground mouse/keyboard control, which can move your pointer, redirect keyboard input, and bring windows forward. Application behavior can also change focus. The agent uses the same tools with no mode selection. See [input routing and evidence](docs/BACKGROUND-EXPERIENCE.md).
 
 The optional browser provider opens a temporary Chromium session for ordinary web fields. Existing browser profiles are not attached automatically.
 
