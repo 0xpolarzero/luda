@@ -23,3 +23,9 @@ The subprocess contract is limited to the fixed local FFmpeg/ffprobe and Luda me
 After integration and the tenth Silo skill-refresh patch, source `ed4edcb` passed all 688 root unit tests and 680 ordinary-account tests with eight explicitly unavailable CLI tests skipped. The integrated private matrix passed both recording suites with the same unchanged source fingerprint; see [the current unit record](UNIT-COVERAGE-CURRENT.md) for retained fixture-permission failures and exact artifact paths.
 
 The [optional desktop media CI run](https://github.com/0xpolarzero/luda/actions/runs/35494437866) subsequently passed on hosted Ubuntu 24.04 AMD64 at `7bf8cf5`. Its recording suite passed four assertions in 6.414 seconds; the fault suite passed five in 11.964 seconds. The rendered-frame oracle decoded 12 frames from a 27,171-byte recording. Full matrix source fingerprint remained `27c32125031d21cdfeb50367fdb0216dee2c36f799cba64e49e04d0638f675e1`; artifacts are retained locally under `artifacts/hosted-media-7bf8cf5/`.
+
+## Unsolicited encoder interruption regression
+
+An additional real fault probe interrupted the owned FFmpeg with SIGINT before its ten-second duration. The earlier implementation returned a playable fragment as `complete` with `end_reason="duration_limit"`; this was false completion. The failing run `run-1789886225901233441` is retained. FFmpeg's interruption exit status is now accepted only when the supervisor actually sent the stop signal; an independently interrupted worker is failed and its partial artifact removed.
+
+The corrected immutable run `run-1789886279614910258` passed four recording and six recording-fault assertions in 4.330 and 10.666 seconds, with fingerprint `16b06c297dbd73d1d917818689655ceab5063681b12d10bce15f04235f7fb742`. All nine recording unit tests also passed. These checks do not make external signals atomic with a simultaneous requested stop.

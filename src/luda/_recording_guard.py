@@ -25,9 +25,11 @@ def child_setup(limit, expected_parent):
 
 
 def stop(process):
+    interrupted = False
     if process and process.poll() is None:
         try:
             os.killpg(process.pid, signal.SIGINT)
+            interrupted = True
         except ProcessLookupError:
             pass
         try:
@@ -38,6 +40,7 @@ def stop(process):
             except ProcessLookupError:
                 pass
             process.wait(timeout=2)
+    return interrupted
 
 
 def emit(value):
@@ -232,7 +235,7 @@ def main():
                                 started = True
             if ending:
                 break
-        stop(process)
+        interrupted = stop(process)
         if not topology_matches():
             raise ValueError("display changed")
         try:
@@ -240,7 +243,9 @@ def main():
         except KeyError:
             pass
         process.stdout.close()
-        if process.returncode not in (0, 255) or not started:
+        if (process.returncode not in (0, 255)
+                or (process.returncode == 255 and not interrupted)
+                or not started):
             raise ValueError("capture failed")
         os.fsync(output)
         emit({"state": "finalizing"})

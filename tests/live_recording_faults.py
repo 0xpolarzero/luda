@@ -52,6 +52,16 @@ def run():
         records.append(
             {"case": "cooperating-clients-one-active-recorder", "passed": True}
         )
+        with first.transaction():
+            ticket = first.recording("start", max_seconds=10)["recording_id"]
+        # FFmpeg can finish a playable fragment on an unsolicited interrupt.
+        # That must not masquerade as our requested stop or duration limit.
+        os.kill(first.recordings.tickets[ticket]["worker_pid"], signal.SIGINT)
+        wait(lambda: first.recording("status", ticket)["state"] in ("complete", "failed"))
+        interrupted = first.recording("status", ticket)
+        assert interrupted["state"] == "failed" and "path" not in interrupted, interrupted
+        first.recording("delete", ticket)
+        records.append({"case": "unsolicited-recorder-interrupt-refuses-completion", "passed": True})
         before = set(first.runtime.glob("recording-*"))
         with patch.object(recording, "MAX_BYTES", 1024):
             try:
