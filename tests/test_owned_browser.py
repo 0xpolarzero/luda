@@ -14,6 +14,18 @@ class OwnedBrowserTests(unittest.TestCase):
     def worker(self):
         w=Worker('unused');w.protocol=Mock();w.page=Mock();w.page.evaluate.return_value=True;return w
 
+    def test_native_keyboard_handoff_restores_real_widget_focus(self):
+        w=self.worker();w.page.is_closed.return_value=False
+        result=w.native_focus()
+        self.assertEqual(result['effect'],'dispatched')
+        w.protocol.send.assert_called_once_with('Emulation.setFocusEmulationEnabled', {'enabled':False})
+        w.page.bring_to_front.assert_called_once()
+
+    def test_closed_browser_never_attempts_native_handoff(self):
+        w=self.worker();w.page.is_closed.return_value=True
+        with self.assertRaises(Refused):w.native_focus()
+        w.protocol.send.assert_not_called();w.page.bring_to_front.assert_not_called()
+
     def test_exact_unicode_insert_uses_native_input_and_exact_value(self):
         w=self.worker();old=snapshot('A😀B',1,2);new=snapshot('A日本\nB',4,4)
         w.snapshot=Mock(side_effect=[({},old),({},old),({},new)])

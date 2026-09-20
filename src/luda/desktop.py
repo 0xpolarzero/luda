@@ -173,6 +173,7 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
             return {'effect':'dispatched' if prepared else 'none', 'window_id':window_id}
         except DesktopError as exc:
             if exc.code != 'FOCUS_CHANGED':
+                if prepared:exc.effect = 'uncertain'
                 raise
         run(['xdotool','windowactivate',str(window['xid'])],effect='uncertain')
         deadline = elapsed_time()+1.5
