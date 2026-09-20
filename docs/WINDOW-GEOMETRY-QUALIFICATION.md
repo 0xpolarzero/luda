@@ -14,6 +14,24 @@ Eight focused unit assertions cover constrained output, no late upgrade, later g
 
 ## Scope and remaining work
 
-This is a bounded WM-02/WM-03 improvement, not release qualification. Luda does not snap sizes to hints, force a saved rectangle, or retain pre-maximize geometry across external changes. The observed restored rectangle and state are available to the caller; automatic cached restore comparison remains unimplemented because reliable invalidation across external moves/hint changes is not established. Only GTK3/XFWM/Xvfb behavior is demonstrated here, not other window managers, Silo/macOS, real display hardware, or race-free EWMH dispatch.
+This is a bounded WM-02/WM-03 improvement, not release qualification. Luda does not snap sizes to hints or force a saved rectangle. The bounded historical comparison described below detects observed changes; it does not establish continuous external-change history. Only GTK3/XFWM/Xvfb behavior is demonstrated here, not other window managers, Silo/macOS, real display hardware, or race-free EWMH dispatch.
 
 Run the fixture only under an isolated ordinary-account Xvfb/D-Bus session with private HOME/XDG, `LUDA_ISOLATED_TEST_DISPLAY=1` and a fresh `LUDA_GEOMETRY_OUTPUT` directory. It starts and stops only its own GTK process and XFWM; no shared desktop is used. Raw evidence contains synthetic window IDs and geometry, not user application data.
+
+## Historical maximize/restore comparison
+
+`maximize` captures prior client/frame bounds only for a normal window with stable pre-action measurements, observed successful maximization and matching normal-size hints. Its `observed_geometry.restore_reference` reports `captured` or `unknown`. An explicit `restore` returns `observed_geometry.restore_comparison` with `matched`, `nonmatching`, or `unknown`, separate from the WM-state effect. A match compares both actual rectangles with the historical reference; it is not a geometry-setting action or a promise of future stability. Nonmatching does not downgrade an otherwise verified WM-state change, and matching never upgrades a dispatched change.
+
+References use the exact opaque window generation, remain local to the backend and have no short expiry. At most64 are retained; eviction, missing observations, window replacement, close and reconnect remove references. Repeating maximize preserves a reference only while current maximized state, geometry, workspace and normal hints still match. Other explicit geometry/state commands invalidate it even if the resulting geometry happens to match; raise-only does not. Window enumeration invalidates references when it observes different rectangles/workspace. Restore consumes its reference and checks current hints/state before and after dispatch. Unknown results include a fixed reason; they do not attribute a constraint to the application or WM.
+
+There is no persistent X11 event monitor. An external restore/move/hint change followed by a return to the same observed values between checks can go undetected. The result explicitly identifies this as historical same-generation comparison. Providers reusing the exact same exposed state between separate reads cannot be made atomic by this cache.
+
+`tests/live_restore_comparison.py` passed seven grouped checks as ordinary UID1001 under private Xvfb/D-Bus/HOME/XDG. Independent `xwininfo`/`xprop` measurements cover minimum-constrained resize, repeated maximize and matching restore, changed minimum hints yielding unknown, external unmaximize/move yielding unknown, own unchanged-workspace command invalidation, a replacement window receiving no stale restore, and backend-close cleanup. The hints case remained maximized in XFWM; the result retained dispatched WM state and unknown comparison. The separate external-move case uses a fresh owned fixture, never retries that uncertain action. Early fixture failures and this behavior are retained in `tests/evidence/restore-comparison/`.
+
+Run as an ordinary user with a writable artifacts directory:
+
+```sh
+.venv/bin/python tests/live_restore_comparison.py
+```
+
+The harness creates its own private session. Focused tests additionally cover nonmatching comparisons, an observed change-and-revert, missing hints, cache eviction, post-restore hints changes and lifecycle contracts. This increment supplies useful scoped WM-03 behavior, not universal restore preservation or catalog qualification.

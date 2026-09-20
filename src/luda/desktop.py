@@ -49,6 +49,8 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         self.snapshots = {}
         self.elements = {}
         self.windows = {}
+        from .window_history import WindowHistory
+        self.window_history = WindowHistory()
         self.clipboard_owner = None
         self.recordings = Recordings(self)
         self.browser = OwnedBrowser(self)
@@ -219,6 +221,7 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
                            'active':xid==active,'wm_class':meta['wm_class'],
                            'unavailable_properties':meta['unavailable_properties']})
         self.windows={w['window_id']:w for w in result}
+        if getattr(self,'window_history',None) is not None:self.window_history.observe(result)
         self.window_diagnostics={'enumerated_count':len(rows),'unavailable_count':len(unavailable),
                                  'unavailable':unavailable[:100],'unavailable_truncated':len(unavailable)>100}
         return result
@@ -681,6 +684,7 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
                 cleanup()
             except Exception as exc:
                 errors.append(str(exc))
+        if getattr(self,'window_history',None) is not None:self.window_history.clear()
         for cache in ('snapshots', 'elements', 'windows'):
             getattr(self, cache, {}).clear()
         self.cleanup_errors = errors

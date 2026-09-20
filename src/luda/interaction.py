@@ -4,6 +4,7 @@ import time
 import uuid
 from .common import DesktopError, process_identity, run
 from .timing import elapsed_time
+from .window_history import WindowHistory, geometry, normal
 from .input_guard import held_button
 from .pointer_input import click_button, check_pointer_ready, move_pointer
 
@@ -14,8 +15,8 @@ def integer(value, name, low, high):
     return value
 
 
-def properties(xid):
-    return run(['xprop', '-id', str(xid), '_NET_WM_STATE']).decode(errors='replace')
+def properties(xid, include_hints=False):
+    return run(['xprop', '-id', str(xid), '_NET_WM_STATE', *(['WM_NORMAL_HINTS'] if include_hints else [])]).decode(errors='replace')
 
 
 class InteractionMixin:
@@ -72,6 +73,20 @@ class InteractionMixin:
         if action == 'workspace': self._workspace(workspace)
         w = self.target_window(window_id, False)
         xid = str(w['xid'])
+        history=getattr(self,'window_history',None)
+        if history is None:self.window_history=history=WindowHistory()
+        reference=None;before=None;before_state='';stable=False
+        if action in ('maximize','restore'):
+            previous=history.take(window_id)
+            try:
+                before_state=properties(w['xid'],include_hints=True)
+                before=self.target_window(window_id,False)
+                stable=geometry(w)==geometry(before)
+                reference=history.context(before,before_state,previous,stable)
+            except DesktopError as exc:
+                if exc.code in ('CANCELLED','TIMEOUT','STALE_TARGET'):raise
+                reference={'reason':'pre_action_metadata_unavailable'}
+        elif action!='raise':history.invalidate(window_id)
         if action == 'raise':return self._raise_window(w,window_id)
         if action == 'move': command = ['wmctrl','-ir',xid,'-e',f'0,{x},{y},-1,-1']
         elif action == 'resize': command = ['xdotool','windowsize',xid,str(width),str(height)]
@@ -115,7 +130,7 @@ class InteractionMixin:
             # never attach replacement-window measurements to this action.
             try:
                 current=self.target_window(window_id,False)
-                state=properties(current['xid'])
+                state=properties(current['xid'],include_hints=action in ('maximize','restore'))
                 current=self.target_window(window_id,False)
             except DesktopError as exc:
                 raise DesktopError(exc.code, 'Window measurements became unavailable after dispatch; list windows again.', effect='uncertain') from exc
@@ -145,6 +160,16 @@ class InteractionMixin:
                           'minimize':flags['hidden']})[action]
                 if not matched and result['effect']=='verified':
                     result.update(effect='dispatched',verification='Requested WM state no longer matches the latest observation; inspect before retrying.')
+            if action=='maximize':
+                if before is not None and normal(before_state):
+                    history.capture(window_id,before,before_state,current,state,stable)
+                elif before is not None:
+                    history.put(window_id,history.context(current,state,reference))
+                else:history.put(window_id,reference)
+                observed['restore_reference']={'status':'captured' if not history.entries[window_id].get('reason') else 'unknown'}
+                if history.entries[window_id].get('reason'):observed['restore_reference']['reason']=history.entries[window_id]['reason']
+            elif action=='restore':
+                observed['restore_comparison']=history.compare(reference,current,state)
             result['observed_geometry']=observed
         return result
 

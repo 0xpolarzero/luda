@@ -1,0 +1,140 @@
+[
+  {
+    "case": "minimum-constrained resize",
+    "result": {
+      "effect": "dispatched",
+      "verification": "Requested state was not observed; inspect before retrying.",
+      "window_id": "2e42d64c2a22469dbb91e21585256f97:600003:19721:3893158:d4ec19deb7808b9ebc409ca6772a8eff",
+      "action": "resize",
+      "observed_geometry": {
+        "client_bounds": {
+          "x": 105,
+          "y": 149,
+          "width": 300,
+          "height": 180
+        },
+        "frame_bounds": {
+          "x": 100,
+          "y": 120,
+          "width": 310,
+          "height": 214
+        },
+        "wm_state": {
+          "maximized_vertical": false,
+          "maximized_horizontal": false,
+          "fullscreen": false,
+          "hidden": false
+        },
+        "scope": "Post-dispatch same-generation observations; separate X11 reads, not an atomic snapshot.",
+        "requested": {
+          "width": 100,
+          "height": 100
+        },
+        "requested_basis": "client_bounds",
+        "request_match": "nonmatching",
+        "constraint_reason": "not_determined"
+      }
+    }
+  },
+  {
+    "case": "repeated maximize and matched restore",
+    "result": {
+      "effect": "verified",
+      "verification": "Window-manager state matches request.",
+      "window_id": "2e42d64c2a22469dbb91e21585256f97:600003:19721:3893158:d4ec19deb7808b9ebc409ca6772a8eff",
+      "action": "restore",
+      "observed_geometry": {
+        "client_bounds": {
+          "x": 105,
+          "y": 149,
+          "width": 300,
+          "height": 180
+        },
+        "frame_bounds": {
+          "x": 100,
+          "y": 120,
+          "width": 310,
+          "height": 214
+        },
+        "wm_state": {
+          "maximized_vertical": false,
+          "maximized_horizontal": false,
+          "fullscreen": false,
+          "hidden": false
+        },
+        "scope": "Post-dispatch same-generation observations; separate X11 reads, not an atomic snapshot.",
+        "restore_comparison": {
+          "status": "matched",
+          "scope": "Historical same-generation geometry comparison; external changes between observations can go undetected.",
+          "prior_geometry": {
+            "client_bounds": {
+              "x": 105,
+              "y": 149,
+              "width": 300,
+              "height": 180
+            },
+            "frame_bounds": {
+              "x": 100,
+              "y": 120,
+              "width": 310,
+              "height": 214
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "case": "external hints change unknown",
+    "result": {
+      "effect": "dispatched",
+      "verification": "Requested state was not observed; inspect before retrying.",
+      "window_id": "2e42d64c2a22469dbb91e21585256f97:600003:19721:3893158:d4ec19deb7808b9ebc409ca6772a8eff",
+      "action": "restore",
+      "observed_geometry": {
+        "client_bounds": {
+          "x": 0,
+          "y": 24,
+          "width": 1200,
+          "height": 876
+        },
+        "frame_bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 1200,
+          "height": 900
+        },
+        "wm_state": {
+          "maximized_vertical": true,
+          "maximized_horizontal": true,
+          "fullscreen": false,
+          "hidden": false
+        },
+        "scope": "Post-dispatch same-generation observations; separate X11 reads, not an atomic snapshot.",
+        "restore_comparison": {
+          "status": "unknown",
+          "scope": "Historical same-generation geometry comparison; external changes between observations can go undetected.",
+          "reason": "state_geometry_or_hints_changed"
+        }
+      }
+    }
+  },
+  {
+    "case": "external unmaximize missing",
+    "result": {
+      "client_bounds": {
+        "x": 0,
+        "y": 24,
+        "width": 1200,
+        "height": 876
+      },
+      "frame_bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 1200,
+        "height": 900
+      },
+      "properties": "_NET_FRAME_EXTENTS(CARDINAL) = 0, 0, 24, 0\n_NET_WM_STATE(ATOM) = _NET_WM_STATE_MAXIMIZED_HORZ, _NET_WM_STATE_MAXIMIZED_VERT, _NET_WM_STATE_FOCUSED\nWM_NORMAL_HINTS(WM_SIZE_HINTS):\n\t\tprogram specified minimum size: 340 by 220\n\t\tprogram specified resize increment: 40 by 20\n\t\tprogram specified base size: 300 by 180\n\t\twindow gravity: NorthWest\n"
+    }
+  }
+]
