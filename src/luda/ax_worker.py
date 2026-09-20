@@ -1080,7 +1080,7 @@ def semantic(node, current, req):
 
 def main(req):
     pid = req["pid"]
-    if req.get("op") not in {"inspect", "read", "set", "focus", "invoke", "insert", "select", "value", "check", "expand", "secret", "choose"}:
+    if req.get("op") not in {"inspect", "read", "locate", "set", "focus", "invoke", "insert", "select", "value", "check", "expand", "secret", "choose"}:
         return failure("UNSUPPORTED_OPERATION", "Unknown accessibility operation.")
     if req.get("start") and identity(pid) != req["start"]:
         return {"error": "STALE_TARGET", "message": "Process identity changed."}
@@ -1168,12 +1168,14 @@ def main(req):
                 or "defunct" in current["states"]):
             return {"error": "STALE_TARGET", "message": "Element identity changed; inspect again."}
         op = req["op"]
-        if op != "read" and ("showing" not in current["states"] or not {"enabled", "sensitive"}.intersection(current["states"])):
+        if op not in ("read", "locate") and ("showing" not in current["states"] or not {"enabled", "sensitive"}.intersection(current["states"])):
             return {"error": "NOT_INTERACTABLE", "message": "Element must be enabled and showing for mutation; inspect the visible target."}
         if op in ("read", "set", "insert", "select", "value") and current["protected"]:
             return {"error": "PROTECTED_FIELD", "message": "This implementation does not read or write protected fields."}
         if target["root_bus_guid"] != bus_generation():
             return {"error": "STALE_TARGET", "message": "Accessibility bus changed before operation; inspect again.", "effect": "none"}
+        if op == 'locate':
+            return {'bounds': current.get('bounds') if target.get('bounds_coordinates') != 'unavailable' else None}
         result = semantic(node, current, req)
         if result is not None:
             return result

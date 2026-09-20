@@ -125,6 +125,26 @@ class AutomaticPointerTests(unittest.TestCase):
         d.agent_feedback('target', position=(10, 20))
         d.cursor.show.assert_called_once()
 
+    @patch('luda.interaction.run')
+    def test_semantic_marker_uses_fresh_geometry_not_cached_inspection(self, run):
+        d, target, _ = self.driver()
+        d.environment = {'DISPLAY': ':99'}
+        target.update(pid=42, start='process')
+        d.elements['e'] = {'node': {'bounds': {'x': 1, 'y': 2, 'width': 4, 'height': 6}}}
+        run.return_value = b'{"bounds":{"x":100,"y":200,"width":20,"height":40}}'
+        d.agent_feedback('target', element_id='e')
+        d.cursor.show.assert_called_once_with(110, 220, kind='action')
+        self.assertEqual(run.call_args.kwargs['timeout'], .4)
+
+    @patch('luda.interaction.run', side_effect=DesktopError('TIMEOUT', 'geometry unavailable'))
+    def test_missing_geometry_degrades_to_current_window_marker(self, run):
+        d, target, _ = self.driver()
+        d.environment = {'DISPLAY': ':99'}
+        target.update(pid=42, start='process')
+        d.elements['e'] = {'node': {'bounds': {'x': 1, 'y': 2, 'width': 4, 'height': 6}}}
+        d.agent_feedback('target', element_id='e')
+        d.cursor.show.assert_called_once_with(110, 70, kind='action')
+
 
 if __name__ == '__main__':
     unittest.main()

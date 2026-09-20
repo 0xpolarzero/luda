@@ -1,7 +1,9 @@
 """Window-manager and pointer operations; caller holds Desktop.transaction()."""
 import math
+import json
 import time
 import uuid
+from pathlib import Path
 from contextlib import contextmanager
 from .common import DesktopError, process_identity, run
 from .timing import elapsed_time
@@ -28,8 +30,21 @@ class InteractionMixin:
             return
         try:
             if position is None:
-                node = getattr(self, 'elements', {}).get(element_id, {}).get('node', {})
-                bounds = node.get('bounds') or self.target_window(window_id, False)['bounds']
+                window = self.target_window(window_id, False)
+                bounds = window['bounds']
+                target = getattr(self, 'elements', {}).get(element_id, {})
+                if target.get('node') and target.get('provider') != 'owned_browser':
+                    # Never put the cursor at stale inspection coordinates after
+                    # a scroll, resize or layout change. This read has its own
+                    # short budget; missing geometry degrades to a window marker.
+                    try:
+                        raw = run(['/usr/bin/python3', str(Path(__file__).with_name('ax_worker.py'))],
+                                  data=json.dumps({'op':'locate','pid':window['pid'],'start':window['start'],
+                                                   'target':target['node']}).encode(),
+                                  timeout=.4, max_output_bytes=4096)
+                        bounds = json.loads(raw).get('bounds') or bounds
+                    except Exception:
+                        pass
                 position = (bounds['x'] + bounds['width']//2, bounds['y'] + bounds['height']//2)
             if getattr(self, 'cursor', None) is None:
                 from .cursor import Cursor
