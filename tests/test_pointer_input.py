@@ -1,8 +1,8 @@
 import json
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch,Mock
 from test_keyboard import FakeKeyboard
-from luda._pointer_native import plan_pointer,move_pointer as native_move
+from luda._pointer_native import plan_pointer,move_pointer as native_move,target_guard
 from luda._keyboard_guard import cleanup_request, native_module
 from luda.common import DesktopError
 from luda.pointer_input import click_button,check_pointer_ready
@@ -22,7 +22,7 @@ class PointerContract(unittest.TestCase):
         self.assertEqual(json.loads(run.call_args.kwargs['data'])['target'],None)
     def test_motion_requires_original_generation_and_owned_button(self):
         request={'position':[10,20],'server_generation':'a'*32,'held_button':'1'}
-        native=FakeKeyboard()
+        native=FakeKeyboard();native.x.lib=Mock();native.x.display=1
         with patch('luda._pointer_native.motion') as motion:
             for buttons in ([],[2],[1,2]):
                 native.pointer=buttons
@@ -53,6 +53,29 @@ class PointerContract(unittest.TestCase):
             native=FakeKeyboard();setattr(native,attribute,[8])
             with self.assertRaises(DesktopError) as error:plan_pointer(native,{'button':'4','count':2,'target':99})
             self.assertEqual(error.exception.code,'INPUT_HELD')
+    def test_observed_pointer_token_refused_before_motion_and_ungrabbed(self):
+        native=FakeKeyboard();native.x.lib=Mock();native.x.display=1
+        native.x._property.return_value=(31,8,b'b'*32,0)
+        with patch('luda._pointer_native.motion') as motion,self.assertRaises(DesktopError) as error:
+            native_move(native,{'position':[1,2],'server_generation':'a'*32,'target':99,'target_generation':'a'*32})
+        self.assertEqual(error.exception.code,'STALE_TARGET');motion.assert_not_called()
+        with self.assertRaises(DesktopError):
+            with target_guard(native,99,'a'*32):self.fail('reused target entered')
+        native.x.lib.XUngrabServer.assert_called_once_with(1)
+    def test_public_calls_propagate_observed_pointer_token(self):
+        from luda.pointer_input import move_pointer
+        from luda.input_guard import held_button
+        calls=[lambda:click_button('1',target=99,target_generation='a'*32),lambda:check_pointer_ready(99,target_generation='a'*32),lambda:move_pointer(1,2,'b'*32,target=99,target_generation='a'*32)]
+        for call in calls:
+            with patch('luda.pointer_input.run',return_value=b'{"code":"STALE_TARGET","message":"replaced"}') as run,self.assertRaises(DesktopError):call()
+            self.assertEqual(json.loads(run.call_args.kwargs['data'])['target_generation'],'a'*32)
+        with patch('luda.input_guard.run',return_value=b'{"code":"STALE_TARGET","message":"replaced"}') as run,self.assertRaises(DesktopError):
+            with held_button('1',target=99,target_generation='a'*32):pass
+        self.assertEqual(json.loads(run.call_args.kwargs['data'])['target_generation'],'a'*32)
+    def test_target_generation_requires_valid_bound_target(self):
+        for target,token in ((None,'a'*32),(99,'broken')):
+            with patch('luda.pointer_input.run') as run,self.assertRaises(DesktopError):click_button('1',target=target,target_generation=token)
+            run.assert_not_called()
     def test_focus_change_refuses(self):
         with self.assertRaises(DesktopError) as error:plan_pointer(FakeKeyboard(),{'button':'1','count':1,'target':100})
         self.assertEqual(error.exception.code,'FOCUS_CHANGED')
@@ -61,7 +84,7 @@ class PointerContract(unittest.TestCase):
         plan=plan_pointer(native,{'button':'7','count':20,'target':99})
         self.assertEqual(plan['server_generation'],'a'*32)
         self.assertEqual(native.current.locked_mods,18)
-        native.current.latched_mods=1
+        native.current.latched_mods=1;native.x._property.return_value=(31,8,b'a'*32,0)
         with self.assertRaises(DesktopError) as error:plan_pointer(native,plan)
         self.assertEqual(error.exception.code,'UNSUPPORTED_INPUT_STATE')
     def test_refusal_never_dispatches(self):

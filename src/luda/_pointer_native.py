@@ -1,12 +1,13 @@
 """Private owned click/wheel injector; every event stays on one X connection."""
 import ctypes as C
+from contextlib import contextmanager
 import json
 import sys
 import time
 from ._keyboard_native import Keyboard,emit
 from ._input_native import generation
 from .common import DesktopError
-from .input_validation import validate_position,validate_generation
+from .input_validation import validate_position,validate_generation,validate_target_generation
 
 
 def motion(native,position):
@@ -20,6 +21,28 @@ def motion(native,position):
     native.x.lib.XSync(native.x.display,False)
 
 
+@contextmanager
+def target_guard(native,target,target_generation):
+    native.x.lib.XGrabServer(native.x.display)
+    try:
+        if target is not None:
+            native.target_token(target,target_generation)
+            active=native.x._property(native.x.root,'_NET_ACTIVE_WINDOW',1)
+            if not active or active[2]!=[target]:raise DesktopError('FOCUS_CHANGED','Target lost focus before pointer input.')
+        yield
+    finally:
+        native.x.lib.XUngrabServer(native.x.display)
+        native.x.lib.XSync(native.x.display,False)
+
+
+def check_held(native,owned=None):
+    state=native.state();buttons=native.buttons()
+    if native.pressed() or state.base_mods or (buttons!=[int(owned)] if owned else bool(buttons)):
+        raise DesktopError('INPUT_HELD','Unexpected held input; pointer was not moved or pressed.')
+    if state.latched_mods or state.latched_group:
+        raise DesktopError('UNSUPPORTED_INPUT_STATE','Latched input; pointer was not moved or pressed.')
+
+
 def move_pointer(native,request):
     expected=validate_generation(request.get('server_generation'))
     position=validate_position(request.get('position'))
@@ -28,17 +51,12 @@ def move_pointer(native,request):
     owned=request.get('held_button')
     if owned is not None and owned not in ('1','2','3'):
         raise DesktopError('INVALID_ARGUMENT','Invalid owned button.')
-    state=native.state();buttons=native.buttons()
-    if native.pressed() or state.base_mods or (buttons!=[int(owned)] if owned else bool(buttons)):
-        raise DesktopError('INPUT_HELD','Unexpected held input; pointer was not moved.')
-    if state.latched_mods or state.latched_group:
-        raise DesktopError('UNSUPPORTED_INPUT_STATE','Latched input; pointer was not moved.')
     target=request.get('target')
-    if target is not None:
-        if type(target) is not int or not 0<target<=0xffffffff:raise DesktopError('INVALID_ARGUMENT','Invalid pointer target.')
-        active=native.x._property(native.x.root,'_NET_ACTIVE_WINDOW',1)
-        if not active or active[2]!=[target]:raise DesktopError('FOCUS_CHANGED','Target lost focus before pointer movement.')
-    motion(native,position)
+    token=validate_target_generation(target,request.get('target_generation'))
+    if target is not None:token=native.target_token(target,token)
+    with target_guard(native,target,token):
+        check_held(native,owned)
+        motion(native,position)
     return {'effect':'dispatched','server_generation':expected}
 
 
@@ -55,6 +73,8 @@ def plan_pointer(native,request):
     target=request.get('target')
     if target is not None and (type(target) is not int or not 0<target<=0xffffffff):
         raise DesktopError('INVALID_ARGUMENT','Invalid pointer target.')
+    token=validate_target_generation(target,request.get('target_generation'))
+    if target is not None:token=native.target_token(target,token)
     state=native.state()
     if native.pressed() or native.buttons() or state.base_mods:
         raise DesktopError('INPUT_HELD','Keys or pointer buttons are already held; no click or scroll sent.')
@@ -63,7 +83,7 @@ def plan_pointer(native,request):
     if target is not None:
         active=native.x._property(native.x.root,'_NET_ACTIVE_WINDOW',1)
         if not active or active[2]!=[target]:raise DesktopError('FOCUS_CHANGED','Target lost focus before pointer input.')
-    return {'kind':'pointer','button':request['button'],'count':request['count'],'target':target,'server_generation':current_generation,**({'position':position} if position is not None else {}),**({'hold':True} if request.get('hold') is True else {})}
+    return {'kind':'pointer','button':request['button'],'count':request['count'],'target':target,'server_generation':current_generation,**({'target_generation':token} if token is not None else {}),**({'position':position} if position is not None else {}),**({'hold':True} if request.get('hold') is True else {})}
 
 
 def event(native,button,pressed):
@@ -94,14 +114,15 @@ def main():
             emit({'armed':True,'client':native.client_resource()})
             pressed=False
             try:
-                if 'position' in request:motion(native,request['position'])
-                if request.get('hold'):
-                    pressed=True;event(native,request['button'],True)
-                    emit({'held':True})
-                    time.sleep(60)
-                    raise DesktopError('TIMEOUT','Held button exceeded lifetime.',effect='uncertain')
                 for index in range(request['count']):
-                    pressed=True;event(native,request['button'],True)
+                    with target_guard(native,request.get('target'),request.get('target_generation')):
+                        check_held(native)
+                        if index==0 and 'position' in request:motion(native,request['position'])
+                        pressed=True;event(native,request['button'],True)
+                    if request.get('hold'):
+                        emit({'held':True})
+                        time.sleep(60)
+                        raise DesktopError('TIMEOUT','Held button exceeded lifetime.',effect='uncertain')
                     time.sleep(.012)
                     event(native,request['button'],False);pressed=False
                     if index+1<request['count']:time.sleep(.035)

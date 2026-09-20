@@ -9,7 +9,7 @@ from .common import DesktopError,checkpoint,mark_effect,run,subprocess_environme
 from .keyboard import keyboard_recovery_checkpoint,_completion_proven,_retain_guardian
 from .timing import elapsed_time
 from .pointer_input import _move_pointer
-from .input_validation import validate_position,validate_generation
+from .input_validation import validate_position,validate_generation,validate_target_generation
 
 
 class HeldPointer:
@@ -21,12 +21,14 @@ class HeldPointer:
 
 
 @contextmanager
-def held_button(button,server_generation=None,position=None,target=None):
+def held_button(button,server_generation=None,position=None,target=None,target_generation=None):
     if button not in ('1','2','3'):
         raise DesktopError('INVALID_ARGUMENT','Unsupported held mouse button.')
     keyboard_recovery_checkpoint();checkpoint()
     if target is not None and (type(target) is not int or not 0<target<=0xffffffff):raise DesktopError('INVALID_ARGUMENT','Invalid native pointer target.')
+    validate_target_generation(target,target_generation)
     request={'button':button,'count':1,'target':target,'hold':True}
+    if target_generation is not None:request['target_generation']=target_generation
     if server_generation is not None:request['server_generation']=validate_generation(server_generation)
     if position is not None:request['position']=validate_position(position)
     plan=json.loads(run([sys.executable,'-m','luda._pointer_native','plan'],data=json.dumps(request).encode()+b'\n',timeout=2,max_output_bytes=4096))

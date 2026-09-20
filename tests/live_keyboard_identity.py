@@ -27,16 +27,16 @@ try:
         connection=x.xcb_connect(None,None);xid=x.xcb_generate_id(connection)
         def checked(cookie):assert not x.xcb_request_check(connection,cookie),'XCB request failed'
         def create():
-            eventmask=C.c_uint32(3) # actual KeyPress and KeyRelease only
+            eventmask=C.c_uint32(3|4|8|64) # key, button and pointer-motion events
             checked(x.xcb_create_window_checked(connection,0,xid,root,10,10,100,80,0,1,0,2048,C.byref(eventmask)))
             checked(x.xcb_map_window_checked(connection,xid))
             checked(x.xcb_set_input_focus_checked(connection,1,xid,0))
             subprocess.run(['xprop','-root','-f','_NET_ACTIVE_WINDOW','32x','-set','_NET_ACTIVE_WINDOW',hex(xid)],check=True,stdout=subprocess.DEVNULL)
-        def events():
+        def events(allowed=(2,3)):
             values=[]
             while event:=x.xcb_poll_for_event(connection):
                 kind=C.cast(event,C.POINTER(C.c_ubyte))[0]&127
-                if kind in (2,3):values.append(kind)
+                if kind in allowed:values.append(kind)
                 libc.free(event)
             return values
         def helper(operation,request):return json.loads(subprocess.check_output([sys.executable,'-m','luda._keyboard_native',operation],input=json.dumps(request).encode()+b'\n',timeout=3))
@@ -45,6 +45,8 @@ try:
         # Injector emits an ownership record followed by its completion record.
         output=subprocess.check_output([sys.executable,'-m','luda._keyboard_native','inject'],input=json.dumps(plan).encode()+b'\n',timeout=3)
         assert json.loads(output.splitlines()[-1])['done'] and events()==[2,3]
+        pointer_request={'button':'1','count':1,'target':xid,'target_generation':old,'position':[30,30]}
+        pointer_plan=json.loads(subprocess.check_output([sys.executable,'-m','luda._pointer_native','plan'],input=json.dumps(pointer_request).encode()+b'\n',timeout=3))
         checked(x.xcb_destroy_window_checked(connection,xid));create()
         new=driver.window_tokens([xid])[xid];assert new!=old
         assert events()==[]
@@ -56,7 +58,19 @@ try:
         fresh=helper('plan',{'chord':'Return','target':xid,'target_generation':new})
         output=subprocess.check_output([sys.executable,'-m','luda._keyboard_native','inject'],input=json.dumps(fresh).encode()+b'\n',timeout=3)
         assert json.loads(output.splitlines()[-1])['done'] and events()==[2,3]
-        print(json.dumps({'same_process_same_xid':True,'observed_generation_planner_refused':True,'old_plan_injector_refused':True,'replacement_received_stale_keys':False,'fresh_generation_delivery_verified':True}))
+        subprocess.run(['xdotool','mousemove','200','200'],check=True)
+        events((2,3,4,5,6))
+        for operation,request in [('plan',pointer_request),('inject',pointer_plan),('move',{'position':[30,30],'target':xid,'target_generation':old,'server_generation':pointer_plan['server_generation']})]:
+            refused=json.loads(subprocess.check_output([sys.executable,'-m','luda._pointer_native',operation],input=json.dumps(request).encode()+b'\n',timeout=3))
+            assert refused['code']=='STALE_TARGET' and refused['effect']=='none',refused
+            assert events((2,3,4,5,6))==[],'replacement received stale pointer events'
+            assert 'X=200\nY=200' in subprocess.check_output(['xdotool','getmouselocation','--shell']).decode()
+        pointer_request['target_generation']=new
+        pointer_plan=json.loads(subprocess.check_output([sys.executable,'-m','luda._pointer_native','plan'],input=json.dumps(pointer_request).encode()+b'\n',timeout=3))
+        output=subprocess.check_output([sys.executable,'-m','luda._pointer_native','inject'],input=json.dumps(pointer_plan).encode()+b'\n',timeout=3)
+        assert json.loads(output.splitlines()[-1])['done'] and events((4,5))==[4,5]
+        assert 'X=30\nY=30' in subprocess.check_output(['xdotool','getmouselocation','--shell']).decode()
+        print(json.dumps({'same_process_same_xid':True,'observed_generation_planner_refused':True,'old_plan_injector_refused':True,'replacement_received_stale_keys':False,'fresh_generation_delivery_verified':True,'stale_pointer_plan_inject_move_refused':True,'replacement_pointer_events':0,'fresh_positioned_click_verified':True}))
 finally:
     if connection:x.xcb_disconnect(connection)
     server.terminate();server.wait(timeout=3)

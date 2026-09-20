@@ -15,3 +15,8 @@ def validate_generation(value):
     return value
 
 
+def validate_target_generation(target,value):
+    if value is not None:
+        if target is None:raise DesktopError('INVALID_ARGUMENT','A target generation requires a target window.')
+        validate_generation(value)
+    return value
