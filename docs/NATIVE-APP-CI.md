@@ -37,6 +37,4 @@ file hashes, OS, architecture, Python, account and installed application
 versions. The workflow uploads all fixture evidence even on failure.
 
 The initial local run on Ubuntu 24.04 ARM64 passed all four suites (about
-26 seconds total), and all three runner cleanup/error tests passed. Hosted
-Ubuntu x86-64 execution must be verified separately after pushing the
-workflow; a local pass is not evidence that GitHub Actions has passed.
+26 seconds total), and all three runner cleanup/error tests passed. Hosted Ubuntu x86-64 execution also passed all four suites in [run 35479304982](https://github.com/0xpolarzero/luda/actions/runs/35479304982), on Ubuntu 24.04.5, Python 3.12.14, UID 1001. Hosted Xvfb remains distinct from a fresh microsandbox guest.
