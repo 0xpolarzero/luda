@@ -22,3 +22,7 @@ The [61b8c0a candidate](../../../integrations/silo/releases/61b8c0a.json) includ
 ## Updated 25-patch candidate
 
 The [e08bc91 candidate](../../../integrations/silo/releases/e08bc91.json) adds canonical managed diagnostics and formatting guidance mirrored by Silo patch 0025. Its [independent canonical-download proof](e08bc91/result.json) matches all 984 Git files, executable bits and 105 directories, then verifies actual guest extraction. The archive is 11,104,155 bytes; expanded files total 15,486,508 bytes. All 25 ordered patches check cleanly against the pinned Silo checkout. The selectable candidate includes this skill; the older 24-patch candidate remains historical. Default onboarding remains disabled and fresh Mac/Silo acceptance is still required.
+
+## Updated 26-patch candidate
+
+The [fd2da8e candidate](../../../integrations/silo/releases/fd2da8e.json) includes the bounded archive extractor and exact Silo0026 mirror. The [canonical proof](fd2da8e/result.json) uses this new trusted local extractor against the downloaded archive: all1059 files, executable bits and114 directories match Git, and normalized extraction passes. Compressed bytes total11,689,624; expanded file bytes total16,158,283. No downloaded code executes. The complete decompressed tar stream, including metadata and padding, must now fit128MiB before parsing. Earlier candidates retain their historical helper versions; this is the current selectable candidate, while default onboarding stays disabled.

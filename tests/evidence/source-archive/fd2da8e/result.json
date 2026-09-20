@@ -1,0 +1,14 @@
+{
+  "commit": "fd2da8e10f3db04918ceafef0ff358766402065b",
+  "source_url": "https://github.com/0xpolarzero/luda/archive/fd2da8e10f3db04918ceafef0ff358766402065b.tar.gz",
+  "source_sha256": "bacc77a56688124d9a30c39a66d182b17795e90e51f7e6f54d5b4f342d859556",
+  "compressed_bytes": 11689624,
+  "expanded_file_bytes": 16158283,
+  "git_files_exact": 1059,
+  "directory_entries_exact": 114,
+  "tar_entries": 1173,
+  "git_executable_bits_exact": true,
+  "guest_extraction_content_and_normalized_modes_exact": true,
+  "downloaded_code_executed": false,
+  "candidate_manifest_validated_only_not_enabled": true
+}

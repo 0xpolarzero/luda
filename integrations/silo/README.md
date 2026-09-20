@@ -28,7 +28,7 @@ Create the source artifact from a reviewed commit, for example using
 of `COMMIT` with that full commit identifier. Preserve the full tree, including
 `requirements.lock`, `build-requirements.lock`, scripts, skills and package sources.
 Record its SHA-256, serve those exact bytes over HTTPS, and put that URL, checksum
-and commit in the manifest. A [verified full-commit GitHub archive candidate](releases/e08bc91.json) is
+and commit in the manifest. A [verified full-commit GitHub archive candidate](releases/fd2da8e.json) is
 already available; see the [source proof](../../tests/evidence/source-archive/README.md).
 The canonical default manifest remains disabled pending integration selection. The archive digest pins bytes; the commit label is integrator-supplied
 provenance, not cryptographic proof of a Git object relationship. Installation

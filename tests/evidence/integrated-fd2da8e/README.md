@@ -1,0 +1,3 @@
+# Integrated fd2da8e evidence
+
+All four retained reports have unchanged source fingerprint `baadc049baf343b48f6da18bc939c4f506974143c0f5362d999c31de7c6bc438`. Root units passed958/959 with one unavailable-build-dependency skip; ordinary-account units passed950/959 with that skip and eight unavailable Codex CLI skips. The ordinary report's Git revision field is empty because the root-owned checkout is not trusted by that account's Git; the exact full-file fingerprint matches the root run. All17 private native suites passed, including real delayed native/MCP paste; the corrected permission oracle passed3.993seconds. These records are scoped test evidence, not fresh Mac/Silo acceptance or release qualification.
