@@ -27,6 +27,7 @@ from .common import environment_scope, subprocess_environment
 from .input_guard import held_button
 from .session_state import session_state
 from .ime import composition_capability
+from .storage import storage_errors, staged_payload
 
 
 class Desktop(InteractionMixin, ConditionWaitsMixin):
@@ -42,14 +43,22 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         self.clipboard_owner = None
         self.local_lock = threading.Lock()
         name = hashlib.sha256(display_identity(self.environment.get('DISPLAY','')).encode()).hexdigest()[:12]
-        directory = Path(tempfile.gettempdir()) / f'silo-desktop-{os.getuid()}'
-        directory.mkdir(mode=0o700, exist_ok=True)
-        if directory.is_symlink() or directory.stat().st_uid != os.getuid() or directory.stat().st_mode & 0o077:
-            raise DesktopError('UNSAFE_RUNTIME', 'Runtime directory must be owned by this account and mode 0700.')
-        self.lockfd = os.open(directory/f'{name}.lock', os.O_CREAT|os.O_RDWR|os.O_NOFOLLOW, 0o600)
-        self.runtime = directory
-        self.control = Control(directory, name)
-        self.admission = Admission(directory, name)
+        self.lockfd = None
+        try:
+            with storage_errors('initialize desktop runtime'):
+                directory = Path(tempfile.gettempdir()) / f'silo-desktop-{os.getuid()}'
+                directory.mkdir(mode=0o700, exist_ok=True)
+                if directory.is_symlink() or directory.stat().st_uid != os.getuid() or directory.stat().st_mode & 0o077:
+                    raise DesktopError('UNSAFE_RUNTIME', 'Runtime directory must be owned by this account and mode 0700.')
+                self.lockfd = os.open(directory/f'{name}.lock', os.O_CREAT|os.O_RDWR|os.O_NOFOLLOW, 0o600)
+                self.runtime = directory
+                self.control = Control(directory, name)
+                self.admission = Admission(directory, name)
+        except BaseException:
+            if self.lockfd is not None:
+                os.close(self.lockfd)
+                self.lockfd = None
+            raise
 
     @contextmanager
     def transaction(self):
@@ -208,6 +217,7 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
     def signature(self, windows):
         return [(w['window_id'], w['bounds'], w['active'], w['workspace']) for w in windows]
 
+    @storage_errors('capture desktop screenshot')
     def observe(self, max_width=1280):
         if not 320 <= max_width <= 2560:
             raise DesktopError('INVALID_ARGUMENT','max_width must be 320–2560.')
@@ -405,6 +415,7 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
                 raise DesktopError('TEXT_MISMATCH','Destination did not match requested text; inspect paste dialogs and contents before retrying.',effect='uncertain',details={'expected_characters':len(expected),'actual_characters':observed.get('characters')})
             time.sleep(.05)
 
+    @storage_errors('prepare or dispatch clipboard paste', effect='uncertain')
     def paste(self, window_id, text, shortcut=None):
         validate_text(text)
         target = self.target_window(window_id)
@@ -420,12 +431,15 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         if not text:
             return {'effect':'none','reason':'Empty paste is a no-op; use set_text to clear an editable element.'}
         payload=text.encode('utf-8')
-        if self.clipboard_owner:
-            mark_effect();stop_process(self.clipboard_owner)
-        with tempfile.NamedTemporaryFile(dir=self.runtime) as source:
-            source.write(payload);source.flush()
+        # Preserve the previous clipboard until the replacement is fully staged.
+        with staged_payload(self.runtime, payload) as payload_path:
+            if self.clipboard_owner:
+                mark_effect();stop_process(self.clipboard_owner)
             mark_effect()
-            self.clipboard_owner=subprocess.Popen(['xclip','-quiet','-selection','clipboard','-in',source.name],stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,env=subprocess_environment())
+            try:
+                self.clipboard_owner=subprocess.Popen(['xclip','-quiet','-selection','clipboard','-in',payload_path],stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,env=subprocess_environment())
+            except FileNotFoundError as exc:
+                raise DesktopError('DEPENDENCY_MISSING', 'Missing executable: xclip', effect='uncertain') from exc
             deadline=elapsed_time()+1
             while True:
                 try:
@@ -495,7 +509,7 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         for cleanup in (lambda: stop_process(self.clipboard_owner) if self.clipboard_owner else None,
                         lambda: self.x.close() if self.x else None,
                         lambda: self.admission.cancel() if getattr(self, 'admission', None) else None,
-                        lambda: os.close(self.lockfd)):
+                        lambda: os.close(self.lockfd) if self.lockfd is not None else None):
             try:
                 cleanup()
             except Exception as exc:
