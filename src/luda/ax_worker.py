@@ -146,6 +146,10 @@ class SelectionUnavailable(ValueError):
     """Provider cannot expose exact, unambiguous selection offsets."""
 
 
+class TextChanged(ValueError):
+    """Provider length changed while taking a bounded text snapshot."""
+
+
 class TextAccess:
     """Normalize providers that use UTF-16 offsets (Qt) to Unicode code points.
 
@@ -173,13 +177,19 @@ class TextAccess:
         if not 0 <= count <= 2_000_000:
             raise VerificationLimit("Text provider exceeds the bounded offset-normalization budget.")
         text = Atspi.Text.get_text(self.raw, 0, count)
+        if Atspi.Text.get_character_count(self.raw) != count:
+            raise TextChanged("Text length changed during bounded readback.")
         if len(text) > 1_000_000:
             raise VerificationLimit("Text provider exceeds the one-million-code-point budget.")
         if self.toolkit.casefold() == "gecko":
             text = decode_gecko_text(text, count)
             self.utf16 = True
+        elif self.toolkit.casefold() == "qt":
+            if count != len(text.encode("utf-16-le")) // 2:
+                raise ValueError("Qt provider count disagrees with UTF-16 offsets.")
+            self.utf16 = True
         elif count == len(text):
-            self.utf16 = self.toolkit.casefold() == "qt"
+            self.utf16 = False
         elif count == len(text.encode("utf-16-le")) // 2:
             self.utf16 = True
         else:
@@ -697,11 +707,13 @@ def main(req):
             if "Text" not in current["interfaces"]:
                 return {"error": "UNSUPPORTED", "message": "Element has no Text interface."}
             t = TextAccess(node.get_text_iface())
-            n = t.get_character_count()
+            n = len(t.text)
             limit = req.get("limit", 16000)
             if type(limit) is not int or not 1 <= limit <= 1_000_000:
                 return failure("INVALID_ARGUMENT", "Text read limit must be 1..1000000.")
-            content = t.get_text(0, min(n, limit))
+            # All text/count/truncation fields describe the same bounded read.
+            # Refreshing with an old end offset can hide a concurrently added suffix.
+            content = t.text[:limit]
             selections = [{"start_offset": sel.start_offset, "end_offset": sel.end_offset}
                           for sel in (t.get_selection(i) for i in range(min(t.get_n_selections(), 100)))]
             representation = t.representation()
@@ -758,6 +770,10 @@ def dispatch(request):
     request.pop("_mutation_started", None)
     try:
         return main(request)
+    except TextChanged:
+        return {"error": "TEXT_CHANGED",
+                "message": "Text changed during bounded readback; inspect again before input.",
+                "effect": "uncertain" if request.get("_mutation_started") else "none"}
     except SelectionUnavailable:
         return {"error": "SELECTION_UNVERIFIABLE",
                 "message": "The accessibility provider cannot expose exact selection offsets. Use deliberate screenshot/clipboard controls and independently verify the application result before retrying.",
