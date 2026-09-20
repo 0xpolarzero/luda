@@ -570,11 +570,9 @@
         "test_gecko_text.GeckoText.test_offsets_preserve_genuine_feff",
         "test_gecko_text.GeckoText.test_selection_synchronizes_editor_caret_before_range",
         "test_provider_snapshots.Snapshots.test_qt_count_must_match_native_utf16_units",
-        "test_owned_browser.OwnedBrowserTests.test_read_limit_keeps_full_codepoint_count",
-        "test_browser_rich.BrowserRichTests.test_unicode_paragraph_mapping_retains_empty_trailing_blocks",
-        "test_browser_rich.BrowserRichTests.test_mid_surrogate_selection_is_unavailable_not_guessed"
+        "test_owned_browser.OwnedBrowserTests.test_read_limit_keeps_full_codepoint_count"
       ],
-      "limits": "Provider-specific code-point conversion for Qt/Gecko plus Chromium authoritative selection. Exact live Firefox cases pass except protected input; older Electron non-BMP selections and GTK4 provider limitations remain explicit. Owned-browser code-point read limits and cooperating paragraph UTF-16 mappings are unit-tested; mid-surrogate selection is explicitly unsupported, not normalized into a guessed position."
+      "limits": "Provider-specific code-point conversion for Qt/Gecko and owned-browser code-point read limits. Exact live Firefox cases pass except protected input; older Electron non-BMP selections and GTK4 provider limitations remain explicit. Cooperating paragraph UTF-16 mappings belong to the separate Editor Bridge and are not core evidence."
     },
     "PTR-07": {
       "implementation": "partial",
@@ -629,11 +627,9 @@
       "implementation": "partial",
       "tests": [
         "test_mcp_cancellation.MCPCancellation.test_later_failure_preserves_prior_effect",
-        "test_owned_browser.OwnedBrowserTests.test_preedit_refusal_precedes_focus_or_input",
-        "test_browser_rich.BrowserRichTests.test_missing_paragraph_policy_precedes_focus_and_input",
-        "test_browser_rich.BrowserRichTests.test_known_final_paragraph_overflow_refuses_before_focus_or_keys"
+        "test_owned_browser.OwnedBrowserTests.test_preedit_refusal_precedes_focus_or_input"
       ],
-      "limits": "Unit accumulated-effect classification; completed substeps are not comprehensively enumerated. Known preedit/provider refusal, missing explicit paragraph semantics and final paragraph overflow stop before focus/keys with no input effects. This does not imply that every later-stage rich-editor failure is pre-input."
+      "limits": "Unit accumulated-effect classification; completed substeps are not comprehensively enumerated. Known owned-HTML preedit/provider refusal stops before focus or input. This does not imply that every later-stage failure is pre-input."
     },
     "ERR-05": {
       "implementation": "partial",
@@ -642,20 +638,9 @@
         "test_keyboard_progress.KeyProgress.test_completed_partial_and_not_started_partition",
         "test_keyboard_progress.KeyProgress.test_public_error_and_status_retain_counts_not_application_success",
         "test_keyboard_progress.KeyProgress.test_native_second_preflight_failure_records_only_first_dispatch",
-        "test_keyboard_progress.KeyProgress.test_actual_companion_error_receipt_reaches_public_dispatch_details",
-        "test_rich_progress.RichProgressTests.test_native_first_verified_second_rejected",
-        "test_rich_progress.RichProgressTests.test_preflight_after_verified_first_does_not_start_second",
-        "test_rich_progress.RichProgressTests.test_native_intermediate_keyup_failure_is_not_verified",
-        "test_rich_progress.RichProgressTests.test_clipboard_after_first_verified_preflight_failure",
-        "test_rich_progress.RichProgressTests.test_clipboard_publication_without_paste_is_conservatively_uncertain",
-        "test_rich_progress.RichProgressTests.test_strict_projection_rejects_payload_and_wrong_counts",
-        "test_rich_progress.RichProgressTests.test_public_error_history_and_report_keep_only_progress",
-        "test_rich_progress.RichProgressTests.test_actual_receipt_transport_filters_untrusted_progress",
-        "test_rich_progress.RichProgressTests.test_lost_receipt_never_synthesizes_progress",
-        "test_rich_progress.RichProgressTests.test_malformed_progress_is_removed_from_public_error",
-        "test_rich_progress.RichProgressTests.test_invalid_next_packet_cannot_reuse_previous_progress"
+        "test_keyboard_progress.KeyProgress.test_actual_companion_error_receipt_reaches_public_dispatch_details"
       ],
-      "limits": "Bounded repeated-key dispatch counts and cooperating rich-editor segment readback counts, with exact public/error/history projection and actual companion/worker receipt tests. Rich verified_completed counts historical exact text/paragraph/unaffected-mark/caret checks; clipboard publication alone may make the current segment uncertain. Lost receipts and cancellation do not synthesize counts. No application save/commit, automatic replay, or comprehensive other-compound-action support is claimed; see RICH-PROGRESS.md."
+      "limits": "Bounded repeated-key dispatch counts, public/error/history projection and actual companion receipt tests. Lost receipts and cancellation do not synthesize counts. No application save/commit, automatic replay, or comprehensive other-compound-action support is claimed. Rich-editor segment progress belongs to the separate Editor Bridge."
     },
     "ERR-06": {
       "implementation": "partial",
@@ -1364,41 +1349,19 @@
     "ERR-03": {
       "implementation": "partial",
       "tests": [
-        "test_owned_browser.OwnedBrowserTests.test_exact_unicode_insert_uses_native_input_and_exact_value",
-        "test_browser_rich.BrowserRichTests.test_same_length_document_change_during_select_stops_before_replacement"
+        "test_owned_browser.OwnedBrowserTests.test_exact_unicode_insert_uses_native_input_and_exact_value"
       ],
-      "limits": "Controlled exact HTML value comparison and cooperating-model revalidation prevent a success claim on a same-length concurrent document change. Selection may already have occurred and is conservatively uncertain; application commit and atomicity against later page changes are not established."
+      "limits": "Controlled exact HTML value comparison. Application commit and atomicity against later page changes are not established. Cooperating rich-editor model revalidation belongs to the separate Editor Bridge."
     },
     "DATA-07": {
-      "implementation": "partial",
-      "tests": [
-        "test_browser_rich.BrowserRichTests.test_missing_paragraph_policy_precedes_focus_and_input",
-        "test_browser_rich.BrowserRichTests.test_prefix_marks_compare_independently_of_text_run_merging",
-        "test_browser_rich.BrowserRichTests.test_same_length_document_change_during_select_stops_before_replacement",
-        "test_browser_rich.BrowserRichTests.test_unsupported_pending_marks_refuse_before_a_new_document_can_be_created",
-        "test_browser_rich.BrowserRichTests.test_unsupported_structure_and_marks_are_not_flattened",
-        "test_rich_hard_breaks.HardBreaks.test_breaks_and_paragraphs_have_distinct_layout_and_native_offsets",
-        "test_rich_hard_breaks.HardBreaks.test_hard_break_does_not_consume_paragraph_budget",
-        "test_rich_hard_breaks.HardBreaks.test_hard_break_requires_declared_capability_before_focus",
-        "test_rich_hard_breaks.HardBreaks.test_known_structural_node_overflow_refuses_before_focus_and_clipboard",
-        "test_rich_hard_breaks.HardBreaks.test_legacy_and_unsupported_mixed_nodes_refuse",
-        "test_rich_hard_breaks.HardBreaks.test_native_shift_enter_exact_hard_break_and_caret",
-        "test_rich_hard_breaks.HardBreaks.test_offline_fixture_sources_and_bridge_match_recorded_hashes",
-        "test_rich_hard_breaks.HardBreaks.test_read_boundary_metadata_is_prefix_bounded_without_hidden_model",
-        "test_rich_hard_breaks.HardBreaks.test_same_plaintext_different_structure_is_not_preserved",
-        "test_rich_hard_breaks.HardBreaks.test_separated_text_runs_count_toward_known_node_budget",
-        "test_rich_hard_breaks.HardBreaks.test_wrong_key_binding_same_lf_never_verifies_or_retries"
-      ],
-      "limits": "Cooperating registered basic ProseMirror paragraphs only: original prefix marks survive text-run merging, unsupported nodes/marks/pending marks are refused, and LF requires explicit paragraph intent. Inserted formatting follows application behavior; these assertions do not support arbitrary contenteditable editors or arbitrary middle-range insertion. Explicitly declared cooperating hard_break leaves have per-action structural/caret/mark verification; legacy and other mixed unsupported nodes refuse. Not generic rich-editor or arbitrary-schema support."
+      "implementation": "not_assessed",
+      "tests": [],
+      "limits": "Cooperating rich-editor functionality is outside core Luda and belongs to the separately installed Editor Bridge. Historical mappings are retained in addons/editor-bridge/docs/test-map.json; no core result or add-on qualification is inferred."
     },
     "WEB-03": {
-      "implementation": "partial",
-      "tests": [
-        "test_browser_rich.BrowserRichTests.test_unicode_paragraph_mapping_retains_empty_trailing_blocks",
-        "test_browser_rich.BrowserRichTests.test_unsupported_structure_and_marks_are_not_flattened",
-        "test_browser_rich.BrowserRichTests.test_detected_focus_change_after_dispatch_never_replays"
-      ],
-      "limits": "Unit evidence covers cooperating paragraph representation and a single dispatched segment followed by uncertain focus failure without replay. Real independent DOM/model oracles are in the registered owned-rich suite; no general rich-editor formatting or focus-race prevention claim."
+      "implementation": "not_assessed",
+      "tests": [],
+      "limits": "Cooperating rich-editor functionality is outside core Luda and belongs to the separately installed Editor Bridge. Historical mappings are retained in addons/editor-bridge/docs/test-map.json; no core result or add-on qualification is inferred."
     },
     "MCP-08": {
       "implementation": "partial",
@@ -1409,12 +1372,9 @@
       "limits": "A real disposable worker and stopped guardian exercise EOF cleanup of owned processes/profile/temporary payload; missing proof retains ownership and refuses a cleanup-success claim. This narrow unit process probe is not real Chromium or MCP transport evidence; those are separate live cases."
     },
     "PERF-08": {
-      "implementation": "partial",
-      "tests": [
-        "test_browser_rich.BrowserRichTests.test_middle_insertion_and_action_budget_refuse_before_focus",
-        "test_browser_rich.BrowserRichTests.test_known_final_paragraph_overflow_refuses_before_focus_or_keys"
-      ],
-      "limits": "Cooperating paragraph operation limits reject excessive segments and known final paragraph overflow before focus/input. This is a bounded rich-text workload assertion, not a memory-pressure benchmark or a general clipboard size qualification."
+      "implementation": "not_assessed",
+      "tests": [],
+      "limits": "Cooperating rich-editor functionality is outside core Luda and belongs to the separately installed Editor Bridge. Historical mappings are retained in addons/editor-bridge/docs/test-map.json; no core result or add-on qualification is inferred."
     },
     "WM-02": {
       "implementation": "partial",
