@@ -3,3 +3,6 @@ recursive-include docs *.md *.json
 recursive-include scripts *.py *.sh
 recursive-include skills *.md
 recursive-include tests *.py *.html
+
+include .mcp.json
+recursive-include .codex-plugin *.json
