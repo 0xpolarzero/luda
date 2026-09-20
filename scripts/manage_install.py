@@ -368,11 +368,12 @@ def config(prefix, output, user, tool_approval="auto", placement="local"):
 
 
 def doctor(prefix, user):
-    release = prefix / 'current'
+    # Resolve once so an atomic current switch cannot mix launcher/server releases.
+    release = (prefix / 'current').resolve()
     if not release.is_dir():
         raise InstallError('No selected installation; run install or rollback first.')
-    command = [release / '.venv/bin/luda-session', '--user', user, '--', release / '.venv/bin/python', '-c',
-               'import json;from luda.desktop import Desktop;d=Desktop();r=d.doctor();d.close();print(json.dumps(r));raise SystemExit(0 if r["ready"] else 1)']
+    command = [release / '.venv/bin/luda-session', '--user', user, '--',
+               release / '.venv/bin/luda', 'doctor']
     result = subprocess.run([str(a) for a in command], capture_output=True, text=True, timeout=20)
     if result.returncode:
         raise InstallError('Desktop readiness failed: ' + (result.stdout or result.stderr)[-1500:])

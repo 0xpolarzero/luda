@@ -28,7 +28,7 @@ Run the guest/session diagnostic:
 sudo python3 scripts/manage_install.py doctor --prefix /opt/luda --user silo-desktop
 ```
 
-This checks the actual selected desktop session, display, accessibility bus and input dependencies. Missing sessions, ambiguous sessions and inaccessible authority files are errors. It does not fabricate readiness from an installed executable. The launcher waits up to five seconds for the selected session by default; `luda-session --wait 0` disables waiting and `--wait 30` is the maximum. Ambiguous sessions fail immediately. It never substitutes another account or session.
+This runs the selected release’s `luda doctor` through its session launcher, checking the actual desktop session, display, accessibility bus and input dependencies. Its `versions` field also identifies the installed driver, tool declarations and bundled skill; the bundled skill identity does not prove that an agent loaded it. Missing sessions, ambiguous sessions and inaccessible authority files are errors. It does not fabricate readiness from an installed executable. The launcher waits up to five seconds for the selected session by default; `luda-session --wait 0` disables waiting and `--wait 30` is the maximum. Ambiguous sessions fail immediately. It never substitutes another account or session.
 
 ## Generate a reviewable Codex configuration bundle
 
@@ -47,7 +47,7 @@ Existing files are never overwritten. The example defaults to Codex running insi
 
 These executable paths are guest paths. They must execute on the guest side of the remote connection; copying them into a host-local MCP configuration does not create an SSH transport. After reconnecting/restarting Codex, verify that the Luda skill is listed and that `desktop_doctor` and `desktop_observe` reach the intended desktop. A fresh Mac Codex SSH onboarding session is not qualified by this Linux-only installation test.
 
-This repository supplies guest installation/configuration helpers, not an implemented Silo UI/provisioning adapter. Silo must still wire the lifecycle into its own APIs and configuration ownership model. For that integration, the required lifecycle is: provision desktop and dependencies, install a release, run readiness, register the reviewed guest-side MCP entry and skill, then open a fresh agent connection. Registration is kept explicit so an installer cannot silently replace unrelated agent configuration.
+The [maintained Silo integration patch series](../integrations/silo/README.md) implements explicit guest provisioning and host registration UI. It has not been shipped in Silo or accepted on macOS; these standalone commands do not install that app integration. For that integration, the required lifecycle is: provision desktop and dependencies, install a release, run readiness, register the reviewed guest-side MCP entry and skill, then open a fresh agent connection. Registration is kept explicit so an installer cannot silently replace unrelated agent configuration.
 
 ## Tool approval and SSH placement
 
