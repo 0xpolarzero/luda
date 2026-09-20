@@ -2,6 +2,8 @@
 import gi
 import json
 import sys
+import os
+import time
 from pathlib import Path
 gi.require_version('Gtk','3.0')
 from gi.repository import Gtk, GLib
@@ -17,6 +19,22 @@ entry=Gtk.Entry();entry.set_visibility(False);entry.get_accessible().set_name('S
 disabled=Gtk.Button(label='Disabled action');disabled.set_sensitive(False);box.pack_start(disabled,False,False,0)
 hidden=Gtk.Entry();hidden.get_accessible().set_name('Hidden text');hidden.set_no_show_all(True);box.pack_start(hidden,False,False,0)
 state={'clicks':0,'text':'','pointer':None}
+# Opt-in timing fault: defer the real GTK default paste handler, never set text.
+paste_delay=int(os.environ.get('LUDA_TEST_PASTE_DELAY_MS','0'))
+assert 0 <= paste_delay <= 2000
+if paste_delay:
+ def delayed_paste(widget):
+  widget.stop_emission_by_name('paste-clipboard')
+  state['paste_requests']=state.get('paste_requests',0)+1
+  state['paste_requested_at']=time.monotonic()
+  def deliver():
+   state['paste_delivered_at']=time.monotonic()
+   widget.handler_block(paste_handler)
+   try:widget.emit('paste-clipboard')
+   finally:widget.handler_unblock(paste_handler)
+   return False
+  GLib.timeout_add(paste_delay,deliver)
+ paste_handler=view.connect('paste-clipboard',delayed_paste)
 def clicked(*_):
  state['clicks']+=1
 button.connect('clicked',clicked)

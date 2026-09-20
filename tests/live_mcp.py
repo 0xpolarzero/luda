@@ -11,6 +11,8 @@ from pathlib import Path
 import subprocess
 import time
 
+from fixture_oracle import wait_text
+
 from PIL import Image
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
@@ -24,7 +26,7 @@ def record(name,ok,details=None):
  assert ok,(name,details)
 
 async def main():
- p=subprocess.Popen(['/usr/bin/python3',str(ROOT/'tests/fixture.py'),str(OUT)])
+ p=subprocess.Popen(['/usr/bin/python3',str(ROOT/'tests/fixture.py'),str(OUT)],env=dict(os.environ,LUDA_TEST_PASTE_DELAY_MS=str(args.paste_delay_ms)))
  try:
   params=StdioServerParameters(command=args.server,env=dict(os.environ))
   async with stdio_client(params) as streams:
@@ -61,9 +63,8 @@ async def main():
     n=next(n for n in tree['nodes'] if n['name']=='Contract text');eid=n['element_id']
     payload='MCP literal text\n日本語 👩🏽\u200d💻\n\tindent\n\n'
     value,_=await call('desktop_type',element_id=eid,text=payload,mode='replace')
-    await asyncio.sleep(.1)
-    actual=json.loads((OUT/'state.json').read_text())['text']
-    record('mcp-set-text-readback',value['effect']=='verified' and actual==payload)
+    observed=await wait_text(OUT/'state.json',payload)
+    record('mcp-set-text-readback',value['effect']=='verified' and observed['matched'],observed)
     value,_=await call('desktop_read_text',element_id=eid)
     record('mcp-read-text',value['text']==payload and not value['truncated'])
     shot,r=await call('desktop_observe',max_width=800)
@@ -86,10 +87,25 @@ async def main():
     record('mcp-invalid-mutation-left-text-unchanged',json.loads((OUT/'state.json').read_text())['text']==payload)
     # Separate insertion from replacement through actual MCP calls.
     await call('desktop_type',element_id=eid,text='',mode='replace')
+    baseline=await wait_text(OUT/'state.json','')
+    (OUT/'paste-evidence.json').write_text(json.dumps({'baseline':baseline},ensure_ascii=False,indent=2))
+    record('mcp-paste-independent-empty-baseline',baseline['matched'],baseline)
     await call('desktop_focus_element',element_id=eid)
-    value,_=await call('desktop_paste',window_id=wid,text=payload,shortcut='ctrl_v')
-    await asyncio.sleep(.15)
-    record('mcp-paste-independent-readback',json.loads((OUT/'state.json').read_text())['text']==payload and value['effect']=='dispatched')
+    began=time.monotonic()
+    paste_response=await s.call_tool('desktop_paste',{'window_id':wid,'text':payload,'shortcut':'ctrl_v'})
+    receipt={'baseline':baseline,'delay_ms':args.paste_delay_ms,'response':paste_response.model_dump(mode='json'),
+             'call_seconds':time.monotonic()-began}
+    (OUT/'paste-evidence.json').write_text(json.dumps(receipt,ensure_ascii=False,indent=2))
+    assert not paste_response.isError,paste_response
+    value=json.loads(paste_response.content[0].text)
+    observed=await wait_text(OUT/'state.json',payload)
+    receipt.update(observation=observed,total_seconds=time.monotonic()-began)
+    (OUT/'paste-evidence.json').write_text(json.dumps(receipt,ensure_ascii=False,indent=2))
+    record('mcp-paste-independent-readback',observed['matched'] and value['effect']=='dispatched',receipt)
+    if args.paste_delay_ms:
+     state=observed['last_state']
+     record('mcp-delayed-real-gtk-paste-once',state.get('paste_requests')==1 and
+            state.get('paste_delivered_at',0)-state.get('paste_requested_at',0)>=args.paste_delay_ms/1000,state)
     prior_operation=value['operation_id']
     report,response=await call('desktop_report')
     serialized=response.content[0].text
@@ -104,5 +120,6 @@ async def main():
   (OUT/'results.json').write_text(json.dumps(results,ensure_ascii=False,indent=2))
   print(json.dumps(results,ensure_ascii=False))
 
-parser=argparse.ArgumentParser();parser.add_argument('--server',default=str(ROOT/'.venv/bin/luda'));args=parser.parse_args()
+parser=argparse.ArgumentParser();parser.add_argument('--server',default=str(ROOT/'.venv/bin/luda'));parser.add_argument('--paste-delay-ms',type=int,default=0);args=parser.parse_args()
+if not 0<=args.paste_delay_ms<=2000:parser.error('paste delay must be 0..2000 ms')
 asyncio.run(main())
