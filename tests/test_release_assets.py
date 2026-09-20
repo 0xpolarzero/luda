@@ -68,6 +68,13 @@ class ReleaseAssets(unittest.TestCase):
             self.assertFalse(any('unrelated' in name for name in archive.namelist()))
             self.assertEqual(len(archive.namelist()), len(set(archive.namelist())))
 
+    def test_plugin_directory_uses_manifest_name_independently_of_skill(self):
+        (self.source / '.codex-plugin/plugin.json').write_text('{"name":"editor-bridge"}')
+        path = self.root / 'addon.zip'
+        release.plugin_zip(self.source, path, 'luda')
+        with zipfile.ZipFile(path) as archive:
+            self.assertIn('editor-bridge/skills/luda/SKILL.md', archive.namelist())
+
     def test_plugin_rejects_missing_entrypoint_and_symlink(self):
         path = self.source / 'skills/luda/references/text.md'
         path.unlink()

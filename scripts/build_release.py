@@ -24,6 +24,9 @@ def plugin_zip(source, target, name):
     required = [source / '.codex-plugin/plugin.json', source / '.mcp.json', source / 'skills' / name / 'SKILL.md']
     if not all(p.is_file() for p in required):
         raise ValueError(f'Missing plugin files for {name}')
+    plugin_name = json.loads(required[0].read_text()).get('name')
+    if not isinstance(plugin_name, str) or not plugin_name or any(c not in 'abcdefghijklmnopqrstuvwxyz0123456789-' for c in plugin_name):
+        raise ValueError('Invalid plugin name')
     files = list(dict.fromkeys(required + sorted((source / 'skills' / name).rglob('*'))))
     license_file = source / 'LICENSE'
     if license_file.is_file():
@@ -33,7 +36,7 @@ def plugin_zip(source, target, name):
             if path.is_symlink():
                 raise ValueError('Plugin assets must not be symbolic links')
             if path.is_file():
-                archive.write(path, str(Path(name) / path.relative_to(source)))
+                archive.write(path, str(Path(plugin_name) / path.relative_to(source)))
 
 
 def verify_wheel(source, wheel, package, skill):
