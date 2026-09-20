@@ -512,3 +512,13 @@ pinned Silo checkout, and final guest bytes matched the canonical helper. Logs a
 patch hashes are retained in `artifacts/silo-managed-browser/`. The separately
 qualified managed installer/browser flow does not turn this result into a real
 Silo VM, macOS app or browser-artifact provisioning pass.
+
+### Browser completion consistency (nineteenth patch)
+
+`0019-browser-completion-status.patch` requires the same complete-success evidence
+for `browser_configured` as for overall readiness. An inconsistent bootstrap result
+with `ok: true` but incomplete installation, configuration or readiness now reports
+browser completion as unknown. It cannot produce the UI's “Last completed setup
+enabled browser tools” claim. This remains historical setup evidence, not a current
+browser launch check. The contradictory-result regression and full guest integration
+suite pass (27 tests); the patch applies cleanly after0018.

@@ -71,6 +71,25 @@ class SiloIntegrationTests(unittest.TestCase):
         disabled=tools.set_browser(RELEASE,self.state,False,fetch=fetch,install=self.install,running=lambda:True)
         self.assertFalse(disabled['browser_configured']);self.assertEqual(disabled['browser_config_sha256'],base['browser_config_sha256'])
         self.assertEqual(self.install.call_args.kwargs,{})
+    def test_incomplete_bootstrap_never_claims_completed_browser_setup(self):
+        candidate=dict(schema_version=1,executable='/opt/trusted/chrome',sha256='a'*64,version='153.0.8010.12',architecture='aarch64')
+        release={**RELEASE,'browser':candidate}
+        def fetch(value,path):
+            with tarfile.open(path,'w:gz') as output:
+                for name in (*REQUIRED,'requirements-browser.lock','src/luda/managed_browser.py'):
+                    info=tarfile.TarInfo('luda-'+COMMIT+'/'+name);info.size=1;output.addfile(info,io.BytesIO(b'x'))
+        complete={'ok':True,'installation_completed':True,'configuration_generated':True,'tools':{'ready':True}}
+        for changes in ({'installation_completed':False},{'configuration_generated':False},{'tools':{'ready':False}},{'ok':False}):
+            with self.subTest(changes=changes):
+                self.install.return_value={**complete,**changes}
+                value=tools.set_browser(release,self.state,True,fetch=fetch,install=self.install,running=lambda:True)
+                self.assertEqual(value['state'],'attention')
+                self.assertIsNone(value['browser_configured'])
+                self.assertIsNone(tools.status(release,self.state)['browser_configured'])
+        self.install.return_value=complete
+        value=tools.set_browser(release,self.state,True,fetch=fetch,install=self.install,running=lambda:True)
+        self.assertEqual(value['state'],'ready');self.assertTrue(value['browser_configured'])
+
     def test_browser_source_without_managed_api_refuses_without_install_or_retry(self):
         candidate=dict(schema_version=1,executable='/opt/trusted/chrome',sha256='a'*64,version='153.0.8010.12',architecture='aarch64')
         release={**RELEASE,'browser':candidate}
