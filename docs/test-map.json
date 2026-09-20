@@ -572,9 +572,9 @@
     "ERR-09": {
       "implementation": "partial",
       "tests": [
-        "test_input_guard.InputGuardTests.test_release_failure_preserves_original_error_and_companion_retries"
+        "test_input_guard.InputGuardTests.test_original_error_preserved_after_verified_cleanup"
       ],
-      "limits": "Retains original failure and failed cleanup information; forced server-death key release remains unqualified."
+      "limits": "Retains original drag failure after verified cleanup; separate fault probes cover unresolved ownership and controller death. Unreachable X-server cleanup remains uncertain."
     },
     "CONC-05": {
       "implementation": "partial",

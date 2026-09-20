@@ -2,7 +2,7 @@
 
 This audit reviews the current source and test inventory, not just test totals. The catalog has 345 cases: 295 P0, 30 P1 and 20 P2. Every case remains release-unqualified until its acceptance criterion has sufficient evidence. A unit mapping is not production qualification.
 
-`test-map.json` now maps 112 requirements to 158 distinct existing unit methods. Some requirements share tests because one narrow assertion informs several criteria. The map explicitly states those limits. Live suites additionally exercise application effects, but their results must be associated with the exact source/environment that ran them; historical artifact files must not be imported as current passes.
+`test-map.json` now maps 112 requirements to 157 distinct existing unit methods. Some requirements share tests because one narrow assertion informs several criteria. The map explicitly states those limits. Live suites additionally exercise application effects, but their results must be associated with the exact source/environment that ran them; historical artifact files must not be imported as current passes.
 
 ## Confirmed runtime gaps at the audited snapshot
 
