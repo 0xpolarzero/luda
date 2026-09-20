@@ -28,6 +28,7 @@ def suite(script, ids, *, wm=True, browser=None, electron=None, firefox=None, mo
 
 SUITES = {
     'dead-compose': suite('live_dead_compose.py', 'KEY-10', wm=False, artifacts=('dead-compose',), gaps=('Explicit no-input refusal of named dead-key and Compose requests; not composition support',)),
+    'cpu-pressure': suite('live_cpu_pressure.py', 'PERF-10', wm=False, artifacts=('cpu-pressure',), gaps=('One CPU, nice15 desktop and two bounded nice0 load workers; no system-wide CPU/OOM qualification',)),
     'mcp': suite('live_mcp.py', 'MCP-02 MCP-03 MCP-04 MCP-05 MCP-06 MCP-07', artifacts=('mcp',)),
     'tui': suite('live_tui.py', 'TERM-09', wm=False, artifacts=('tui',)),
     'ax-deadline': suite('live_ax_deadline.py', 'AX-07', wm=False, artifacts=('ax-deadline',), gaps=('Stopped-provider call completes under earlier libatspi timeout; does not exercise the five-second worker kill path',)),
