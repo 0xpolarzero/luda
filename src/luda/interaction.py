@@ -3,6 +3,7 @@ import math
 import time
 import uuid
 from .common import DesktopError, process_identity, run
+from .timing import elapsed_time
 
 
 def integer(value, name, low, high):
@@ -88,7 +89,7 @@ class InteractionMixin:
         if any(isinstance(v, bool) or not isinstance(v, (int,float)) or not math.isfinite(v) for v in (x,y)):
             raise DesktopError('INVALID_ARGUMENT', 'Coordinates must be finite numbers.')
         snap = self.snapshots.get(snapshot_id)
-        if not snap or time.monotonic()-snap['time'] >= 15:
+        if not snap or elapsed_time()-snap['time'] >= 15:
             raise DesktopError('STALE_OBSERVATION', 'Screenshot expired; observe again.')
         w = self.target_window(window_id, require_focus)
         if self.signature(list(self.windows.values())) != snap['signature']:
@@ -184,7 +185,7 @@ class InteractionMixin:
         if any(isinstance(v,bool) or not isinstance(v,(int,float)) or not math.isfinite(v) for v in (x,y)):
             raise DesktopError('INVALID_ARGUMENT','Coordinates must be finite numbers.')
         snap=self.snapshots.get(snapshot_id)
-        if not snap or time.monotonic()-snap['time']>=15:
+        if not snap or elapsed_time()-snap['time']>=15:
             raise DesktopError('STALE_OBSERVATION','Screenshot expired; observe again.')
         observed=next((p for p in snap.get('popups',[]) if p['popup_id']==popup_id and p['owner_window_id']==owner_window_id),None)
         if observed is None:raise DesktopError('STALE_TARGET','Popup is not authorized by this screenshot and owner.')
