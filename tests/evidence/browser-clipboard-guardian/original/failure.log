@@ -1,0 +1,10 @@
+dbus-daemon[22235]: [session uid=1001 pid=22235] Activating service name='org.a11y.Bus' requested by ':1.0' (uid=1001 pid=22237 comm="xfwm4 --compositor=off")
+dbus-daemon[22235]: [session uid=1001 pid=22235] Successfully activated service 'org.a11y.Bus'
+dbus-daemon[22258]: Activating service name='org.a11y.atspi.Registry' requested by ':1.0' (uid=1001 pid=22237 comm="xfwm4 --compositor=off")
+dbus-daemon[22235]: [session uid=1001 pid=22235] Activating service name='org.xfce.Xfconf' requested by ':1.2' (uid=1001 pid=22237 comm="xfwm4 --compositor=off")
+dbus-daemon[22258]: Successfully activated service 'org.a11y.atspi.Registry'
+SpiRegistry daemon is running with well-known name - org.a11y.atspi.Registry
+dbus-daemon[22235]: [session uid=1001 pid=22235] Successfully activated service 'org.xfce.Xfconf'
+{"observed_held_before_eof": [37], "held_after_browser_guard_exit": [37], "browser_guard_exit": 0, "scope": "actual browser guardian, test-only worker using actual keyboard guardian/native injector; injector stopped after real Control press"}
+
+(xfconfd:22273): xfconfd-WARNING **: 08:16:33.561: Name org.xfce.Xfconf lost on the message dbus, exiting.
