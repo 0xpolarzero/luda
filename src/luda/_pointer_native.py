@@ -1,6 +1,7 @@
 """Private owned click/wheel injector; every event stays on one X connection."""
 import ctypes as C
 import json
+import re
 import sys
 import time
 from ._keyboard_native import Keyboard,emit
@@ -8,9 +9,61 @@ from ._input_native import generation
 from .common import DesktopError
 
 
+def validate_position(position):
+    if not isinstance(position,(list,tuple)) or len(position)!=2 or any(type(v) is not int or not 0<=v<=32767 for v in position):
+        raise DesktopError('INVALID_ARGUMENT','Pointer position must contain two nonnegative X11 integer coordinates.')
+    return list(position)
+
+
+def validate_generation(value):
+    if not isinstance(value,str) or not re.fullmatch('[0-9a-f]{32}',value):
+        raise DesktopError('INVALID_ARGUMENT','Invalid X server generation.')
+    return value
+
+
+def motion(native,position):
+    x,y=validate_position(position)
+    bounds=native.x.geometry(native.x.root)
+    if x>=bounds['width'] or y>=bounds['height']:
+        raise DesktopError('OUT_OF_BOUNDS','Pointer position is outside the current desktop.')
+    native.test.XTestFakeMotionEvent.argtypes=[C.c_void_p,C.c_int,C.c_int,C.c_int,C.c_ulong]
+    if not native.test.XTestFakeMotionEvent(native.x.display,-1,x,y,0):
+        raise DesktopError('INPUT_UNAVAILABLE','Pointer movement failed.',effect='uncertain')
+    native.x.lib.XSync(native.x.display,False)
+
+
+def move_pointer(native,request):
+    expected=validate_generation(request.get('server_generation'))
+    position=validate_position(request.get('position'))
+    if generation(native.x)!=expected:
+        raise DesktopError('SESSION_CHANGED','X server changed; pointer was not moved.')
+    owned=request.get('held_button')
+    if owned is not None and owned not in ('1','2','3'):
+        raise DesktopError('INVALID_ARGUMENT','Invalid owned button.')
+    state=native.state();buttons=native.buttons()
+    if native.pressed() or state.base_mods or (buttons!=[int(owned)] if owned else bool(buttons)):
+        raise DesktopError('INPUT_HELD','Unexpected held input; pointer was not moved.')
+    if state.latched_mods or state.latched_group:
+        raise DesktopError('UNSUPPORTED_INPUT_STATE','Latched input; pointer was not moved.')
+    target=request.get('target')
+    if target is not None:
+        if type(target) is not int or not 0<target<=0xffffffff:raise DesktopError('INVALID_ARGUMENT','Invalid pointer target.')
+        active=native.x._property(native.x.root,'_NET_ACTIVE_WINDOW',1)
+        if not active or active[2]!=[target]:raise DesktopError('FOCUS_CHANGED','Target lost focus before pointer movement.')
+    motion(native,position)
+    return {'effect':'dispatched','server_generation':expected}
+
+
 def plan_pointer(native,request):
     if request.get('button') not in ('1','2','3','4','5','6','7') or type(request.get('count')) is not int or not 1<=request['count']<=20:
         raise DesktopError('INVALID_ARGUMENT','Pointer button/count is unsupported.')
+    current_generation=generation(native.x)
+    if request.get('server_generation') is not None and validate_generation(request['server_generation'])!=current_generation:
+        raise DesktopError('SESSION_CHANGED','X server changed before pointer planning.')
+    position=validate_position(request['position']) if 'position' in request else None
+    if position is not None:
+        bounds=native.x.geometry(native.x.root)
+        if position[0]>=bounds['width'] or position[1]>=bounds['height']:raise DesktopError('OUT_OF_BOUNDS','Pointer position is outside the current desktop.')
     target=request.get('target')
     if target is not None and (type(target) is not int or not 0<target<=0xffffffff):
         raise DesktopError('INVALID_ARGUMENT','Invalid pointer target.')
@@ -22,7 +75,7 @@ def plan_pointer(native,request):
     if target is not None:
         active=native.x._property(native.x.root,'_NET_ACTIVE_WINDOW',1)
         if not active or active[2]!=[target]:raise DesktopError('FOCUS_CHANGED','Target lost focus before pointer input.')
-    return {'kind':'pointer','button':request['button'],'count':request['count'],'target':target,'server_generation':generation(native.x),**({'hold':True} if request.get('hold') is True else {})}
+    return {'kind':'pointer','button':request['button'],'count':request['count'],'target':target,'server_generation':current_generation,**({'position':position} if position is not None else {}),**({'hold':True} if request.get('hold') is True else {})}
 
 
 def event(native,button,pressed):
@@ -37,6 +90,7 @@ def main():
     try:
         request=json.loads(sys.stdin.buffer.readline(4097));native=Keyboard()
         if sys.argv[1]=='plan':emit(plan_pointer(native,request))
+        elif sys.argv[1]=='move':emit(move_pointer(native,request))
         elif sys.argv[1]=='release':
             if request.get('button') not in ('1','2','3','4','5','6','7'):raise ValueError()
             if generation(native.x)!=request['server_generation']:
@@ -52,6 +106,7 @@ def main():
             emit({'armed':True,'client':native.client_resource()})
             pressed=False
             try:
+                if 'position' in request:motion(native,request['position'])
                 if request.get('hold'):
                     pressed=True;event(native,request['button'],True)
                     emit({'held':True})
@@ -69,7 +124,7 @@ def main():
             emit({'done':True,'effect':'dispatched','verification':'Pointer delivery does not prove application outcome.'})
         else:raise ValueError()
     except DesktopError as exc:emit({'code':exc.code,'message':str(exc),'effect':exc.effect})
-    except Exception:emit({'code':'INPUT_UNAVAILABLE','message':'Native pointer helper failed.','effect':'none'})
+    except Exception:emit({'code':'INPUT_UNAVAILABLE','message':'Native pointer helper failed.','effect':'uncertain' if sys.argv[1]=='move' else 'none'})
     finally:
         if native:native.close()
 

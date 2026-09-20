@@ -4,7 +4,8 @@ from pathlib import Path
 from live_keyboard_guard import Oracle,wait,descendants
 from luda.common import DesktopError,operation_scope
 from luda.desktop import Desktop
-from luda.pointer_input import click_button
+from luda.pointer_input import click_button,check_pointer_ready,move_pointer
+from luda.input_guard import held_button
 ROOT=Path(__file__).resolve().parents[1]
 
 
@@ -22,12 +23,25 @@ def child():
    subprocess.run(['xdotool','mousemove',str(bounds['x']+bounds['width']//2),str(bounds['y']+bounds['height']//2)],check=True)
    wait(lambda:(out/'state.json').exists())
    def state():return json.loads((out/'state.json').read_text())
-   click_button('1',3,window['xid']);wait(lambda:len(state()['releases'])==3)
+   ready=check_pointer_ready(window['xid'])
+   click_button('1',3,window['xid'],position=(bounds['x']+bounds['width']//2,bounds['y']+bounds['height']//2),server_generation=ready['server_generation']);wait(lambda:len(state()['releases'])==3)
    assert state()['presses']==[1,1,1] and state()['releases']==[1,1,1]
    click_button('4',4,window['xid']);click_button('6',3,window['xid']);wait(lambda:len(state()['scrolls'])==7)
    assert sum('UP' in value for value in state()['scrolls'])==4
    assert sum('LEFT' in value for value in state()['scrolls'])==3
    rows.append('triple-click-and-vertical-horizontal-wheel-exact-file-oracle')
+   ready=check_pointer_ready(window['xid'])
+   move_pointer(20,20,ready['server_generation'],target=window['xid'])
+   with held_button('1',server_generation=ready['server_generation'],position=(30,30),target=window['xid']) as pointer:
+    pointer.move(40,40)
+    location=subprocess.check_output(['xdotool','getmouselocation','--shell']).decode()
+    assert 'X=40\nY=40' in location and oracle.buttons()&0x100
+    subprocess.run(['xdotool','mouseup','1'],check=True)
+    try:pointer.move(50,50);raise AssertionError('released drag moved')
+    except DesktopError as exc:assert exc.code=='INPUT_HELD'
+   assert 'X=40\nY=40' in subprocess.check_output(['xdotool','getmouselocation','--shell']).decode()
+   move_pointer(bounds['x']+bounds['width']//2,bounds['y']+bounds['height']//2,ready['server_generation'])
+   rows.append('combined-click-position-and-generation-bound-motion-stops-if-held-button-released')
    subprocess.run(['xdotool','mousedown','1'],check=True);held=oracle.buttons()
    try:
     try:click_button('1',1,window['xid']);raise AssertionError('held input accepted')

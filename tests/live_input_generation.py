@@ -10,7 +10,9 @@ import sys
 import tempfile
 import time
 from live_keyboard_guard import Oracle,wait,descendants
-from luda.common import environment_scope
+from luda.common import environment_scope,DesktopError
+from luda.pointer_input import move_pointer
+from luda.input_guard import HeldPointer
 from luda import keyboard
 
 
@@ -58,6 +60,17 @@ def main():
             wait(lambda:subprocess.run(['xdpyinfo'],env=env,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL).returncode==0)
             oracle=Oracle();new_generation=native({'operation':'generation'})['server_generation'];assert new_generation!=old_generation
             command('xdotool','keydown','Control_L');command('xdotool','mousedown','1')
+            command('xdotool','mousemove','321','234')
+            def pointer_position():
+                root,child=C.c_ulong(),C.c_ulong();coords=[C.c_int() for _ in range(4)];mask=C.c_uint()
+                oracle.x.XQueryPointer(oracle.d,oracle.x.XDefaultRootWindow(oracle.d),C.byref(root),C.byref(child),*[C.byref(v) for v in coords],C.byref(mask))
+                return (coords[0].value,coords[1].value)
+            replacement_position=pointer_position();assert replacement_position==(321,234)
+            for operation in (lambda:move_pointer(100,100,old_generation),lambda:HeldPointer('1',old_generation).move(100,100)):
+                with environment_scope(env):
+                    try:operation();raise AssertionError('replacement moved')
+                    except DesktopError as exc:assert exc.code=='SESSION_CHANGED'
+                assert pointer_position()==replacement_position
             held=oracle.pressed();button_state=oracle.buttons();assert held and button_state
             key_guard.stdin.close();os.kill(key_guard.pid,signal.SIGCONT)
             assert select.select([key_guard.stdout],[],[],4)[0]
@@ -66,7 +79,7 @@ def main():
             mouse_guard.stdin.close();os.kill(mouse_guard.pid,signal.SIGCONT)
             mouse_proof=json.loads(mouse_guard.stdout.readline());mouse_guard.wait(timeout=3)
             assert mouse_proof['session_changed'] and mouse_proof['cleanup_skipped'] and not mouse_proof['cleanup_verified'],mouse_proof
-            assert oracle.pressed()==held and oracle.buttons()==button_state
+            assert oracle.pressed()==held and oracle.buttons()==button_state and pointer_position()==replacement_position
             explicit=native({'operation':'release','button':'1','server_generation':old_generation})
             assert explicit['session_changed'] and explicit['cleanup_skipped'] and oracle.buttons()==button_state
             # A failed old cleanup can be explicitly resolved by generation
@@ -86,7 +99,7 @@ def main():
             command('xdotool','keyup','Control_L');command('xdotool','mouseup','1')
             print(json.dumps({'same_display':env['DISPLAY'],'same_authority_path':True,'generation_changed':True,
                               'keyboard_cleanup':'skipped; replacement matching held key preserved',
-                              'mouse_cleanup':'skipped; replacement held button preserved',
+                              'mouse_cleanup':'skipped; replacement held button and pointer position preserved',
                               'explicit_recovery':'original environment used; replacement proof resolved quarantine without input'},indent=2))
         finally:
             if mouse_writer is not None:os.close(mouse_writer)

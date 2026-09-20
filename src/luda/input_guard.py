@@ -8,14 +8,27 @@ import sys
 from .common import DesktopError,checkpoint,mark_effect,run,subprocess_environment
 from .keyboard import keyboard_recovery_checkpoint,_completion_proven,_retain_guardian
 from .timing import elapsed_time
+from .pointer_input import _move_pointer
+from ._pointer_native import validate_position,validate_generation
+
+
+class HeldPointer:
+    def __init__(self,button,server_generation):
+        self.button=button;self.server_generation=server_generation;self.active=True
+    def move(self,x,y):
+        if not self.active:raise DesktopError('STALE_TARGET','Held pointer context has ended.')
+        return _move_pointer(x,y,self.server_generation,held_button=self.button)
 
 
 @contextmanager
-def held_button(button):
+def held_button(button,server_generation=None,position=None,target=None):
     if button not in ('1','2','3'):
         raise DesktopError('INVALID_ARGUMENT','Unsupported held mouse button.')
     keyboard_recovery_checkpoint();checkpoint()
-    request={'button':button,'count':1,'target':None,'hold':True}
+    if target is not None and (type(target) is not int or not 0<target<=0xffffffff):raise DesktopError('INVALID_ARGUMENT','Invalid native pointer target.')
+    request={'button':button,'count':1,'target':target,'hold':True}
+    if server_generation is not None:request['server_generation']=validate_generation(server_generation)
+    if position is not None:request['position']=validate_position(position)
     plan=json.loads(run([sys.executable,'-m','luda._pointer_native','plan'],data=json.dumps(request).encode()+b'\n',timeout=2,max_output_bytes=4096))
     if plan.get('code'):raise DesktopError(plan['code'],plan['message'],effect=plan.get('effect','none'))
     child=subprocess.Popen([sys.executable,'-m','luda._keyboard_guard'],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,start_new_session=True,env=subprocess_environment())
@@ -37,8 +50,10 @@ def held_button(button):
                 result=ready;proven=_completion_proven(result)
                 raise DesktopError(result.get('code','INPUT_UNAVAILABLE'),result.get('message','Held input failed.'),effect=result.get('effect','none'))
             mark_effect()
-            try:yield
+            pointer=HeldPointer(button,plan['server_generation'])
+            try:yield pointer
             except BaseException as exc:failure=exc
+            finally:pointer.active=False
             try:child.stdin.write(b'D');child.stdin.flush()
             except BrokenPipeError:pass
             child.stdin.close()

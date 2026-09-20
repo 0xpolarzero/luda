@@ -2,7 +2,7 @@ import json
 import unittest
 from unittest.mock import patch
 from test_keyboard import FakeKeyboard
-from luda._pointer_native import plan_pointer
+from luda._pointer_native import plan_pointer,move_pointer as native_move
 from luda._keyboard_guard import cleanup_request, native_module
 from luda.common import DesktopError
 from luda.pointer_input import click_button,check_pointer_ready
@@ -20,6 +20,34 @@ class PointerContract(unittest.TestCase):
         with patch('luda.pointer_input.run',return_value=b'{"server_generation":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}') as run:
             self.assertEqual(check_pointer_ready()['effect'],'none')
         self.assertEqual(json.loads(run.call_args.kwargs['data'])['target'],None)
+    def test_motion_requires_original_generation_and_owned_button(self):
+        request={'position':[10,20],'server_generation':'a'*32,'held_button':'1'}
+        native=FakeKeyboard()
+        with patch('luda._pointer_native.motion') as motion:
+            for buttons in ([],[2],[1,2]):
+                native.pointer=buttons
+                with self.assertRaises(DesktopError) as error:native_move(native,request)
+                self.assertEqual(error.exception.code,'INPUT_HELD')
+            native.pointer=[1]
+            native_move(native,request);motion.assert_called_once_with(native,[10,20]);motion.reset_mock()
+            with self.assertRaises(DesktopError) as error:native_move(native,dict(request,server_generation='b'*32))
+            self.assertEqual(error.exception.code,'SESSION_CHANGED');motion.assert_not_called()
+    def test_combined_click_validates_position_before_dispatch(self):
+        for position in ((True,2),(-1,2),(1,),[1,2,3],(1.5,2),(32768,0)):
+            with patch('luda.pointer_input.run') as run,self.assertRaises(DesktopError):click_button('1',position=position)
+            run.assert_not_called()
+        native=FakeKeyboard();native.x.geometry=lambda xid:{'width':100,'height':100}
+        with self.assertRaises(DesktopError) as error:plan_pointer(native,{'button':'1','count':1,'position':[100,0]})
+        self.assertEqual(error.exception.code,'OUT_OF_BOUNDS')
+        plan=plan_pointer(native,{'button':'1','count':1,'position':[99,0],'server_generation':'a'*32})
+        self.assertEqual(plan['position'],[99,0])
+        with self.assertRaises(DesktopError) as error:plan_pointer(native,dict(plan,server_generation='b'*32))
+        self.assertEqual(error.exception.code,'SESSION_CHANGED')
+    def test_ended_hold_cannot_move(self):
+        from luda.input_guard import HeldPointer
+        pointer=HeldPointer('1','a'*32);pointer.active=False
+        with patch('luda.input_guard._move_pointer') as move,self.assertRaises(DesktopError):pointer.move(10,20)
+        move.assert_not_called()
     def test_held_keys_and_buttons_refuse(self):
         for attribute in ('keys','pointer'):
             native=FakeKeyboard();setattr(native,attribute,[8])
