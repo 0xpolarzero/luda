@@ -1,0 +1,195 @@
+{
+  "schema_version": 1,
+  "policy": "Supplemental associations only where runners lack requirement metadata; no pass or qualification status.",
+  "scripts": {
+    "live_backend.py": {
+      "requirements": [
+        "TXT-01",
+        "TXT-02",
+        "TXT-05",
+        "TXT-06",
+        "TXT-07",
+        "TXT-08",
+        "KEY-07",
+        "STATE-01"
+      ],
+      "scope": "Owned GTK text, clipboard, protected-field, pointer and stale-target assertions with persisted app state.",
+      "limits": "A single native fixture; not every text provider or desktop backend."
+    },
+    "live_mcp.py": {
+      "requirements": [
+        "MCP-02",
+        "MCP-03",
+        "MCP-04",
+        "MCP-05",
+        "MCP-06",
+        "MCP-07"
+      ],
+      "scope": "Actual stdio initialization, discovery, input validation, actions, text and image metadata.",
+      "limits": "Successful stream exchange and explicit assertions only; not fresh Mac/SSH discovery or protocol migration."
+    },
+    "live_cancellation.py": {
+      "requirements": [
+        "MCP-09",
+        "FAULT-03",
+        "ERR-04"
+      ],
+      "scope": "Protocol cancellation against a stopped owned accessibility provider, then late-effect observation.",
+      "limits": "Does not undo input delivered before cancellation or qualify SSH disconnection."
+    },
+    "live_control.py": {
+      "requirements": [
+        "CONC-01",
+        "CONC-05"
+      ],
+      "scope": "Two independent MCP servers share cooperative pause/resume state.",
+      "limits": "Does not stop arbitrary foreign clients or establish exclusive human input ownership."
+    },
+    "live_mcp_controls.py": {
+      "requirements": [
+        "AUTH-01",
+        "AUTH-02",
+        "SEC-09",
+        "SEM-05"
+      ],
+      "scope": "Actual MCP protected input with hash-only oracle and explicit option selection.",
+      "limits": "Protected native GTK support only; not all password managers, browsers or secret-delivery mechanisms."
+    },
+    "live_menu.py": {
+      "requirements": [
+        "PTR-02",
+        "MENU-02",
+        "MENU-03"
+      ],
+      "scope": "Owned GTK context menu and submenu outside the owner client rectangle.",
+      "limits": "No general tray, detached-menu or window-manager menu qualification."
+    },
+    "live_waits.py": {
+      "requirements": [
+        "WAIT-02",
+        "WAIT-03",
+        "WAIT-05",
+        "WAIT-09"
+      ],
+      "scope": "Delayed GTK element/text changes and sampled pixel stability with cancellation/timeout cases.",
+      "limits": "Pixel stability is a bounded declared condition, not universal application idle."
+    },
+    "live_input_guard.py": {
+      "requirements": [
+        "PTR-07",
+        "FAULT-10"
+      ],
+      "scope": "Controller death while an owned pointer button is held; independent release checks.",
+      "limits": "Private display and owned input only; cannot identify a concurrent human holding the same button."
+    },
+    "live_keyboard_guard.py": {
+      "requirements": [
+        "KEY-03",
+        "KEY-04",
+        "KEY-05",
+        "KEY-06",
+        "KEY-08"
+      ],
+      "scope": "Native layout/modifier planning and held-key cleanup against independent X state.",
+      "limits": "Only recorded layouts/states and tested failure points; not arbitrary XKB actions or IME composition."
+    },
+    "live_keyboard_identity.py": {
+      "requirements": [
+        "WIN-04",
+        "FAULT-01"
+      ],
+      "scope": "Same-process XID recreation must not receive stale key dispatch; independent input oracle.",
+      "limits": "Keyboard injection target identity only; ordinary asynchronous EWMH commands have separate limits."
+    },
+    "live_mcp_keyboard.py": {
+      "requirements": [
+        "KEY-09",
+        "MCP-04"
+      ],
+      "scope": "Actual MCP bounded repetition and malformed-count refusal with GTK text/navigation oracle.",
+      "limits": "Bounded explicit key repetitions, not human autorepeat timing across all applications."
+    },
+    "live_pointer_guard.py": {
+      "requirements": [
+        "PTR-01",
+        "PTR-04",
+        "KEY-06"
+      ],
+      "scope": "Owned native click/wheel delivery and guard recovery with file/X-state oracles.",
+      "limits": "Discrete wheel/button behavior only; not smooth scrolling or every nested scroll container."
+    },
+    "live_input_generation.py": {
+      "requirements": [
+        "STATE-02",
+        "FAULT-05"
+      ],
+      "scope": "Owned X server replacement at the same display/authority path and generation-bound cleanup.",
+      "limits": "Controlled replacement, not all VM shutdown or SSH transport failure sequences."
+    },
+    "live_session_state.py": {
+      "requirements": [
+        "AUTH-09"
+      ],
+      "scope": "Read-only lock/screensaver hints from controlled services on a private D-Bus session.",
+      "limits": "Does not lock a real desktop or prove inactive/unknown hints mean unlocked."
+    },
+    "live_file_workflows.py": {
+      "requirements": [
+        "FILE-01",
+        "FILE-02",
+        "FILE-03",
+        "FILE-04",
+        "FILE-05",
+        "FILE-08"
+      ],
+      "scope": "Mousepad overwrite Cancel/Replace, unsaved close decisions and readonly target; independent bytes.",
+      "limits": "One editor/version; no disk-full save or concurrent path substitution qualification."
+    },
+    "live_thunar.py": {
+      "requirements": [
+        "APPS-02",
+        "FILE-03",
+        "FILE-04"
+      ],
+      "scope": "Owned Thunar create/rename/copy conflict/delete decisions with filesystem oracles.",
+      "limits": "Private fixture files only; not every filesystem, trash integration or drag-and-drop mode."
+    },
+    "live_interaction.py": {
+      "requirements": [
+        "WM-01",
+        "WM-02",
+        "WM-03",
+        "WM-04",
+        "WM-05",
+        "WM-06",
+        "WM-07"
+      ],
+      "scope": "Window states, geometry, raise ordering/focus and close blocked by owned modal dialog.",
+      "limits": "One Xfwm setup; numerical EWMH dispatch is asynchronous and not an atomic identity transaction."
+    },
+    "live_mcp_applications.py": {
+      "requirements": [
+        "MCP-03",
+        "SEC-03",
+        "ERR-02",
+        "CONC-05",
+        "WM-09"
+      ],
+      "scope": "Actual MCP application discovery/launch and cooperative pause with independent argument/window oracle.",
+      "limits": "Configured guest application metadata; not fresh Mac SSH onboarding."
+    },
+    "live_terminals.py": {
+      "requirements": [
+        "TERM-01",
+        "TERM-02",
+        "TERM-03",
+        "TERM-04",
+        "TERM-05",
+        "TERM-06",
+        "TERM-07"
+      ],
+      "scope": "xterm/Xfce terminal paste/confirmation and interrupt behavior measured by passive PTY bytes/signals.",
+      "limits": "No pasted shell execution; bindings and bracketed-paste behavior are terminal-specific. PRIMARY/TUI workflows are separate."
+    }
+  }
+}
