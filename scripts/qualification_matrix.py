@@ -161,7 +161,7 @@ def run_bounded(command, env, log, timeout, token):
 
 
 def dependencies(spec, executable, electron=None, firefox=None):
-    commands = ['xvfb-run', 'Xvfb', 'dbus-run-session', 'xfwm4', 'wmctrl', 'xdotool', 'scrot', 'xclip', 'xprop', 'gdbus']
+    commands = ['xvfb-run', 'Xvfb', 'dbus-run-session', 'xfwm4', 'wmctrl', 'xdotool', 'scrot', 'xclip', 'xprop', 'gdbus', 'xdpyinfo']
     if spec['script'] in ('live_accessibility_lifecycle.py', 'live_mcp_reconnect.py'):
         commands.append('xfce4-session')
     commands.extend({'live_recording.py': ['ffmpeg', 'ffprobe'], 'live_recording_faults.py': ['ffmpeg', 'ffprobe'], 'live_ocr.py': ['tesseract'], 'live_password_manager.py': ['keepassxc', 'keepassxc-cli'], 'live_tray.py': ['xfce4-panel'], 'live_tui.py': ['xterm'], 'live_dead_compose.py': ['setxkbmap', 'xkbcomp']}.get(spec['script'], ()))
@@ -182,10 +182,40 @@ def dependencies(spec, executable, electron=None, firefox=None):
     return checks
 
 
+def wait_for_display(timeout=5):
+    """Read-only connection probes before any WM or fixture is launched."""
+    began = time.monotonic()
+    deadline = began + timeout
+    attempts = 0
+    last = None
+    while time.monotonic() < deadline:
+        attempts += 1
+        try:
+            probe = subprocess.run(['xdpyinfo'], stdout=subprocess.DEVNULL,
+                                   stderr=subprocess.DEVNULL,
+                                   timeout=max(.001, min(1, deadline - time.monotonic())))
+            last = probe.returncode
+            if last == 0:
+                return {'ready': True, 'attempts': attempts,
+                        'elapsed_seconds': round(time.monotonic() - began, 3)}
+        except subprocess.TimeoutExpired:
+            last = 'probe_timeout'
+        remaining = deadline - time.monotonic()
+        if remaining > 0:
+            time.sleep(min(.05, remaining))
+    return {'ready': False, 'attempts': attempts, 'last_probe': last,
+            'elapsed_seconds': round(time.monotonic() - began, 3)}
+
+
 def inside(name, executable, electron=None, firefox=None):
     spec = SUITES[name]
     wm = None
+    startup = {'stage': 'display_connect'}
     try:
+        startup['display'] = wait_for_display()
+        if not startup['display']['ready']:
+            raise RuntimeError('Private X display connection not ready; inspect xserver.log and startup.json')
+        startup['stage'] = 'window_manager'
         if spec['runner_window_manager']:
             wm = subprocess.Popen(['xfwm4', '--compositor=off'])
             deadline = time.monotonic() + 10
@@ -193,6 +223,7 @@ def inside(name, executable, electron=None, firefox=None):
                 if wm.poll() is not None or time.monotonic() > deadline:
                     raise RuntimeError('Private window manager not ready')
                 time.sleep(.1)
+        startup['stage'] = 'fixture'
         command = [sys.executable, str(ROOT / 'tests' / spec['script'])]
         if spec['browser_argument']:
             command.extend([spec['browser_argument'], executable])
@@ -208,6 +239,8 @@ def inside(name, executable, electron=None, firefox=None):
                 wm.wait(timeout=3)
             except subprocess.TimeoutExpired:
                 wm.kill(); wm.wait(timeout=2)
+        if path := os.environ.get('LUDA_MATRIX_STARTUP_REPORT'):
+            Path(path).write_text(json.dumps(startup, indent=2) + '\n')
 
 
 def main():
@@ -258,7 +291,8 @@ def main():
                     with tempfile.TemporaryDirectory(prefix='luda-matrix-') as directory:
                         token = uuid.uuid4().hex
                         env = private_environment(Path(directory), token)
-                        command = ['xvfb-run', '-a', '-s', '-screen 0 1440x1000x24 -nolisten tcp',
+                        env['LUDA_MATRIX_STARTUP_REPORT'] = str(destination / 'startup.json')
+                        command = ['xvfb-run', '-a', '-e', str(destination / 'xserver.log'), '-s', '-screen 0 1440x1000x24 -nolisten tcp',
                                    'dbus-run-session', '--', sys.executable, str(Path(__file__).resolve()), '--inside', name]
                         if args.executable:
                             command.extend(['--executable', args.executable])
@@ -269,6 +303,8 @@ def main():
                         row['command'] = command
                         with (destination / 'suite.log').open('wb') as log:
                             row.update(run_bounded(command, env, log, args.timeout, token))
+                        startup_path = destination / 'startup.json'
+                        row['startup'] = json.loads(startup_path.read_text()) if startup_path.exists() else {'stage': 'launcher', 'reported': False}
                 for folder in spec['artifact_directories']:
                     for artifact in (ROOT / 'artifacts' / folder).rglob('*'):
                         if artifact.is_file() and not artifact.is_symlink() and artifact.stat().st_mtime_ns >= since:

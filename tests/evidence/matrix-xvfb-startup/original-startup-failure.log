@@ -1,0 +1,12 @@
+
+(xfwm4:11491): Gtk-WARNING **: 08:33:11.777: cannot open display: :99
+Traceback (most recent call last):
+  File "/home/runner/work/luda/luda/scripts/qualification_matrix.py", line 297, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/runner/work/luda/luda/scripts/qualification_matrix.py", line 234, in main
+    return inside(args.inside, args.executable, args.electron_executable, args.firefox_executable)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/luda/luda/scripts/qualification_matrix.py", line 194, in inside
+    raise RuntimeError('Private window manager not ready')
+RuntimeError: Private window manager not ready

@@ -14,6 +14,68 @@ SCRIPTS=Path(__file__).resolve().parents[1]/'scripts';sys.path.insert(0,str(SCRI
 spec=importlib.util.spec_from_file_location('qualification_matrix',SCRIPTS/'qualification_matrix.py')
 m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
 class Matrix(unittest.TestCase):
+    def test_display_probe_waits_without_launching_input(self):
+        failed=subprocess.CompletedProcess(['xdpyinfo'],1)
+        ready=subprocess.CompletedProcess(['xdpyinfo'],0)
+        with patch.object(m.subprocess,'run',side_effect=[failed,ready]) as run:
+            result=m.wait_for_display(.3)
+        self.assertTrue(result['ready']);self.assertEqual(result['attempts'],2)
+        self.assertTrue(all(c.args[0]==['xdpyinfo'] for c in run.call_args_list))
+
+    def test_unavailable_display_prevents_wm_and_fixture(self):
+        with tempfile.TemporaryDirectory() as temp:
+            report=Path(temp)/'startup.json'
+            with patch.dict(os.environ,LUDA_MATRIX_STARTUP_REPORT=str(report)), \
+                 patch.object(m,'wait_for_display',return_value={'ready':False,'attempts':3}), \
+                 patch.object(m.subprocess,'Popen') as spawn,patch.object(m.subprocess,'call') as fixture:
+                with self.assertRaisesRegex(RuntimeError,'X display connection'):
+                    m.inside('owned-browser','/unused/chrome')
+            spawn.assert_not_called();fixture.assert_not_called()
+            self.assertEqual(json.loads(report.read_text())['stage'],'display_connect')
+
+    def test_readiness_timeout_does_not_escape_deadline(self):
+        with patch.object(m.subprocess,'run',side_effect=subprocess.TimeoutExpired('xdpyinfo',.01)):
+            began=time.monotonic();result=m.wait_for_display(.08)
+        self.assertFalse(result['ready']);self.assertEqual(result['last_probe'],'probe_timeout')
+        self.assertLess(time.monotonic()-began,.3)
+
+    def test_dead_wm_is_not_retried_or_treated_as_fixture_failure(self):
+        from unittest.mock import Mock
+        wm=Mock();wm.poll.return_value=1
+        with tempfile.TemporaryDirectory() as temp:
+            report=Path(temp)/'startup.json'
+            with patch.dict(os.environ,LUDA_MATRIX_STARTUP_REPORT=str(report)), \
+                 patch.object(m,'wait_for_display',return_value={'ready':True,'attempts':1}), \
+                 patch.object(m.subprocess,'Popen',return_value=wm) as spawn, \
+                 patch.object(m.subprocess,'run',return_value=subprocess.CompletedProcess([],1)), \
+                 patch.object(m.subprocess,'call') as fixture:
+                with self.assertRaisesRegex(RuntimeError,'window manager not ready'):
+                    m.inside('owned-browser','/unused/chrome')
+            spawn.assert_called_once();fixture.assert_not_called();wm.terminate.assert_called_once()
+            self.assertEqual(json.loads(report.read_text())['stage'],'window_manager')
+
+    @unittest.skipUnless(m.shutil.which('xvfb-run') and m.shutil.which('xdpyinfo'), 'Private Xvfb tools unavailable')
+    def test_actual_private_server_and_invalid_owned_authority(self):
+        with tempfile.TemporaryDirectory() as temp:
+            log=Path(temp)/'xserver.log';empty=Path(temp)/'empty-authority';empty.touch()
+            code="""import json,os,sys
+sys.path.insert(0,sys.argv[1])
+from qualification_matrix import wait_for_display
+ready=wait_for_display(2)
+os.environ['XAUTHORITY']=sys.argv[2]
+refused=wait_for_display(.2)
+print(json.dumps({'ready':ready,'invalid_owned_authority':refused}))
+raise SystemExit(0 if ready['ready'] and not refused['ready'] else 1)
+"""
+            result=subprocess.run(['xvfb-run','-a','-e',str(log),'-s','-screen 0 320x240x24 -nolisten tcp',
+                                   sys.executable,'-c',code,str(SCRIPTS),str(empty)],
+                                  capture_output=True,text=True,timeout=10)
+            self.assertEqual(result.returncode,0,result.stderr+result.stdout)
+            self.assertTrue(log.is_file())
+            value=json.loads(result.stdout)
+            self.assertTrue(value['ready']['ready'])
+            self.assertFalse(value['invalid_owned_authority']['ready'])
+
     def test_known_failures_still_nonzero(self):
         token=uuid.uuid4().hex
         with tempfile.TemporaryFile() as log:
@@ -66,7 +128,7 @@ class Matrix(unittest.TestCase):
             checks=m.dependencies(m.SUITES['firefox'],'/bin/true','/bin/true')
             self.assertFalse(checks['firefox_executable']);self.assertNotIn('browser_executable',checks)
             self.assertTrue(m.dependencies(m.SUITES['firefox'],None,None,'/bin/true')['firefox_executable'])
-        with patch.object(m.subprocess,'call',return_value=1) as run,patch.object(m.subprocess,'Popen') as wm:
+        with patch.object(m,'wait_for_display',return_value={'ready':True,'attempts':1}),patch.object(m.subprocess,'call',return_value=1) as run,patch.object(m.subprocess,'Popen') as wm:
             self.assertEqual(m.inside('firefox',None,None,'/test/firefox'),1)
             self.assertEqual(run.call_args.args[0][-2:],['--executable','/test/firefox'])
             wm.assert_not_called()

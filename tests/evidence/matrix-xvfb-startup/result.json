@@ -1,0 +1,63 @@
+{
+  "hosted_run": "https://github.com/0xpolarzero/luda/actions/runs/35499802558",
+  "hosted_source": "037c3cc",
+  "original_log_sha256": "640d902f0659787919cf24cf553a97c018a994877a0557c7935ecd2de2e99166",
+  "original_cause": "Unknown: Xvfb/xauth stderr was discarded; xfwm4 could not open :99 before fixture started",
+  "local_run": "run-1789893641485142018",
+  "source_sha256": "ea4c7f668d22309daf9d4527ac94c4bd215492d3f55caf529562b7336120d3e0",
+  "source_unchanged": true,
+  "runner_sha256": "9eedec224768bd8aedf94379535e1132cc93e10b9f3de3e4185f722cd3e7464a",
+  "environment": {
+    "uid": 1001,
+    "python": "3.12.3",
+    "architecture": "aarch64",
+    "distribution": {
+      "NAME": "Ubuntu",
+      "ID": "ubuntu",
+      "PRETTY_NAME": "Ubuntu 24.04.4 LTS",
+      "VERSION_ID": "24.04",
+      "VERSION": "24.04.4 LTS (Noble Numbat)",
+      "VERSION_CODENAME": "noble",
+      "ID_LIKE": "debian",
+      "HOME_URL": "https://www.ubuntu.com/",
+      "SUPPORT_URL": "https://help.ubuntu.com/",
+      "BUG_REPORT_URL": "https://bugs.launchpad.net/ubuntu/",
+      "PRIVACY_POLICY_URL": "https://www.ubuntu.com/legal/terms-and-policies/privacy-policy",
+      "UBUNTU_CODENAME": "noble",
+      "LOGO": "ubuntu-logo"
+    },
+    "packages": [
+      "at-spi2-core\t2.52.0-1build1",
+      "gir1.2-gtk-4.0:arm64\t4.14.5+ds-0ubuntu0.10",
+      "python3-gi\t3.48.2-1",
+      "python3-pyqt5\t5.15.10+dfsg-1build6",
+      "xfce4-session\t4.18.3-1build2",
+      "xfwm4\t4.18.0-1build3",
+      "xvfb\t2:21.1.12-1ubuntu1.6"
+    ],
+    "browser": {
+      "executable": "/workspace/silo-desktop-research/browsers/chromium-1243/chrome-linux-arm64/chrome",
+      "version": "Google Chrome for Testing 153.0.8010.12"
+    }
+  },
+  "result": {
+    "suite": "owned-browser",
+    "status": "passed",
+    "seconds": 18.965,
+    "returncode": 0,
+    "startup": {
+      "stage": "fixture",
+      "display": {
+        "ready": true,
+        "attempts": 1,
+        "elapsed_seconds": 0.002
+      }
+    },
+    "cleanup": {
+      "tagged_processes_found": 0,
+      "survivors": []
+    }
+  },
+  "xserver_log_retained": true,
+  "xserver_log_bytes": 3522
+}
