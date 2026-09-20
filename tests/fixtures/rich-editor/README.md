@@ -15,8 +15,7 @@ npm run build
 ```
 
 Update the recorded hashes after reviewing any deliberate source/dependency
-change. Keep generated `node_modules` outside the qualification source tree:
-source fingerprints include fixture files. Bundled runtime MIT licenses are
+change. Generated `node_modules` are excluded from source fingerprints and source distributions; the reviewed lock, bundle and fixture files remain included. Bundled runtime MIT licenses are
 in `THIRD_PARTY_NOTICES.md`; esbuild is a build-only dependency.
 
 The cooperating read-only API reports actual DOM and ProseMirror state. The

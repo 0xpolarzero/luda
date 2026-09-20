@@ -2,7 +2,9 @@ include requirements.lock uv.lock build-requirements.in build-requirements.lock
 recursive-include docs *.md *.json
 recursive-include scripts *.py *.sh
 recursive-include skills *.md
-recursive-include tests *.py *.html *.js
+recursive-include tests *.py *.html *.js *.json *.md
+prune tests/tools/codex-cli/node_modules
+prune tests/fixtures/rich-editor/node_modules
 
 include .mcp.json
 recursive-include .codex-plugin *.json

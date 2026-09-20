@@ -114,7 +114,7 @@ def release_identity(source):
     files = [source / p for p in ('pyproject.toml', 'MANIFEST.in', 'requirements.lock', 'build-requirements.lock')]
     files += [source / name for name in ('.mcp.json', 'README.md', 'build-requirements.in') if (source / name).is_file()]
     files += [p for name in ('src', 'skills', 'scripts', 'docs', 'tests', '.codex-plugin', 'integrations') for p in (source / name).rglob('*')
-              if p.is_file() and '__pycache__' not in p.parts and not any(part.endswith('.egg-info') for part in p.parts)]
+              if p.is_file() and 'node_modules' not in p.parts and '__pycache__' not in p.parts and not any(part.endswith('.egg-info') for part in p.parts)]
     digest = hashlib.sha256()
     for path in sorted(files):
         digest.update(str(path.relative_to(source)).encode() + b'\0' + path.read_bytes() + b'\0')

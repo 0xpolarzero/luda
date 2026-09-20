@@ -63,11 +63,16 @@ class Installation(unittest.TestCase):
 
     def test_packaged_source_changes_alter_release_identity(self):
         previous=installer.release_identity(self.source)
-        for name in ('.mcp.json','.codex-plugin/plugin.json','scripts/manage_install.py','docs/example.md','tests/fixtures/page.html','integrations/silo/0001-guest-onboarding.patch'):
+        for name in ('.mcp.json','.codex-plugin/plugin.json','scripts/manage_install.py','docs/example.md','tests/fixtures/page.html','tests/fixtures/editor/package-lock.json','tests/fixtures/editor/THIRD_PARTY_NOTICES.md','integrations/silo/0001-guest-onboarding.patch'):
             path=self.source/name;path.parent.mkdir(parents=True,exist_ok=True);path.write_text('package content')
             current=installer.release_identity(self.source)
             self.assertNotEqual(previous,current);previous=current
         cache=self.source/'src/__pycache__/generated.pyc';cache.parent.mkdir();cache.write_bytes(b'cache')
+        self.assertEqual(previous,installer.release_identity(self.source))
+        dependency=self.source/'tests/tools/codex-cli/node_modules/example/index.js'
+        dependency.parent.mkdir(parents=True);dependency.write_text('installed dependency')
+        self.assertEqual(previous,installer.release_identity(self.source))
+        dependency.write_text('different installed dependency')
         self.assertEqual(previous,installer.release_identity(self.source))
 
     def test_source_mutation_during_build_preserves_prior_release(self):
