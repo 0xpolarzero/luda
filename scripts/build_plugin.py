@@ -91,6 +91,8 @@ def build_host_marketplace(output, prefix, vm_id, skill_file, skill_sha256,
     name = 'luda-' + identity
     marketplace = 'silo-' + identity
     config = host_ssh_config(prefix, user, ssh_executable, ssh_config, ssh_alias)
+    server_name = 'ld-' + identity
+    config['mcpServers'] = {server_name: config['mcpServers']['luda']}
     if not isinstance(skill_sha256, str) or not re.fullmatch('[0-9a-f]{64}', skill_sha256):
         raise ValueError('Expected skill SHA-256 must come from the verified guest release.')
     skill_file = Path(skill_file)
@@ -115,6 +117,7 @@ def build_host_marketplace(output, prefix, vm_id, skill_file, skill_sha256,
         manifest.update(name=name, version=manifest['version']+'+ssh.'+hashlib.sha256(
             json.dumps(config,sort_keys=True).encode()+skill).hexdigest()[:16])
         manifest['interface']['displayName'] = 'Luda desktop '+str(uuid.UUID(vm_id))
+        manifest['description'] = 'Control desktop of Silo VM '+str(uuid.UUID(vm_id))+'. The bundled skill is generic guidance; select this VM-specific tool server.'
         (plugin/'.codex-plugin/plugin.json').write_text(json.dumps(manifest,indent=2)+'\n')
         (plugin/'skills/luda').mkdir(parents=True)
         (plugin/'skills/luda/SKILL.md').write_bytes(skill)
@@ -125,6 +128,7 @@ def build_host_marketplace(output, prefix, vm_id, skill_file, skill_sha256,
             {'name':name,'source':{'source':'local','path':'./plugins/'+name},
              'policy':{'installation':'AVAILABLE','authentication':'ON_INSTALL'},'category':'Productivity'}]},indent=2)+'\n')
         metadata = {'format':1,'vm_id':str(uuid.UUID(vm_id)),'plugin':name,'marketplace':marketplace,
+                    'server_name':server_name,'ssh_alias':ssh_alias,
                     'version':manifest['version'],'skill_sha256':skill_sha256,
                     'mcp_sha256':hashlib.sha256((plugin/'.mcp.json').read_bytes()).hexdigest()}
         (stage/'host-registration.json').write_text(json.dumps(metadata,indent=2)+'\n')

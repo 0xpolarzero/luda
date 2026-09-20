@@ -43,7 +43,11 @@ registration as the profile owner; the existing profile directory must be owned
 by that account and not writable by other accounts. There is no implicit profile
 or output directory. The builder preserves existing destinations. It packages
 verified skill bytes unchanged and derives distinct plugin/marketplace names
-from the VM UUID. Its cache version includes transport/skill content identity.
+from the VM UUID. The MCP server key is `ld-<full UUID without hyphens>`,
+independently unique across VMs. Codex CLI 0.155.1 flattened two plugin-local
+`luda` keys into one resolved server in the retained initial probe; distinct
+plugin names alone did not separate servers. Its cache version includes
+transport/skill content identity.
 
 The generated MCP command passes host arguments without a shell and separately
 quotes every token of the fixed guest `luda-session` command for OpenSSH's remote
@@ -54,17 +58,22 @@ the cached plugin and must stay at their declared paths. Update/remove the plugi
 when those paths, VM identity or guest skill/runtime release change.
 
 Registration invokes actual CLI marketplace-add/plugin-add/list commands. It
-verifies cached launch configuration and skill hashes, preserves unrelated
+verifies cached launch configuration and skill hashes plus the effective
+`codex mcp list --json` command/arguments, preserves unrelated
 settings, and refuses a conflicting marketplace, disabled existing plugin or
 modified cache instead of overwriting it. It records ownership and attempt state
 under the selected profile's `luda-registrations/`, with a cooperative utility
 lock; this does not lock unrelated Codex processes out of their own settings.
 
 `registered` and `already_registered` mean the selected profile's cached artifacts
-matched. They do not prove MCP startup, a running guest, tool approval, skill
+and resolved configuration matched. They do not prove MCP startup, a running guest, tool approval, skill
 loading in an existing conversation, or Mac remote-executor placement. Start a
 new conversation, inspect doctor/identity information and observe the intended
-VM before input. No approval policy is silently replaced by this utility.
+VM before input. Registration returns the VM UUID and server name, and the
+plugin display name/description identify that VM. Each bundled skill keeps the
+name `luda` and unchanged generic guidance; duplicate skill names are not routing
+identities or authority to choose a VM. Select the intended VM-specific tool
+server explicitly. No approval policy is silently replaced by this utility.
 
 ## Partial results and updates
 
@@ -83,7 +92,8 @@ workflow; this first layer deliberately refuses in-place replacement.
 
 `tests/test_host_plugin.py` covers remote-shell metacharacters as literal paths,
 wrong skill hashes, two VM identities, actual temporary-profile CLI registration,
-idempotency, preserved settings, disabled/conflicting entries, modified cached
+resolved MCP keys/SSH alias mapping for both VMs, idempotency, preserved settings,
+disabled/conflicting entries, modified cached
 skill, partial marketplace success and completed installation with a lost reply.
 The generated plugin passes plugin-creator validation. Existing local and remote
 builder API tests remain unchanged. No real user profile is modified by tests.

@@ -61,6 +61,12 @@ class HostRegistration(unittest.TestCase):
         second=registration.register(two,self.codex,self.home)
         self.assertEqual(first['status'],'registered');self.assertEqual(second['status'],'registered')
         self.assertNotEqual(first['plugin_id'],second['plugin_id'])
+        # Plugin listing is not resolved MCP configuration: Codex flattens keys.
+        effective=registration.cli(self.codex,self.home,'mcp','list')
+        self.assertEqual({entry['name'] for entry in effective},{first['server_name'],second['server_name']})
+        self.assertEqual({entry['transport']['args'][-2] for entry in effective},{'silo-1','silo-2'})
+        self.assertEqual({entry['name']:entry['transport']['args'][-2] for entry in effective},
+                         {first['server_name']:'silo-1',second['server_name']:'silo-2'})
         before=(self.home/'config.toml').read_bytes()
         again=registration.register(one,self.codex,self.home)
         self.assertEqual(again['status'],'already_registered')

@@ -56,7 +56,11 @@ def validate_bundle(market):
         raise RegistrationError('bundle_identity_invalid')
     if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.+-]{0,127}',meta.get('version','')):
         raise RegistrationError('bundle_version_invalid')
+    if meta.get('server_name')!='ld-'+identity:
+        raise RegistrationError('bundle_server_identity_invalid')
     plugin=market/'plugins'/meta['plugin']
+    if set(read_json(plugin/'.mcp.json').get('mcpServers',{}))!={meta['server_name']}:
+        raise RegistrationError('bundle_server_identity_invalid')
     manifest=read_json(plugin/'.codex-plugin/plugin.json')
     if manifest.get('name')!=meta['plugin'] or manifest.get('version')!=meta['version']:
         raise RegistrationError('bundle_manifest_mismatch')
@@ -101,10 +105,14 @@ def register(market,codex_executable,codex_home,runner=cli):
             cached=home/'plugins/cache'/meta['marketplace']/meta['plugin']/meta['version']
             for file,key in (('.mcp.json','mcp_sha256'),('skills/luda/SKILL.md','skill_sha256')):
                 if hashlib.sha256((cached/file).read_bytes()).hexdigest()!=meta[key]:raise RegistrationError('cached_content_mismatch')
+            effective=[entry for entry in run('mcp','list') if entry.get('name')==meta['server_name']]
+            expected=read_json(cached/'.mcp.json')['mcpServers'][meta['server_name']]
+            if len(effective)!=1 or effective[0].get('enabled') is not True or any(effective[0].get('transport',{}).get(key)!=expected[key] for key in ('command','args')):
+                raise RegistrationError('effective_server_conflict')
         if entries:
             verify(entries)
             atomic(receipt,{'state':'registered','identity':desired})
-            return {'status':'already_registered','plugin_id':plugin_id,'verified_cached_content':True,'restart_required':True}
+            return {'status':'already_registered','plugin_id':plugin_id,'server_name':meta['server_name'],'vm_id':meta['vm_id'],'verified_cached_content':True,'restart_required':True}
         if previous:raise RegistrationError('previous_attempt_requires_review')
         stage='marketplace_add'
         atomic(receipt,{'state':'pending','stage':stage,'identity':desired})
@@ -121,7 +129,7 @@ def register(market,codex_executable,codex_home,runner=cli):
             atomic(receipt,{'state':'unconfirmed','stage':stage,'identity':desired})
             return {'status':'unconfirmed','stage':stage,'plugin_id':plugin_id,'automatic_retry_allowed':False,
                     'next_step':'Inspect this profile with codex plugin list/marketplace list. Rerun only to verify a completed installation; an incomplete attempt requires explicit administrative review.'}
-        return {'status':'registered','plugin_id':plugin_id,'verified_cached_content':True,'restart_required':True}
+        return {'status':'registered','plugin_id':plugin_id,'server_name':meta['server_name'],'vm_id':meta['vm_id'],'verified_cached_content':True,'restart_required':True}
     finally:os.close(fd)
 
 
