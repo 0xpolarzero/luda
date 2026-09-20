@@ -27,6 +27,7 @@ def suite(script, ids, *, wm=True, browser=None, electron=None, firefox=None, mo
 
 
 SUITES = {
+    'image-editor': suite('live_image_editor.py', 'APPS-09 APPS-10', wm=False, artifacts=('image-editor',)),
     'session-input': suite('live_session_input.py', 'AUTH-09', artifacts=('session-input',)),
     'resource-limits': suite('live_resource_limits.py', 'PERF-10 ERR-06', artifacts=('resource-limits',)),
     'bus-generation': suite('live_bus_generation.py', 'ENV-08 LIFE-06 AX-06', artifacts=('bus-generation',)),
