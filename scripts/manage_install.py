@@ -101,6 +101,30 @@ def invoke(argv, timeout=300):
         raise
 
 
+def source_files(source):
+    """Declared build inputs, shared by release identity and clean staging."""
+    files = [source / p for p in ('pyproject.toml', 'MANIFEST.in', 'requirements.lock', 'build-requirements.lock')]
+    files += [source / name for name in ('uv.lock', 'requirements-browser.lock', '.mcp.json', 'README.md', 'build-requirements.in') if (source / name).is_file()]
+    files += [p for name in ('src', 'skills', 'scripts', 'docs', 'tests', '.codex-plugin', 'integrations') for p in (source / name).rglob('*')
+              if p.is_file() and 'node_modules' not in p.parts and '__pycache__' not in p.parts and not any(part.endswith('.egg-info') for part in p.parts)]
+    return sorted(files)
+
+
+@contextmanager
+def build_source(source, parent, identity, browser=None):
+    # Never hand setuptools a checkout containing stale build/lib or egg-info.
+    # Copy bytes into newly owned writable files; source permissions stay intact.
+    with tempfile.TemporaryDirectory(prefix='.build-source-', dir=parent) as directory:
+        staged = Path(directory)
+        for path in source_files(source):
+            target = staged / path.relative_to(source)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(path, target)
+        if release_identity(staged, browser) != identity:
+            raise InstallError('Source changed during staging; previous release remains selected.')
+        yield staged
+
+
 def release_identity(source, browser=None):
     try:
         metadata = tomllib.loads((source / 'pyproject.toml').read_text(encoding='utf-8'))
@@ -114,14 +138,10 @@ def release_identity(source, browser=None):
         raise InstallError('Source project.version must be a string.')
     if not re.fullmatch(r'[A-Za-z0-9_.+-]+', version):
         raise InstallError('Package version is not a safe release name.')
-    files = [source / p for p in ('pyproject.toml', 'MANIFEST.in', 'requirements.lock', 'build-requirements.lock')]
-    files += [source / name for name in ('requirements-browser.lock', '.mcp.json', 'README.md', 'build-requirements.in') if (source / name).is_file()]
-    files += [p for name in ('src', 'skills', 'scripts', 'docs', 'tests', '.codex-plugin', 'integrations') for p in (source / name).rglob('*')
-              if p.is_file() and 'node_modules' not in p.parts and '__pycache__' not in p.parts and not any(part.endswith('.egg-info') for part in p.parts)]
     digest = hashlib.sha256()
     if browser is not None:
         digest.update(b'browser\0' + json.dumps(browser, sort_keys=True, separators=(',', ':')).encode() + b'\0')
-    for path in sorted(files):
+    for path in source_files(source):
         digest.update(str(path.relative_to(source)).encode() + b'\0' + path.read_bytes() + b'\0')
     return version + '-' + digest.hexdigest()[:16]
 
@@ -176,7 +196,8 @@ def install(prefix, source, runner=invoke, browser_config=None, user="silo-deskt
             python = release / '.venv/bin/python'
             runner([python, '-m', 'pip', 'install', '--require-hashes', '-r', source / ('requirements-browser.lock' if browser else 'requirements.lock')])
             runner([python, '-m', 'pip', 'install', '--require-hashes', '-r', source / 'build-requirements.lock'])
-            runner([python, '-m', 'pip', 'wheel', '--no-build-isolation', '--no-deps', '--wheel-dir', release / 'wheels', source])
+            with build_source(source, release, identity, browser) as staged:
+                runner([python, '-m', 'pip', 'wheel', '--no-build-isolation', '--no-deps', '--wheel-dir', release / 'wheels', staged])
             wheels = list((release / 'wheels').glob('luda-*.whl'))
             if len(wheels) != 1:
                 raise InstallError('Build did not produce exactly one Luda wheel.')
