@@ -50,7 +50,7 @@ class BrowserRichTests(unittest.TestCase):
 
     def test_same_length_document_change_during_select_stops_before_replacement(self):
         before=value('old');changed=value('NEW');selected=value('NEW');selected.update(start=0,end=3,selection={'type':'all'})
-        w=Worker('unused');w.protocol=Mock();w.snapshot=Mock(side_effect=[({},before),({},changed),({},selected),({},selected)])
+        w=Worker('unused');w.protocol=Mock();bridge=Mock();bridge.evaluate.return_value=False;item={'bridge':bridge};w.snapshot=Mock(side_effect=[(item,before),(item,changed),(item,selected),(item,selected)])
         with self.assertRaises(Refused) as caught:w.rich_type('t','target','replace',None,before)
         self.assertEqual(caught.exception.code,'TEXT_CHANGED');self.assertEqual(w.effect,'uncertain')
         self.assertEqual([c.args[0] for c in w.protocol.send.call_args_list],['Input.dispatchKeyEvent','Input.dispatchKeyEvent'])

@@ -46,6 +46,10 @@ class Worker:
         self.pw = self.context = self.page = self.protocol = None
         self.elements = {}
         self.effect = 'none'
+        from ._browser_clipboard import Clipboard
+        self.clipboard=Clipboard(profile)
+        self.clipboard_changed=False
+        self.native_target=None
 
     def open(self, request):
         if self.context:
@@ -147,11 +151,12 @@ class Worker:
                     entry.dispose();node.dispose();continue
                 if len(rows)>=limit:
                     more=True;entry.dispose();node.dispose();continue
+                ranges=entry.evaluate("entry=>typeof entry.at==='function'&&typeof entry.identity==='function'")
                 token=uuid.uuid4().hex
                 self.elements[token]={'node':node,'bridge':entry,'document':self.page.evaluate_handle('document'),'time':now,'type':'basic-paragraphs-v1','tag':'PROSEMIRROR'}
                 rows.append({'token':token,'name':meta['name'],'role':role,'states':states,'protected':False,'supported':not problem,'unsupported_reason':problem,
                              'provider':'owned_browser','text_representation':'paragraphs','actions':[] if problem else ['focus','read','select','type'],
-                             'interfaces':['Text'],'multiline':True,'line_break_semantics':'paragraph','write_scope':'whole-field replace or append at end'})
+                             'interfaces':['Text'],'multiline':True,'line_break_semantics':'paragraph','write_scope':'native: whole-field replace or append at end; explicit clipboard: selected code-point range','transports':['native','clipboard'],'selection_scope':'code-point ranges' if ranges else 'whole-field or end; update cooperating bridge for arbitrary ranges'})
             return rows,more
         finally:registry.dispose()
 
@@ -223,11 +228,34 @@ class Worker:
         if type(start) is not int or type(end) is not int or not 0<=start<=end<=len(before['text']):
             raise Refused('INVALID_ARGUMENT')
         if before['tag']=='PROSEMIRROR':
-            if (start,end)==(0,len(before['text'])):self.rich_key('a','KeyA',65,2)
-            elif start==end==len(before['text']):self.rich_key('End','End',35,2)
-            else:raise Refused('UNSUPPORTED_SELECTION')
-            _,after=self.snapshot(token,mutation=True,focus=True)
-            if after['model']!=before['model'] or (after['start'],after['end'])!=(start,end):raise Refused('SELECTION_UNVERIFIED')
+            if not item['bridge'].evaluate("entry=>typeof entry.at==='function'&&typeof entry.identity==='function'"):
+                if (start,end)==(0,len(before['text'])):self.rich_key('a','KeyA',65,2)
+                elif start==end==len(before['text']):self.rich_key('End','End',35,2)
+                else:raise Refused('UNSUPPORTED_SELECTION')
+            else:
+                held=item['bridge'].evaluate_handle('entry=>entry.identity()')
+                try:
+                    # The captured model must still match the snapshot before selection.
+                    _,current=self.snapshot(token,mutation=True,focus=True)
+                    if current['model']!=before['model']:raise Refused('TEXT_CHANGED')
+                    self.effect='uncertain'
+                    result=item['bridge'].evaluate("""(entry,{held,start,end})=>{
+                      if(window.__ludaProseMirror?.get(entry.id)!==entry||entry.identity()!==held)return {error:'STALE_TARGET'};
+                      if(!document.hasFocus()||document.activeElement!==entry.root)return {error:'FOCUS_CHANGED'};
+                      if(!window.__ludaOwnedComposition?.known||window.__ludaOwnedComposition.active)return {error:'COMPOSITION_UNKNOWN'};
+                      const a=entry.at(start),b=entry.at(end);
+                      if(!a||!b||!entry.root.contains(a.node)||!entry.root.contains(b.node)||a.node.getRootNode()!==document||b.node.getRootNode()!==document||a.roundtrip!==a.position||b.roundtrip!==b.position)return {error:'SELECTION_UNVERIFIED'};
+                      getSelection().setBaseAndExtent(a.node,a.offset,b.node,b.offset);return {};
+                    }""",{'held':held,'start':start,'end':end})
+                    if result.get('error'):raise Refused(result['error'])
+                finally:held.dispose()
+            deadline=time.monotonic()+.75
+            while True:
+                _,after=self.snapshot(token,mutation=True,focus=True)
+                if after['model']!=before['model']:raise Refused('TEXT_CHANGED')
+                if (after['start'],after['end'])==(start,end):break
+                if time.monotonic()>=deadline:raise Refused('SELECTION_UNVERIFIED')
+                self.page.wait_for_timeout(10)
             return {'effect':'verified','start_offset':start,'end_offset':end,'offset_units':'Unicode code points'}
         self.effect = 'uncertain'
         # Fixed selection-only operation: never assigns value or model content.
@@ -256,12 +284,16 @@ class Worker:
         if valid is None:raise Refused('TEXT_BOUNDARY_UNAVAILABLE')
         if valid is not True:raise Refused('UNSUPPORTED_TEXT_BOUNDARY')
 
-    def type(self, token, text, mode, line_breaks=None):
+    def type(self, token, text, mode, line_breaks=None, transport="native"):
         if not isinstance(text,str) or len(text)>MAX_TEXT or '\r' in text or '\x00' in text:
             raise Refused('UNSUPPORTED_TEXT')
         if mode not in ('insert','replace'):
             raise Refused('INVALID_ARGUMENT')
+        if transport not in ('native','clipboard'):raise Refused('INVALID_ARGUMENT')
         _, before = self.snapshot(token, mutation=True)
+        if transport=='clipboard':
+            if before['tag']!='PROSEMIRROR':raise Refused('UNSUPPORTED_ACTION')
+            return self.rich_clipboard_type(token,text,mode,line_breaks,before)
         if before['tag']=='PROSEMIRROR':return self.rich_type(token,text,mode,line_breaks,before)
         if line_breaks is not None:raise Refused('UNSUPPORTED_ACTION')
         if before['tag']=='INPUT' and any(c in text for c in ('\n','\t')):
@@ -353,8 +385,68 @@ class Worker:
                 'model':current['model'],'stored_marks':current['stored_marks'],'existing_formatting':'preserved' if mode=='insert' else 'replaced_with_field',
                 'verification':'Exact paragraph text, structure and unaffected existing marks; new formatting follows application behavior. Application commit is separate.'}
 
+    def rich_clipboard_type(self, token, text, mode, line_breaks, before):
+        from .common import DesktopError
+        if '\n' in text and line_breaks!='paragraph':raise Refused('LINE_BREAK_SEMANTICS_REQUIRED')
+        if line_breaks not in (None,'paragraph'):raise Refused('UNSUPPORTED_ACTION')
+        start,end=(0,len(before['text'])) if mode=='replace' else (before['start'],before['end'])
+        if start is None or end is None:raise Refused('UNSUPPORTED_SELECTION')
+        prefix,suffix=before['text'][:start],before['text'][end:]
+        expected=prefix+text+suffix
+        if len(expected)>MAX_TEXT or len(expected.split('\n'))>128 or len(text.split('\n'))>27:raise Refused('VERIFICATION_LIMIT')
+        if not self.native_target:raise Refused('BROWSER_SCOPE_UNSUPPORTED')
+        try:self.clipboard.preflight()
+        except DesktopError as exc:raise Refused(exc.code) from None
+        if not before['focused']:self.focus(token)
+        _,current=self.snapshot(token,mutation=True,focus=True)
+        if (current['model'],current['selection'],current['stored_marks'])!=(before['model'],before['selection'],before['stored_marks']):raise Refused('TEXT_CHANGED')
+        if mode=='replace':
+            self.select(token,start,end)
+            _,current=self.snapshot(token,mutation=True,focus=True)
+            if current['model']!=before['model']:raise Refused('TEXT_CHANGED')
+        prefix_marks=before['styled'][:start];suffix_marks=before['styled'][end:]
+        inserted='';deadline=time.monotonic()+6
+        for index,segment in enumerate(text.split('\n')):
+            actions=([('return',None)] if index else [])+([('paste',segment)] if segment else [('delete',None)] if index==0 and start!=end else [])
+            for action,payload in actions:
+                if time.monotonic()>=deadline:raise Refused('BROWSER_TIMEOUT')
+                _,fresh=self.snapshot(token,mutation=True,focus=True)
+                if (fresh['model'],fresh['selection'],fresh['stored_marks'])!=(current['model'],current['selection'],current['stored_marks']):raise Refused('TEXT_CHANGED')
+                try:
+                    self.clipboard.preflight()
+                    if action=='paste':
+                        self.effect='uncertain';self.clipboard_changed=True
+                        self.clipboard.stage(payload)
+                        _,staged=self.snapshot(token,mutation=True,focus=True)
+                        if (staged['model'],staged['selection'],staged['stored_marks'])!=(fresh['model'],fresh['selection'],fresh['stored_marks']):raise Refused('TEXT_CHANGED')
+                        self.clipboard.verify(payload)
+                        self.clipboard.key(self.native_target,'ctrl+v');inserted+=payload
+                    else:
+                        self.effect='uncertain'
+                        self.clipboard.key(self.native_target,'Return' if action=='return' else 'BackSpace')
+                        if action=='return':inserted+='\n'
+                except DesktopError as exc:raise Refused(exc.code) from None
+                intended=prefix+inserted+suffix
+                until=min(deadline,time.monotonic()+.75)
+                while True:
+                    _,after=self.snapshot(token,mutation=True,focus=True)
+                    if after['text']==intended:break
+                    if time.monotonic()>=until:raise Refused('TEXT_MISMATCH')
+                    self.page.wait_for_timeout(10)
+                if after['paragraphs']!=intended.split('\n'):raise Refused('TEXT_MISMATCH')
+                if after['styled'][:start]!=prefix_marks or after['styled'][start+len(inserted):]!=suffix_marks:raise Refused('FORMATTING_CHANGED')
+                if (after['start'],after['end'])!=(start+len(inserted),start+len(inserted)):raise Refused('SELECTION_UNVERIFIED')
+                current=after
+        return {'effect':'verified' if self.effect!='none' else 'none','exact_match':True,'transport':'clipboard',
+                'clipboard_changed':self.clipboard_changed,'clipboard':'Final nonempty segment remains until another owner replaces it or the temporary browser session closes; PRIMARY unchanged.' if self.clipboard_changed else 'CLIPBOARD and PRIMARY unchanged by this request.',
+                'expected_characters':len(expected),'actual_characters':len(current['text']),'caret_verified':True,
+                'text_representation':'paragraphs','line_breaks':'paragraph','model':current['model'],'stored_marks':current['stored_marks'],
+                'existing_formatting':'preserved' if mode=='insert' else 'replaced_with_field'}
+
     def dispatch(self, request):
         self.effect = 'none'
+        self.clipboard_changed=False
+        self.native_target=request.get('native_target')
         op=request.get('op')
         if op=='open':return self.open(request)
         if op=='inspect':return self.inspect(request)
@@ -362,7 +454,7 @@ class Worker:
         if op=='read':return self.read(token,request.get('limit',16000))
         if op=='focus':return self.focus(token)
         if op=='select':return self.select(token,request['start_offset'],request['end_offset'])
-        if op=='type':return self.type(token,request['text'],request['mode'],request.get('line_breaks'))
+        if op=='type':return self.type(token,request['text'],request['mode'],request.get('line_breaks'),request.get('transport','native'))
         raise Refused('UNSUPPORTED_ACTION')
 
 
@@ -374,14 +466,15 @@ def main():
             try:
                 result=worker.dispatch(json.loads(raw))
             except Refused as exc:
-                result={'error':exc.code,'effect':worker.effect}
+                result={'error':exc.code,'effect':worker.effect,'clipboard_changed':worker.clipboard_changed}
             except Exception:
-                result={'error':'BROWSER_OPERATION_FAILED','effect':worker.effect}
+                result={'error':'BROWSER_OPERATION_FAILED','effect':worker.effect,'clipboard_changed':worker.clipboard_changed}
             data=json.dumps(result,ensure_ascii=False,separators=(',',':'))
             if len(data.encode())>1024*1024:
                 data=json.dumps({'error':'VERIFICATION_LIMIT','effect':worker.effect})
             print(data,flush=True)
     finally:
+        worker.clipboard.close()
         if worker.context:
             worker.context.close()
         if worker.pw:

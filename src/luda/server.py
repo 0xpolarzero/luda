@@ -310,9 +310,9 @@ async def desktop_read_text(element_id: str, limit: int = 16000) -> CallToolResu
 
 
 @mcp.tool()
-async def desktop_type(element_id: str, text: str, mode: Literal["insert", "replace"] = "insert", line_breaks: Literal["paragraph"] | None = None) -> CallToolResult:
-    """Type into an editable element and verify exact readback. Owned browser-native insertion refuses positions inside a grapheme; offsets still count code points. For a cooperating rich editor, LF requires line_breaks="paragraph"; only whole-field replace or append at the end is supported, and actual new formatting is reported. Default insert preserves surrounding text and replaces the selection; replace changes the entire field. Preserves Unicode/LF/tabs, never adds a submit key. Exact readback does not prove application commit or guarantee autocomplete events; inspect the result before an explicit commit or suggestion selection."""
-    return await execute_async('type_text',element_id,text,mode,line_breaks=line_breaks)
+async def desktop_type(element_id: str, text: str, mode: Literal["insert", "replace"] = "insert", line_breaks: Literal["paragraph"] | None = None, transport: Literal["native", "clipboard"] = "native") -> CallToolResult:
+    """Type into an editable element and verify exact readback. Owned browser-native insertion refuses positions inside a grapheme; offsets still count code points. For a cooperating rich editor, LF requires line_breaks="paragraph"; native input supports whole-field replace or append at the end. Explicit transport="clipboard" supports selected code-point ranges and leaves the final nonempty segment in CLIPBOARD until another owner replaces it or the temporary session closes. Empty text deletes the selection without replacing CLIPBOARD; actual new formatting is reported. Default insert preserves surrounding text and replaces the selection; replace changes the entire field. Preserves Unicode/LF/tabs, never adds a submit key. Exact readback does not prove application commit or guarantee autocomplete events; inspect the result before an explicit commit or suggestion selection."""
+    return await execute_async('type_text',element_id,text,mode,line_breaks=line_breaks,transport=transport)
 
 
 @mcp.tool()

@@ -74,6 +74,7 @@ function mount() {
   root.id = 'editor';
   if(params.get('seed')==='marks') view.dispatch(view.state.tr.addMark(1,5,schema.marks.strong.create()).addMark(13,18,schema.marks.em.create()));
   root.addEventListener('input',e=>{if(e.isTrusted&&blurNext){blurNext=false;document.querySelector('#blur').focus();queueMicrotask(persist);}});
+  root.addEventListener('paste',e=>{if(e.isTrusted&&blurNext){blurNext=false;queueMicrotask(()=>{document.querySelector('#blur').focus();persist();});}});
   root.addEventListener('compositionstart', event => {
     if (event.isTrusted && spoofNextKey) {
       spoofNextKey = false;

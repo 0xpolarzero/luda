@@ -11,7 +11,22 @@ export function registerProseMirror(view, {paragraphs} = {}) {
   if (!view?.dom || !view?.state?.doc || registrations.size >= 32) throw new Error('Invalid or excessive editor registrations');
   const root = view.dom, id = crypto.randomUUID();
   if ([...registrations.values()].some(entry => entry.root === root)) throw new Error('Editor already registered');
-  const entry = Object.freeze({id, root, contract: 'basic-paragraphs-v1', read() {
+  const entry = Object.freeze({id, root, contract: 'basic-paragraphs-v1',
+    identity: () => view.state.doc,
+    at(offset) {
+      if (!Number.isInteger(offset) || offset < 0) return null;
+      let logical=0, position=0;
+      for (let i=0;i<view.state.doc.childCount;i++) {
+        const paragraph=view.state.doc.child(i), chars=Array.from(paragraph.textContent);
+        if (offset>=logical && offset<=logical+chars.length) {
+          const target=position+1+chars.slice(0,offset-logical).join('').length;
+          const dom=view.domAtPos(target);
+          return {...dom,position:target,roundtrip:view.posAtDOM(dom.node,dom.offset,1)};
+        }
+        logical+=chars.length+1;position+=paragraph.nodeSize;
+      }
+      return null;
+    }, read() {
     if (view.isDestroyed || view.dom !== root || !root.isConnected || root.getRootNode() !== document) return {error:'STALE_TARGET'};
     if (view.state.storedMarks?.some(mark=>!['strong','em'].includes(mark.type.name)||Object.keys(mark.attrs).length)) return {error:'TEXT_REPRESENTATION_UNSUPPORTED'};
     const doc = view.state.doc;

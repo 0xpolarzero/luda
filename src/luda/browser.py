@@ -15,6 +15,13 @@ from .common import DesktopError, checkpoint, mark_effect, process_identity
 from .timing import elapsed_time
 
 MESSAGES = {
+    'DEPENDENCY_MISSING':'The explicit clipboard transport requires xclip.',
+    'CLIPBOARD_FAILED':'Clipboard staging could not be verified; no paste shortcut was sent at this step.',
+    'CLIPBOARD_CHANGED':'Clipboard changed before paste; no shortcut was sent at this step.',
+    'INPUT_HELD':'Release held input before clipboard typing.',
+    'KEYBOARD_UNAVAILABLE':'Native keyboard state is unavailable.',
+    'UNSUPPORTED_INPUT_STATE':'Clear latched input before clipboard typing.',
+
     'UNSUPPORTED_TEXT_BOUNDARY':'Browser-native input cannot split a grapheme (such as a joined emoji or combining sequence); choose complete boundaries. Offsets remain Unicode code points.',
     'TEXT_BOUNDARY_UNAVAILABLE':'Cannot verify native browser input boundaries; no input sent at this boundary.',
     'BROWSER_TIMEOUT':'Owned browser operation exceeded its deadline; inspect before retrying.',
@@ -113,7 +120,7 @@ class OwnedBrowser:
                         mark_effect(effect)
                         if 'error' in value:
                             code=value['error']
-                            raise DesktopError(code if code in MESSAGES else 'BROWSER_OPERATION_FAILED',MESSAGES.get(code,MESSAGES['BROWSER_OPERATION_FAILED']),effect=effect)
+                            raise DesktopError(code if code in MESSAGES else 'BROWSER_OPERATION_FAILED',MESSAGES.get(code,MESSAGES['BROWSER_OPERATION_FAILED']),effect=effect,details={'clipboard_changed':value.get('clipboard_changed') is True})
                         return value
         except DesktopError as exc:
             if exc.code not in MESSAGES or exc.code in ('BROWSER_CLOSED','BROWSER_TIMEOUT'):
@@ -201,8 +208,8 @@ class OwnedBrowser:
         return value
 
     def element(self, target, op, **kwargs):
-        self.scoped(target['window_id'],op!='read')
-        return self.request(op,token=target['browser_token'],**kwargs)
+        window=self.scoped(target['window_id'],op!='read')
+        return self.request(op,token=target['browser_token'],native_target={'xid':window['xid'],'generation':window['window_id'].rsplit(':',1)[-1]},**kwargs)
 
     def close(self):
         process=self.process

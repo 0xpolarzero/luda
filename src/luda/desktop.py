@@ -491,16 +491,17 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
             validate_text(kwargs['text'])
         return self.ax({'op':op,'pid':w['pid'],'start':w['start'],'target':node,**kwargs},op!='read')
 
-    def type_text(self, element_id, text, mode='insert', line_breaks=None):
+    def type_text(self, element_id, text, mode='insert', line_breaks=None, transport='native'):
         validate_text(text)
+        if transport not in ('native','clipboard'):raise DesktopError('INVALID_ARGUMENT','Choose native or clipboard transport.')
         if mode not in ('insert','replace'):
             raise DesktopError('INVALID_ARGUMENT','Text mode must be insert or replace.')
         target = self.elements.get(element_id)
         if not target or elapsed_time()-target['time']>=60:
             raise DesktopError('STALE_TARGET','Element expired; inspect again.')
         if target.get('provider') == 'owned_browser':
-            return self.browser.element(target,'type',text=text,mode=mode,line_breaks=line_breaks)
-        if line_breaks is not None:
+            return self.browser.element(target,'type',text=text,mode=mode,line_breaks=line_breaks,transport=transport)
+        if line_breaks is not None or transport!='native':
             raise DesktopError('UNSUPPORTED_ACTION','Explicit paragraph input requires a cooperating owned-browser editor.')
         node = target['node']
         if node.get('protected'):
