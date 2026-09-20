@@ -1,0 +1,166 @@
+dbus-daemon[11552]: [session uid=1001 pid=11552] Activating service name='org.a11y.Bus' requested by ':1.0' (uid=1001 pid=11557 comm="xfwm4 --compositor=off" label="unconfined")
+dbus-daemon[11552]: [session uid=1001 pid=11552] Successfully activated service 'org.a11y.Bus'
+dbus-daemon[11552]: [session uid=1001 pid=11552] Activating service name='org.gtk.vfs.Daemon' requested by ':1.2' (uid=1001 pid=11557 comm="xfwm4 --compositor=off" label="unconfined")
+dbus-daemon[11552]: [session uid=1001 pid=11552] Successfully activated service 'org.gtk.vfs.Daemon'
+dbus-daemon[11569]: Activating service name='org.a11y.atspi.Registry' requested by ':1.0' (uid=1001 pid=11557 comm="xfwm4 --compositor=off" label="unconfined")
+dbus-daemon[11552]: [session uid=1001 pid=11552] Activating service name='org.xfce.Xfconf' requested by ':1.2' (uid=1001 pid=11557 comm="xfwm4 --compositor=off" label="unconfined")
+dbus-daemon[11569]: Successfully activated service 'org.a11y.atspi.Registry'
+SpiRegistry daemon is running with well-known name - org.a11y.atspi.Registry
+dbus-daemon[11552]: [session uid=1001 pid=11552] Successfully activated service 'org.xfce.Xfconf'
+
+(xfwm4:11557): xfwm4-WARNING **: 09:10:00.309: Failed to connect to session manager: Failed to connect to the session manager: SESSION_MANAGER environment variable not defined
+Processing request of type CallToolRequest
+dbus-daemon[11552]: [session uid=1001 pid=11552] Activating service name='org.freedesktop.portal.Desktop' requested by ':1.8' (uid=1001 pid=11634 comm="/home/runner/work/_temp/luda-playwright/chromium-1" label="luda-ci-owned-browser (unconfined)")
+dbus-daemon[11552]: [session uid=1001 pid=11552] Activating service name='org.freedesktop.portal.Documents' requested by ':1.9' (uid=1001 pid=11741 comm="/usr/libexec/xdg-desktop-portal" label="unconfined")
+dbus-daemon[11552]: [session uid=1001 pid=11552] Activating service name='org.freedesktop.impl.portal.PermissionStore' requested by ':1.10' (uid=1001 pid=11753 comm="/usr/libexec/xdg-document-portal" label="unconfined")
+dbus-daemon[11552]: [session uid=1001 pid=11552] Successfully activated service 'org.freedesktop.impl.portal.PermissionStore'
+dbus-daemon[11552]: [session uid=1001 pid=11552] Successfully activated service 'org.freedesktop.portal.Documents'
+Ignoring invalid max threads value 4294967295 > max (100000).
+
+(/usr/libexec/xdg-desktop-portal:11741): xdg-desktop-portal-WARNING **: 09:10:04.469: Choosing gtk.portal for org.freedesktop.impl.portal.Lockdown as a last-resort fallback
+
+(/usr/libexec/xdg-desktop-portal:11741): xdg-desktop-portal-WARNING **: 09:10:04.469: The preferred method to match portal implementations to desktop environments is to use the portals.conf(5) configuration file
+dbus-daemon[11552]: [session uid=1001 pid=11552] Activating service name='org.freedesktop.impl.portal.desktop.gtk' requested by ':1.9' (uid=1001 pid=11741 comm="/usr/libexec/xdg-desktop-portal" label="unconfined")
+dbus-daemon[11552]: [session uid=1001 pid=11552] Successfully activated service 'org.freedesktop.impl.portal.desktop.gtk'
+
+(/usr/libexec/xdg-desktop-portal:11741): xdg-desktop-portal-WARNING **: 09:10:04.581: No skeleton to export
+
+(/usr/libexec/xdg-desktop-portal:11741): xdg-desktop-portal-WARNING **: 09:10:04.581: Choosing gtk.portal for org.freedesktop.impl.portal.FileChooser as a last-resort fallback
+
+(/usr/libexec/xdg-desktop-portal:11741): xdg-desktop-portal-WARNING **: 09:10:04.582: Choosing gtk.portal for org.freedesktop.impl.portal.AppChooser as a last-resort fallback
+
+(/usr/libexec/xdg-desktop-portal:11741): xdg-desktop-portal-WARNING **: 09:10:04.584: Choosing gtk.portal for org.freedesktop.impl.portal.Print as a last-resort fallback
+
+(/usr/libexec/xdg-desktop-portal:11741): xdg-desktop-portal-WARNING **: 09:10:04.586: Choosing gtk.portal for org.freedesktop.impl.portal.Notification as a last-resort fallback
+
+(/usr/libexec/xdg-desktop-portal:11741): xdg-desktop-portal-WARNING **: 09:10:04.589: Choosing gtk.portal for org.freedesktop.impl.portal.Inhibit as a last-resort fallback
+
+(/usr/libexec/xdg-desktop-portal:11741): xdg-desktop-portal-WARNING **: 09:10:04.591: Choosing gtk.portal for org.freedesktop.impl.portal.Access as a last-resort fallback
+[W][00202.656489] pw.conf      | [          conf.c: 1031 try_load_conf()] can't load config client.conf: No such file or directory
+[E][00202.657064] pw.conf      | [          conf.c: 1060 pw_conf_load_conf_for_context()] can't load config client.conf: No such file or directory
+
+(/usr/libexec/xdg-desktop-portal:11741): xdg-desktop-portal-WARNING **: 09:10:04.597: Failed connect to PipeWire: Couldn't create PipeWire context
+
+(/usr/libexec/xdg-desktop-portal:11741): xdg-desktop-portal-WARNING **: 09:10:04.597: Choosing gtk.portal for org.freedesktop.impl.portal.Account as a last-resort fallback
+
+(/usr/libexec/xdg-desktop-portal:11741): xdg-desktop-portal-WARNING **: 09:10:04.599: Choosing gtk.portal for org.freedesktop.impl.portal.Email as a last-resort fallback
+
+(/usr/libexec/xdg-desktop-portal:11741): xdg-desktop-portal-WARNING **: 09:10:04.600: Choosing gtk.portal for org.freedesktop.impl.portal.DynamicLauncher as a last-resort fallback
+dbus-daemon[11552]: [session uid=1001 pid=11552] Successfully activated service 'org.freedesktop.portal.Desktop'
+Processing request of type ListToolsRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+  + Exception Group Traceback (most recent call last):
+  |   File "/home/runner/work/luda/luda/tests/live_owned_browser.py", line 210, in <module>
+  |     raise SystemExit(asyncio.run(main(parser.parse_args().executable)))
+  |                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |   File "/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/asyncio/runners.py", line 195, in run
+  |     return runner.run(main)
+  |            ^^^^^^^^^^^^^^^^
+  |   File "/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/asyncio/runners.py", line 118, in run
+  |     return self._loop.run_until_complete(task)
+  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |   File "/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+  |     return future.result()
+  |            ^^^^^^^^^^^^^^^
+  |   File "/home/runner/work/luda/luda/tests/live_owned_browser.py", line 64, in main
+  |     async with stdio_client(params) as streams:
+  |                ^^^^^^^^^^^^^^^^^^^^
+  |   File "/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/contextlib.py", line 231, in __aexit__
+  |     await self.gen.athrow(value)
+  |   File "/home/runner/work/luda/luda/.venv/lib/python3.12/site-packages/mcp/client/stdio/__init__.py", line 183, in stdio_client
+  |     anyio.create_task_group() as tg,
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+  |   File "/home/runner/work/luda/luda/.venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 847, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Exception Group Traceback (most recent call last):
+    |   File "/home/runner/work/luda/luda/.venv/lib/python3.12/site-packages/mcp/client/stdio/__init__.py", line 189, in stdio_client
+    |     yield read_stream, write_stream
+    |   File "/home/runner/work/luda/luda/tests/live_owned_browser.py", line 65, in main
+    |     async with ClientSession(*streams) as session:
+    |                ^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/runner/work/luda/luda/.venv/lib/python3.12/site-packages/mcp/shared/session.py", line 238, in __aexit__
+    |     return await self._task_group.__aexit__(exc_type, exc_val, exc_tb)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/runner/work/luda/luda/.venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 847, in __aexit__
+    |     raise BaseExceptionGroup(
+    | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+    +-+---------------- 1 ----------------
+      | Traceback (most recent call last):
+      |   File "/home/runner/work/luda/luda/tests/live_owned_browser.py", line 157, in main
+      |     record('preedit-preserved-after-refusal',state.get('text')==before_ime['text'])
+      |   File "/home/runner/work/luda/luda/tests/live_owned_browser.py", line 39, in record
+      |     if not ok:raise AssertionError(name)
+      |               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+      | AssertionError: preedit-preserved-after-refusal
+      +------------------------------------
+A connection to the bus can't be made
+
+(xfconfd:11588): xfconfd-WARNING **: 09:10:40.657: Name org.xfce.Xfconf lost on the message dbus, exiting.

@@ -14,6 +14,8 @@ import time
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
+from ordered_oracle import accept_snapshot
+
 ROOT=Path(__file__).resolve().parents[1]
 OUT=ROOT/'artifacts/owned-browser'
 HTML='''<!doctype html><meta charset="utf-8"><title>Luda owned browser contract</title>
@@ -25,14 +27,16 @@ HTML='''<!doctype html><meta charset="utf-8"><title>Luda owned browser contract<
 <button onclick="location.reload()">Reload document</button>
 <button onclick="let f=document.createElement('iframe');f.srcdoc='frame fixture';document.body.append(f);save()">Add frame</button>
 <script>
-const events=[];function save(){fetch('/oracle',{method:'POST',body:JSON.stringify({active:document.activeElement?.id,frames:document.querySelectorAll('iframe').length,text:document.querySelector('#text').value,single:document.querySelector('#single').value,selection:[document.querySelector('#text').selectionStart,document.querySelector('#text').selectionEnd],events:events.slice(-30)})})}
+const events=[];let oracleSequence=0,oracleBarrier=0;function save(){fetch('/oracle',{method:'POST',body:JSON.stringify({oracle_document:ORACLE_DOCUMENT,oracle_sequence:++oracleSequence,oracle_barrier:oracleBarrier,active:document.activeElement?.id,frames:document.querySelectorAll('iframe').length,text:document.querySelector('#text').value,single:document.querySelector('#single').value,selection:[document.querySelector('#text').selectionStart,document.querySelector('#text').selectionEnd],events:events.slice(-30)})})}
 function wire(){for(const n of document.querySelectorAll('textarea,input:not([type=password])'))for(const type of ['input','beforeinput','select','compositionstart','compositionupdate','compositionend','keydown','keyup','focus','blur'])n.addEventListener(type,e=>{events.push({type:e.type,inputType:e.inputType??null,trusted:e.isTrusted,isComposing:e.isComposing??null,key:e.key??null,code:e.code??null,data:e.data??null});queueMicrotask(save)})}wire();save();
+setInterval(async()=>{const r=await fetch('/oracle-barrier');const n=await r.json();if(n>oracleBarrier){oracleBarrier=n;save();}},50);
 </script>'''
 
 
 async def main(executable):
     if os.getuid()==0 or os.environ.get('LUDA_ISOLATED_TEST_DISPLAY')!='1':raise RuntimeError('Private ordinary-UID display required')
     OUT.mkdir(parents=True,exist_ok=True);cases=[];state={};lock=threading.Lock()
+    requested_barrier=0;document_generation=0
     def record(name,ok,details=None):
         cases.append({'case':name,'passed':bool(ok),'details':details})
         (OUT/'results.json').write_text(json.dumps(cases,ensure_ascii=False,indent=2))
@@ -40,16 +44,32 @@ async def main(executable):
     class Handler(http.server.BaseHTTPRequestHandler):
         def log_message(self,*args):pass
         def do_GET(self):
+            nonlocal document_generation
+            if self.path=='/oracle-barrier':
+                with lock:value=requested_barrier
+                self.send_response(200);self.send_header('Content-Type','application/json');self.end_headers();self.wfile.write(json.dumps(value).encode());return
             self.send_response(200)
             if self.path=='/download':
                 self.send_header('Content-Disposition','attachment; filename=synthetic.txt');self.end_headers();self.wfile.write(b'luda-owned-download-sentinel');return
-            self.send_header('Content-Type','text/html; charset=utf-8');self.end_headers();self.wfile.write(HTML.encode())
+            with lock:document_generation+=1;generation=document_generation
+            self.send_header('Content-Type','text/html; charset=utf-8');self.end_headers();self.wfile.write(HTML.replace('ORACLE_DOCUMENT',str(generation)).encode())
         def do_POST(self):
             value=json.loads(self.rfile.read(int(self.headers['Content-Length'])))
-            with lock:state.clear();state.update(value)
-            (OUT/'oracle.json').write_text(json.dumps(value,ensure_ascii=False,indent=2))
+            with lock:
+                if accept_snapshot(state,value):
+                    (OUT/'oracle.json').write_text(json.dumps(state,ensure_ascii=False,indent=2))
             self.send_response(204);self.end_headers()
     server=http.server.ThreadingHTTPServer(('127.0.0.1',0),Handler);threading.Thread(target=server.serve_forever,daemon=True).start()
+    async def fresh_oracle():
+        nonlocal requested_barrier
+        with lock:requested_barrier+=1;barrier=requested_barrier
+        deadline=time.monotonic()+2
+        while True:
+            with lock:value=dict(state)
+            if value.get('oracle_barrier',0)>=barrier:return value
+            if time.monotonic()>=deadline:raise AssertionError('Fresh read-only oracle barrier timed out')
+            await asyncio.sleep(.02)
+
     async def oracle(expected):
         deadline=time.monotonic()+2
         while True:
@@ -150,11 +170,12 @@ async def main(executable):
                 for block in shot.content:
                     if block.type=='image':(OUT/'ime-screen.png').write_bytes(base64.b64decode(block.data))
                 before_ime=await call('desktop_read_text',element_id=eid)
-                with lock:ime_oracle=dict(state)
-                record('native-ime-precondition',before_ime['composition']['active'] and any(e['type']=='compositionstart' and e['trusted'] for e in ime_oracle['events']),{'read':before_ime,'oracle':ime_oracle})
+                ime_oracle=await fresh_oracle()
+                record('native-ime-precondition',ime_oracle['text']==before_ime['text'] and before_ime['composition']['active'] and any(e['type']=='compositionstart' and e['trusted'] for e in ime_oracle['events']),{'read':before_ime,'oracle':ime_oracle})
                 await error('desktop_type','IME_COMPOSITION_ACTIVE',element_id=eid,text='must not replace preedit')
-                await asyncio.sleep(.1)
-                record('preedit-preserved-after-refusal',state.get('text')==before_ime['text'])
+                after_ime=await call('desktop_read_text',element_id=eid)
+                after_oracle=await fresh_oracle()
+                record('preedit-preserved-after-refusal',after_ime['text']==before_ime['text'] and after_ime['composition']==before_ime['composition'] and after_oracle['text']==before_ime['text'] and after_oracle['oracle_document']==ime_oracle['oracle_document'] and after_oracle['selection']==ime_oracle['selection'] and after_oracle['events']==ime_oracle['events'],{'before_read':before_ime,'after_read':after_ime,'before_oracle':ime_oracle,'after_oracle':after_oracle})
                 await call('desktop_press_keys',window_id=wid,chord='Escape')
                 await button('Reload document');await asyncio.sleep(.15)
                 await error('desktop_read_text','STALE_TARGET',element_id=eid)

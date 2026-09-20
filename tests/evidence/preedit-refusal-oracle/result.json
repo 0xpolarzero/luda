@@ -1,0 +1,1609 @@
+{
+  "scope": "Fixture snapshot ordering and fresh read-only barriers; no runtime/input changes",
+  "original_run": "run-1789895395852047343",
+  "original_source": "9e17932",
+  "original_cases": [
+    {
+      "case": "native-ime-precondition",
+      "passed": true,
+      "details": {
+        "read": {
+          "ok": true,
+          "operation_id": "4f9b1b904e4440a897235d8ea93ce1b0",
+          "elapsed_ms": 432,
+          "effect": "none",
+          "text": "u306bA👩🏽‍💻B EC",
+          "characters": 14,
+          "truncated": false,
+          "caret_offset": 5,
+          "selections": [],
+          "offset_units": "Unicode code points",
+          "provider_offset_units": "UTF-16 code units",
+          "plain_text_verification_supported": true,
+          "text_representation": "html_value",
+          "composition": {
+            "known": true,
+            "active": true
+          }
+        },
+        "oracle": {
+          "active": "text",
+          "frames": 0,
+          "text": "u306A👩🏽‍💻B EC",
+          "single": "",
+          "selection": [
+            0,
+            4
+          ],
+          "events": [
+            {
+              "type": "beforeinput",
+              "inputType": "insertText",
+              "trusted": true,
+              "isComposing": false,
+              "key": null,
+              "code": null,
+              "data": "leading 001😀"
+            },
+            {
+              "type": "input",
+              "inputType": "insertText",
+              "trusted": true,
+              "isComposing": false,
+              "key": null,
+              "code": null,
+              "data": "leading 001😀"
+            },
+            {
+              "type": "select",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": null,
+              "key": null,
+              "code": null,
+              "data": null
+            },
+            {
+              "type": "keydown",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": false,
+              "key": "Backspace",
+              "code": "Backspace",
+              "data": null
+            },
+            {
+              "type": "beforeinput",
+              "inputType": "deleteContentBackward",
+              "trusted": true,
+              "isComposing": false,
+              "key": null,
+              "code": null,
+              "data": null
+            },
+            {
+              "type": "input",
+              "inputType": "deleteContentBackward",
+              "trusted": true,
+              "isComposing": false,
+              "key": null,
+              "code": null,
+              "data": null
+            },
+            {
+              "type": "keyup",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": false,
+              "key": "Backspace",
+              "code": "Backspace",
+              "data": null
+            },
+            {
+              "type": "blur",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": null,
+              "key": null,
+              "code": null,
+              "data": null
+            },
+            {
+              "type": "focus",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": null,
+              "key": null,
+              "code": null,
+              "data": null
+            },
+            {
+              "type": "keydown",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": false,
+              "key": "Control",
+              "code": "ControlLeft",
+              "data": null
+            },
+            {
+              "type": "keydown",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": false,
+              "key": "Shift",
+              "code": "ShiftLeft",
+              "data": null
+            },
+            {
+              "type": "keydown",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": false,
+              "key": "Process",
+              "code": "KeyU",
+              "data": null
+            },
+            {
+              "type": "compositionstart",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": null,
+              "key": null,
+              "code": null,
+              "data": ""
+            },
+            {
+              "type": "compositionupdate",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": null,
+              "key": null,
+              "code": null,
+              "data": "u"
+            },
+            {
+              "type": "beforeinput",
+              "inputType": "insertCompositionText",
+              "trusted": true,
+              "isComposing": true,
+              "key": null,
+              "code": null,
+              "data": "u"
+            },
+            {
+              "type": "input",
+              "inputType": "insertCompositionText",
+              "trusted": true,
+              "isComposing": true,
+              "key": null,
+              "code": null,
+              "data": "u"
+            },
+            {
+              "type": "keydown",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": true,
+              "key": "Process",
+              "code": "Digit3",
+              "data": null
+            },
+            {
+              "type": "compositionupdate",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": null,
+              "key": null,
+              "code": null,
+              "data": "u3"
+            },
+            {
+              "type": "beforeinput",
+              "inputType": "insertCompositionText",
+              "trusted": true,
+              "isComposing": true,
+              "key": null,
+              "code": null,
+              "data": "u3"
+            },
+            {
+              "type": "input",
+              "inputType": "insertCompositionText",
+              "trusted": true,
+              "isComposing": true,
+              "key": null,
+              "code": null,
+              "data": "u3"
+            },
+            {
+              "type": "keydown",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": true,
+              "key": "Process",
+              "code": "Digit0",
+              "data": null
+            },
+            {
+              "type": "compositionupdate",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": null,
+              "key": null,
+              "code": null,
+              "data": "u30"
+            },
+            {
+              "type": "beforeinput",
+              "inputType": "insertCompositionText",
+              "trusted": true,
+              "isComposing": true,
+              "key": null,
+              "code": null,
+              "data": "u30"
+            },
+            {
+              "type": "input",
+              "inputType": "insertCompositionText",
+              "trusted": true,
+              "isComposing": true,
+              "key": null,
+              "code": null,
+              "data": "u30"
+            },
+            {
+              "type": "keydown",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": true,
+              "key": "Process",
+              "code": "Digit6",
+              "data": null
+            },
+            {
+              "type": "compositionupdate",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": null,
+              "key": null,
+              "code": null,
+              "data": "u306"
+            },
+            {
+              "type": "beforeinput",
+              "inputType": "insertCompositionText",
+              "trusted": true,
+              "isComposing": true,
+              "key": null,
+              "code": null,
+              "data": "u306"
+            },
+            {
+              "type": "input",
+              "inputType": "insertCompositionText",
+              "trusted": true,
+              "isComposing": true,
+              "key": null,
+              "code": null,
+              "data": "u306"
+            },
+            {
+              "type": "keydown",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": true,
+              "key": "Process",
+              "code": "KeyB",
+              "data": null
+            },
+            {
+              "type": "compositionupdate",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": null,
+              "key": null,
+              "code": null,
+              "data": "u306b"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "case": "desktop_type-IME_COMPOSITION_ACTIVE",
+      "passed": true,
+      "details": {
+        "ok": false,
+        "code": "IME_COMPOSITION_ACTIVE",
+        "message": "Composition is active or its completion is uncertain; no automatic cancellation.",
+        "effect": "none",
+        "details": {
+          "clipboard_may_have_changed": false
+        },
+        "operation_id": "075592af64e94f4f944359b022c60bf1",
+        "elapsed_ms": 482
+      }
+    },
+    {
+      "case": "preedit-preserved-after-refusal",
+      "passed": false,
+      "details": null
+    }
+  ],
+  "original_final_oracle": {
+    "active": "text",
+    "frames": 0,
+    "text": "u306bA👩🏽‍💻B EC",
+    "single": "",
+    "selection": [
+      5,
+      5
+    ],
+    "events": [
+      {
+        "type": "select",
+        "inputType": null,
+        "trusted": true,
+        "isComposing": null,
+        "key": null,
+        "code": null,
+        "data": null
+      },
+      {
+        "type": "keydown",
+        "inputType": null,
+        "trusted": true,
+        "isComposing": false,
+        "key": "Backspace",
+        "code": "Backspace",
+        "data": null
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "deleteContentBackward",
+        "trusted": true,
+        "isComposing": false,
+        "key": null,
+        "code": null,
+        "data": null
+      },
+      {
+        "type": "input",
+        "inputType": "deleteContentBackward",
+        "trusted": true,
+        "isComposing": false,
+        "key": null,
+        "code": null,
+        "data": null
+      },
+      {
+        "type": "keyup",
+        "inputType": null,
+        "trusted": true,
+        "isComposing": false,
+        "key": "Backspace",
+        "code": "Backspace",
+        "data": null
+      },
+      {
+        "type": "blur",
+        "inputType": null,
+        "trusted": true,
+        "isComposing": null,
+        "key": null,
+        "code": null,
+        "data": null
+      },
+      {
+        "type": "focus",
+        "inputType": null,
+        "trusted": true,
+        "isComposing": null,
+        "key": null,
+        "code": null,
+        "data": null
+      },
+      {
+        "type": "keydown",
+        "inputType": null,
+        "trusted": true,
+        "isComposing": false,
+        "key": "Control",
+        "code": "ControlLeft",
+        "data": null
+      },
+      {
+        "type": "keydown",
+        "inputType": null,
+        "trusted": true,
+        "isComposing": false,
+        "key": "Shift",
+        "code": "ShiftLeft",
+        "data": null
+      },
+      {
+        "type": "keydown",
+        "inputType": null,
+        "trusted": true,
+        "isComposing": false,
+        "key": "Process",
+        "code": "KeyU",
+        "data": null
+      },
+      {
+        "type": "compositionstart",
+        "inputType": null,
+        "trusted": true,
+        "isComposing": null,
+        "key": null,
+        "code": null,
+        "data": ""
+      },
+      {
+        "type": "compositionupdate",
+        "inputType": null,
+        "trusted": true,
+        "isComposing": null,
+        "key": null,
+        "code": null,
+        "data": "u"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertCompositionText",
+        "trusted": true,
+        "isComposing": true,
+        "key": null,
+        "code": null,
+        "data": "u"
+      },
+      {
+        "type": "input",
+        "inputType": "insertCompositionText",
+        "trusted": true,
+        "isComposing": true,
+        "key": null,
+        "code": null,
+        "data": "u"
+      },
+      {
+        "type": "keydown",
+        "inputType": null,
+        "trusted": true,
+        "isComposing": true,
+        "key": "Process",
+        "code": "Digit3",
+        "data": null
+      },
+      {
+        "type": "compositionupdate",
+        "inputType": null,
+        "trusted": true,
+        "isComposing": null,
+        "key": null,
+        "code": null,
+        "data": "u3"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertCompositionText",
+        "trusted": true,
+        "isComposing": true,
+        "key": null,
+        "code": null,
+        "data": "u3"
+      },
+      {
+        "type": "input",
+        "inputType": "insertCompositionText",
+        "trusted": true,
+        "isComposing": true,
+        "key": null,
+        "code": null,
+        "data": "u3"
+      },
+      {
+        "type": "keydown",
+        "inputType": null,
+        "trusted": true,
+        "isComposing": true,
+        "key": "Process",
+        "code": "Digit0",
+        "data": null
+      },
+      {
+        "type": "compositionupdate",
+        "inputType": null,
+        "trusted": true,
+        "isComposing": null,
+        "key": null,
+        "code": null,
+        "data": "u30"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertCompositionText",
+        "trusted": true,
+        "isComposing": true,
+        "key": null,
+        "code": null,
+        "data": "u30"
+      },
+      {
+        "type": "input",
+        "inputType": "insertCompositionText",
+        "trusted": true,
+        "isComposing": true,
+        "key": null,
+        "code": null,
+        "data": "u30"
+      },
+      {
+        "type": "keydown",
+        "inputType": null,
+        "trusted": true,
+        "isComposing": true,
+        "key": "Process",
+        "code": "Digit6",
+        "data": null
+      },
+      {
+        "type": "compositionupdate",
+        "inputType": null,
+        "trusted": true,
+        "isComposing": null,
+        "key": null,
+        "code": null,
+        "data": "u306"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertCompositionText",
+        "trusted": true,
+        "isComposing": true,
+        "key": null,
+        "code": null,
+        "data": "u306"
+      },
+      {
+        "type": "input",
+        "inputType": "insertCompositionText",
+        "trusted": true,
+        "isComposing": true,
+        "key": null,
+        "code": null,
+        "data": "u306"
+      },
+      {
+        "type": "keydown",
+        "inputType": null,
+        "trusted": true,
+        "isComposing": true,
+        "key": "Process",
+        "code": "KeyB",
+        "data": null
+      },
+      {
+        "type": "compositionupdate",
+        "inputType": null,
+        "trusted": true,
+        "isComposing": null,
+        "key": null,
+        "code": null,
+        "data": "u306b"
+      },
+      {
+        "type": "beforeinput",
+        "inputType": "insertCompositionText",
+        "trusted": true,
+        "isComposing": true,
+        "key": null,
+        "code": null,
+        "data": "u306b"
+      },
+      {
+        "type": "input",
+        "inputType": "insertCompositionText",
+        "trusted": true,
+        "isComposing": true,
+        "key": null,
+        "code": null,
+        "data": "u306b"
+      }
+    ]
+  },
+  "original_log_sha256": "9f679b220aaf268bc57cab4470e084a29595a0e3547634c861999a9b0719d4a8",
+  "final_run": "run-1789895952577046620",
+  "source_unchanged": true,
+  "source_sha256": "32359f5bf23b4fb5a3f76beb11ee9c5a96ef50fb187e795b48d3d9917fa8f291",
+  "environment": {
+    "uid": 1001,
+    "python": "3.12.3",
+    "architecture": "aarch64",
+    "distribution": {
+      "NAME": "Ubuntu",
+      "ID": "ubuntu",
+      "PRETTY_NAME": "Ubuntu 24.04.4 LTS",
+      "VERSION_ID": "24.04",
+      "VERSION": "24.04.4 LTS (Noble Numbat)",
+      "VERSION_CODENAME": "noble",
+      "ID_LIKE": "debian",
+      "HOME_URL": "https://www.ubuntu.com/",
+      "SUPPORT_URL": "https://help.ubuntu.com/",
+      "BUG_REPORT_URL": "https://bugs.launchpad.net/ubuntu/",
+      "PRIVACY_POLICY_URL": "https://www.ubuntu.com/legal/terms-and-policies/privacy-policy",
+      "UBUNTU_CODENAME": "noble",
+      "LOGO": "ubuntu-logo"
+    },
+    "packages": [
+      "at-spi2-core\t2.52.0-1build1",
+      "gir1.2-gtk-4.0:arm64\t4.14.5+ds-0ubuntu0.10",
+      "python3-gi\t3.48.2-1",
+      "python3-pyqt5\t5.15.10+dfsg-1build6",
+      "xfce4-session\t4.18.3-1build2",
+      "xfwm4\t4.18.0-1build3",
+      "xvfb\t2:21.1.12-1ubuntu1.6"
+    ],
+    "browser": {
+      "executable": "/workspace/silo-desktop-research/browsers/chromium-1243/chrome-linux-arm64/chrome",
+      "version": "Google Chrome for Testing 153.0.8010.12"
+    }
+  },
+  "suite": {
+    "status": "passed",
+    "returncode": 0,
+    "seconds": 19.983,
+    "cleanup": {
+      "tagged_processes_found": 0,
+      "survivors": []
+    }
+  },
+  "final_cases": [
+    {
+      "case": "native-ime-precondition",
+      "passed": true,
+      "details": {
+        "read": {
+          "ok": true,
+          "operation_id": "da00471c1271473c8a772d65c66b926b",
+          "elapsed_ms": 114,
+          "effect": "none",
+          "text": "u306bA👩🏽‍💻B EC",
+          "characters": 14,
+          "truncated": false,
+          "caret_offset": 5,
+          "selections": [],
+          "offset_units": "Unicode code points",
+          "provider_offset_units": "UTF-16 code units",
+          "plain_text_verification_supported": true,
+          "text_representation": "html_value",
+          "composition": {
+            "known": true,
+            "active": true
+          }
+        },
+        "oracle": {
+          "oracle_document": 1,
+          "oracle_sequence": 85,
+          "oracle_barrier": 1,
+          "active": "text",
+          "frames": 0,
+          "text": "u306bA👩🏽‍💻B EC",
+          "single": "",
+          "selection": [
+            5,
+            5
+          ],
+          "events": [
+            {
+              "type": "select",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": null,
+              "key": null,
+              "code": null,
+              "data": null
+            },
+            {
+              "type": "keydown",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": false,
+              "key": "Backspace",
+              "code": "Backspace",
+              "data": null
+            },
+            {
+              "type": "beforeinput",
+              "inputType": "deleteContentBackward",
+              "trusted": true,
+              "isComposing": false,
+              "key": null,
+              "code": null,
+              "data": null
+            },
+            {
+              "type": "input",
+              "inputType": "deleteContentBackward",
+              "trusted": true,
+              "isComposing": false,
+              "key": null,
+              "code": null,
+              "data": null
+            },
+            {
+              "type": "keyup",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": false,
+              "key": "Backspace",
+              "code": "Backspace",
+              "data": null
+            },
+            {
+              "type": "blur",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": null,
+              "key": null,
+              "code": null,
+              "data": null
+            },
+            {
+              "type": "focus",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": null,
+              "key": null,
+              "code": null,
+              "data": null
+            },
+            {
+              "type": "keydown",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": false,
+              "key": "Control",
+              "code": "ControlLeft",
+              "data": null
+            },
+            {
+              "type": "keydown",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": false,
+              "key": "Shift",
+              "code": "ShiftLeft",
+              "data": null
+            },
+            {
+              "type": "keydown",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": false,
+              "key": "Process",
+              "code": "KeyU",
+              "data": null
+            },
+            {
+              "type": "compositionstart",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": null,
+              "key": null,
+              "code": null,
+              "data": ""
+            },
+            {
+              "type": "compositionupdate",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": null,
+              "key": null,
+              "code": null,
+              "data": "u"
+            },
+            {
+              "type": "beforeinput",
+              "inputType": "insertCompositionText",
+              "trusted": true,
+              "isComposing": true,
+              "key": null,
+              "code": null,
+              "data": "u"
+            },
+            {
+              "type": "input",
+              "inputType": "insertCompositionText",
+              "trusted": true,
+              "isComposing": true,
+              "key": null,
+              "code": null,
+              "data": "u"
+            },
+            {
+              "type": "keydown",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": true,
+              "key": "Process",
+              "code": "Digit3",
+              "data": null
+            },
+            {
+              "type": "compositionupdate",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": null,
+              "key": null,
+              "code": null,
+              "data": "u3"
+            },
+            {
+              "type": "beforeinput",
+              "inputType": "insertCompositionText",
+              "trusted": true,
+              "isComposing": true,
+              "key": null,
+              "code": null,
+              "data": "u3"
+            },
+            {
+              "type": "input",
+              "inputType": "insertCompositionText",
+              "trusted": true,
+              "isComposing": true,
+              "key": null,
+              "code": null,
+              "data": "u3"
+            },
+            {
+              "type": "keydown",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": true,
+              "key": "Process",
+              "code": "Digit0",
+              "data": null
+            },
+            {
+              "type": "compositionupdate",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": null,
+              "key": null,
+              "code": null,
+              "data": "u30"
+            },
+            {
+              "type": "beforeinput",
+              "inputType": "insertCompositionText",
+              "trusted": true,
+              "isComposing": true,
+              "key": null,
+              "code": null,
+              "data": "u30"
+            },
+            {
+              "type": "input",
+              "inputType": "insertCompositionText",
+              "trusted": true,
+              "isComposing": true,
+              "key": null,
+              "code": null,
+              "data": "u30"
+            },
+            {
+              "type": "keydown",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": true,
+              "key": "Process",
+              "code": "Digit6",
+              "data": null
+            },
+            {
+              "type": "compositionupdate",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": null,
+              "key": null,
+              "code": null,
+              "data": "u306"
+            },
+            {
+              "type": "beforeinput",
+              "inputType": "insertCompositionText",
+              "trusted": true,
+              "isComposing": true,
+              "key": null,
+              "code": null,
+              "data": "u306"
+            },
+            {
+              "type": "input",
+              "inputType": "insertCompositionText",
+              "trusted": true,
+              "isComposing": true,
+              "key": null,
+              "code": null,
+              "data": "u306"
+            },
+            {
+              "type": "keydown",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": true,
+              "key": "Process",
+              "code": "KeyB",
+              "data": null
+            },
+            {
+              "type": "compositionupdate",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": null,
+              "key": null,
+              "code": null,
+              "data": "u306b"
+            },
+            {
+              "type": "beforeinput",
+              "inputType": "insertCompositionText",
+              "trusted": true,
+              "isComposing": true,
+              "key": null,
+              "code": null,
+              "data": "u306b"
+            },
+            {
+              "type": "input",
+              "inputType": "insertCompositionText",
+              "trusted": true,
+              "isComposing": true,
+              "key": null,
+              "code": null,
+              "data": "u306b"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "case": "desktop_type-IME_COMPOSITION_ACTIVE",
+      "passed": true,
+      "details": {
+        "ok": false,
+        "code": "IME_COMPOSITION_ACTIVE",
+        "message": "Composition is active or its completion is uncertain; no automatic cancellation.",
+        "effect": "none",
+        "details": {
+          "clipboard_may_have_changed": false
+        },
+        "operation_id": "f250a6efdf4f4632b1a55f133c747e2d",
+        "elapsed_ms": 136
+      }
+    },
+    {
+      "case": "preedit-preserved-after-refusal",
+      "passed": true,
+      "details": {
+        "before_read": {
+          "ok": true,
+          "operation_id": "da00471c1271473c8a772d65c66b926b",
+          "elapsed_ms": 114,
+          "effect": "none",
+          "text": "u306bA👩🏽‍💻B EC",
+          "characters": 14,
+          "truncated": false,
+          "caret_offset": 5,
+          "selections": [],
+          "offset_units": "Unicode code points",
+          "provider_offset_units": "UTF-16 code units",
+          "plain_text_verification_supported": true,
+          "text_representation": "html_value",
+          "composition": {
+            "known": true,
+            "active": true
+          }
+        },
+        "after_read": {
+          "ok": true,
+          "operation_id": "9ead4f0bb1e5458ea4adfd560baf7760",
+          "elapsed_ms": 113,
+          "effect": "none",
+          "text": "u306bA👩🏽‍💻B EC",
+          "characters": 14,
+          "truncated": false,
+          "caret_offset": 5,
+          "selections": [],
+          "offset_units": "Unicode code points",
+          "provider_offset_units": "UTF-16 code units",
+          "plain_text_verification_supported": true,
+          "text_representation": "html_value",
+          "composition": {
+            "known": true,
+            "active": true
+          }
+        },
+        "before_oracle": {
+          "oracle_document": 1,
+          "oracle_sequence": 85,
+          "oracle_barrier": 1,
+          "active": "text",
+          "frames": 0,
+          "text": "u306bA👩🏽‍💻B EC",
+          "single": "",
+          "selection": [
+            5,
+            5
+          ],
+          "events": [
+            {
+              "type": "select",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": null,
+              "key": null,
+              "code": null,
+              "data": null
+            },
+            {
+              "type": "keydown",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": false,
+              "key": "Backspace",
+              "code": "Backspace",
+              "data": null
+            },
+            {
+              "type": "beforeinput",
+              "inputType": "deleteContentBackward",
+              "trusted": true,
+              "isComposing": false,
+              "key": null,
+              "code": null,
+              "data": null
+            },
+            {
+              "type": "input",
+              "inputType": "deleteContentBackward",
+              "trusted": true,
+              "isComposing": false,
+              "key": null,
+              "code": null,
+              "data": null
+            },
+            {
+              "type": "keyup",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": false,
+              "key": "Backspace",
+              "code": "Backspace",
+              "data": null
+            },
+            {
+              "type": "blur",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": null,
+              "key": null,
+              "code": null,
+              "data": null
+            },
+            {
+              "type": "focus",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": null,
+              "key": null,
+              "code": null,
+              "data": null
+            },
+            {
+              "type": "keydown",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": false,
+              "key": "Control",
+              "code": "ControlLeft",
+              "data": null
+            },
+            {
+              "type": "keydown",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": false,
+              "key": "Shift",
+              "code": "ShiftLeft",
+              "data": null
+            },
+            {
+              "type": "keydown",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": false,
+              "key": "Process",
+              "code": "KeyU",
+              "data": null
+            },
+            {
+              "type": "compositionstart",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": null,
+              "key": null,
+              "code": null,
+              "data": ""
+            },
+            {
+              "type": "compositionupdate",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": null,
+              "key": null,
+              "code": null,
+              "data": "u"
+            },
+            {
+              "type": "beforeinput",
+              "inputType": "insertCompositionText",
+              "trusted": true,
+              "isComposing": true,
+              "key": null,
+              "code": null,
+              "data": "u"
+            },
+            {
+              "type": "input",
+              "inputType": "insertCompositionText",
+              "trusted": true,
+              "isComposing": true,
+              "key": null,
+              "code": null,
+              "data": "u"
+            },
+            {
+              "type": "keydown",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": true,
+              "key": "Process",
+              "code": "Digit3",
+              "data": null
+            },
+            {
+              "type": "compositionupdate",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": null,
+              "key": null,
+              "code": null,
+              "data": "u3"
+            },
+            {
+              "type": "beforeinput",
+              "inputType": "insertCompositionText",
+              "trusted": true,
+              "isComposing": true,
+              "key": null,
+              "code": null,
+              "data": "u3"
+            },
+            {
+              "type": "input",
+              "inputType": "insertCompositionText",
+              "trusted": true,
+              "isComposing": true,
+              "key": null,
+              "code": null,
+              "data": "u3"
+            },
+            {
+              "type": "keydown",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": true,
+              "key": "Process",
+              "code": "Digit0",
+              "data": null
+            },
+            {
+              "type": "compositionupdate",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": null,
+              "key": null,
+              "code": null,
+              "data": "u30"
+            },
+            {
+              "type": "beforeinput",
+              "inputType": "insertCompositionText",
+              "trusted": true,
+              "isComposing": true,
+              "key": null,
+              "code": null,
+              "data": "u30"
+            },
+            {
+              "type": "input",
+              "inputType": "insertCompositionText",
+              "trusted": true,
+              "isComposing": true,
+              "key": null,
+              "code": null,
+              "data": "u30"
+            },
+            {
+              "type": "keydown",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": true,
+              "key": "Process",
+              "code": "Digit6",
+              "data": null
+            },
+            {
+              "type": "compositionupdate",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": null,
+              "key": null,
+              "code": null,
+              "data": "u306"
+            },
+            {
+              "type": "beforeinput",
+              "inputType": "insertCompositionText",
+              "trusted": true,
+              "isComposing": true,
+              "key": null,
+              "code": null,
+              "data": "u306"
+            },
+            {
+              "type": "input",
+              "inputType": "insertCompositionText",
+              "trusted": true,
+              "isComposing": true,
+              "key": null,
+              "code": null,
+              "data": "u306"
+            },
+            {
+              "type": "keydown",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": true,
+              "key": "Process",
+              "code": "KeyB",
+              "data": null
+            },
+            {
+              "type": "compositionupdate",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": null,
+              "key": null,
+              "code": null,
+              "data": "u306b"
+            },
+            {
+              "type": "beforeinput",
+              "inputType": "insertCompositionText",
+              "trusted": true,
+              "isComposing": true,
+              "key": null,
+              "code": null,
+              "data": "u306b"
+            },
+            {
+              "type": "input",
+              "inputType": "insertCompositionText",
+              "trusted": true,
+              "isComposing": true,
+              "key": null,
+              "code": null,
+              "data": "u306b"
+            }
+          ]
+        },
+        "after_oracle": {
+          "oracle_document": 1,
+          "oracle_sequence": 86,
+          "oracle_barrier": 2,
+          "active": "text",
+          "frames": 0,
+          "text": "u306bA👩🏽‍💻B EC",
+          "single": "",
+          "selection": [
+            5,
+            5
+          ],
+          "events": [
+            {
+              "type": "select",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": null,
+              "key": null,
+              "code": null,
+              "data": null
+            },
+            {
+              "type": "keydown",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": false,
+              "key": "Backspace",
+              "code": "Backspace",
+              "data": null
+            },
+            {
+              "type": "beforeinput",
+              "inputType": "deleteContentBackward",
+              "trusted": true,
+              "isComposing": false,
+              "key": null,
+              "code": null,
+              "data": null
+            },
+            {
+              "type": "input",
+              "inputType": "deleteContentBackward",
+              "trusted": true,
+              "isComposing": false,
+              "key": null,
+              "code": null,
+              "data": null
+            },
+            {
+              "type": "keyup",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": false,
+              "key": "Backspace",
+              "code": "Backspace",
+              "data": null
+            },
+            {
+              "type": "blur",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": null,
+              "key": null,
+              "code": null,
+              "data": null
+            },
+            {
+              "type": "focus",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": null,
+              "key": null,
+              "code": null,
+              "data": null
+            },
+            {
+              "type": "keydown",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": false,
+              "key": "Control",
+              "code": "ControlLeft",
+              "data": null
+            },
+            {
+              "type": "keydown",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": false,
+              "key": "Shift",
+              "code": "ShiftLeft",
+              "data": null
+            },
+            {
+              "type": "keydown",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": false,
+              "key": "Process",
+              "code": "KeyU",
+              "data": null
+            },
+            {
+              "type": "compositionstart",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": null,
+              "key": null,
+              "code": null,
+              "data": ""
+            },
+            {
+              "type": "compositionupdate",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": null,
+              "key": null,
+              "code": null,
+              "data": "u"
+            },
+            {
+              "type": "beforeinput",
+              "inputType": "insertCompositionText",
+              "trusted": true,
+              "isComposing": true,
+              "key": null,
+              "code": null,
+              "data": "u"
+            },
+            {
+              "type": "input",
+              "inputType": "insertCompositionText",
+              "trusted": true,
+              "isComposing": true,
+              "key": null,
+              "code": null,
+              "data": "u"
+            },
+            {
+              "type": "keydown",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": true,
+              "key": "Process",
+              "code": "Digit3",
+              "data": null
+            },
+            {
+              "type": "compositionupdate",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": null,
+              "key": null,
+              "code": null,
+              "data": "u3"
+            },
+            {
+              "type": "beforeinput",
+              "inputType": "insertCompositionText",
+              "trusted": true,
+              "isComposing": true,
+              "key": null,
+              "code": null,
+              "data": "u3"
+            },
+            {
+              "type": "input",
+              "inputType": "insertCompositionText",
+              "trusted": true,
+              "isComposing": true,
+              "key": null,
+              "code": null,
+              "data": "u3"
+            },
+            {
+              "type": "keydown",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": true,
+              "key": "Process",
+              "code": "Digit0",
+              "data": null
+            },
+            {
+              "type": "compositionupdate",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": null,
+              "key": null,
+              "code": null,
+              "data": "u30"
+            },
+            {
+              "type": "beforeinput",
+              "inputType": "insertCompositionText",
+              "trusted": true,
+              "isComposing": true,
+              "key": null,
+              "code": null,
+              "data": "u30"
+            },
+            {
+              "type": "input",
+              "inputType": "insertCompositionText",
+              "trusted": true,
+              "isComposing": true,
+              "key": null,
+              "code": null,
+              "data": "u30"
+            },
+            {
+              "type": "keydown",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": true,
+              "key": "Process",
+              "code": "Digit6",
+              "data": null
+            },
+            {
+              "type": "compositionupdate",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": null,
+              "key": null,
+              "code": null,
+              "data": "u306"
+            },
+            {
+              "type": "beforeinput",
+              "inputType": "insertCompositionText",
+              "trusted": true,
+              "isComposing": true,
+              "key": null,
+              "code": null,
+              "data": "u306"
+            },
+            {
+              "type": "input",
+              "inputType": "insertCompositionText",
+              "trusted": true,
+              "isComposing": true,
+              "key": null,
+              "code": null,
+              "data": "u306"
+            },
+            {
+              "type": "keydown",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": true,
+              "key": "Process",
+              "code": "KeyB",
+              "data": null
+            },
+            {
+              "type": "compositionupdate",
+              "inputType": null,
+              "trusted": true,
+              "isComposing": null,
+              "key": null,
+              "code": null,
+              "data": "u306b"
+            },
+            {
+              "type": "beforeinput",
+              "inputType": "insertCompositionText",
+              "trusted": true,
+              "isComposing": true,
+              "key": null,
+              "code": null,
+              "data": "u306b"
+            },
+            {
+              "type": "input",
+              "inputType": "insertCompositionText",
+              "trusted": true,
+              "isComposing": true,
+              "key": null,
+              "code": null,
+              "data": "u306b"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "final_case_count": 39,
+  "final_all_passed": true,
+  "tested_files": {
+    "tests/live_owned_browser.py": "f95b4520605340dd359d7b0a3c9a73cd4e1bd943a832a3c9c8be81f683d0e741",
+    "tests/ordered_oracle.py": "f2399ec163ce4deb4cf1d8c2b5b9a3d8baa4a17906b04393f9e29c7045ffa492"
+  }
+}
