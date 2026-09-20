@@ -137,6 +137,10 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
                 # uses the normal foreground path, never a replayed mutation.
                 checkpoint()
         route = environment['LUDA_INPUT_ROUTE']
+        if getattr(self, '_input_window', None) is not None and self._input_route != route:
+            raise DesktopError('INPUT_STATE_CHANGED','A composed action cannot switch input devices.')
+        if route == 'shared':
+            self.retire_private_input()
         previous = (getattr(self, '_input_window', None), getattr(self, '_input_route', None))
         self._input_window, self._input_route = target, route
         try:
@@ -144,6 +148,13 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
                 yield route
         finally:
             self._input_window, self._input_route = previous
+
+    def retire_private_input(self):
+        """Return to the ordinary device hierarchy before compatibility input."""
+        keyboard_recovery_checkpoint()
+        owner = getattr(self, 'private_input', None)
+        if owner is not None:
+            owner.close()
 
     def _activate_shared(self, window_id):
         """Foreground compatibility route, selected before application input."""

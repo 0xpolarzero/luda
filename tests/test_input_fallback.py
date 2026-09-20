@@ -39,6 +39,7 @@ class InputFallback(unittest.TestCase):
             with desktop.input_scope({'window_id':'window'}) as route:
                 self.assertEqual(route, 'shared')
                 self.assertNotIn('LUDA_PRIVATE_INPUT', subprocess_environment())
+        desktop.private_input.close.assert_called_once()
 
     def test_cancellation_and_session_change_never_choose_fallback(self):
         for code in ('CANCELLED', 'TIMEOUT', 'SESSION_CHANGED'):

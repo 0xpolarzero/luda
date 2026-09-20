@@ -11,7 +11,7 @@ import sys
 import time
 from urllib.parse import urlsplit
 import uuid
-from .common import DesktopError, checkpoint, mark_effect, process_identity, subprocess_environment
+from .common import DesktopError, checkpoint, mark_effect, process_identity
 from .timing import elapsed_time
 
 MESSAGES = {
@@ -174,8 +174,12 @@ class OwnedBrowser:
         except ValueError:
             raise DesktopError('BROWSER_SELECTION_CHANGED','Managed browser selection is unavailable or changed; review provisioning before opening it.',effect='none') from None
         self.topology=self.desktop.display().topology()
-        with self.desktop.input_scope():
-            input_environment=dict(subprocess_environment() or self.desktop.environment)
+        # CDP addresses this page directly; attaching an extra master keyboard
+        # can change Chromium's native device selection even without injection.
+        self.desktop.retire_private_input()
+        input_environment=dict(self.desktop.environment)
+        input_environment.pop('LUDA_PRIVATE_INPUT',None)
+        input_environment.pop('LUDA_INPUT_ROUTE',None)
         proof_read, proof_write = os.pipe2(os.O_CLOEXEC | os.O_NONBLOCK)
         self.cleanup_proof = proof_read
         try:
