@@ -1,0 +1,7 @@
+# Activation readback identity
+
+`Desktop.activate` formerly verified only that the active numeric XID matched the one passed to `xdotool`. An X server can reuse an XID after its window disappears. That made an active replacement window sufficient to report the original cached window verified. Activation now reacquires the full original window handle during readback, including its observed generation. A missing/replaced generation returns stale-target uncertainty, and any post-dispatch lookup failure also retains uncertainty.
+
+`tests/test_activation_identity.py` demonstrates the reused active XID, successful unchanged identity, and failed post-dispatch lookup. The baseline failed both rejection cases; all three pass after the fix. The complete unit suite passed 511 tests on this change.
+
+This is a verification fix, not an atomic targeting guarantee. The command still passes a numeric XID to `xdotool`; ordinary window-manager commands have a validation-to-dispatch interval. A native helper could reduce that interval by checking the generation under `XGrabServer` immediately before sending an EWMH request, but the window manager handles that message after the grab is released. The standard asynchronous EWMH protocol does not carry Luda's generation token or guarantee the same identity will exist when the manager acts. Do not advertise such a helper as fully atomic or substitute destructive client termination for a normal close dialog.

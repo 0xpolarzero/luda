@@ -234,8 +234,15 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         run(['xdotool','windowactivate',str(w['xid'])],effect='uncertain')
         deadline = elapsed_time()+1.5
         while elapsed_time()<deadline:
-            if self.active()==w['xid']:
-                return {'effect':'verified','window_id':window_id,'verification':'active window matches'}
+            try:
+                current = self.target_window(window_id, False)
+            except DesktopError as exc:
+                # The numeric XID command was already sent; failed readback
+                # cannot establish that nothing happened.
+                exc.effect = 'uncertain'
+                raise
+            if current['active']:
+                return {'effect':'verified','window_id':window_id,'verification':'active window and observed generation match'}
             time.sleep(.04)
         raise DesktopError('ACTIVATION_FAILED','Window did not become active.',effect='uncertain')
 
