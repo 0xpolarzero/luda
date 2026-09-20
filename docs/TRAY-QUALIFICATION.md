@@ -77,3 +77,7 @@ No runtime extension was needed for this bounded workflow. The catalog remains
 release-unqualified; successful counter activation must not be presented as
 complete semantic tray support. A future owner-aware tray API needs a separate
 identity design and review rather than relaxing focus or popup ownership checks.
+
+The optional `tray` qualification-matrix entry runs the same private-session
+launcher and checks for `xfce4-panel` before launch. Registration does not
+automatically qualify the requirement.

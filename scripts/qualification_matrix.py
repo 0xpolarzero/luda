@@ -27,6 +27,7 @@ def suite(script, ids, *, wm=True, browser=None, electron=None, firefox=None, mo
 
 
 SUITES = {
+    'tray': suite('live_tray.py', 'MENU-07', wm=False, artifacts=('tray',), gaps=('Observed private XFCE tray screenshot workflow; semantic icon/menu ownership unavailable',)),
     'undo': suite('live_undo.py', 'EDIT-06', artifacts=('undo','files')),
     'rtl': suite('live_rtl.py', 'DATA-10', wm=False, artifacts=('rtl',)),
     'thunar-drag': suite('live_thunar_drag.py', 'PTR-09', artifacts=('thunar-drag',), gaps=('Thunar 4.18 native right-drag menu with screenshot-derived rows; requires thunar, no modifier or cross-filesystem qualification',)),
@@ -144,6 +145,8 @@ def dependencies(spec, executable, electron=None, firefox=None):
     commands = ['xvfb-run', 'Xvfb', 'dbus-run-session', 'xfwm4', 'wmctrl', 'xdotool', 'scrot', 'xclip', 'xprop', 'gdbus']
     if spec['script'] in ('live_accessibility_lifecycle.py', 'live_mcp_reconnect.py'):
         commands.append('xfce4-session')
+    if spec['script'] == 'live_tray.py':
+        commands.append('xfce4-panel')
     checks = {command: shutil.which(command) is not None for command in commands}
     imports = {'Gtk': "import gi;gi.require_version('Gtk','3.0');from gi.repository import Gtk",
                'Gtk4': "import gi;gi.require_version('Gtk','4.0');from gi.repository import Gtk",
