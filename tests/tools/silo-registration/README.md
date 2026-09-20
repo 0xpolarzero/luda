@@ -3,9 +3,13 @@
 The `Silo native registration` workflow checks out the exact upstream Silo commit
 required by `integrations/silo/apply.py`, applies every ordered patch and executes
 the actual resulting sources. It runs the three frontend test files, full
-TypeScript checking and `codex_desktop::tests` including the five normally ignored
+TypeScript checking, the exact native browser-action/status test, and
+`codex_desktop::tests` including the five normally ignored
 real Codex CLI cases. Missing CLI, version mismatch, native skipped cases or a
-missing expected real-CLI test fail the job. The pinned CLI comes from the existing
+missing expected real-CLI test fail the job. Completion requires34 frontend tests
+in three files, one exact browser-action native test and the existing ten native
+registration tests. The separate exact filter avoids silently missing the new
+`desktop::tests` case or unnecessarily rerunning the registration group. The pinned CLI comes from the existing
 `tests/tools/codex-cli/package-lock.json`; it uses temporary profiles without model
 calls or sign-in. There are no copied native module stubs.
 

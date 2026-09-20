@@ -19,6 +19,7 @@ def commands(checkout):
     return [
         ('frontend', ['node_modules/.bin/vitest', 'run', 'src/desktop/codex-desktop-registration.test.tsx', 'src/desktop/linux-desktop-native.test.tsx', 'src/desktop/linux-desktop-viewer.test.tsx', '--maxWorkers=2']),
         ('typescript', ['node_modules/.bin/tsc', '-b', '--pretty', 'false']),
+        ('browser-action-native', ['cargo', 'test', '--manifest-path', str(checkout/'app/SiloUI/src-tauri/Cargo.toml'), '--locked', 'desktop::tests::browser_actions_are_fixed_and_status_is_strict', '--', '--exact', '--test-threads=1']),
         ('native', ['cargo', 'test', '--manifest-path', str(checkout/'app/SiloUI/src-tauri/Cargo.toml'), '--locked', 'codex_desktop::tests', '--', '--include-ignored', '--test-threads=1']),
     ]
 
@@ -31,6 +32,16 @@ def native_complete(text):
                      'actual_cli_reviewed_update_preserves_other_vm_and_records_uncertainty',
                      'actual_cli_failed_removal_is_not_replayed',
                      'actual_cli_two_vm_configuration_and_idempotency'))
+
+
+def browser_action_complete(text):
+    return bool(re.search(r'test desktop::tests::browser_actions_are_fixed_and_status_is_strict \.\.\. ok',text)
+        and re.search(r'test result: ok\. 1 passed; 0 failed; 0 ignored;',text))
+
+
+def frontend_complete(text):
+    text=re.sub(r'\x1b\[[0-9;]*m','',text)
+    return bool(re.search(r'Test Files\s+3 passed \(3\)',text) and re.search(r'Tests\s+34 passed \(34\)',text))
 
 
 def main():
@@ -56,6 +67,10 @@ def main():
             report['steps'].append({'name': name, 'argv': argv, 'exit_code': result.returncode})
             if result.returncode:
                 raise ValueError('Step failed: '+name)
+            if name == 'browser-action-native' and not browser_action_complete((output/'browser-action-native.log').read_text()):
+                raise ValueError('Expected the exact native browser action test, without skips')
+            if name == 'frontend' and not frontend_complete((output/'frontend.log').read_text()):
+                raise ValueError('Expected all 34 frontend tests in three files, without skips')
             if name == 'native' and not native_complete((output/'native.log').read_text()):
                 raise ValueError('Expected all ten native cases, including five actual CLI cases, without skips')
         report['passed'] = True
