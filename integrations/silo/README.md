@@ -192,3 +192,19 @@ not qualify application packaging. Evidence lives in
 `artifacts/silo-native-registration/` in the main checkout, including earlier
 harness failures (incorrect synthetic build variable names and repeated fixture
 directory creation), corrected logs and exact patch hashes.
+
+### Registration transport preservation fix (fourth patch)
+
+`0004-preserve-registered-transport.patch` fixes a lifecycle ordering bug in the
+third patch: preparing transport directly at its persistent location could replace
+SSH config/host pins before a renamed VM's bundle conflict was refused. The fixed
+path prepares a disposable candidate, rendering its known-hosts reference for the
+final location. It compares both files against existing transport and validates
+the bundle before publishing a first transport directory. Registration never
+replaces existing transport files, even when later CLI verification refuses.
+Changed aliases, pins, manually edited config and bundle conflicts preserve the
+old bytes. Candidate preparation still uses the existing editor identity/key
+provisioning mechanism; this is not a claim of zero side effects across Silo's
+identity store. Six native tests passed including the actual CLI test and the
+new regression for all four preservation cases. Apply all four patches in order;
+the first three remain byte-identical to their previously tested versions.

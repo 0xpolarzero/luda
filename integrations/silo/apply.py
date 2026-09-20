@@ -3,25 +3,37 @@
 import argparse
 from pathlib import Path
 import subprocess
+import os
+import tempfile
 
 BASE = '777e1090d5e998059758160912138228ba98378d'
 ASSETS = Path(__file__).resolve().parent
 
 
 def apply(checkout, mutate=False):
-    def git(*args):
-        return subprocess.run(['git', '-C', str(checkout), *args], capture_output=True, text=True)
+    def git(*args, **kwargs):
+        return subprocess.run(['git', '-C', str(checkout), *args], capture_output=True, text=True, **kwargs)
     head = git('rev-parse', 'HEAD')
     if head.returncode or head.stdout.strip() != BASE:
         raise ValueError('Require the exact pinned Silo base commit.')
     if git('diff', '--quiet', 'HEAD', '--').returncode:
         raise ValueError('Require a checkout with no tracked changes.')
-    patches = [str(ASSETS / name) for name in ('0001-guest-onboarding.patch', '0002-desktop-onboarding.patch', '0003-host-codex-registration.patch')]
-    if git('apply', '--check', *patches).returncode:
-        raise ValueError('Patch check failed; preserve existing files and inspect the checkout.')
-    if mutate and git('apply', *patches).returncode:
-        raise ValueError('Patch application failed; inspect the checkout before retrying.')
-    return 'Applied all three patches.' if mutate else 'All three patches apply cleanly; no files changed.'
+    patches = [str(ASSETS / name) for name in ('0001-guest-onboarding.patch', '0002-desktop-onboarding.patch', '0003-host-codex-registration.patch', '0004-preserve-registered-transport.patch')]
+    # An ordered patch can modify a file added by an earlier patch. Build the
+    # complete result in an isolated index before touching the user's checkout.
+    with tempfile.TemporaryDirectory(prefix='luda-silo-index-') as temporary:
+        env = dict(os.environ, GIT_INDEX_FILE=str(Path(temporary) / 'index'))
+        if git('read-tree', 'HEAD', env=env).returncode:
+            raise ValueError('Unable to prepare isolated patch check.')
+        for patch in patches:
+            if git('apply', '--cached', patch, env=env).returncode:
+                raise ValueError('Patch check failed; preserve existing files and inspect the checkout.')
+        combined = git('diff', '--cached', '--binary', 'HEAD', env=env)
+        if combined.returncode or git('apply', '--check', '-', input=combined.stdout).returncode:
+            raise ValueError('Patch check failed; preserve existing files and inspect the checkout.')
+        if mutate and git('apply', '-', input=combined.stdout).returncode:
+            raise ValueError('Patch application failed; inspect the checkout before retrying.')
+    return 'Applied all four patches.' if mutate else 'All four patches apply cleanly; no files changed.'
 
 
 def main():

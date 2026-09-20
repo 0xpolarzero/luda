@@ -311,3 +311,37 @@ class SiloIntegrationTests(unittest.TestCase):
         subprocess.run(['git', '-C', str(checkout), 'apply', '--include=' + target,
                         str(ASSETS / '0003-host-codex-registration.patch')], check=True)
         self.assertEqual((checkout / target).read_bytes(), (ROOT / 'skills/luda/SKILL.md').read_bytes())
+
+    def test_ordered_patch_check_isolated_from_checkout_and_index(self):
+        spec = importlib.util.spec_from_file_location('silo_apply', ASSETS / 'apply.py')
+        module = importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+        checkout = self.state / 'ordered';checkout.mkdir()
+        def git(*args):
+            return subprocess.run(['git', '-C', str(checkout), *args], check=True, capture_output=True, text=True).stdout
+        git('init', '-q');git('-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', 'commit', '--allow-empty', '-qm', 'base')
+        assets = self.state / 'patches';assets.mkdir()
+        names = ('0001-guest-onboarding.patch', '0002-desktop-onboarding.patch',
+                 '0003-host-codex-registration.patch', '0004-preserve-registered-transport.patch')
+        previous = ''
+        for index, name in enumerate(names):
+            content = previous + str(index) + '\n'
+            (checkout / 'new.txt').write_text(content)
+            git('add', 'new.txt')
+            (assets / name).write_text(git('diff', '--cached', '--binary'))
+            git('-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', 'commit', '-qm', 'patch')
+            previous = content
+        git('reset', '--hard', 'HEAD~4')
+        before = git('write-tree')
+        with patch.object(module, 'BASE', git('rev-parse', 'HEAD').strip()), patch.object(module, 'ASSETS', assets):
+            module.apply(checkout)
+            self.assertFalse((checkout / 'new.txt').exists())
+            self.assertEqual(git('write-tree'), before)
+            valid = (assets / names[-1]).read_text()
+            (assets / names[-1]).write_text('invalid patch')
+            with self.assertRaises(ValueError): module.apply(checkout, True)
+            self.assertFalse((checkout / 'new.txt').exists())
+            self.assertEqual(git('write-tree'), before)
+            (assets / names[-1]).write_text(valid)
+            module.apply(checkout, True)
+            self.assertEqual((checkout / 'new.txt').read_text(), previous)
+            self.assertEqual(git('write-tree'), before)
