@@ -7,6 +7,7 @@ recursive-include tests/evidence *.log *.gz *.png *.jsonl
 prune tests/tools/codex-cli/node_modules
 prune tests/fixtures/rich-editor/node_modules
 prune tests/fixtures/owned-rich-editor/node_modules
+prune tests/fixtures/owned-rich-hard-breaks/node_modules
 prune tests/fixtures/pm-selection/node_modules
 prune tests/fixtures/agent-rich-clipboard/node_modules
 

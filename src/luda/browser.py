@@ -28,7 +28,7 @@ MESSAGES = {
     'UNSUPPORTED_TEXT_BOUNDARY':'Browser-native input cannot split a grapheme (such as a joined emoji or combining sequence); choose complete boundaries. Offsets remain Unicode code points.',
     'TEXT_BOUNDARY_UNAVAILABLE':'Cannot verify native browser input boundaries; no input sent at this boundary.',
     'BROWSER_TIMEOUT':'Owned browser operation exceeded its deadline; inspect before retrying.',
-    'LINE_BREAK_SEMANTICS_REQUIRED':'This editor requires line_breaks=paragraph for LF; no input sent.',
+    'LINE_BREAK_SEMANTICS_REQUIRED':'Specify one supported line_breaks policy for LF (paragraph or explicitly declared hard_break); no input sent.',
     'FORMATTING_CHANGED':'Existing rich-text formatting changed after input; inspect before retrying.',
     'TEXT_REPRESENTATION_UNSUPPORTED':'This editor contains unsupported structure or marks; no exact text route is available.',
     'STALE_TARGET':'Browser document or field changed or expired; inspect again.',

@@ -1372,13 +1372,24 @@
     "DATA-07": {
       "implementation": "partial",
       "tests": [
-        "test_browser_rich.BrowserRichTests.test_prefix_marks_compare_independently_of_text_run_merging",
-        "test_browser_rich.BrowserRichTests.test_unsupported_structure_and_marks_are_not_flattened",
-        "test_browser_rich.BrowserRichTests.test_unsupported_pending_marks_refuse_before_a_new_document_can_be_created",
         "test_browser_rich.BrowserRichTests.test_missing_paragraph_policy_precedes_focus_and_input",
-        "test_browser_rich.BrowserRichTests.test_same_length_document_change_during_select_stops_before_replacement"
+        "test_browser_rich.BrowserRichTests.test_prefix_marks_compare_independently_of_text_run_merging",
+        "test_browser_rich.BrowserRichTests.test_same_length_document_change_during_select_stops_before_replacement",
+        "test_browser_rich.BrowserRichTests.test_unsupported_pending_marks_refuse_before_a_new_document_can_be_created",
+        "test_browser_rich.BrowserRichTests.test_unsupported_structure_and_marks_are_not_flattened",
+        "test_rich_hard_breaks.HardBreaks.test_breaks_and_paragraphs_have_distinct_layout_and_native_offsets",
+        "test_rich_hard_breaks.HardBreaks.test_hard_break_does_not_consume_paragraph_budget",
+        "test_rich_hard_breaks.HardBreaks.test_hard_break_requires_declared_capability_before_focus",
+        "test_rich_hard_breaks.HardBreaks.test_known_structural_node_overflow_refuses_before_focus_and_clipboard",
+        "test_rich_hard_breaks.HardBreaks.test_legacy_and_unsupported_mixed_nodes_refuse",
+        "test_rich_hard_breaks.HardBreaks.test_native_shift_enter_exact_hard_break_and_caret",
+        "test_rich_hard_breaks.HardBreaks.test_offline_fixture_sources_and_bridge_match_recorded_hashes",
+        "test_rich_hard_breaks.HardBreaks.test_read_boundary_metadata_is_prefix_bounded_without_hidden_model",
+        "test_rich_hard_breaks.HardBreaks.test_same_plaintext_different_structure_is_not_preserved",
+        "test_rich_hard_breaks.HardBreaks.test_separated_text_runs_count_toward_known_node_budget",
+        "test_rich_hard_breaks.HardBreaks.test_wrong_key_binding_same_lf_never_verifies_or_retries"
       ],
-      "limits": "Cooperating registered basic ProseMirror paragraphs only: original prefix marks survive text-run merging, unsupported nodes/marks/pending marks are refused, and LF requires explicit paragraph intent. Inserted formatting follows application behavior; these assertions do not support arbitrary contenteditable editors or arbitrary middle-range insertion."
+      "limits": "Cooperating registered basic ProseMirror paragraphs only: original prefix marks survive text-run merging, unsupported nodes/marks/pending marks are refused, and LF requires explicit paragraph intent. Inserted formatting follows application behavior; these assertions do not support arbitrary contenteditable editors or arbitrary middle-range insertion. Explicitly declared cooperating hard_break leaves have per-action structural/caret/mark verification; legacy and other mixed unsupported nodes refuse. Not generic rich-editor or arbitrary-schema support."
     },
     "WEB-03": {
       "implementation": "partial",

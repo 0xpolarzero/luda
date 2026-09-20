@@ -1,0 +1,19 @@
+{
+  "name": "luda-owned-rich-editor-fixture",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "build": "esbuild fixture.js --bundle --format=esm --minify --external:/bridge.mjs --outfile=editor.bundle.js"
+  },
+  "dependencies": {
+    "prosemirror-commands": "1.7.1",
+    "prosemirror-keymap": "1.2.3",
+    "prosemirror-model": "1.25.1",
+    "prosemirror-schema-basic": "1.2.4",
+    "prosemirror-state": "1.4.3",
+    "prosemirror-view": "1.39.2"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.5"
+  }
+}

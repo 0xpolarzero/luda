@@ -1,0 +1,14 @@
+[
+  {
+    "artifact": "luda-0.1.0-py3-none-any.whl",
+    "sha256": "bb76a8d234bb824c3e6d3463f251b498b14c5e9d82bce60208cb54bde288a840",
+    "bridge_sha256": "0cfa3ff8221193cea66b8a31dd7f2e16b37d9077f91f60fa91b7e5f5894edb34",
+    "verified": true
+  },
+  {
+    "artifact": "luda-0.1.0.tar.gz",
+    "sha256": "8a4054bd5ea0fc3ea0ec61d631236f58aeaf027b92243385504d333546048c12",
+    "bridge_sha256": "0cfa3ff8221193cea66b8a31dd7f2e16b37d9077f91f60fa91b7e5f5894edb34",
+    "verified": true
+  }
+]

@@ -22,7 +22,7 @@ The result verifies exact text and paragraph structure after each action. Append
 
 ## Supported model and limits
 
-Only `doc` → `paragraph` → `text`, without custom attributes, is supported. Existing and pending stored marks may be `strong` and `em` without attributes. Images, hard breaks, tables, links, custom nodes/attributes and other marks are refused before this route sends content. The basic schema may define other nodes; their presence in the actual document is what is refused. Existing formatting outside an insertion is compared exactly, without assuming adjacent text-run boundaries remain unchanged.
+Only `doc` → `paragraph` → `text`, without custom attributes, is supported. Existing and pending stored marks may be `strong` and `em` without attributes. This legacy paragraph declaration refuses images, hard breaks, tables, links, custom nodes/attributes and other marks before sending content. The separate hard-break declaration below narrowly extends the accepted model. The basic schema may define other nodes; their presence in the actual document is what is refused. Existing formatting outside an insertion is compared exactly, without assuming adjacent text-run boundaries remain unchanged.
 
 Each registered view has a fresh immutable registration identity. Unregister/re-register, node replacement or navigation invalidates old handles, including re-registering the same DOM root. Limits are 32 registered editors, 128 paragraphs, 4,096 visited nodes, 64,000 code points, bounded serialized models and at most 27 input segments/53 content actions per call. Unsupported selections and over-budget requests are refused before focus/content input. The shared owner/client deadlines still apply; partial changes can remain after interruption.
 
@@ -63,3 +63,42 @@ The final immutable runtime run `run-1789892551493165832` passed **46 assertions
 The ordinary HTML regression passed in 16.600 seconds (`run-1789892410375872515`); the native-rich regression passed in 23.481 seconds (`run-1789891876117597843`). The final full unit run executed 762 tests: 761 passed, with only the separately integrated Silo embedded-skill refresh pending. All 28 focused rich tests passed. Actual wheel/sdist builds contained byte-identical bridge assets and the new Python clipboard helper; the skill validator passed. These scoped local results do not automatically qualify the complete WEB/DATA catalog.
 
 Final rich-input receipts can include [payload-free partial progress](../../docs/RICH-PROGRESS.md): verified segments, one uncertain current segment and untouched remainder. These counts do not prove application save or authorize automatic replay; missing final receipts do not produce guessed progress.
+
+## Explicit hard breaks
+
+Applications that bind native Shift+Enter to an inline `hard_break` leaf may opt in:
+
+```js
+registerProseMirror(view, {paragraphs: 'enter', hard_breaks: 'shift-enter'});
+```
+
+This registers `basic-paragraphs-hard-breaks-v1`; legacy registrations remain
+paragraph-only. The module does not install the binding, change the schema, or
+dispatch model transactions. The application must actually supply that behavior.
+Only the existing paragraph/text model plus attribute-free `hard_break` leaves
+is accepted; strong/em marks remain the only supported formatting, including on
+breaks. Links, lists, images, tables, custom nodes/attributes and unsupported
+pending marks remain refused before input, even when mixed with supported content.
+
+`desktop_type(..., line_breaks="hard_break")` sends Shift+Enter between segments.
+Both native whole-field/end input and explicit clipboard range replacement
+support the policy. `line_breaks="paragraph"` still sends ordinary Enter.
+Consecutive/empty/trailing segments create exactly those declared boundaries;
+there is no automatic replacement of hard breaks by paragraphs or vice versa.
+
+The descriptor lists `supported_line_breaks`. Logical read text uses LF for both
+kinds, and `line_break_boundaries` reports their code-point offsets and actual
+kinds; model JSON retains the complete structure and marks. Boundary metadata is
+limited to the returned text prefix. Selection mapping uses public EditorView
+DOM APIs with UTF-16 text positions and size-one hard-break nodes. Every action
+verifies the exact structural sequence, caret and unaffected prefix/suffix marks.
+New formatting follows the app. A wrong Shift+Enter handler can mutate the app
+before mismatch detection: the result is uncertain and never retried.
+
+The original 128-paragraph, 64,000-code-point, 4,096-node and 27-segment budgets
+remain. Preflight counts mandatory paragraph/break/separated-text nodes;
+application-added formatting fragmentation can still exceed a readback budget
+after dispatch and cause an uncertain result. Composition, temporary lifetime,
+clipboard ownership and non-atomic focus limitations are unchanged.
+See [hard-break evidence](../../docs/OWNED-HARD-BREAKS.md); this is not a generic
+rich-editor integration or a promise that every schema supports Shift+Enter.

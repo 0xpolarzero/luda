@@ -1,0 +1,87 @@
+{
+  "final": "run-1789899789912478867",
+  "attempts": [
+    {
+      "run": "run-1789899337508083943",
+      "source_sha256": "201c80f0d615826e2d02899945d3a5fe83e89770b5ea4708048f0b0a8dc91654",
+      "source_unchanged": true,
+      "suites": [
+        {
+          "suite": "owned-hard-breaks",
+          "status": "failed",
+          "seconds": 0.602
+        }
+      ]
+    },
+    {
+      "run": "run-1789899347859858364",
+      "source_sha256": "0ca59e748ebe8c7c6e143a231dd41f853ece310ba02b2f89e9dc5491e6b8359d",
+      "source_unchanged": true,
+      "suites": [
+        {
+          "suite": "owned-hard-breaks",
+          "status": "failed",
+          "seconds": 2.772
+        }
+      ]
+    },
+    {
+      "run": "run-1789899380230596421",
+      "source_sha256": "cc324922ff5a0c532de633d98306a9af4328fbb510938db5e171318ee32a92eb",
+      "source_unchanged": true,
+      "suites": [
+        {
+          "suite": "owned-hard-breaks",
+          "status": "passed",
+          "seconds": 29.005
+        }
+      ]
+    },
+    {
+      "run": "run-1789899571413100054",
+      "source_sha256": "bcdf73027253f2fcb144aa2078ee2b883eb12db5be30844030c367efc7e1cc1f",
+      "source_unchanged": true,
+      "suites": [
+        {
+          "suite": "owned-hard-breaks",
+          "status": "passed",
+          "seconds": 33.276
+        }
+      ]
+    },
+    {
+      "run": "run-1789899789912478867",
+      "source_sha256": "c56c14f306c56fe475c7ef62240a60eff0064e9da38b26d4ec208e12d67b2e4a",
+      "source_unchanged": true,
+      "suites": [
+        {
+          "suite": "owned-hard-breaks",
+          "status": "passed",
+          "seconds": 32.826
+        },
+        {
+          "suite": "owned-rich",
+          "status": "passed",
+          "seconds": 24.405
+        },
+        {
+          "suite": "owned-rich-clipboard",
+          "status": "passed",
+          "seconds": 66.588
+        }
+      ]
+    }
+  ],
+  "tested_runtime_and_fixture_unchanged": [
+    "src/luda/_browser_rich.py",
+    "src/luda/_browser_worker.py",
+    "src/luda/browser.py",
+    "src/luda/desktop.py",
+    "src/luda/server.py",
+    "integrations/prosemirror/luda-prosemirror.mjs",
+    "tests/live_owned_hard_breaks.py",
+    "tests/fixtures/owned-rich-hard-breaks/fixture.js",
+    "tests/fixtures/owned-rich-hard-breaks/editor.bundle.js"
+  ],
+  "post_run_changes": "Documentation, focused unit assertions and evidence capture only."
+}

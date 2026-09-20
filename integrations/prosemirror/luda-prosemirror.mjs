@@ -6,24 +6,36 @@ const registry = Object.freeze({version: 1, list: () => [...registrations.values
 if (Object.hasOwn(window, '__ludaProseMirror')) throw new Error('Luda bridge already registered');
 Object.defineProperty(window, '__ludaProseMirror', {value: registry, configurable: false});
 
-export function registerProseMirror(view, {paragraphs} = {}) {
+export function registerProseMirror(view, {paragraphs, hard_breaks} = {}) {
+  if (hard_breaks !== undefined && hard_breaks !== 'shift-enter') throw new Error('Declare native Shift+Enter hard-break behavior');
+  const breaks = hard_breaks === 'shift-enter';
+  if (breaks && !(view?.state?.schema?.nodes?.hard_break?.isInline && view.state.schema.nodes.hard_break.isLeaf)) throw new Error('Hard-break schema node required');
   if (paragraphs !== 'enter') throw new Error('Declare native Enter paragraph behavior');
   if (!view?.dom || !view?.state?.doc || registrations.size >= 32) throw new Error('Invalid or excessive editor registrations');
   const root = view.dom, id = crypto.randomUUID();
   if ([...registrations.values()].some(entry => entry.root === root)) throw new Error('Editor already registered');
-  const entry = Object.freeze({id, root, contract: 'basic-paragraphs-v1',
+  const entry = Object.freeze({id, root, contract: breaks ? 'basic-paragraphs-hard-breaks-v1' : 'basic-paragraphs-v1',
     identity: () => view.state.doc,
     at(offset) {
       if (!Number.isInteger(offset) || offset < 0) return null;
       let logical=0, position=0;
       for (let i=0;i<view.state.doc.childCount;i++) {
-        const paragraph=view.state.doc.child(i), chars=Array.from(paragraph.textContent);
-        if (offset>=logical && offset<=logical+chars.length) {
-          const target=position+1+chars.slice(0,offset-logical).join('').length;
-          const dom=view.domAtPos(target);
-          return {...dom,position:target,roundtrip:view.posAtDOM(dom.node,dom.offset,1)};
+        const paragraph=view.state.doc.child(i);
+        let native=position+1;
+        if (offset===logical) {const dom=view.domAtPos(native);return {...dom,position:native,roundtrip:view.posAtDOM(dom.node,dom.offset,1)};}
+        for (let j=0;j<paragraph.childCount;j++) {
+          const child=paragraph.child(j);
+          if (child.isText) {
+            for (const char of child.text) {
+              native+=char.length;logical++;
+              if (offset===logical) {const dom=view.domAtPos(native);return {...dom,position:native,roundtrip:view.posAtDOM(dom.node,dom.offset,1)};}
+            }
+          } else if (breaks && child.type.name==='hard_break') {
+            native+=child.nodeSize;logical++;
+            if (offset===logical) {const dom=view.domAtPos(native);return {...dom,position:native,roundtrip:view.posAtDOM(dom.node,dom.offset,1)};}
+          } else return null;
         }
-        logical+=chars.length+1;position+=paragraph.nodeSize;
+        logical++;position+=paragraph.nodeSize;
       }
       return null;
     }, read() {
@@ -34,7 +46,7 @@ export function registerProseMirror(view, {paragraphs} = {}) {
     let nodes = 0, unsupported = doc.type.name !== 'doc';
     doc.descendants((node, pos, parent) => {
       if (++nodes > 4096) return false;
-      if (!(node.type.name === 'paragraph' && parent === doc || node.isText && parent.type.name === 'paragraph')) unsupported = true;
+      if (!(node.type.name === 'paragraph' && parent === doc || (node.isText || breaks && node.type.name === 'hard_break' && node.isLeaf && node.nodeSize === 1) && parent.type.name === 'paragraph')) unsupported = true;
       if (Object.keys(node.attrs).length || node.marks.some(mark => !['strong','em'].includes(mark.type.name) || Object.keys(mark.attrs).length)) unsupported = true;
       return !unsupported;
     });
@@ -43,7 +55,7 @@ export function registerProseMirror(view, {paragraphs} = {}) {
     const model = doc.toJSON();
     if (JSON.stringify(model).length > 128000) return {error:'VERIFICATION_LIMIT'};
     const rect=root.getBoundingClientRect(), style=getComputedStyle(root);
-    return {model, selection: view.state.selection.toJSON(), stored_marks: view.state.storedMarks?.map(mark=>mark.toJSON()) ?? null,
+    return {contract:entry.contract,model, selection: view.state.selection.toJSON(), stored_marks: view.state.storedMarks?.map(mark=>mark.toJSON()) ?? null,
       visible:rect.width>0&&rect.height>0&&style.visibility==='visible'&&style.display!=='none',
       enabled:view.editable && !root.closest('[inert]'), focused:document.hasFocus()&&document.activeElement===root,
       composition:window.__ludaOwnedComposition??{known:false,active:null}};

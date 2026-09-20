@@ -91,3 +91,12 @@ MULTIPLE and SINGLE-mode results, sort/filter/recycle cases and retained discove
 failures are in [RANGE-SELECTION.md](RANGE-SELECTION.md). This does not establish
 unloaded/virtualized range inference, stable record generations for reused
 identities, atomic application interaction, or catalog qualification.
+
+## DATA-07 hard-break follow-up
+
+An explicitly cooperating application can now declare its actual Shift+Enter
+hard-break binding. The existing typing tool distinguishes hard breaks from
+paragraph LF with exact structure/mark/caret readback in the bounded basic schema.
+[Scoped real-provider evidence](OWNED-HARD-BREAKS.md) retains incorrect bindings,
+legacy/unsupported refusals and composition boundaries. This does not admit links,
+lists, tables, arbitrary schemas or generic rich editors, nor qualify DATA-07.

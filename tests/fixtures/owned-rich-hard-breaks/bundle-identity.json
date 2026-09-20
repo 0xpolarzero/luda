@@ -11,9 +11,10 @@
     "w3c-keyname": "2.2.8"
   },
   "files": {
-    "fixture.js": "cac5b4b994c9f1e394a1b2e43ee029cab6f63a04370af9a570a16df4c741fb00",
-    "editor.bundle.js": "7a06a7cb7e709e4d87fcb1473dc0d19866bdbf7f6f730806642e279079566957",
-    "package-lock.json": "ecb8aba7917dbb3dc5ea44666b02d6a0bfaf84ddc8318fdc4aaf04b4d772f90b"
+    "fixture.js": "0b14ac66f7c78be5fced3c20c5362cecdaf67e3f2f011aa6893e1e224874be96",
+    "editor.bundle.js": "aa036b7676e7408bbf2b3ab0cc4c967f5c980778f070af98838826df57495745",
+    "package-lock.json": "ecb8aba7917dbb3dc5ea44666b02d6a0bfaf84ddc8318fdc4aaf04b4d772f90b",
+    "index.html": "e7b2854f5942be6e8ab2a432e50292c16aed718a6882846761fe66913580bebe"
   },
   "bridge_sha256": "0cfa3ff8221193cea66b8a31dd7f2e16b37d9077f91f60fa91b7e5f5894edb34"
 }

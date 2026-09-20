@@ -538,7 +538,7 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
         if target.get('provider') == 'owned_browser':
             return self.browser.element(target,'type',text=text,mode=mode,line_breaks=line_breaks,transport=transport)
         if line_breaks is not None or transport!='native':
-            raise DesktopError('UNSUPPORTED_ACTION','Explicit paragraph input requires a cooperating owned-browser editor.')
+            raise DesktopError('UNSUPPORTED_ACTION','Explicit line-break policies and clipboard transport require a cooperating owned-browser editor.')
         node = target['node']
         if node.get('protected'):
             raise DesktopError('PROTECTED_FIELD','Ordinary typing does not write protected fields.')

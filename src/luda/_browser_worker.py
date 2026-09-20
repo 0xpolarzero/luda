@@ -4,7 +4,7 @@ import os
 import sys
 import time
 import uuid
-from ._browser_rich import decode as decode_rich, RichInvalid, unchanged_prefix
+from ._browser_rich import decode as decode_rich, RichInvalid, unchanged_prefix, insertion_layout, layout_over_budget
 from urllib.parse import urlsplit
 from .progress import RichProgress, MAX_RICH_SEGMENTS, rich_text_progress
 
@@ -156,10 +156,10 @@ class Worker:
                     more=True;entry.dispose();node.dispose();continue
                 ranges=entry.evaluate("entry=>typeof entry.at==='function'&&typeof entry.identity==='function'")
                 token=uuid.uuid4().hex
-                self.elements[token]={'node':node,'bridge':entry,'document':self.page.evaluate_handle('document'),'time':now,'type':'basic-paragraphs-v1','tag':'PROSEMIRROR'}
+                self.elements[token]={'node':node,'bridge':entry,'document':self.page.evaluate_handle('document'),'time':now,'type':observed.get('contract','basic-paragraphs-v1'),'tag':'PROSEMIRROR'}
                 rows.append({'token':token,'name':meta['name'],'role':role,'states':states,'protected':False,'supported':not problem,'unsupported_reason':problem,
-                             'provider':'owned_browser','text_representation':'paragraphs','actions':[] if problem else ['focus','read','select','type'],
-                             'interfaces':['Text'],'multiline':True,'line_break_semantics':'paragraph','write_scope':'native: whole-field replace or append at end; explicit clipboard: selected code-point range','transports':['native','clipboard'],'selection_scope':'code-point ranges' if ranges else 'whole-field or end; update cooperating bridge for arbitrary ranges'})
+                             'provider':'owned_browser','text_representation':'paragraphs_with_hard_breaks' if observed.get('contract')=='basic-paragraphs-hard-breaks-v1' else 'paragraphs','actions':[] if problem else ['focus','read','select','type'],
+                             'interfaces':['Text'],'multiline':True,'line_break_semantics':'explicit paragraph or hard_break' if observed.get('contract')=='basic-paragraphs-hard-breaks-v1' else 'paragraph','supported_line_breaks':['paragraph','hard_break'] if observed.get('contract')=='basic-paragraphs-hard-breaks-v1' else ['paragraph'],'write_scope':'native: whole-field replace or append at end; explicit clipboard: selected code-point range','transports':['native','clipboard'],'selection_scope':'code-point ranges' if ranges else 'whole-field or end; update cooperating bridge for arbitrary ranges'})
             return rows,more
         finally:registry.dispose()
 
@@ -219,7 +219,8 @@ class Worker:
                 'plain_text_verification_supported':True,'text_representation':'html_value',
                 'composition':value['composition']}
         if value['tag']=='PROSEMIRROR':
-            result.update(text_representation='paragraphs',model=value['model'] if len(text)<=limit else None,model_truncated=len(text)>limit,stored_marks=value['stored_marks'],line_breaks='paragraph',selection_supported=value['start'] is not None)
+            result.update(text_representation='paragraphs_with_hard_breaks' if value['hard_breaks_supported'] else 'paragraphs',model=value['model'] if len(text)<=limit else None,model_truncated=len(text)>limit,stored_marks=value['stored_marks'],line_breaks='paragraph_and_hard_break' if value['hard_breaks_supported'] else 'paragraph',selection_supported=value['start'] is not None)
+            if value['hard_breaks_supported']:result['line_break_boundaries']=[{'offset':i,'kind':'paragraph' if kind=='p' else 'hard_break'} for i,kind in enumerate(value['layout'][:limit]) if kind!='t']
         return result
 
     def focus(self, token):
@@ -352,12 +353,14 @@ class Worker:
         self.protocol.send('Input.dispatchKeyEvent',{'type':'keyUp','key':key,'code':code,'windowsVirtualKeyCode':number,'modifiers':0})
 
     def rich_type(self, token, text, mode, line_breaks, before):
-        if '\n' in text and line_breaks!='paragraph':raise Refused('LINE_BREAK_SEMANTICS_REQUIRED')
-        if line_breaks not in (None,'paragraph'):raise Refused('UNSUPPORTED_ACTION')
+        if '\n' in text and line_breaks not in ('paragraph','hard_break'):raise Refused('LINE_BREAK_SEMANTICS_REQUIRED')
+        if line_breaks not in (None,'paragraph','hard_break') or line_breaks=='hard_break' and not before.get('hard_breaks_supported'):raise Refused('UNSUPPORTED_ACTION')
         if mode=='insert' and (before['start'],before['end'])!=(len(before['text']),len(before['text'])):
             raise Refused('UNSUPPORTED_SELECTION')
+        predicted_layout=(before['layout'] if mode=='insert' else '')+insertion_layout(text,line_breaks)
+        if layout_over_budget(predicted_layout):raise Refused('VERIFICATION_LIMIT')
         segments=text.split('\n')
-        if len(segments)>MAX_RICH_SEGMENTS or (len(before['paragraphs']) if mode=='insert' else 1)+len(segments)-1>128 or len(text)+(len(before['text']) if mode=='insert' else 0)>MAX_TEXT:
+        if len(segments)>MAX_RICH_SEGMENTS or (len(before['paragraphs']) if mode=='insert' else 1)+(len(segments)-1 if line_breaks!='hard_break' else 0)>128 or len(text)+(len(before['text']) if mode=='insert' else 0)>MAX_TEXT:
             raise Refused('VERIFICATION_LIMIT')
         self.progress=RichProgress(len(segments))
         if text:
@@ -372,6 +375,7 @@ class Worker:
             _,current=self.snapshot(token,mutation=True,focus=True)
             if current['model']!=before['model']:raise Refused('TEXT_CHANGED')
         expected=before['text'] if mode=='insert' else ''
+        expected_layout=before['layout'] if mode=='insert' else ''
         original=before if mode=='insert' else None
         deadline=time.monotonic()+6
         for index,segment in enumerate(segments):
@@ -380,32 +384,33 @@ class Worker:
                 if time.monotonic()>=deadline:raise Refused('BROWSER_TIMEOUT')
                 _,fresh=self.snapshot(token,mutation=True,focus=True)
                 if (fresh['model'],fresh['selection'],fresh['stored_marks'])!=(current['model'],current['selection'],current['stored_marks']):raise Refused('TEXT_CHANGED')
-                if action=='return':self.progress.begin();self.rich_key('Enter','Enter',13);expected+='\n'
+                if action=='return':self.progress.begin();self.rich_key('Enter','Enter',13,8 if line_breaks=='hard_break' else 0);expected+='\n';expected_layout+=insertion_layout('\n',line_breaks)
                 elif action=='delete':self.progress.begin();self.rich_key('Backspace','Backspace',8)
                 else:
                     self.require_text_boundaries(fresh['text'],fresh['start'],fresh['end'])
-                    self.progress.begin();self.effect='uncertain';self.protocol.send('Input.insertText',{'text':payload});expected+=payload
+                    self.progress.begin();self.effect='uncertain';self.protocol.send('Input.insertText',{'text':payload});expected+=payload;expected_layout+=insertion_layout(payload,line_breaks)
                 _,after=self.snapshot(token,mutation=True,focus=True)
-                if after['text']!=expected or after['paragraphs']!=expected.split('\n'):
+                if after['text']!=expected or after['layout']!=expected_layout:
                     raise Refused('TEXT_MISMATCH')
                 if original and not unchanged_prefix(original,after):raise Refused('FORMATTING_CHANGED')
                 if after['start']!=after['end'] or after['end']!=len(expected):raise Refused('SELECTION_UNVERIFIED','caret_readback')
                 current=after
             self.progress.complete()
         return {'effect':'verified' if self.effect!='none' else 'none','exact_match':True,'expected_characters':len(expected),'actual_characters':len(current['text']),
-                'caret_verified':current['start']==current['end']==len(expected),'text_representation':'paragraphs','line_breaks':'paragraph',
+                'caret_verified':current['start']==current['end']==len(expected),'text_representation':'paragraphs_with_hard_breaks' if before.get('hard_breaks_supported') else 'paragraphs','line_breaks':line_breaks or 'paragraph',
                 'model':current['model'],'stored_marks':current['stored_marks'],'existing_formatting':'preserved' if mode=='insert' else 'replaced_with_field',
                 'verification':'Exact paragraph text, structure and unaffected existing marks; new formatting follows application behavior. Application commit is separate.'}
 
     def rich_clipboard_type(self, token, text, mode, line_breaks, before):
         from .common import DesktopError
-        if '\n' in text and line_breaks!='paragraph':raise Refused('LINE_BREAK_SEMANTICS_REQUIRED')
-        if line_breaks not in (None,'paragraph'):raise Refused('UNSUPPORTED_ACTION')
+        if '\n' in text and line_breaks not in ('paragraph','hard_break'):raise Refused('LINE_BREAK_SEMANTICS_REQUIRED')
+        if line_breaks not in (None,'paragraph','hard_break') or line_breaks=='hard_break' and not before.get('hard_breaks_supported'):raise Refused('UNSUPPORTED_ACTION')
         start,end=(0,len(before['text'])) if mode=='replace' else (before['start'],before['end'])
         if start is None or end is None:raise Refused('UNSUPPORTED_SELECTION')
         prefix,suffix=before['text'][:start],before['text'][end:]
         expected=prefix+text+suffix
-        if len(expected)>MAX_TEXT or len(expected.split('\n'))>128 or len(text.split('\n'))>MAX_RICH_SEGMENTS:raise Refused('VERIFICATION_LIMIT')
+        expected_layout=before['layout'][:start]+insertion_layout(text,line_breaks)+before['layout'][end:]
+        if len(expected)>MAX_TEXT or layout_over_budget(expected_layout) or len(text.split('\n'))>MAX_RICH_SEGMENTS:raise Refused('VERIFICATION_LIMIT')
         self.progress=RichProgress(len(text.split('\n')))
         if not self.native_target:raise Refused('BROWSER_SCOPE_UNSUPPORTED')
         try:self.clipboard.preflight()
@@ -418,7 +423,7 @@ class Worker:
             _,current=self.snapshot(token,mutation=True,focus=True)
             if current['model']!=before['model']:raise Refused('TEXT_CHANGED')
         prefix_marks=before['styled'][:start];suffix_marks=before['styled'][end:]
-        inserted='';deadline=time.monotonic()+6
+        inserted='';inserted_layout='';deadline=time.monotonic()+6
         for index,segment in enumerate(text.split('\n')):
             actions=([('return',None)] if index else [])+([('paste',segment)] if segment else [('delete',None)] if index==0 and start!=end else [])
             for action,payload in actions:
@@ -438,14 +443,14 @@ class Worker:
                         self.clipboard.verify(payload)
                         _,ready=self.snapshot(token,mutation=True,focus=True)
                         if (ready['model'],ready['selection'],ready['stored_marks'])!=(fresh['model'],fresh['selection'],fresh['stored_marks']):raise Refused('TEXT_CHANGED')
-                        self.progress.begin();self.rich_key('v','KeyV',86,2);inserted+=payload
+                        self.progress.begin();self.rich_key('v','KeyV',86,2);inserted+=payload;inserted_layout+=insertion_layout(payload,line_breaks)
                     else:
-                        self.clipboard.prepare_key(self.native_target,'Return' if action=='return' else 'BackSpace')
+                        self.clipboard.prepare_key(self.native_target,('shift+Return' if line_breaks=='hard_break' else 'Return') if action=='return' else 'BackSpace')
                         _,ready=self.snapshot(token,mutation=True,focus=True)
                         if (ready['model'],ready['selection'],ready['stored_marks'])!=(fresh['model'],fresh['selection'],fresh['stored_marks']):raise Refused('TEXT_CHANGED')
                         self.progress.begin()
-                        self.rich_key('Enter','Enter',13) if action=='return' else self.rich_key('Backspace','Backspace',8)
-                        if action=='return':inserted+='\n'
+                        self.rich_key('Enter','Enter',13,8 if line_breaks=='hard_break' else 0) if action=='return' else self.rich_key('Backspace','Backspace',8)
+                        if action=='return':inserted+='\n';inserted_layout+=insertion_layout('\n',line_breaks)
                 except DesktopError as exc:raise Refused(exc.code) from None
                 intended=prefix+inserted+suffix
                 until=min(deadline,time.monotonic()+.75)
@@ -454,7 +459,7 @@ class Worker:
                     if after['text']==intended:break
                     if time.monotonic()>=until:raise Refused('TEXT_MISMATCH')
                     self.page.wait_for_timeout(10)
-                if after['paragraphs']!=intended.split('\n'):raise Refused('TEXT_MISMATCH')
+                if after['layout']!=before['layout'][:start]+inserted_layout+before['layout'][end:]:raise Refused('TEXT_MISMATCH')
                 if after['styled'][:start]!=prefix_marks or after['styled'][start+len(inserted):]!=suffix_marks:raise Refused('FORMATTING_CHANGED')
                 if (after['start'],after['end'])!=(start+len(inserted),start+len(inserted)):raise Refused('SELECTION_UNVERIFIED')
                 current=after
@@ -462,7 +467,7 @@ class Worker:
         return {'effect':'verified' if self.effect!='none' else 'none','exact_match':True,'transport':'clipboard',
                 'clipboard_changed':self.clipboard_changed,'clipboard':'Final nonempty segment remains until another owner replaces it or the temporary browser session closes; PRIMARY unchanged.' if self.clipboard_changed else 'CLIPBOARD and PRIMARY unchanged by this request.',
                 'expected_characters':len(expected),'actual_characters':len(current['text']),'caret_verified':True,
-                'text_representation':'paragraphs','line_breaks':'paragraph','model':current['model'],'stored_marks':current['stored_marks'],
+                'text_representation':'paragraphs_with_hard_breaks' if before.get('hard_breaks_supported') else 'paragraphs','line_breaks':line_breaks or 'paragraph','model':current['model'],'stored_marks':current['stored_marks'],
                 'existing_formatting':'preserved' if mode=='insert' else 'replaced_with_field'}
 
     def dispatch(self, request):

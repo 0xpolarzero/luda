@@ -74,6 +74,7 @@ SUITES = {
     'browser-offsets': suite('live_browser_offsets.py', 'EDIT-09 WEB-02 WEB-03', browser='--executable', artifacts=('browser-offset',)),
     'pm-selection-prototype': suite('live_pm_selection.py', 'WEB-03 DATA-07', browser='--executable', artifacts=('pm-selection',), gaps=('Test-only public EditorView DOM range mapping, not production arbitrary selection support',)),
     'owned-rich-clipboard': suite('live_owned_rich_clipboard.py', 'WEB-03 DATA-07', browser='--executable', artifacts=('owned-rich-clipboard',), gaps=('Explicit clipboard transport; cooperating basic ProseMirror only',), timeout=300),
+    'owned-hard-breaks': suite('live_owned_hard_breaks.py', 'DATA-07 WEB-03', browser='--executable', artifacts=('owned-hard-breaks',), gaps=('Explicit cooperating ProseMirror hard-break schema; not generic rich editors',)),
     'owned-rich': suite('live_owned_rich.py', 'WEB-03 DATA-07', browser='--executable', artifacts=('owned-rich',), gaps=('Cooperating basic ProseMirror paragraphs only; not arbitrary rich editors',)),
     'owned-secret': suite('live_owned_secret.py', 'AUTH-01 AUTH-07', browser='--executable', artifacts=('owned-secret',), gaps=('Password-only explicit route; application-controlled masking is not atomic',)),
     'owned-browser': suite('live_owned_browser.py', 'WEB-01 WEB-02 MCP-08', browser='--executable', artifacts=('owned-browser',), gaps=('Owned Chromium HTML fields; generic rich editors/frames unsupported',)),
