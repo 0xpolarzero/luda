@@ -15,9 +15,11 @@ class EditorDesktop(Desktop):
     def inspect(self, window_id, limit=150, name=None, role=None, states=None, max_depth=30):
         result = super().inspect(window_id,limit,name,role,states,max_depth)
         fields = result.get('text_fields', [])
-        result['editor_bridge'] = {'status':'connected' if fields else 'no_matching_editor',
+        unsupported = result.get('owned_browser',{}).get('code') == 'BROWSER_SCOPE_UNSUPPORTED'
+        result['editor_bridge'] = {
+            'status':'unsupported_page_scope' if unsupported else 'connected' if fields else 'no_matching_editor',
             'supported_editors':sum(field.get('supported') is True for field in fields),
-            'next_step': 'Use a supported text_fields element_id.' if fields else 'Remove filters to check all editors. If still empty, the application developer must register its ProseMirror EditorView with the bridge.'}
+            'next_step': 'Return to one top-level page without frames; the owned editor provider does not support this page scope.' if unsupported else 'Use a supported text_fields element_id.' if fields else 'Remove filters to check all editors. If still empty, the application developer must register its ProseMirror EditorView with the bridge.'}
         return result
 
     def type_text(self, element_id, text, mode='insert', line_breaks=None, transport='native'):

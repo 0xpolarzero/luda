@@ -72,3 +72,22 @@ print(json.dumps(names))
             with patch.object(server,'execute_async',new=AsyncMock(return_value=response)):
                 result=asyncio.run(server.editor_doctor())
             self.assertEqual(json.loads(result.content[0].text)['ready'],browser)
+
+    def test_page_scope_refusal_is_not_misdiagnosed_as_missing_registration(self):
+        backend=EditorDesktop.__new__(EditorDesktop)
+        underlying={'text_fields':[],'nodes':[{'role':'push button','name':'Toolbar'}],
+                    'owned_browser':{'available':False,'code':'BROWSER_SCOPE_UNSUPPORTED'}}
+        with patch.object(Desktop,'inspect',return_value=underlying):
+            result=backend.inspect('owned')
+        self.assertEqual(result['editor_bridge']['status'],'unsupported_page_scope')
+        self.assertEqual(result['owned_browser']['code'],'BROWSER_SCOPE_UNSUPPORTED')
+        self.assertEqual(result['nodes'],underlying['nodes'])
+        self.assertNotIn('register',result['editor_bridge']['next_step'])
+
+    def test_connected_unsupported_document_is_distinct_from_no_matching_editor(self):
+        backend=EditorDesktop.__new__(EditorDesktop)
+        for fields,status in (([],'no_matching_editor'),([{'supported':False,'unsupported_reason':'TEXT_REPRESENTATION_UNSUPPORTED'}],'connected')):
+            with patch.object(Desktop,'inspect',return_value={'text_fields':fields,'nodes':[]}):
+                result=backend.inspect('owned')
+            self.assertEqual(result['editor_bridge']['status'],status)
+            self.assertEqual(result['editor_bridge']['supported_editors'],0)
