@@ -65,6 +65,7 @@ SUITES = {
     'combos': suite('live_combo.py', 'SEM-05', modules=('Gtk', 'Atspi', 'PyQt5'), artifacts=('combo',), gaps=('Qt combo commit is explicitly unsupported',)),
     'browser': suite('live_browser.py', 'WEB-01 WEB-02 WEB-03 WEB-05 WEB-06', browser='--browser', artifacts=('browser',), gaps=('Rich contenteditable exact verification is unsupported',)),
     'browser-offsets': suite('live_browser_offsets.py', 'EDIT-09 WEB-02 WEB-03', browser='--executable', artifacts=('browser-offset',)),
+    'pm-selection-prototype': suite('live_pm_selection.py', 'WEB-03 DATA-07', browser='--executable', artifacts=('pm-selection',), gaps=('Test-only public EditorView DOM range mapping, not production arbitrary selection support',)),
     'owned-rich': suite('live_owned_rich.py', 'WEB-03 DATA-07', browser='--executable', artifacts=('owned-rich',), gaps=('Cooperating basic ProseMirror paragraphs only; not arbitrary rich editors',)),
     'owned-browser': suite('live_owned_browser.py', 'WEB-01 WEB-02 MCP-08', browser='--executable', artifacts=('owned-browser',), gaps=('Owned Chromium HTML fields; generic rich editors/frames unsupported',)),
     'rich-editor-protocol': suite('live_rich_protocol.py', 'WEB-03 DATA-07', browser='--executable', artifacts=('rich-editor-protocol',), gaps=('Test-only owned browser-native text input; explicit paragraph semantics; no generic rich editor adapter',)),

@@ -1,0 +1,21 @@
+<!doctype html><meta charset="utf-8"><title>Luda Owned Rich Editor</title>
+<style>
+body { font: 18px sans-serif; padding: 16px; }
+#host { margin-top: 14px; }
+.editor { min-height: 190px; padding: 14px; border: 2px solid #333; width: 800px; }
+.ProseMirror { white-space: pre-wrap; overflow-wrap: break-word; }
+.ProseMirror p { margin: 0; }
+.ProseMirror:focus { outline: 3px solid #357; }
+button { font: inherit; margin: 5px; }
+</style>
+<h1>Owned rich editor fixture</h1>
+<button id="replace">Replace editor node</button>
+<button id="reload">Reload document</button>
+<button id="composition">Synthetic pending composition</button>
+<button id="spoof-key">Arm synthetic Escape during next composition</button>
+<button id="spoof">Arm synthetic end during next composition</button>
+<button id="image">Insert image model node</button>
+<button id="pending-link">Arm unsupported link mark</button><button id="paragraph-limit">Load 128 paragraphs</button><button id="blur">Move focus after next input</button><button id="reregister">Renew registration</button>
+<textarea id="comparison" aria-label="HTML comparison">A👩🏽‍💻B éC</textarea><button id="same-length">Same-length update</button>
+<div id="host"></div><output id="mode"></output>
+<script type="module" src="editor.bundle.js"></script>
