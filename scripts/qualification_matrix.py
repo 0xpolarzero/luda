@@ -27,6 +27,7 @@ def suite(script, ids, *, wm=True, browser=None, electron=None, firefox=None, mo
 
 
 SUITES = {
+    'mcp': suite('live_mcp.py', 'MCP-02 MCP-03 MCP-04 MCP-05 MCP-06 MCP-07', artifacts=('mcp',)),
     'tui': suite('live_tui.py', 'TERM-09', wm=False, artifacts=('tui',)),
     'ax-deadline': suite('live_ax_deadline.py', 'AX-07', wm=False, artifacts=('ax-deadline',), gaps=('Stopped-provider call completes under earlier libatspi timeout; does not exercise the five-second worker kill path',)),
     'single-line': suite('live_single_line.py', 'EDIT-05', browser='--executable', modules=('Gtk','Atspi','PyQt5'), artifacts=('single-line',)),
