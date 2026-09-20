@@ -17,8 +17,8 @@ cleans up owned processes. Results contain booleans, interface names and error
 codes, not the synthetic one-time value or complete tool responses.
 
 The [evidence audit proposal](AUTH-EVIDENCE-AUDIT.md) compares these probe outcomes
-with the exact catalog criteria. It proposes report separation for review; no
-record, exit status or qualification has been changed.
+with the exact catalog criteria. The approved follow-up below documents the resulting report separation and
+exit policy; original records and catalog qualification remain unchanged.
 
 ## Observed results
 
@@ -41,8 +41,9 @@ only the provider's observed activation action, not to conceal a product failure
 No one-time literal appeared in that run's result files or captured MCP
 server log. That does **not** establish absence from caller transcripts, process
 memory, clipboard managers or all diagnostic systems. The clipboard retention is
-an explicit observed failure, not an expected-failure pass. The suite retains all
-four failed checks and remains nonzero.
+an explicit observed failure, not an expected-failure pass. Those original runs retain all
+four failed checks and remain recorded as nonzero. The later scoped workflow
+report described below does not rewrite their outcomes.
 
 ## Input design implications
 
@@ -96,3 +97,63 @@ Current screenshot expiry/geometry checks do not guarantee content freshness.
 Any stronger stale-content guard needs a separate design with animation,
 caret-blink, overlays and human-input races considered; this fixture does not
 justify claiming screenshot input has been made atomic.
+
+## Scoped workflows and preserved diagnostics
+
+After the criterion audit, the approved follow-up adds actual missing workflow
+evidence instead of treating all possible input routes as required successes:
+
+- **AUTH-05:** a separate fresh fixture expires its session, refuses its old
+  semantic handle, then exposes the login notice through fresh inspection. The
+  independent old-action, replacement-action and submission counters all remain
+  zero. This is the safe observation sequence; the separate old-screenshot probe
+  still activates the replacement login control and remains a failed diagnostic.
+- **AUTH-06:** before approving the popup, public browser-chrome text establishes
+  its full scheme/host/port and public inspection establishes the expected visible
+  app/popup session. After approval, public inspection reads the returned app's
+  session-specific completion status; the independent DOM oracle agrees.
+
+The browser initially omits the scheme even after Ctrl+L. Runs that could not
+establish it refused approval; their failed/blocked results remain captured.
+The address-bar context menu's items were absent from scoped AX, but its retained
+screenshot visibly showed **Always show full URLs** as the final item. One
+public End/Return sequence selected it in the disposable profile. Subsequent
+public text readback included the scheme; no HTTP scheme was inferred, no CDP
+preference was set, and no user browser profile was changed. The fixture records
+this screenshot-dependent menu path and setting/readback result. Menu order in
+another browser/version is not qualified by this pinned fixture.
+
+The final run has **4/4 scoped required workflows passing, 12/16 total probes
+passing, and four failed diagnostics preserved**. AUTH-04 covers only the
+explicit visible-digit workflow and measured storage boundary; AUTH-10 covers
+only the synthetic exposed human-presence step. AUTH-07 remains explicitly
+unexercised, and all catalog qualifications remain `unqualified`.
+
+The report retains every probe in `cases`, maps exact acceptance strings and
+probe IDs under `required_workflows`, and preserves failed original values under
+`route_diagnostics`. The latter distinguish the OTP clipboard route, unsupported
+protected provider, stale-coordinate activation and the historical stronger
+cryptographic-attestation assertion. None becomes a supported capability.
+
+The new exit policy is nonzero for a failed/missing required workflow, any
+unclassified failed probe, a duplicate or omitted expected probe, or harness
+failure. Matrix source-change and cleanup checks continue to apply. It permits
+zero when the scoped workflows succeed despite explicitly classified route
+limitations. This is why the final run exits zero; it does **not** mean all auth
+requirements, routes or providers are qualified. Six deterministic report tests
+ensure failures or omitted diagnostics cannot be hidden by classification.
+
+The final 16.410-second ordinary-UID run used unchanged source fingerprint
+`af362f65e7d2229da7a2f74b5f926aed9b56058d7f5fe1896dc3eb55e87b2370`, with no owned
+process survivors. Evidence is retained in
+`artifacts/qualification-matrix/run-1789873145058039909/`. Earlier failed/blocked
+runs, including the first full-URL menu probe, are retained alongside it.
+
+The earlier context-menu screenshot also shows Chrome echoing the deliberately
+retained **synthetic** OTP in its Paste-and-search item. That is additional visible
+evidence of the ordinary clipboard route's limitation, not a private/user secret;
+the original screenshot remains preserved. Later popup probes explicitly install
+an independent test clipboard sentinel to isolate this separate workflow. This
+fixture setup is not a production clipboard-restore policy or a claim that the
+original clipboard route avoids retention. Final popup screenshots show the
+sentinel; the latest captured text records do not contain the complete OTP.

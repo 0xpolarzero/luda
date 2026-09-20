@@ -1,3 +1,8 @@
 <!doctype html><meta charset="utf-8"><title>Luda Local Authorization</title>
 <h1>Synthetic local authorization</h1><p>No external account or permission is involved.</p>
-<button onclick="opener.postMessage('synthetic-authorized',location.origin);window.close()">Approve synthetic session</button>
+<p id="session"></p><button id="approve">Approve synthetic session</button>
+<script>
+const requestedSession=new URLSearchParams(location.search).get('session');
+session.textContent='Synthetic session: '+requestedSession;
+approve.onclick=()=>{opener.postMessage({type:'synthetic-authorized',session:requestedSession},location.origin);window.close()};
+</script>

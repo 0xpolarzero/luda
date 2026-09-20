@@ -1,5 +1,10 @@
 # Authentication evidence audit proposal
 
+This is the audit snapshot **before** the approved follow-up tests. See the
+[implemented follow-up](AUTH-QUALIFICATION.md#scoped-workflows-and-preserved-diagnostics)
+for subsequent evidence and the actual report/exit policy. Statements about
+missing evidence below refer to this audit snapshot.
+
 This is a proposed interpretation and report design for review. It does not change
 runtime behavior, tests, suite exit status, catalog acceptance, priority or
 qualification. All catalog cases discussed here remain `unqualified`. The existing

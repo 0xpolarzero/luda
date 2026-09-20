@@ -1,5 +1,6 @@
 """Synthetic auth boundaries: MCP drives UI; read-only DOM is an independent oracle."""
 import argparse
+import base64
 import ctypes
 import hashlib
 import asyncio
@@ -12,6 +13,8 @@ import platform
 import subprocess
 import threading
 import time
+from urllib.parse import urlsplit
+from auth_report import report
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 from playwright.async_api import async_playwright
@@ -53,6 +56,7 @@ async def main(executable):
             await context.route('**/*',lambda route: route.continue_() if route.request.url.startswith(f'http://127.0.0.1:{server.server_port}/') else route.abort())
             page=await context.new_page()
             await page.goto(f'http://127.0.0.1:{server.server_port}/auth.html')
+            popup_clipboard_owner=None
             try:
                 async with stdio_client(StdioServerParameters(command=str(ROOT/'.venv/bin/luda'),env=dict(os.environ))) as streams:
                     async with ClientSession(*streams) as session:
@@ -125,17 +129,83 @@ async def main(executable):
                         record('browser-protected-otp-support',not err and await page.locator('#masked').input_value()=='001204',code=result.get('code'),response_contains_value='001204' in json.dumps(result))
                         await click('Verify synthetic code')
                         record('explicit-otp-submit-clears-fixture',await page.evaluate('audit.verified') and await page.locator('#otp').input_value()=='')
+                        # Separate popup observation from the preceding intentional clipboard-retention probe.
+                        popup_clipboard_owner=subprocess.Popen(['xclip','-selection','clipboard','-in','-quiet'],stdin=subprocess.PIPE,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+                        popup_clipboard_owner.stdin.write(b'luda-popup-test-sentinel');popup_clipboard_owner.stdin.close()
+                        await asyncio.sleep(.05)
+                        app_context=await call('desktop_inspect',window_id=wid,limit=500)
+                        expected_session='Synthetic session: luda-session-a'
+                        app_session_visible=any(n['name']==expected_session for n in app_context['nodes'])
                         await click('Open local authorization window')
                         popupid=await window('Luda Local Authorization')
                         await call('desktop_activate',window_id=popupid)
-                        await click('Approve synthetic session',popupid)
+                        popup_tree=await call('desktop_inspect',window_id=popupid,limit=500)
+                        addresses=[n for n in popup_tree['nodes'] if n['name']=='Address and search bar' and 'Text' in n['interfaces']]
+                        origin_matches=False;origin_read_code=None
+                        if len(addresses)==1:
+                            await call('desktop_press_keys',window_id=popupid,chord='ctrl+l')
+                            err,location=await raw('desktop_read_text',element_id=addresses[0]['element_id'])
+                            origin_read_code=location.get('code')
+                            if not err:
+                                displayed=location['text']
+                                if '://' not in displayed:
+                                    # Public GUI setting in this disposable browser profile only.
+                                    shot=await call('desktop_observe')
+                                    b=addresses[0]['bounds'];image=shot['image_size'];native=shot['desktop_size']
+                                    await call('desktop_click',window_id=popupid,snapshot_id=shot['snapshot_id'],x=(b['x']+b['width']/2)*image['width']/native['width'],y=(b['y']+b['height']/2)*image['height']/native['height'],button='right')
+                                    menu=await call('desktop_inspect',window_id=popupid,limit=500)
+                                    visual=await session.call_tool('desktop_observe',{})
+                                    for content in visual.content:
+                                        if content.type=='image':(OUT/'address-context-menu.png').write_bytes(base64.b64decode(content.data))
+                                    (OUT/'address-context-menu.json').write_text(visual.content[0].text)
+                                    choices=[n for n in menu['nodes'] if n['name'].casefold()=='always show full urls']
+                                    setting={'available':len(choices)==1,'menu_names':[n['name'] for n in menu['nodes'] if 'menu' in n['role']]}
+                                    if len(choices)==1 and 'checked' not in choices[0]['states']:
+                                        chosen=choices[0]
+                                        action=next((a for a in chosen.get('actions',[]) if a.casefold() in ('click','press','activate','check')),None)
+                                        if action:
+                                            failed,outcome=await raw('desktop_invoke',element_id=chosen['element_id'],action=action)
+                                            setting.update(action=action,action_error=failed,effect=outcome.get('effect'),code=outcome.get('code'))
+                                    elif not choices:
+                                        # The retained screenshot of this pinned Chrome fixture
+                                        # shows Always show full URLs as the final menu item.
+                                        await call('desktop_press_keys',window_id=popupid,chord='End')
+                                        await call('desktop_press_keys',window_id=popupid,chord='Return')
+                                        setting.update(action='End then Return',method='observed_last_menu_item')
+                                    else:
+                                        await call('desktop_press_keys',window_id=popupid,chord='Escape')
+                                    fresh_chrome=await call('desktop_inspect',window_id=popupid,limit=500)
+                                    fresh_addresses=[n for n in fresh_chrome['nodes'] if n['name']=='Address and search bar' and 'Text' in n['interfaces']]
+                                    if len(fresh_addresses)==1:
+                                        err,location=await raw('desktop_read_text',element_id=fresh_addresses[0]['element_id'])
+                                        if not err:displayed=location['text']
+                                    setting['scheme_visible_after']='://' in displayed
+                                    (OUT/'full-url-setting.json').write_text(json.dumps(setting,indent=2)+'\n')
+                                parsed=urlsplit(displayed)
+                                origin_matches=parsed.scheme=='http' and parsed.hostname=='127.0.0.1' and parsed.port==server.server_port
+                        popup_session_visible=any(n['name']==expected_session for n in popup_tree['nodes'])
+                        record('popup-origin-session-identified-before-approval',origin_matches and app_session_visible and popup_session_visible,browser_origin_matches=origin_matches,scheme_explicit=bool(len(addresses)==1 and not err and '://' in location.get('text','')),app_and_popup_session_visible=app_session_visible and popup_session_visible,address_candidates=len(addresses),read_code=origin_read_code,editable_names=[n['name'] for n in popup_tree['nodes'] if n['role']=='entry'])
+                        identity_verified=origin_matches and app_session_visible and popup_session_visible
+                        if identity_verified:
+                            await click('Approve synthetic session',popupid)
+                        else:
+                            await call('desktop_window',window_id=popupid,action='close')
                         await call('desktop_wait',condition='window_absent',window_id=popupid,timeout=4)
                         await call('desktop_activate',window_id=wid)
-                        record('local-popup-return-to-intended-window',await page.evaluate('audit.authorized'))
+                        record('local-popup-return-to-intended-window',identity_verified and await page.evaluate('audit.authorized'),status='observed' if identity_verified else 'blocked_by_missing_origin')
+                        resumed=await call('desktop_inspect',window_id=wid,limit=500)
+                        record('returned-app-session-visible',identity_verified and any(n['name']=='Synthetic local authorization complete: luda-session-a' for n in resumed['nodes']) and await page.evaluate("audit.authorizedSession==='luda-session-a'"))
                         record('oauth-origin-session-attestation',False,limitation='Window title and visible UI do not establish trusted OAuth origin/session identity; no real OAuth was exercised.')
                         await click('Require human presence')
                         human_tree=await call('desktop_inspect',window_id=wid,limit=500)
                         record('human-presence-exposed-not-completed',any('Human presence required' in n['name'] for n in human_tree['nodes']) and await page.evaluate('audit.humanRequired'))
+                        await click('Reset synthetic fixture')
+                        await asyncio.sleep(.2)
+                        safe_old=await node('Existing session action')
+                        await click('Expire synthetic session')
+                        err,safe_result=await raw('desktop_invoke',element_id=safe_old['element_id'],action=next(a for a in safe_old['actions'] if a.casefold() in ('click','press','activate')))
+                        safe_tree=await call('desktop_inspect',window_id=wid,limit=500)
+                        record('expiry-recovery-observes-before-new-input',err and safe_result.get('code')=='STALE_TARGET' and any('Session expired' in n['name'] for n in safe_tree['nodes']) and await page.evaluate('audit.oldActions===0 && audit.unexpectedLoginActions===0 && audit.submissions===0'),stale_code=safe_result.get('code'))
                         await click('Reset synthetic fixture')
                         await asyncio.sleep(.2)
                         old=await node('Existing session action')
@@ -152,11 +222,16 @@ async def main(executable):
                         record('expired-session-old-element-refused',err and result.get('code')=='STALE_TARGET' and await page.evaluate('audit.oldActions===0') and await page.evaluate('audit.unexpectedLoginActions')==login_actions_before,code=result.get('code'))
                         fresh=await call('desktop_inspect',window_id=wid,limit=500)
                         record('expiry-visible-in-fresh-observation',any('Session expired' in n['name'] for n in fresh['nodes']))
-            finally:await browser.close()
+            finally:
+                if popup_clipboard_owner and popup_clipboard_owner.poll() is None:
+                    popup_clipboard_owner.terminate();popup_clipboard_owner.wait(timeout=3)
+                await browser.close()
     finally:
         server.shutdown();server.server_close()
-        (OUT/'results.json').write_text(json.dumps(dict(environment=environment,cases=records),indent=2)+'\n')
-    return 0 if records and all(r['passed'] for r in records) else 1
+        evidence=report(records)
+        (OUT/'results.json').write_text(json.dumps(dict(environment=environment,**evidence),indent=2)+'\n')
+    print(json.dumps({'required_workflows_passed':evidence['required_workflows_passed'],'probe_summary':evidence['probe_summary'],'failed_diagnostics':sum(not r['passed'] for r in evidence['route_diagnostics'])}),flush=True)
+    return 0 if evidence['required_workflows_passed'] else 1
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser();parser.add_argument('--browser',required=True)
