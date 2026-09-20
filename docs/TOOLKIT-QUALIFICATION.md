@@ -101,3 +101,11 @@ use bounded independent-oracle polling because action acceptance can precede an
 asynchronous modal appearing. Accessible names are not assumed unique: the fixture
 harness selects the first matching control rather than overwriting it with its
 child label.
+
+## Separately verified GUI alternatives
+
+The [GTK4 GUI workflow qualification](GTK4-GUI-WORKFLOWS.md) preserves the current
+semantic checkbox refusal and uncertain selection failure, then independently
+verifies explicit screenshot/keyboard/paste routes for checking a box and replacing
+a selected suffix. Those user workflows pass through existing public tools;
+semantic checkbox/selection support remains unsupported or failing as recorded.
