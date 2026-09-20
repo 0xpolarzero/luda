@@ -40,6 +40,9 @@ jobs:
           .venv/bin/python -m pip install --no-deps -e .
       - name: Native and MCP workflows on an isolated display
         run: LUDA_ISOLATED_TEST_DISPLAY=1 xvfb-run -a -s '-screen 0 1440x900x24 -nolisten tcp' dbus-run-session -- .venv/bin/python scripts/headless_tests.py
+      - name: Independently observed window geometry
+        if: ${{ !cancelled() }}
+        run: .venv/bin/python scripts/qualification_matrix.py --suites window-geometry
       - uses: actions/upload-artifact@v4
         if: always()
         with:

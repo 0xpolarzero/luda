@@ -50,7 +50,7 @@ jobs:
       - name: Real sandboxed browser text, IME and cleanup qualification
         run: |
           browser=$(cat artifacts/owned-browser-provision/browser-path.txt)
-          .venv/bin/python scripts/qualification_matrix.py --suites owned-browser owned-rich owned-rich-clipboard browser-permission --executable "$browser"
+          .venv/bin/python scripts/qualification_matrix.py --suites owned-browser owned-rich owned-rich-clipboard browser-permission rich-progress --executable "$browser"
       - name: Qualify the installed managed wheel and launcher
         if: ${{ !cancelled() && steps.provision_browser.outcome == 'success' && steps.sandbox_policy.outcome == 'success' }}
         run: |

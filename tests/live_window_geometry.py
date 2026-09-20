@@ -30,7 +30,8 @@ def oracle(xid):
 
 def main():
     assert os.geteuid()!=0 and os.environ.get('LUDA_ISOLATED_TEST_DISPLAY')=='1'
-    output=Path(os.environ['LUDA_GEOMETRY_OUTPUT']);output.mkdir(parents=True,exist_ok=False)
+    output=Path(os.environ.get('LUDA_GEOMETRY_OUTPUT', str(Path(__file__).resolve().parents[1]/'artifacts/window-geometry'/('run-'+str(time.time_ns())))))
+    output.mkdir(parents=True,exist_ok=False)
     wm=subprocess.Popen(['xfwm4','--compositor=off'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
     app=None;driver=None;records=[]
     try:

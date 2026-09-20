@@ -20,3 +20,6 @@ recursive-include integrations *.py *.json *.md *.patch *.mjs
 recursive-include tests/evidence/hosted-rich-selection *.log
 recursive-include tests/evidence/rich-cancellation-barrier *.gz
 recursive-include tests/evidence/progress-integration *.gz
+recursive-include tests/evidence/rich-progress *.log
+recursive-include tests/evidence/window-geometry *.log
+recursive-include tests/evidence/agent-delayed-save-first-attempt *.gz *.png
