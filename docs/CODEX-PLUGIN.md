@@ -1,6 +1,6 @@
-# Agent plugin and skill
+# Codex plugin
 
-Luda's plugin packages an MCP server registration and `skills/luda/SKILL.md`. Runtime installation is separate. The repository plugin runs `luda` from PATH in the agent's graphical environment.
+Luda's plugin packages an MCP server registration and the complete `skills/luda` folder. Runtime installation is separate. For other clients or standalone MCP registration, see [Connect your agent](AGENT-INTEGRATIONS.md). Choose this plugin or standalone registration, not both. The repository plugin runs `luda` from PATH in the agent's graphical environment.
 
 Build a bundle with an explicit installed path:
 

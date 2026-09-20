@@ -31,7 +31,7 @@ In the graphical session:
 /opt/luda/current/.venv/bin/luda
 ```
 
-The second command serves MCP over stdio. Configure the agent to invoke this absolute executable and install the [plugin/skill](CODEX-PLUGIN.md). The repository plugin invokes `luda` on PATH; the bundle builder writes the selected absolute installation path.
+The second command serves MCP over stdio. Follow [Connect your agent](AGENT-INTEGRATIONS.md) to register this executable and install the skill for Codex, Claude Code, Cursor, Gemini CLI or OpenCode. The repository plugin invokes `luda` on PATH; the bundle builder writes the selected absolute installation path.
 
 ## SSH and explicit session attachment
 
@@ -59,3 +59,7 @@ sudo python3 scripts/manage_install.py uninstall --prefix /opt/luda
 Release IDs are recorded in `/opt/luda/.luda-install.json`. Reconnect clients after selecting a different release. Uninstall preserves modified and unknown files and external agent settings. Stop clients before uninstalling; remove their Luda registration separately while preserving other entries.
 
 `desktop_doctor` reports actual dependency and capability availability. Missing `wmctrl` prevents target enumeration; missing `xdotool` prevents focus-dependent input while read-only screenshot/accessibility capabilities can remain available. Installed files alone are not evidence of a ready desktop.
+
+## Package into an environment
+
+For an image, VM or managed Linux workstation, see [environment packaging](ENVIRONMENT-PACKAGING.md). Install the runtime once and register each selected agent for its own account; user-wide discovery then works across project folders. Desktop provisioning and account lifecycle belong to the integrator.
