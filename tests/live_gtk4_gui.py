@@ -37,7 +37,14 @@ async def child(out):
     if owner:wid=owner['window_id'];break
     await asyncio.sleep(.05)
    assert wid;await call('desktop_activate',window_id=wid);await asyncio.sleep(.3)
-   tree,_=await call('desktop_inspect',window_id=wid)
+   # The native window can precede GTK4's AT-SPI registration. Retry only
+   # this read-only startup observation; never replay an application action.
+   deadline=time.monotonic()+4
+   while True:
+    tree,_=await call('desktop_inspect',allow_error=True,window_id=wid)
+    if tree.get('ok') is not False:break
+    assert tree.get('code')=='ACCESSIBILITY_UNAVAILABLE' and time.monotonic()<deadline,tree
+    await asyncio.sleep(.1)
    nodes={}
    for node in tree['nodes']:nodes.setdefault(node['name'],node)
    (out/'inspect.json').write_text(json.dumps(tree,indent=2))

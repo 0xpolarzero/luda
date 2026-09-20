@@ -1,0 +1,818 @@
+[
+  {
+    "toolkit": "qt",
+    "case": "scoped-tree",
+    "status": "failed",
+    "detail": {
+      "code": "ACCESSIBILITY_UNAVAILABLE",
+      "message": "No accessible window matches this X11 target. The application may not be registered with the accessibility bus or expose usable window geometry; use screenshot controls."
+    }
+  },
+  {
+    "toolkit": "gtk4",
+    "case": "scoped-tree",
+    "status": "supported",
+    "detail": {
+      "response": {
+        "nodes": [
+          {
+            "pid": 11605,
+            "name": "Luda GTK4 Fixture",
+            "role": "frame",
+            "states": [
+              "active",
+              "sensitive",
+              "showing",
+              "visible"
+            ],
+            "interfaces": [
+              "Accessible",
+              "Action",
+              "Component"
+            ],
+            "protected": false,
+            "actions": [
+              "window.close",
+              "window.minimize",
+              "window.toggle-maximized",
+              "default.activate"
+            ],
+            "depth": 0,
+            "bounds_coordinates": "unavailable",
+            "element_id": "c281f83eba5b450ea90ee5738b0f1c3e",
+            "parent_element_id": null
+          },
+          {
+            "pid": 11605,
+            "name": "",
+            "role": "panel",
+            "states": [
+              "sensitive",
+              "showing",
+              "vertical",
+              "visible"
+            ],
+            "interfaces": [
+              "Accessible",
+              "Action",
+              "Component"
+            ],
+            "protected": false,
+            "actions": [],
+            "depth": 1,
+            "bounds_coordinates": "unavailable",
+            "element_id": "03552e3ec1d24c7ab05ce69919a2c68a",
+            "parent_element_id": "c281f83eba5b450ea90ee5738b0f1c3e"
+          },
+          {
+            "pid": 11605,
+            "name": "Toolkit text",
+            "role": "text",
+            "states": [
+              "editable",
+              "focusable",
+              "focused",
+              "multi-line",
+              "sensitive",
+              "showing",
+              "visible",
+              "has-popup"
+            ],
+            "interfaces": [
+              "Accessible",
+              "Action",
+              "Component",
+              "EditableText",
+              "Text"
+            ],
+            "protected": false,
+            "actions": [
+              "clipboard.copy",
+              "clipboard.paste",
+              "selection.delete",
+              "misc.insert-emoji",
+              "clipboard.cut",
+              "menu.popup",
+              "selection.select-all"
+            ],
+            "native_text_mutation_supported": true,
+            "depth": 2,
+            "bounds_coordinates": "unavailable",
+            "element_id": "af148dc1ab004404bdb5a3e6f0483e5a",
+            "parent_element_id": "03552e3ec1d24c7ab05ce69919a2c68a"
+          },
+          {
+            "pid": 11605,
+            "name": "Toolkit check",
+            "role": "check box",
+            "states": [
+              "focusable",
+              "sensitive",
+              "showing",
+              "visible",
+              "checkable"
+            ],
+            "interfaces": [
+              "Accessible",
+              "Action",
+              "Component"
+            ],
+            "protected": false,
+            "actions": [],
+            "depth": 2,
+            "bounds_coordinates": "unavailable",
+            "element_id": "291e5c40e2754b7a811305310e6777c6",
+            "parent_element_id": "03552e3ec1d24c7ab05ce69919a2c68a"
+          },
+          {
+            "pid": 11605,
+            "name": "Toolkit value",
+            "role": "slider",
+            "states": [
+              "focusable",
+              "horizontal",
+              "sensitive",
+              "showing",
+              "visible"
+            ],
+            "interfaces": [
+              "Accessible",
+              "Action",
+              "Component",
+              "Value"
+            ],
+            "protected": false,
+            "actions": [],
+            "value": {
+              "current": 0.0,
+              "minimum": 0.0,
+              "maximum": 100.0,
+              "increment": 0.0
+            },
+            "depth": 2,
+            "bounds_coordinates": "unavailable",
+            "element_id": "b6987266b79747859f30812b4b08cfb2",
+            "parent_element_id": "03552e3ec1d24c7ab05ce69919a2c68a"
+          },
+          {
+            "pid": 11605,
+            "name": "[protected]",
+            "role": "password text",
+            "states": [
+              "editable",
+              "focusable",
+              "sensitive",
+              "showing",
+              "visible",
+              "has-popup"
+            ],
+            "interfaces": [
+              "Accessible",
+              "Action",
+              "Component",
+              "EditableText",
+              "Text"
+            ],
+            "protected": true,
+            "actions": [
+              "activate"
+            ],
+            "native_text_mutation_supported": true,
+            "depth": 2,
+            "bounds_coordinates": "unavailable",
+            "element_id": "35bff212661640bbba3be80aa210f88d",
+            "parent_element_id": "03552e3ec1d24c7ab05ce69919a2c68a"
+          },
+          {
+            "pid": 11605,
+            "name": "Toolkit disabled",
+            "role": "push button",
+            "states": [
+              "focusable",
+              "showing",
+              "visible"
+            ],
+            "interfaces": [
+              "Accessible",
+              "Action",
+              "Component"
+            ],
+            "protected": false,
+            "actions": [
+              "click"
+            ],
+            "depth": 2,
+            "bounds_coordinates": "unavailable",
+            "element_id": "903ff0f586bf49748f818f15fbd0648f",
+            "parent_element_id": "03552e3ec1d24c7ab05ce69919a2c68a"
+          },
+          {
+            "pid": 11605,
+            "name": "Open toolkit dialog",
+            "role": "push button",
+            "states": [
+              "focusable",
+              "sensitive",
+              "showing",
+              "visible"
+            ],
+            "interfaces": [
+              "Accessible",
+              "Action",
+              "Component"
+            ],
+            "protected": false,
+            "actions": [
+              "click"
+            ],
+            "depth": 2,
+            "bounds_coordinates": "unavailable",
+            "element_id": "1ae630b362ef44848f082f4893027f3b",
+            "parent_element_id": "03552e3ec1d24c7ab05ce69919a2c68a"
+          },
+          {
+            "pid": 11605,
+            "name": "",
+            "role": "panel",
+            "states": [
+              "sensitive",
+              "showing",
+              "visible"
+            ],
+            "interfaces": [
+              "Accessible",
+              "Action",
+              "Component"
+            ],
+            "protected": false,
+            "actions": [],
+            "depth": 3,
+            "bounds_coordinates": "unavailable",
+            "element_id": "846cd4468dff44a5a773255496b466ae",
+            "parent_element_id": "291e5c40e2754b7a811305310e6777c6"
+          },
+          {
+            "pid": 11605,
+            "name": "Toolkit check",
+            "role": "label",
+            "states": [
+              "sensitive",
+              "showing",
+              "visible"
+            ],
+            "interfaces": [
+              "Accessible",
+              "Action",
+              "Component",
+              "Text"
+            ],
+            "protected": false,
+            "actions": [
+              "clipboard.copy",
+              "selection.delete",
+              "clipboard.paste",
+              "link.open",
+              "clipboard.cut",
+              "link.copy",
+              "menu.popup",
+              "selection.select-all"
+            ],
+            "depth": 3,
+            "bounds_coordinates": "unavailable",
+            "element_id": "960c6b39046e4e8db9d3de4f00e21acc",
+            "parent_element_id": "291e5c40e2754b7a811305310e6777c6"
+          },
+          {
+            "pid": 11605,
+            "name": "Open toolkit dialog",
+            "role": "label",
+            "states": [
+              "sensitive",
+              "showing",
+              "visible"
+            ],
+            "interfaces": [
+              "Accessible",
+              "Action",
+              "Component",
+              "Text"
+            ],
+            "protected": false,
+            "actions": [
+              "clipboard.copy",
+              "selection.delete",
+              "clipboard.paste",
+              "link.open",
+              "clipboard.cut",
+              "link.copy",
+              "menu.popup",
+              "selection.select-all"
+            ],
+            "depth": 3,
+            "bounds_coordinates": "unavailable",
+            "element_id": "68cdab9bb8e444c4bc8e3412e12144e1",
+            "parent_element_id": "1ae630b362ef44848f082f4893027f3b"
+          }
+        ],
+        "truncated": true,
+        "truncation": {
+          "result_or_time_limit": false,
+          "budget_pruned": false,
+          "depth_pruned": false,
+          "unreadable_branches": 0
+        },
+        "visited_nodes": 12,
+        "max_depth": 30,
+        "unreadable_nodes": 1,
+        "unreadable_branches": 0,
+        "coverage": "selected accessible top-level window",
+        "available": true,
+        "window_mapping": "unique_title_and_size",
+        "bounds_coordinates": "unavailable",
+        "window_id": "567cbf1bc6434252a4ba5f3fb703f4f6:400004:11605:114700:7e309b70b0fed94301522e511f7a77df",
+        "element_expiry_seconds": 60,
+        "bounds_coordinate_space": "unavailable"
+      },
+      "oracle": true
+    }
+  },
+  {
+    "toolkit": "gtk4",
+    "case": "focus",
+    "status": "supported",
+    "detail": {
+      "response": {
+        "effect": "verified",
+        "accepted": false,
+        "focused": true,
+        "changed": false,
+        "focus_request_supported": false
+      },
+      "oracle": true
+    }
+  },
+  {
+    "toolkit": "gtk4",
+    "case": "replace-0",
+    "status": "supported",
+    "detail": {
+      "response": {
+        "effect": "verified",
+        "accepted": true,
+        "exact_match": true,
+        "expected_characters": 11,
+        "actual_characters": 11,
+        "composition": {
+          "known": false,
+          "active": null
+        },
+        "verification": "Exact exposed text at readback; pending IME composition and application commit are not verified."
+      },
+      "oracle": true
+    }
+  },
+  {
+    "toolkit": "gtk4",
+    "case": "replace-1",
+    "status": "supported",
+    "detail": {
+      "response": {
+        "effect": "verified",
+        "accepted": true,
+        "exact_match": true,
+        "expected_characters": 17,
+        "actual_characters": 17,
+        "composition": {
+          "known": false,
+          "active": null
+        },
+        "verification": "Exact exposed text at readback; pending IME composition and application commit are not verified."
+      },
+      "oracle": true
+    }
+  },
+  {
+    "toolkit": "gtk4",
+    "case": "unicode-offset-contract",
+    "status": "supported",
+    "detail": {
+      "text": "café 日本語 👩🏽‍💻 é\n",
+      "characters": 17,
+      "truncated": false,
+      "caret_offset": 17,
+      "offset_units": "Unicode code points",
+      "provider_offset_units": "Unicode code points",
+      "provider_text_encoding": "plain",
+      "selections": [],
+      "selection_source": "Text",
+      "selections_truncated": false,
+      "text_representation": "plain",
+      "plain_text_verification_supported": true,
+      "embedded_objects": [],
+      "embedded_objects_truncated": false,
+      "composition": {
+        "known": false,
+        "active": null
+      }
+    }
+  },
+  {
+    "toolkit": "gtk4",
+    "case": "replace-2",
+    "status": "supported",
+    "detail": {
+      "response": {
+        "effect": "verified",
+        "accepted": true,
+        "exact_match": true,
+        "expected_characters": 10,
+        "actual_characters": 10,
+        "composition": {
+          "known": false,
+          "active": null
+        },
+        "verification": "Exact exposed text at readback; pending IME composition and application commit are not verified."
+      },
+      "oracle": true
+    }
+  },
+  {
+    "toolkit": "gtk4",
+    "case": "replace-3",
+    "status": "supported",
+    "detail": {
+      "response": {
+        "effect": "verified",
+        "accepted": true,
+        "exact_match": true,
+        "expected_characters": 0,
+        "actual_characters": 0,
+        "composition": {
+          "known": false,
+          "active": null
+        },
+        "verification": "Exact exposed text at readback; pending IME composition and application commit are not verified."
+      },
+      "oracle": true
+    }
+  },
+  {
+    "toolkit": "gtk4",
+    "case": "prepare-append",
+    "status": "supported",
+    "detail": {
+      "response": {
+        "effect": "verified",
+        "accepted": true,
+        "exact_match": true,
+        "expected_characters": 7,
+        "actual_characters": 7,
+        "composition": {
+          "known": false,
+          "active": null
+        },
+        "verification": "Exact exposed text at readback; pending IME composition and application commit are not verified."
+      },
+      "oracle": true
+    }
+  },
+  {
+    "toolkit": "gtk4",
+    "case": "append-at-current-caret",
+    "status": "supported",
+    "detail": {
+      "response": {
+        "effect": "verified",
+        "accepted": true,
+        "exact_match": true,
+        "expected_characters": 16,
+        "actual_characters": 16,
+        "replaced_characters": 0,
+        "inserted_characters": 9,
+        "caret_verified": true,
+        "caret_offset": 16,
+        "verification": "Exact exposed text at readback; pending IME composition and application commit are not verified.",
+        "composition": {
+          "known": false,
+          "active": null
+        }
+      },
+      "oracle": true
+    }
+  },
+  {
+    "toolkit": "gtk4",
+    "case": "prepare-insert",
+    "status": "supported",
+    "detail": {
+      "response": {
+        "effect": "verified",
+        "accepted": true,
+        "exact_match": true,
+        "expected_characters": 13,
+        "actual_characters": 13,
+        "composition": {
+          "known": false,
+          "active": null
+        },
+        "verification": "Exact exposed text at readback; pending IME composition and application commit are not verified."
+      },
+      "oracle": true
+    }
+  },
+  {
+    "toolkit": "gtk4",
+    "case": "select",
+    "status": "failed",
+    "detail": {
+      "code": "ACCESSIBILITY_ERROR",
+      "message": "The accessibility provider failed. Inspect again before retrying an action."
+    }
+  },
+  {
+    "toolkit": "gtk4",
+    "case": "insert-selection",
+    "status": "blocked",
+    "detail": "Selection prerequisite failed; insertion not attempted."
+  },
+  {
+    "toolkit": "gtk4",
+    "case": "caret-zero",
+    "status": "failed",
+    "detail": {
+      "code": "ACCESSIBILITY_ERROR",
+      "message": "The accessibility provider failed. Inspect again before retrying an action."
+    }
+  },
+  {
+    "toolkit": "gtk4",
+    "case": "insert-caret",
+    "status": "blocked",
+    "detail": "Caret prerequisite failed; insertion not attempted."
+  },
+  {
+    "toolkit": "gtk4",
+    "case": "astral-prepare",
+    "status": "supported",
+    "detail": {
+      "response": {
+        "effect": "verified",
+        "accepted": true,
+        "exact_match": true,
+        "expected_characters": 6,
+        "actual_characters": 6,
+        "composition": {
+          "known": false,
+          "active": null
+        },
+        "verification": "Exact exposed text at readback; pending IME composition and application commit are not verified."
+      },
+      "oracle": true
+    }
+  },
+  {
+    "toolkit": "gtk4",
+    "case": "astral-select",
+    "status": "failed",
+    "detail": {
+      "code": "ACCESSIBILITY_ERROR",
+      "message": "The accessibility provider failed. Inspect again before retrying an action."
+    }
+  },
+  {
+    "toolkit": "gtk4",
+    "case": "astral-replace",
+    "status": "blocked",
+    "detail": "Astral selection prerequisite failed; insertion not attempted."
+  },
+  {
+    "toolkit": "gtk4",
+    "case": "disabled-refused",
+    "status": "supported",
+    "detail": "NOT_INTERACTABLE"
+  },
+  {
+    "toolkit": "gtk4",
+    "case": "check-True",
+    "status": "unsupported",
+    "detail": {
+      "code": "UNSUPPORTED_ACTION",
+      "message": "No recognized semantic state-changing action is available."
+    }
+  },
+  {
+    "toolkit": "gtk4",
+    "case": "check-True",
+    "status": "unsupported",
+    "detail": {
+      "code": "UNSUPPORTED_ACTION",
+      "message": "No recognized semantic state-changing action is available."
+    }
+  },
+  {
+    "toolkit": "gtk4",
+    "case": "check-False",
+    "status": "supported",
+    "detail": {
+      "response": {
+        "effect": "verified",
+        "accepted": true,
+        "changed": false,
+        "checked": false
+      },
+      "oracle": true
+    }
+  },
+  {
+    "toolkit": "gtk4",
+    "case": "value-42",
+    "status": "supported",
+    "detail": {
+      "response": {
+        "effect": "verified",
+        "accepted": true,
+        "exact_match": true,
+        "actual_value": 42.0
+      },
+      "oracle": true
+    }
+  },
+  {
+    "toolkit": "gtk4",
+    "case": "value-0",
+    "status": "supported",
+    "detail": {
+      "response": {
+        "effect": "verified",
+        "accepted": true,
+        "exact_match": true,
+        "actual_value": 0.0
+      },
+      "oracle": true
+    }
+  },
+  {
+    "toolkit": "gtk4",
+    "case": "value-100",
+    "status": "supported",
+    "detail": {
+      "response": {
+        "effect": "verified",
+        "accepted": true,
+        "exact_match": true,
+        "actual_value": 100.0
+      },
+      "oracle": true
+    }
+  },
+  {
+    "toolkit": "gtk4",
+    "case": "protected-field-redacted",
+    "status": "supported",
+    "detail": null
+  },
+  {
+    "toolkit": "gtk4",
+    "case": "protected-read-refused",
+    "status": "supported",
+    "detail": "PROTECTED_FIELD"
+  },
+  {
+    "toolkit": "gtk4",
+    "case": "open-modal",
+    "status": "supported",
+    "detail": {
+      "response": {
+        "effect": "dispatched",
+        "accepted": true,
+        "verification": "Application outcome not verified; observe next."
+      },
+      "oracle": true
+    }
+  },
+  {
+    "toolkit": "gtk4",
+    "case": "modal-scoped-tree",
+    "status": "supported",
+    "detail": {
+      "response": {
+        "nodes": [
+          {
+            "pid": 11605,
+            "name": "Luda GTK4 Modal",
+            "role": "frame",
+            "states": [
+              "active",
+              "modal",
+              "sensitive",
+              "showing",
+              "visible"
+            ],
+            "interfaces": [
+              "Accessible",
+              "Action",
+              "Component"
+            ],
+            "protected": false,
+            "actions": [
+              "window.close",
+              "default.activate"
+            ],
+            "depth": 0,
+            "bounds_coordinates": "unavailable",
+            "element_id": "31add1b7b207427c9a77ee43d4f0d6d8",
+            "parent_element_id": null
+          },
+          {
+            "pid": 11605,
+            "name": "Close toolkit dialog",
+            "role": "push button",
+            "states": [
+              "focusable",
+              "focused",
+              "sensitive",
+              "showing",
+              "visible"
+            ],
+            "interfaces": [
+              "Accessible",
+              "Action",
+              "Component"
+            ],
+            "protected": false,
+            "actions": [
+              "click"
+            ],
+            "depth": 1,
+            "bounds_coordinates": "unavailable",
+            "element_id": "dd67a7182e5345f79d496f95e7a74abe",
+            "parent_element_id": "31add1b7b207427c9a77ee43d4f0d6d8"
+          },
+          {
+            "pid": 11605,
+            "name": "Close toolkit dialog",
+            "role": "label",
+            "states": [
+              "sensitive",
+              "showing",
+              "visible"
+            ],
+            "interfaces": [
+              "Accessible",
+              "Action",
+              "Component",
+              "Text"
+            ],
+            "protected": false,
+            "actions": [
+              "clipboard.copy",
+              "selection.delete",
+              "clipboard.paste",
+              "link.open",
+              "clipboard.cut",
+              "link.copy",
+              "menu.popup",
+              "selection.select-all"
+            ],
+            "depth": 2,
+            "bounds_coordinates": "unavailable",
+            "element_id": "8259bcc936124efa87703ff828616da6",
+            "parent_element_id": "dd67a7182e5345f79d496f95e7a74abe"
+          }
+        ],
+        "truncated": false,
+        "truncation": {
+          "result_or_time_limit": false,
+          "budget_pruned": false,
+          "depth_pruned": false,
+          "unreadable_branches": 0
+        },
+        "visited_nodes": 3,
+        "max_depth": 30,
+        "unreadable_nodes": 0,
+        "unreadable_branches": 0,
+        "coverage": "selected accessible top-level window",
+        "available": true,
+        "window_mapping": "unique_title_and_size",
+        "bounds_coordinates": "unavailable",
+        "window_id": "567cbf1bc6434252a4ba5f3fb703f4f6:400008:11605:114700:a3a4ebebcc734b0b53d3f4514b788ee2",
+        "element_expiry_seconds": 60,
+        "bounds_coordinate_space": "unavailable"
+      },
+      "oracle": true
+    }
+  },
+  {
+    "toolkit": "gtk4",
+    "case": "close-modal",
+    "status": "supported",
+    "detail": {
+      "response": {
+        "effect": "dispatched",
+        "accepted": true,
+        "verification": "Application outcome not verified; observe next."
+      },
+      "oracle": true
+    }
+  }
+]

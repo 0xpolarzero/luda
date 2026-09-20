@@ -1,0 +1,408 @@
+[
+  {
+    "case": "table-inclusive-range",
+    "passed": true,
+    "response": {
+      "ok": true,
+      "operation_id": "e8234f38d0134f119b2a53a4d72175a5",
+      "elapsed_ms": 312,
+      "effect": "verified",
+      "accepted": true,
+      "selected": true,
+      "changed": true,
+      "extend": false,
+      "selection_scope": "table_row_range",
+      "selected_items": [
+        {
+          "name": "Record 0001",
+          "role": "table cell",
+          "position": 1
+        },
+        {
+          "name": "Record 0002",
+          "role": "table cell",
+          "position": 2
+        },
+        {
+          "name": "Record 0003",
+          "role": "table cell",
+          "position": 3
+        }
+      ],
+      "multiple_selection_advertised": false,
+      "verification": "Exact observed provider item identities and selected set; not atomic against later application changes.",
+      "progress": {
+        "unit": "selection_step",
+        "requested": 3,
+        "verified_completed": 3,
+        "current_uncertain": 0,
+        "not_started": 0,
+        "application_commit_verified": false
+      }
+    },
+    "oracle": {
+      "selected_id": null,
+      "descending": false,
+      "filtered": false,
+      "edited": {},
+      "lazy_loaded": false,
+      "expanded": false,
+      "editing_widget_visible": false,
+      "editing_widget_focused": false,
+      "visible_range": [
+        "0",
+        "24"
+      ],
+      "row_count": 120,
+      "first_id": 0,
+      "selected_ids": [
+        1,
+        2,
+        3
+      ],
+      "selection_events": 3
+    }
+  },
+  {
+    "case": "table-reversed-add",
+    "passed": true,
+    "response": {
+      "ok": true,
+      "operation_id": "5df0348ca47c4975b7b7b9568544958c",
+      "elapsed_ms": 273,
+      "effect": "verified",
+      "accepted": true,
+      "selected": true,
+      "changed": true,
+      "extend": true,
+      "selection_scope": "table_row_range",
+      "selected_items": [
+        {
+          "name": "Record 0001",
+          "role": "table cell",
+          "position": 1
+        },
+        {
+          "name": "Record 0002",
+          "role": "table cell",
+          "position": 2
+        },
+        {
+          "name": "Record 0003",
+          "role": "table cell",
+          "position": 3
+        },
+        {
+          "name": "Record 0004",
+          "role": "table cell",
+          "position": 4
+        },
+        {
+          "name": "Record 0005",
+          "role": "table cell",
+          "position": 5
+        }
+      ],
+      "multiple_selection_advertised": false,
+      "verification": "Exact observed provider item identities and selected set; not atomic against later application changes.",
+      "progress": {
+        "unit": "selection_step",
+        "requested": 2,
+        "verified_completed": 2,
+        "current_uncertain": 0,
+        "not_started": 0,
+        "application_commit_verified": false
+      }
+    },
+    "oracle": {
+      "selected_id": null,
+      "descending": false,
+      "filtered": false,
+      "edited": {},
+      "lazy_loaded": false,
+      "expanded": false,
+      "editing_widget_visible": false,
+      "editing_widget_focused": false,
+      "visible_range": [
+        "0",
+        "24"
+      ],
+      "row_count": 120,
+      "first_id": 0,
+      "selected_ids": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "selection_events": 5
+    }
+  },
+  {
+    "case": "table-idempotent",
+    "passed": true
+  },
+  {
+    "case": "table-exclusive-removes-others",
+    "passed": true,
+    "oracle": {
+      "selected_id": null,
+      "descending": false,
+      "filtered": false,
+      "edited": {},
+      "lazy_loaded": false,
+      "expanded": false,
+      "editing_widget_visible": false,
+      "editing_widget_focused": false,
+      "visible_range": [
+        "0",
+        "24"
+      ],
+      "row_count": 120,
+      "first_id": 0,
+      "selected_ids": [
+        2,
+        3
+      ],
+      "selection_events": 8
+    }
+  },
+  {
+    "case": "list-inclusive-range",
+    "passed": true,
+    "response": {
+      "ok": true,
+      "operation_id": "2adc75fcfdad4081bc7106019de9d924",
+      "elapsed_ms": 311,
+      "effect": "verified",
+      "accepted": true,
+      "selected": true,
+      "changed": true,
+      "extend": false,
+      "selection_scope": "list_item_range",
+      "selected_items": [
+        {
+          "name": "Option 01",
+          "role": "list item",
+          "position": 1
+        },
+        {
+          "name": "Option 02",
+          "role": "list item",
+          "position": 2
+        },
+        {
+          "name": "Option 03",
+          "role": "list item",
+          "position": 3
+        }
+      ],
+      "multiple_selection_advertised": false,
+      "verification": "Exact observed provider item identities and selected set; not atomic against later application changes.",
+      "progress": {
+        "unit": "selection_step",
+        "requested": 3,
+        "verified_completed": 3,
+        "current_uncertain": 0,
+        "not_started": 0,
+        "application_commit_verified": false
+      }
+    },
+    "oracle": {
+      "selected_id": null,
+      "descending": false,
+      "filtered": false,
+      "edited": {},
+      "lazy_loaded": false,
+      "expanded": false,
+      "editing_widget_visible": false,
+      "editing_widget_focused": false,
+      "visible_range": [
+        "0",
+        "24"
+      ],
+      "row_count": 120,
+      "first_id": 0,
+      "selected_ids": [
+        2,
+        3
+      ],
+      "selection_events": 8,
+      "option_ids": [
+        1,
+        2,
+        3
+      ]
+    }
+  },
+  {
+    "case": "list-reversed-add",
+    "passed": true,
+    "oracle": {
+      "selected_id": null,
+      "descending": false,
+      "filtered": false,
+      "edited": {},
+      "lazy_loaded": false,
+      "expanded": false,
+      "editing_widget_visible": false,
+      "editing_widget_focused": false,
+      "visible_range": [
+        "0",
+        "24"
+      ],
+      "row_count": 120,
+      "first_id": 0,
+      "selected_ids": [
+        2,
+        3
+      ],
+      "selection_events": 8,
+      "option_ids": [
+        1,
+        2,
+        3,
+        4
+      ]
+    }
+  },
+  {
+    "case": "list-exclusive-verifies-clear-then-add",
+    "passed": true,
+    "response": {
+      "ok": true,
+      "operation_id": "7edd941eaaff4444845830fabd87c6fb",
+      "elapsed_ms": 315,
+      "effect": "verified",
+      "accepted": true,
+      "selected": true,
+      "changed": true,
+      "extend": false,
+      "selection_scope": "list_item_range",
+      "selected_items": [
+        {
+          "name": "Option 02",
+          "role": "list item",
+          "position": 2
+        },
+        {
+          "name": "Option 03",
+          "role": "list item",
+          "position": 3
+        }
+      ],
+      "multiple_selection_advertised": false,
+      "verification": "Exact observed provider item identities and selected set; not atomic against later application changes.",
+      "progress": {
+        "unit": "selection_step",
+        "requested": 3,
+        "verified_completed": 3,
+        "current_uncertain": 0,
+        "not_started": 0,
+        "application_commit_verified": false
+      }
+    },
+    "oracle": {
+      "selected_id": null,
+      "descending": false,
+      "filtered": false,
+      "edited": {},
+      "lazy_loaded": false,
+      "expanded": false,
+      "editing_widget_visible": false,
+      "editing_widget_focused": false,
+      "visible_range": [
+        "0",
+        "24"
+      ],
+      "row_count": 120,
+      "first_id": 0,
+      "selected_ids": [
+        2,
+        3
+      ],
+      "selection_events": 8,
+      "option_ids": [
+        2,
+        3
+      ]
+    }
+  },
+  {
+    "case": "desktop_choose-refused",
+    "passed": true,
+    "response": {
+      "ok": false,
+      "code": "NOT_INTERACTABLE",
+      "message": "Every range item must remain enabled and showing.",
+      "effect": "none",
+      "details": {},
+      "operation_id": "4eb02aca368d4212ad5b1de95a16b271",
+      "elapsed_ms": 264
+    }
+  },
+  {
+    "case": "disabled-range-no-change",
+    "passed": true
+  },
+  {
+    "case": "desktop_choose-refused",
+    "passed": true,
+    "response": {
+      "ok": false,
+      "code": "NOT_INTERACTABLE",
+      "message": "Every range item must be in the visible viewport; scroll and inspect again.",
+      "effect": "none",
+      "details": {},
+      "operation_id": "1686dcd343e44c88abe860d6ce8992ed",
+      "elapsed_ms": 238
+    }
+  },
+  {
+    "case": "offscreen-range-no-change",
+    "passed": true
+  },
+  {
+    "case": "desktop_choose-refused",
+    "passed": false,
+    "response": {
+      "ok": true,
+      "operation_id": "f7b82b91161647638f6157ab7e00b0ce",
+      "elapsed_ms": 274,
+      "effect": "verified",
+      "accepted": true,
+      "selected": true,
+      "changed": true,
+      "extend": false,
+      "selection_scope": "table_row_range",
+      "selected_items": [
+        {
+          "name": "Record 0001",
+          "role": "table cell",
+          "position": 1
+        },
+        {
+          "name": "Record 0002",
+          "role": "table cell",
+          "position": 2
+        },
+        {
+          "name": "Record 0003",
+          "role": "table cell",
+          "position": 3
+        }
+      ],
+      "multiple_selection_advertised": false,
+      "verification": "Exact observed provider item identities and selected set; not atomic against later application changes.",
+      "progress": {
+        "unit": "selection_step",
+        "requested": 1,
+        "verified_completed": 1,
+        "current_uncertain": 0,
+        "not_started": 0,
+        "application_commit_verified": false
+      }
+    }
+  }
+]

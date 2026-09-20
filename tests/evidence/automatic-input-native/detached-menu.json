@@ -1,0 +1,60 @@
+{
+  "uid": 1000,
+  "cases": [
+    {
+      "case": "owned-attached-menu-observed",
+      "passed": true,
+      "popups": [
+        {
+          "xid": 4194397,
+          "transient_for": 4194307,
+          "override_redirect": true,
+          "pid": 12294,
+          "bounds": {
+            "x": 455,
+            "y": 309,
+            "width": 194,
+            "height": 78
+          },
+          "start": "116288",
+          "generation": "2ed593991fa24ea1c796f5e279a97416",
+          "owner_window_id": "4e3f1f0509ca46aeb2b7f465e032c0de:400003:12294:116288:b7aecc054d045cdeab8ac943a04fc8a1",
+          "popup_id": "f27baee4bf15462eb4a2d7f5dd7e3fb4",
+          "image_bounds": {
+            "x": 405,
+            "y": 275,
+            "width": 172,
+            "height": 70
+          }
+        }
+      ]
+    },
+    {
+      "case": "tear-off-creates-new-window-context",
+      "passed": true
+    },
+    {
+      "case": "attached-popup-snapshot-refused-after-tearoff",
+      "passed": true,
+      "code": "STALE_OBSERVATION"
+    },
+    {
+      "case": "detached-inspection-probe",
+      "passed": true,
+      "code": null
+    },
+    {
+      "case": "moved-detached-coordinate-action-exact",
+      "passed": true
+    },
+    {
+      "case": "closed-detached-handle-refused",
+      "passed": true,
+      "code": "STALE_TARGET"
+    },
+    {
+      "case": "owner-deliberately-reopens-attached-menu",
+      "passed": true
+    }
+  ]
+}

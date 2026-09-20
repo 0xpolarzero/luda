@@ -1,0 +1,47 @@
+{
+  "scope": "public Luda API; two GTK3 fixtures on private Xvfb/XFWM",
+  "uid": 1000,
+  "cases": [
+    {
+      "case": "public-background-text-with-independent-app-readback",
+      "passed": true,
+      "before_after_desktop_unchanged": true
+    },
+    {
+      "case": "public-background-button-with-independent-app-counter",
+      "passed": true,
+      "before_after_desktop_unchanged": true
+    },
+    {
+      "case": "automatic-key-foreground-independent-text-oracle",
+      "passed": true
+    },
+    {
+      "case": "automatic-paste-foreground-independent-text-oracle",
+      "passed": true
+    },
+    {
+      "case": "minimized-target-automatic-routing",
+      "passed": true,
+      "became_foreground": false
+    },
+    {
+      "case": "concurrent-user-typing-and-background-set-invoke",
+      "passed": true,
+      "user_text_exact": true,
+      "target_action_count_delta": 1,
+      "sampled_desktop_unchanged": true
+    },
+    {
+      "case": "application-action-can-steal-focus",
+      "passed": true,
+      "background_noninterference": false
+    }
+  ],
+  "cleanup_errors": [],
+  "limits": [
+    "Before/after observations do not exclude transient interference.",
+    "Concurrent input is a synthetic X11 user stream; no preview, pixel input, or toolkit-wide qualification.",
+    "No production-wide qualification is claimed."
+  ]
+}
