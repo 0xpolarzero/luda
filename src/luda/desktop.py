@@ -102,13 +102,63 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
             self.local_lock.release()
 
     @contextmanager
-    def input_scope(self):
-        """Provide session-owned input only to helpers that need it."""
-        if getattr(self,'private_input',None) is None:
-            from .private_input import PrivateInput
-            self.private_input=PrivateInput(self.environment)
-        with environment_scope(self.private_input.environment()):
-            yield
+    def input_scope(self, window=None):
+        """Choose compatibility before dispatch; nested actions keep that route."""
+        target = window.get('window_id') if window else None
+        if target is not None and getattr(self, '_input_window', None) == target:
+            yield self._input_route
+            return
+        from .input_routing import prefers_private_input
+        cached = getattr(self, '_private_windows', set())
+        private = window is None or target in cached or prefers_private_input(window)
+        environment = dict(self.environment)
+        environment.pop('LUDA_PRIVATE_INPUT', None)
+        environment['LUDA_INPUT_ROUTE'] = 'shared'
+        if private:
+            try:
+                if getattr(self, 'private_input', None) is None:
+                    from .private_input import PrivateInput
+                    self.private_input = PrivateInput(self.environment)
+                environment = self.private_input.environment()
+                environment['LUDA_INPUT_ROUTE'] = 'private'
+                if target is not None:
+                    self._private_windows = cached | {target}
+            except DesktopError as exc:
+                if exc.code in ('CANCELLED', 'TIMEOUT', 'SESSION_CHANGED'):
+                    raise
+                # Startup failed before any application input. Compatibility
+                # uses the normal foreground path, never a replayed mutation.
+                checkpoint()
+        route = environment['LUDA_INPUT_ROUTE']
+        previous = (getattr(self, '_input_window', None), getattr(self, '_input_route', None))
+        self._input_window, self._input_route = target, route
+        try:
+            with environment_scope(environment):
+                yield route
+        finally:
+            self._input_window, self._input_route = previous
+
+    def _activate_shared(self, window_id):
+        """Foreground compatibility route, selected before application input."""
+        window = self.target_window(window_id, False)
+        state = keyboard_capabilities()
+        if state.get('input_held') is True:
+            raise DesktopError('INPUT_HELD', 'Release held keys or mouse buttons before foreground input.')
+        if window.get('active'):
+            return {'effect':'none', 'window_id':window_id}
+        run(['xdotool','windowactivate',str(window['xid'])],effect='uncertain')
+        deadline = elapsed_time()+1.5
+        while elapsed_time()<deadline:
+            try:
+                current = self.target_window(window_id, False)
+            except DesktopError as exc:
+                exc.effect = 'uncertain'
+                raise
+            if current['active']:
+                return {'effect':'verified','window_id':window_id,
+                        'verification':'Foreground target identity and active window match.'}
+            time.sleep(.04)
+        raise DesktopError('ACTIVATION_FAILED','Window did not become active.',effect='uncertain')
 
     def check_input_focus(self,window):
         return self._input_focus(window,'check_focus')
@@ -281,7 +331,9 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
     def activate(self, window_id):
         """Expose the target and focus only the agent's keyboard."""
         window = self.target_window(window_id, False)
-        with self.input_scope():
+        with self.input_scope(window) as route:
+            if route == 'shared':
+                return self._activate_shared(window_id)
             from .interaction import properties
             if '_NET_WM_STATE_HIDDEN' in properties(window['xid']):
                 self.display().map_without_focus(window['xid'], window_id.rsplit(':', 1)[-1])
@@ -444,17 +496,21 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
 
     @contextmanager
     def prepare_input_window(self, window_id, *, activate=True):
-        """Focus the agent keyboard without changing the human input devices."""
-        with self.input_scope():
+        """Use private focus where supported and foreground input otherwise."""
+        target = self.target_window(window_id, False)
+        with self.input_scope(target) as route:
             changed = False
             try:
-                target = self.target_window(window_id, False)
                 if activate:
-                    from .interaction import properties
-                    if '_NET_WM_STATE_HIDDEN' in properties(target['xid']):
-                        self.display().map_without_focus(target['xid'], window_id.rsplit(':', 1)[-1])
-                        changed = True
+                    if route == 'shared':
+                        changed = self._activate_shared(window_id)['effect'] != 'none'
                         target = self.target_window(window_id, False)
+                    else:
+                        from .interaction import properties
+                        if '_NET_WM_STATE_HIDDEN' in properties(target['xid']):
+                            self.display().map_without_focus(target['xid'], window_id.rsplit(':', 1)[-1])
+                            changed = True
+                            target = self.target_window(window_id, False)
                     self.focus_input(target)
                     changed = True
                 yield self.target_window(window_id)

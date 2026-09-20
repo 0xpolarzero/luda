@@ -71,13 +71,15 @@ class InteractionMixin:
             else:
                 self._interaction_point(target, snapshot_id, x, y, False)
         snap = self.snapshots[snapshot_id]
-        with self.input_scope():
+        with self.input_scope(window) as route:
             ready = check_pointer_ready()
             if ready['server_generation'] != snap.get('topology', {}).get('server_generation'):
                 raise DesktopError('STALE_OBSERVATION', 'X server changed after observation; observe again.')
             token = None
             focused = False
             try:
+                if route == 'shared':
+                    self._activate_shared(window_id)
                 self.focus_input(window)
                 focused = True
                 current = self.list_windows()
