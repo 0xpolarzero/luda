@@ -130,7 +130,7 @@ Return screenshot plus window layout and a 15-second snapshot ID. Pointer coordi
 desktop_inspect(window_id: str, limit: int=150, name: str | None=None, role: str | None=None, states: list[str] | None=None, max_depth: int=30)
 ```
 
-Inspect a window or find controls by name/role substring and required states. Returns bounded tree, parent IDs, supported actions and 60-second element IDs. Owned browser text_fields have distinct provider-bound IDs for ordinary HTML fields and explicitly cooperating paragraph editors; role="entry" filters for fields. Field metadata describes line breaks and write scope. Empty matches and unavailable accessibility are distinct.
+Inspect a window or find controls by name/role substring and required states. Returns bounded tree, parent IDs, supported actions and 60-second element IDs. Owned browser text_fields have distinct provider-bound IDs for ordinary HTML fields and explicitly cooperating paragraph editors; role="entry" filters for fields. Field metadata describes line breaks and write scope. When extra owned pages/windows or frames make the owned provider unavailable, native nodes remain independently inspected; owned_browser reports unavailable/code and text_fields is empty. Cached owned fields still refuse unsupported scope; no mutation fallback. Empty matches and unavailable accessibility are distinct.
 
 ## `desktop_read_text`
 

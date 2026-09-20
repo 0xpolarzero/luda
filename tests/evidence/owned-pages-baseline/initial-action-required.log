@@ -1,0 +1,64 @@
+dbus-daemon[2665]: [session uid=1001 pid=2665] Activating service name='org.a11y.Bus' requested by ':1.0' (uid=1001 pid=2668 comm="xfwm4 --compositor=off")
+dbus-daemon[2665]: [session uid=1001 pid=2665] Successfully activated service 'org.a11y.Bus'
+dbus-daemon[2678]: Activating service name='org.a11y.atspi.Registry' requested by ':1.0' (uid=1001 pid=2668 comm="xfwm4 --compositor=off")
+dbus-daemon[2665]: [session uid=1001 pid=2665] Activating service name='org.xfce.Xfconf' requested by ':1.2' (uid=1001 pid=2668 comm="xfwm4 --compositor=off")
+dbus-daemon[2678]: Successfully activated service 'org.a11y.atspi.Registry'
+SpiRegistry daemon is running with well-known name - org.a11y.atspi.Registry
+dbus-daemon[2665]: [session uid=1001 pid=2665] Successfully activated service 'org.xfce.Xfconf'
+
+(xfwm4:2668): xfwm4-WARNING **: 10:21:54.653: Failed to connect to session manager: Failed to connect to the session manager: SESSION_MANAGER environment variable not defined
+Processing request of type CallToolRequest
+Processing request of type ListToolsRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+  + Exception Group Traceback (most recent call last):
+  |   File "/workspace/luda-browser-pages/tests/live_owned_pages_probe.py", line 66, in <module>
+  |     p=argparse.ArgumentParser();p.add_argument('--executable',required=True);raise SystemExit(asyncio.run(main(p.parse_args().executable)))
+  |                                                                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |   File "/usr/lib/python3.12/asyncio/runners.py", line 194, in run
+  |     return runner.run(main)
+  |            ^^^^^^^^^^^^^^^^
+  |   File "/usr/lib/python3.12/asyncio/runners.py", line 118, in run
+  |     return self._loop.run_until_complete(task)
+  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |   File "/usr/lib/python3.12/asyncio/base_events.py", line 687, in run_until_complete
+  |     return future.result()
+  |            ^^^^^^^^^^^^^^^
+  |   File "/workspace/luda-browser-pages/tests/live_owned_pages_probe.py", line 35, in main
+  |     async with stdio_client(params) as streams:
+  |   File "/usr/lib/python3.12/contextlib.py", line 231, in __aexit__
+  |     await self.gen.athrow(value)
+  |   File "/workspace/luda-browser-pages/.venv/lib/python3.12/site-packages/mcp/client/stdio/__init__.py", line 182, in stdio_client
+  |     async with (
+  |   File "/workspace/luda-browser-pages/.venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 847, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Exception Group Traceback (most recent call last):
+    |   File "/workspace/luda-browser-pages/.venv/lib/python3.12/site-packages/mcp/client/stdio/__init__.py", line 189, in stdio_client
+    |     yield read_stream, write_stream
+    |   File "/workspace/luda-browser-pages/tests/live_owned_pages_probe.py", line 36, in main
+    |     async with ClientSession(*streams) as session:
+    |   File "/workspace/luda-browser-pages/.venv/lib/python3.12/site-packages/mcp/shared/session.py", line 238, in __aexit__
+    |     return await self._task_group.__aexit__(exc_type, exc_val, exc_tb)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/workspace/luda-browser-pages/.venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 847, in __aexit__
+    |     raise BaseExceptionGroup(
+    | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+    +-+---------------- 1 ----------------
+      | Traceback (most recent call last):
+      |   File "/workspace/luda-browser-pages/tests/live_owned_pages_probe.py", line 48, in main
+      |     await click('Open tab');await until(lambda:'child' in state)
+      |     ^^^^^^^^^^^^^^^^^^^^^^^
+      |   File "/workspace/luda-browser-pages/tests/live_owned_pages_probe.py", line 46, in click
+      |     tree=await call('desktop_inspect',window_id=target,name=name);node=next(n for n in tree['nodes'] if n['name']==name and n['role']=='push button');await call('desktop_invoke',element_id=node['element_id'])
+      |                                                                                                                                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      |   File "/workspace/luda-browser-pages/tests/live_owned_pages_probe.py", line 42, in call
+      |     if not allow_error:assert not raw.isError,(tool,v)
+      |                               ^^^^^^^^^^^^^^^
+      | AssertionError: ('desktop_invoke', {'ok': False, 'code': 'ACTION_REQUIRED', 'message': 'This element exposes several actions; choose an exact action from desktop_inspect.', 'effect': 'none', 'details': {'actions': ['press', 'showContextMenu']}, 'operation_id': 'df2978c8b9b34864b8f87c9f1d5f65c5', 'elapsed_ms': 75})
+      +------------------------------------
+
+(xfconfd:2686): xfconfd-WARNING **: 10:21:57.707: Name org.xfce.Xfconf lost on the message dbus, exiting.

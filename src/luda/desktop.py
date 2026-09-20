@@ -444,7 +444,18 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
             raise DesktopError('INVALID_ARGUMENT','limit must be 1–500.')
         w = self.target_window(window_id,False)
         owned = getattr(self, 'browser', None)
-        browser_fields = owned.inspect(window_id,limit,name,role,states) if owned and owned.window_id == window_id else None
+        browser_fields = None
+        owned_unavailable = False
+        if owned and owned.window_id == window_id:
+            try:
+                browser_fields = owned.inspect(window_id,limit,name,role,states)
+            except DesktopError as exc:
+                if exc.code != 'BROWSER_SCOPE_UNSUPPORTED':
+                    raise
+                # Optional page-field scope must not erase independently mapped
+                # native accessibility. This changes observation only; cached
+                # owned elements still route through their original provider.
+                owned_unavailable = True
         try:
             result = self.ax({'op':'inspect','pid':w['pid'],'start':w['start'],'limit':limit,'bounds':w['bounds'],'frame_bounds':w['frame_bounds'],'window_title':w['title'],'filters':{k:v for k,v in {'name':name,'role':role,'states':states}.items() if v is not None},'max_depth':max_depth})
         except DesktopError as exc:
@@ -456,6 +467,10 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
             result = {'text_fields': browser_fields['fields'],
                       'text_fields_truncated': browser_fields['truncated'],
                       'owned_browser_limits': browser_fields['unsupported'], **result}
+        if owned_unavailable:
+            result = {'text_fields': [],
+                      'owned_browser': {'available': False, 'code': 'BROWSER_SCOPE_UNSUPPORTED'},
+                      **result}
         now=elapsed_time()
         self.elements={k:v for k,v in self.elements.items() if now-v['time']<60}
         tokens = {node['path']:uuid.uuid4().hex for node in result['nodes']}

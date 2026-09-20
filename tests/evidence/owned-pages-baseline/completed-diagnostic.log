@@ -1,0 +1,38 @@
+dbus-daemon[7209]: [session uid=1001 pid=7209] Activating service name='org.a11y.Bus' requested by ':1.0' (uid=1001 pid=7212 comm="xfwm4 --compositor=off")
+dbus-daemon[7209]: [session uid=1001 pid=7209] Successfully activated service 'org.a11y.Bus'
+dbus-daemon[7222]: Activating service name='org.a11y.atspi.Registry' requested by ':1.0' (uid=1001 pid=7212 comm="xfwm4 --compositor=off")
+dbus-daemon[7209]: [session uid=1001 pid=7209] Activating service name='org.xfce.Xfconf' requested by ':1.2' (uid=1001 pid=7212 comm="xfwm4 --compositor=off")
+dbus-daemon[7222]: Successfully activated service 'org.a11y.atspi.Registry'
+SpiRegistry daemon is running with well-known name - org.a11y.atspi.Registry
+dbus-daemon[7209]: [session uid=1001 pid=7209] Successfully activated service 'org.xfce.Xfconf'
+
+(xfwm4:7212): xfwm4-WARNING **: 10:22:16.844: Failed to connect to session manager: Failed to connect to the session manager: SESSION_MANAGER environment variable not defined
+Processing request of type CallToolRequest
+Processing request of type ListToolsRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+Processing request of type CallToolRequest
+
+(xfconfd:7230): xfconfd-WARNING **: 10:22:24.755: Name org.xfce.Xfconf lost on the message dbus, exiting.
