@@ -1,5 +1,9 @@
 # Current capability and evidence gaps
 
+For the bounded post-browser/clipboard/installer audit at `7783721`, see
+[P0-GAP-REVIEW.md](P0-GAP-REVIEW.md). The snapshot below retains its historical
+counts and limits; the newer report identifies superseded statements explicitly.
+
 Audit refreshed against source `ae824b2` on 2026-09-20. The implementation, evidence and remaining
 product work must be assessed separately. The [346-case catalog](REQUIREMENTS.md)
 retains its original priorities and acceptance criteria. No case becomes
