@@ -10,6 +10,7 @@ import selectors
 import signal
 import subprocess
 import tempfile
+import sys
 import threading
 import time
 
@@ -112,10 +113,16 @@ def run(args, *, data=None, timeout=3, effect="none", cleanup=False,
     process = None
     streams = None
     try:
-        source = tempfile.TemporaryFile() if data is not None else None
-        if source:
-            source.write(data)
-            source.seek(0)
+        # Local import avoids storage.py's DesktopError import cycle.
+        from .storage import storage_errors
+        with storage_errors('stage private helper input'):
+            source = tempfile.TemporaryFile() if data is not None else None
+            if source:
+                source.write(data)
+                source.flush()
+                source.seek(0)
+        if not cleanup:
+            checkpoint()
         try:
             process = subprocess.Popen(args, stdin=source if source else subprocess.DEVNULL,
                                        stdout=subprocess.PIPE, stderr=subprocess.PIPE,
@@ -168,7 +175,8 @@ def run(args, *, data=None, timeout=3, effect="none", cleanup=False,
             except subprocess.TimeoutExpired:
                 # The owned group was signalled; close inherited pipes below.
                 pass
-        if isinstance(exc, MemoryError) or (isinstance(exc, OSError) and exc.errno in
+        staged_failure = isinstance(exc, DesktopError) and exc.code in ('STORAGE_UNAVAILABLE', 'RESOURCE_UNAVAILABLE')
+        if staged_failure or isinstance(exc, MemoryError) or (isinstance(exc, OSError) and exc.errno in
                                              (errno.EMFILE, errno.ENFILE, errno.ENOMEM, errno.EAGAIN)):
             failure_effect = effect if process is not None else 'none'
             operation = _current_operation.get()
@@ -179,13 +187,22 @@ def run(args, *, data=None, timeout=3, effect="none", cleanup=False,
                     raise DesktopError('CANCELLED', 'Operation cancelled. Inspect state before retrying.', effect=failure_effect) from exc
                 if elapsed_time() >= operation.deadline:
                     raise DesktopError('TIMEOUT', 'Overall operation deadline exceeded. Inspect state before retrying.', effect=failure_effect) from exc
+            if staged_failure:
+                raise DesktopError(exc.code, str(exc), effect=failure_effect, details=exc.details) from exc
             raise DesktopError('RESOURCE_UNAVAILABLE',
                                'Backend helper exhausted memory or file/process resources. Release resources or increase the account limit; inspect state before retrying.',
                                effect=failure_effect) from exc
         raise
     finally:
         if source is not None:
-            source.close()
+            primary_failure = sys.exc_info()[0] is not None
+            try:
+                source.close()
+            except (OSError, MemoryError):
+                # Failed buffered writes may fail again on close; retain the
+                # original actionable error/cancellation while still closing.
+                if not primary_failure:
+                    raise
         if streams is not None:
             streams.close()
         if process is not None:
