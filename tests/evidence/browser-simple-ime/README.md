@@ -69,3 +69,22 @@ hosted artifacts remain separately retained; only the relevant synthetic test
 payload and compact evidence are copied here. The local experiment is ARM64;
 the original hosted failure was AMD64. There are no synthetic composition
 messages, extra retry attempts within a suite, or weakened expected results.
+
+## Remaining explicit-simple fixtures
+
+A subsequent audit at base `037c3cc` updated four remaining active settings:
+`live_ime.py`, `live_ime_browser.py`, `live_pm_selection.py`, and the explicit
+native-composition branch of `live_rich_editor.py`. Other branches still inherit
+their original environment. No historical artifact was rewritten.
+
+`remaining-fixtures.json` records a fresh UID1001 class check with the private
+IBus module and representative `--suites ime rich-editor-ime` run. All 12 GTK
+cases started real preedit, but the suite still failed because generic AX
+operations cannot reliably guard composition. The rich prototype passed all
+six native pending-refusal and explicit commit/cancel value checks; its six
+monitor-recovery checks still failed because the pinned browser emits an
+untrusted composition end, as already documented in
+[the rich-editor prototype evidence](../../../docs/OWNED-RICH-EDITOR-PROTOTYPE.md).
+Both exits remain 1. This update fixes fixture input-method selection; it does
+not qualify these known-failing workflows or claim every affected prototype
+was rerun.

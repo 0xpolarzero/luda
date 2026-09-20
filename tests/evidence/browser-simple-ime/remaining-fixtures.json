@@ -1,0 +1,248 @@
+{
+  "scope": "Remaining explicit GTK-simple test fixtures only; historical evidence and runtime unchanged",
+  "base": "037c3cc",
+  "class_probe": {
+    "uid": 1001,
+    "requested": "gtk-im-context-simple",
+    "actual": "gtk-im-context-simple",
+    "module_cache": "Private extracted official ibus-gtk3 1.5.29-2, same setup as README"
+  },
+  "run": "run-1789893102750722886",
+  "environment": {
+    "uid": 1001,
+    "python": "3.12.3",
+    "architecture": "aarch64",
+    "distribution": {
+      "NAME": "Ubuntu",
+      "ID": "ubuntu",
+      "PRETTY_NAME": "Ubuntu 24.04.4 LTS",
+      "VERSION_ID": "24.04",
+      "VERSION": "24.04.4 LTS (Noble Numbat)",
+      "VERSION_CODENAME": "noble",
+      "ID_LIKE": "debian",
+      "HOME_URL": "https://www.ubuntu.com/",
+      "SUPPORT_URL": "https://help.ubuntu.com/",
+      "BUG_REPORT_URL": "https://bugs.launchpad.net/ubuntu/",
+      "PRIVACY_POLICY_URL": "https://www.ubuntu.com/legal/terms-and-policies/privacy-policy",
+      "UBUNTU_CODENAME": "noble",
+      "LOGO": "ubuntu-logo"
+    },
+    "packages": [
+      "at-spi2-core\t2.52.0-1build1",
+      "gir1.2-gtk-4.0:arm64\t4.14.5+ds-0ubuntu0.10",
+      "python3-gi\t3.48.2-1",
+      "python3-pyqt5\t5.15.10+dfsg-1build6",
+      "xfce4-session\t4.18.3-1build2",
+      "xfwm4\t4.18.0-1build3",
+      "xvfb\t2:21.1.12-1ubuntu1.6"
+    ],
+    "browser": {
+      "executable": "/workspace/silo-desktop-research/browsers/chromium-1243/chrome-linux-arm64/chrome",
+      "version": "Google Chrome for Testing 153.0.8010.12"
+    }
+  },
+  "source_sha256": "17e60c80bdc5e214e2a8a4bc9c7b22a6897031f5f3974101e599a8f91d8c6b4f",
+  "source_unchanged": true,
+  "fixture_sha256": {
+    "tests/live_pm_selection.py": "a7e571ade743f5b73bc724d1756e2e7b825adebfefaf40931f24daccc0f53ee4",
+    "tests/live_ime.py": "cbf46c23d3aac5549330fa581713d8576406011c7b1c45ef7a022687545a50f0",
+    "tests/live_ime_browser.py": "3d7a98fbde59f63fec8c23be6786e7b47d73d1af064af41653888cdcfeaa058d",
+    "tests/live_rich_editor.py": "124affc05a2dd6ee5db25292e3f24395b21e80bf95cdade89c15f88a0bb72d2e"
+  },
+  "suites": [
+    {
+      "suite": "ime",
+      "status": "failed",
+      "returncode": 1,
+      "seconds": 23.233,
+      "source_unchanged": true
+    },
+    {
+      "suite": "rich-editor-ime",
+      "status": "failed",
+      "returncode": 1,
+      "seconds": 17.228,
+      "source_unchanged": true
+    }
+  ],
+  "gtk_cases": [
+    {
+      "widget": "entry",
+      "operation": "observe",
+      "preedit_started": true,
+      "guarded": false,
+      "preedit_preserved": true
+    },
+    {
+      "widget": "entry",
+      "operation": "focus",
+      "preedit_started": true,
+      "guarded": false,
+      "preedit_preserved": false
+    },
+    {
+      "widget": "entry",
+      "operation": "replace",
+      "preedit_started": true,
+      "guarded": false,
+      "preedit_preserved": false
+    },
+    {
+      "widget": "entry",
+      "operation": "insert",
+      "preedit_started": true,
+      "guarded": false,
+      "preedit_preserved": false
+    },
+    {
+      "widget": "entry",
+      "operation": "select",
+      "preedit_started": true,
+      "guarded": false,
+      "preedit_preserved": false
+    },
+    {
+      "widget": "entry",
+      "operation": "paste",
+      "preedit_started": true,
+      "guarded": false,
+      "preedit_preserved": false
+    },
+    {
+      "widget": "textview",
+      "operation": "observe",
+      "preedit_started": true,
+      "guarded": false,
+      "preedit_preserved": true
+    },
+    {
+      "widget": "textview",
+      "operation": "focus",
+      "preedit_started": true,
+      "guarded": false,
+      "preedit_preserved": true
+    },
+    {
+      "widget": "textview",
+      "operation": "replace",
+      "preedit_started": true,
+      "guarded": false,
+      "preedit_preserved": true
+    },
+    {
+      "widget": "textview",
+      "operation": "insert",
+      "preedit_started": true,
+      "guarded": false,
+      "preedit_preserved": true
+    },
+    {
+      "widget": "textview",
+      "operation": "select",
+      "preedit_started": true,
+      "guarded": false,
+      "preedit_preserved": false
+    },
+    {
+      "widget": "textview",
+      "operation": "paste",
+      "preedit_started": true,
+      "guarded": false,
+      "preedit_preserved": false
+    }
+  ],
+  "rich_cases": [
+    {
+      "case": "owned-browser-private-pipe",
+      "passed": true
+    },
+    {
+      "case": "prosemirror-native-ime-commit-pending-refused",
+      "passed": true
+    },
+    {
+      "case": "prosemirror-native-ime-commit-value",
+      "passed": true
+    },
+    {
+      "case": "prosemirror-native-ime-commit-monitor-recovery",
+      "passed": false
+    },
+    {
+      "case": "prosemirror-native-ime-cancel-pending-refused",
+      "passed": true
+    },
+    {
+      "case": "prosemirror-native-ime-cancel-value",
+      "passed": true
+    },
+    {
+      "case": "prosemirror-native-ime-cancel-monitor-recovery",
+      "passed": false
+    },
+    {
+      "case": "generic-prewrap-native-ime-commit-pending-refused",
+      "passed": true
+    },
+    {
+      "case": "generic-prewrap-native-ime-commit-value",
+      "passed": true
+    },
+    {
+      "case": "generic-prewrap-native-ime-commit-monitor-recovery",
+      "passed": false
+    },
+    {
+      "case": "generic-prewrap-native-ime-cancel-pending-refused",
+      "passed": true
+    },
+    {
+      "case": "generic-prewrap-native-ime-cancel-value",
+      "passed": true
+    },
+    {
+      "case": "generic-prewrap-native-ime-cancel-monitor-recovery",
+      "passed": false
+    },
+    {
+      "case": "textarea-native-ime-commit-pending-refused",
+      "passed": true
+    },
+    {
+      "case": "textarea-native-ime-commit-value",
+      "passed": true
+    },
+    {
+      "case": "textarea-native-ime-commit-monitor-recovery",
+      "passed": false
+    },
+    {
+      "case": "textarea-native-ime-cancel-pending-refused",
+      "passed": true
+    },
+    {
+      "case": "textarea-native-ime-cancel-value",
+      "passed": true
+    },
+    {
+      "case": "textarea-native-ime-cancel-monitor-recovery",
+      "passed": false
+    },
+    {
+      "case": "synthetic-end-during-native-preedit-refused",
+      "passed": true
+    },
+    {
+      "case": "synthetic-end-probe-explicit-cancel-value",
+      "passed": true
+    },
+    {
+      "case": "native-monitor-unknown-provenance",
+      "passed": true
+    }
+  ],
+  "raw_result_sha256": {
+    "artifacts/ime/results.json": "2b2ba5cabe23c38372a472be6e4d89e44c7f3038fd8e2f601a32bbf36701a8e2",
+    "artifacts/rich-editor-ime/results.json": "bd2b4eb4a031cb1758d13075702d0af23be9eae9c05653b55fa8b9dc008f91a1"
+  }
+}

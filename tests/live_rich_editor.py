@@ -63,7 +63,7 @@ def main(executable, native_composition_only=False):
         print(json.dumps({'case':case, 'passed':bool(passed)}), flush=True)
     try:
         with sync_playwright() as pw:
-            browser = pw.chromium.launch(executable_path=executable, headless=False, env=dict(os.environ, ACCESSIBILITY_ENABLED='1', **({'GTK_IM_MODULE':'simple'} if native_composition_only else {})),
+            browser = pw.chromium.launch(executable_path=executable, headless=False, env=dict(os.environ, ACCESSIBILITY_ENABLED='1', **({'GTK_IM_MODULE':'gtk-im-context-simple'} if native_composition_only else {})),
                 args=['--force-renderer-accessibility', '--disable-background-networking', '--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1', '--window-size=1100,900'])
             try:
                 protocol = browser.new_browser_cdp_session()

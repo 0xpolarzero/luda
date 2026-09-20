@@ -39,7 +39,7 @@ def main(executable):
     def record(case,passed,**details):
         rows.append(dict(case=case,passed=bool(passed),**details));(OUT/'results.json').write_text(json.dumps(rows,ensure_ascii=False,indent=2));print(json.dumps({'case':case,'passed':bool(passed)}),flush=True)
     desktop=Desktop()
-    with tempfile.TemporaryDirectory(prefix='luda-pm-range-') as temporary,patch.dict(os.environ,TMPDIR=temporary,GTK_IM_MODULE='simple'):
+    with tempfile.TemporaryDirectory(prefix='luda-pm-range-') as temporary,patch.dict(os.environ,TMPDIR=temporary,GTK_IM_MODULE='gtk-im-context-simple'):
         worker=Worker(str(Path(temporary)/'profile'))
         try:
             root=f'http://127.0.0.1:{server.server_port}/index.html'

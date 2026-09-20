@@ -27,7 +27,7 @@ def main():
     records=[]
     capability=None
     with tempfile.TemporaryDirectory(prefix='luda-ime-') as temp:
-        os.environ.update(XDG_CONFIG_HOME=temp+'/config',XDG_CACHE_HOME=temp+'/cache',XDG_RUNTIME_DIR=temp,GTK_IM_MODULE='simple',NO_AT_BRIDGE='0')
+        os.environ.update(XDG_CONFIG_HOME=temp+'/config',XDG_CACHE_HOME=temp+'/cache',XDG_RUNTIME_DIR=temp,GTK_IM_MODULE='gtk-im-context-simple',NO_AT_BRIDGE='0')
         wm=subprocess.Popen(['xfwm4','--compositor=off'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True)
         try:
             deadline=time.monotonic()+8

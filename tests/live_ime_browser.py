@@ -17,7 +17,7 @@ def main():
     if os.environ.get('LUDA_ISOLATED_TEST_DISPLAY')!='1':raise SystemExit('Private display only.')
     records=[]
     with tempfile.TemporaryDirectory(prefix='luda-browser-ime-') as temp:
-        os.environ.update(XDG_CONFIG_HOME=temp+'/config',XDG_CACHE_HOME=temp+'/cache',XDG_RUNTIME_DIR=temp,GTK_IM_MODULE='simple',NO_AT_BRIDGE='0')
+        os.environ.update(XDG_CONFIG_HOME=temp+'/config',XDG_CACHE_HOME=temp+'/cache',XDG_RUNTIME_DIR=temp,GTK_IM_MODULE='gtk-im-context-simple',NO_AT_BRIDGE='0')
         wm=subprocess.Popen(['xfwm4','--compositor=off'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True)
         try:
             deadline=time.monotonic()+8
