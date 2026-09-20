@@ -245,3 +245,47 @@ Disconnect, and discovery preserving a typed profile without registration. The
 sixth patch applied cleanly after the first four (the fifth refreshes only skill
 bytes). This remains Linux qualification of native logic, not macOS dialog or
 packaging acceptance. Logs are in `artifacts/silo-native-registration/`.
+
+### Reviewed same-transport version update (seventh patch)
+
+`0007-reviewed-version-update.patch` adds **Review update**, followed by a separate
+**Confirm this update**. Preview reads the selected profile and installed guest
+skill without changing the registration. It shows the VM/profile, old/new versions
+and skill hashes. The guest skill must exactly match the reviewed skill embedded
+in this Silo build. A profile lock coordinates Silo operations; it is not a global
+lock on independent Codex writers.
+
+Confirmation recomputes a digest covering the selected executable identity,
+profile/VM, receipt, source catalog/manifest, cached manifest/skill/MCP contents,
+effective server configuration, current SSH config/pins and proposed new version.
+A stale preview refuses without applying. Modified or disabled registrations,
+changed marketplace sources/catalog paths, modified cache files and changed SSH
+aliases/pins are refused. This increment updates the reviewed skill/version while
+keeping the exact MCP command and SSH transport; changing transport requires a
+separate deliberate migration and is not silently incorporated.
+
+Codex 0.155.1 has no `plugin update` command. An actual isolated CLI probe confirms
+that `plugin add PLUGIN@MARKETPLACE` installs a changed local version in place.
+After confirmation, Silo records an uncertain update receipt, archives the old
+reviewed source bundle, publishes the candidate and issues **one** plugin-add
+operation. Fresh CLI/cache readback establishes the new version even if the add
+acknowledgement is lost. Failure preserves the uncertain receipt, old source
+archive and SSH transport; there is no automatic retry, rollback or remove/re-add.
+Existing clients are not killed. Codex itself removes the previous version's
+cache, so the UI tells users to start a new conversation and does not promise
+old cached skill paths remain available. The editor's public-key derivation used
+by read-only transport checks now has a five-second subprocess deadline.
+
+Validation on Linux ARM64: eight native registration tests passed, including three
+actual Codex CLI cases. The update case verifies source/config preservation during
+preview, stale-plan refusal, changed source/catalog/cache and disabled-state
+refusal, lost-response reconciliation, new cached skill bytes, unchanged server
+namespace, the other VM remaining registered, and failed-install uncertainty with
+no replay. A separate native transport test verifies config/pin mismatches are
+read-only. Twenty-four frontend tests and TypeScript checking passed, including
+the separate confirmation and preview invalidation on profile edits. The patch
+applies after the previously qualified native patches; skill-refresh patch five
+changes only embedded bytes. Evidence is in `artifacts/silo-native-registration/`.
+The actual native key-derivation/SSH path was not run in this VM, which lacks
+`/usr/bin/ssh-keygen` and `/usr/bin/ssh`; native compilation, pure transport checks
+and real temporary-profile Codex behavior are distinct from macOS/real-VM acceptance.
