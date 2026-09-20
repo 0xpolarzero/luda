@@ -236,10 +236,13 @@
     "WIN-04": {
       "implementation": "partial",
       "tests": [
-        "test_window_tokens.WindowTokenTests.test_missing_and_valid_property",
-        "test_window_tokens.WindowTokenTests.test_malformed_property_types_lengths_and_bytes"
+        "test_activation_identity.ActivationIdentity.test_post_dispatch_lookup_failure_retains_uncertainty",
+        "test_activation_identity.ActivationIdentity.test_reused_active_xid_does_not_verify_original_generation",
+        "test_activation_identity.ActivationIdentity.test_same_generation_active_is_verified",
+        "test_window_tokens.WindowTokenTests.test_malformed_property_types_lengths_and_bytes",
+        "test_window_tokens.WindowTokenTests.test_missing_and_valid_property"
       ],
-      "limits": "Property/token parser and forged values covered; real XID reuse exercised by live_window_tokens.py separately."
+      "limits": "Property/token parser and forged values covered; real XID reuse exercised by live_window_tokens.py separately. Activation postcondition additionally requires the original full window generation; it no longer verifies a replacement active XID. Numeric window-manager dispatch still has an asynchronous identity race; readback is not prevention of every misdelivery."
     },
     "WIN-05": {
       "implementation": "partial",
@@ -289,19 +292,62 @@
     "SEM-05": {
       "implementation": "partial",
       "tests": [
+        "test_choice_identity.Choices.test_action_extend_lost_prior_selection_not_verified",
+        "test_choice_identity.Choices.test_action_normalization_uses_linear_child_reads",
+        "test_choice_identity.Choices.test_action_postmutation_name_budget_failure_is_uncertain",
+        "test_choice_identity.Choices.test_action_recycled_name_not_verified",
+        "test_choice_identity.Choices.test_action_replace_and_extend_preserve_expected_selection",
+        "test_choice_identity.Choices.test_action_replaced_object_not_verified_from_old_selected_proxy",
+        "test_choice_identity.Choices.test_action_stop_before_toggling_replaced_other_option",
+        "test_choice_identity.Choices.test_combo_exact_selected_identity_verified",
+        "test_choice_identity.Choices.test_combo_postmutation_name_budget_failure_is_uncertain",
+        "test_choice_identity.Choices.test_combo_recycled_name_not_verified",
+        "test_choice_identity.Choices.test_combo_reused_path_in_other_provider_not_verified",
+        "test_selection_identity.SelectionIdentity.test_changed_provider_with_same_path_is_not_verified",
+        "test_selection_identity.SelectionIdentity.test_extend_does_not_verify_lost_prior_selection",
+        "test_selection_identity.SelectionIdentity.test_identity_budget_failure_after_selection_stays_uncertain",
+        "test_selection_identity.SelectionIdentity.test_recycled_selected_name_is_not_verified",
+        "test_selection_identity.SelectionIdentity.test_replaced_child_at_selected_index_is_not_verified",
         "test_semantic.OptionSelection.test_already_selected_is_idempotent",
         "test_semantic.OptionSelection.test_extend_preserves_other_choices",
         "test_semantic.OptionSelection.test_false_deselection_success_not_verified",
         "test_semantic.OptionSelection.test_single_choice_is_exclusive_without_multiselectable_flag",
         "test_semantic.OptionSelection.test_stale_child_index_refused",
+        "test_table_rows.Rows.test_actual_replacement_cell_name_not_verified",
+        "test_table_rows.Rows.test_actual_replacement_provider_not_verified",
+        "test_table_rows.Rows.test_disabled_or_hidden_table_refused_before_selection",
         "test_table_rows.Rows.test_exact_row_and_single_selection_normalization",
-        "test_table_rows.Rows.test_ignored_provider_acceptance_not_verified"
+        "test_table_rows.Rows.test_extend_preserves_other_rows",
+        "test_table_rows.Rows.test_extend_reordered_prior_row_not_verified",
+        "test_table_rows.Rows.test_ignored_provider_acceptance_not_verified",
+        "test_table_rows.Rows.test_missing_prior_row_anchor_refuses_before_mutation",
+        "test_table_rows.Rows.test_name_budget_failure_after_selection_retains_uncertainty",
+        "test_table_rows.Rows.test_offscreen_sentinel_refused_before_mutation",
+        "test_table_rows.Rows.test_position_changed_before_action_refused",
+        "test_table_rows.Rows.test_recycled_cell_meaning_after_selection_not_verified",
+        "test_table_rows.Rows.test_unreliable_coordinates_refuse_viewport_claim"
       ],
-      "limits": "Mock option/TableCell providers verify exact single selection and ignored-provider uncertainty; live toolkit combo/list/table results remain separate. No general range/virtualized selection qualification."
+      "limits": "Exact generic/combo/action-list/TableCell selection checks provider/path/role/full bounded name and fresh selected objects; add must retain previous identities. Targeted provider-fault units plus separate real GTK/Qt fixtures; Qt combo commitment remains unsupported. No range selection or universal virtualized-provider qualification."
     },
     "DATA-03": {
       "implementation": "partial",
       "tests": [
+        "test_choice_identity.Choices.test_action_extend_lost_prior_selection_not_verified",
+        "test_choice_identity.Choices.test_action_normalization_uses_linear_child_reads",
+        "test_choice_identity.Choices.test_action_postmutation_name_budget_failure_is_uncertain",
+        "test_choice_identity.Choices.test_action_recycled_name_not_verified",
+        "test_choice_identity.Choices.test_action_replace_and_extend_preserve_expected_selection",
+        "test_choice_identity.Choices.test_action_replaced_object_not_verified_from_old_selected_proxy",
+        "test_choice_identity.Choices.test_action_stop_before_toggling_replaced_other_option",
+        "test_choice_identity.Choices.test_combo_exact_selected_identity_verified",
+        "test_choice_identity.Choices.test_combo_postmutation_name_budget_failure_is_uncertain",
+        "test_choice_identity.Choices.test_combo_recycled_name_not_verified",
+        "test_choice_identity.Choices.test_combo_reused_path_in_other_provider_not_verified",
+        "test_selection_identity.SelectionIdentity.test_changed_provider_with_same_path_is_not_verified",
+        "test_selection_identity.SelectionIdentity.test_extend_does_not_verify_lost_prior_selection",
+        "test_selection_identity.SelectionIdentity.test_identity_budget_failure_after_selection_stays_uncertain",
+        "test_selection_identity.SelectionIdentity.test_recycled_selected_name_is_not_verified",
+        "test_selection_identity.SelectionIdentity.test_replaced_child_at_selected_index_is_not_verified",
         "test_semantic.OptionSelection.test_already_selected_is_idempotent",
         "test_semantic.OptionSelection.test_extend_preserves_other_choices",
         "test_semantic.OptionSelection.test_false_deselection_success_not_verified",
@@ -309,9 +355,11 @@
         "test_semantic.OptionSelection.test_stale_child_index_refused",
         "test_table_rows.Rows.test_exact_row_and_single_selection_normalization",
         "test_table_rows.Rows.test_extend_preserves_other_rows",
-        "test_table_rows.Rows.test_ignored_provider_acceptance_not_verified"
+        "test_table_rows.Rows.test_extend_reordered_prior_row_not_verified",
+        "test_table_rows.Rows.test_ignored_provider_acceptance_not_verified",
+        "test_table_rows.Rows.test_missing_prior_row_anchor_refuses_before_mutation"
       ],
-      "limits": "Mock option and TableCell providers verify replace/add and reject unobserved selection effects. Range selection and all virtualized providers remain unqualified; real toolkit evidence is separate."
+      "limits": "Replace/add selection verifies exact fresh identities and retained prior options/row anchors; unexpected replacements are not deselected. At most 500 rows/options are normalized; action-list child reads are linear per plan. Range semantics and all virtualized providers remain unqualified."
     },
     "SEM-06": {
       "implementation": "partial",
@@ -644,11 +692,16 @@
     "SEC-07": {
       "implementation": "partial",
       "tests": [
-        "test_protocol_validation.ProtocolValidation.test_repair_hints_contain_schema_names_but_no_submitted_values",
+        "test_error_redaction.ErrorRedaction.test_exception_stringifier_is_never_called",
+        "test_error_redaction.ErrorRedaction.test_public_secret_failure_response_history_and_streams_are_redacted",
+        "test_error_redaction.ErrorRedaction.test_typed_diagnostics_remain_useful",
+        "test_error_redaction.ErrorRedaction.test_unexpected_failure_does_not_clear_unfinished_recovery_owner",
+        "test_error_redaction.ErrorRedaction.test_unexpected_secret_worker_decode_failure_is_redacted",
+        "test_output_bounds.OutputBounds.test_stderr_counts_toward_limit_without_echoing_it",
         "test_output_bounds.OutputBounds.test_stdout_overflow_has_no_payload_in_error",
-        "test_output_bounds.OutputBounds.test_stderr_counts_toward_limit_without_echoing_it"
+        "test_protocol_validation.ProtocolValidation.test_repair_hints_contain_schema_names_but_no_submitted_values"
       ],
-      "limits": "These checks cover invalid protocol input and bounded process-output errors, not every external provider failure path."
+      "limits": "Schema/output-bound errors and unexpected public backend exceptions omit submitted values/provider text. Protected runtime/decode failures, exception stringifiers and metadata-only history/streams are tested. Typed DesktopError producers retain responsibility for safe actionable diagnostics; external app/system logs are not covered."
     },
     "PERF-09": {
       "implementation": "partial",
@@ -798,11 +851,16 @@
     "AUTH-09": {
       "implementation": "partial",
       "tests": [
-        "test_session_state.SessionStateTests.test_reported_lock_takes_precedence",
+        "test_session_input.SessionInput.test_blocking_hints_refuse_without_touching_mutation",
+        "test_session_input.SessionInput.test_observation_and_recovery_do_not_query_or_unlock",
+        "test_session_input.SessionInput.test_probe_timeout_prevents_dispatch",
+        "test_session_input.SessionInput.test_query_uses_selected_backend_environment",
+        "test_session_input.SessionInput.test_unknown_and_inactive_are_not_claimed_unlocked_or_blocked",
         "test_session_state.SessionStateTests.test_active_saver_is_not_mislabeled_locked",
+        "test_session_state.SessionStateTests.test_reported_lock_takes_precedence",
         "test_session_state.SessionStateTests.test_unavailable_never_means_unlocked"
       ],
-      "limits": "Read-only login1/screensaver hints; unknown never proves unlocked and a screensaver is not necessarily a lock. No atomic lock/input guard."
+      "limits": "Selected-session login1/screensaver hints are checked before public mutations. Positive lock/screensaver hints and probe timeout block input; observation/recovery remain available. Unknown/inactive is not proof of unlocked state, and no atomic lock-to-input guarantee is claimed. Real private session-input fixture evidence is separate."
     },
     "WAIT-02": {
       "implementation": "implemented",
@@ -944,6 +1002,13 @@
     "SEM-09": {
       "implementation": "partial",
       "tests": [
+        "test_bus_generation.Generation.test_authenticated_guid_reads_exact_connection_and_frees_string",
+        "test_bus_generation.Generation.test_changed_or_missing_generation_refuses_before_traversal",
+        "test_bus_generation.Generation.test_generation_changes_during_target_resolution_refuses",
+        "test_bus_generation.Generation.test_malformed_guid_refused_and_freed",
+        "test_bus_generation.Generation.test_missing_connection_or_guid_refused",
+        "test_bus_generation.Generation.test_missing_library_diagnostic_is_sanitized",
+        "test_bus_generation.Generation.test_unavailable_generation_never_invokes_action",
         "test_element_name_identity.Names.test_identity_budget_diagnostic_contains_no_application_contents",
         "test_element_name_identity.Names.test_name_budget_applies_to_encoded_bytes",
         "test_element_name_identity.Names.test_protected_name_never_read_or_hashed",
@@ -956,33 +1021,49 @@
         "test_provider_identity.ProviderScope.test_geometry_selected_root_stays_in_its_provider",
         "test_provider_identity.ProviderScope.test_missing_provider_identity_never_widens_scope",
         "test_provider_identity.ProviderScope.test_mutation_cannot_choose_first_colliding_provider",
-        "test_provider_identity.ProviderScope.test_well_known_alias_not_accepted_as_generation"
+        "test_provider_identity.ProviderScope.test_well_known_alias_not_accepted_as_generation",
+        "test_selection_identity.SelectionIdentity.test_changed_provider_with_same_path_is_not_verified",
+        "test_selection_identity.SelectionIdentity.test_extend_does_not_verify_lost_prior_selection",
+        "test_selection_identity.SelectionIdentity.test_identity_budget_failure_after_selection_stays_uncertain",
+        "test_selection_identity.SelectionIdentity.test_recycled_selected_name_is_not_verified",
+        "test_selection_identity.SelectionIdentity.test_replaced_child_at_selected_index_is_not_verified"
       ],
-      "limits": "Complete bounded UTF-8 name identity detects changes beyond the public 300-character label, hides private digests, and fails closed on unreadable/oversized identities. Protected names are never read. Mock providers do not establish every toolkit identity race. Private provider connection identity scopes colliding object paths across same-PID providers; disappeared providers cannot silently rebind. Same-provider identical widget reuse and bus-lifetime replacement require separate evidence."
+      "limits": "Observed target identity includes bounded complete name, provider connection and authenticated accessibility bus generation. Colliding/reused paths, bus changes and post-selection meaning changes are refused or uncertain. Identical complete provider identities cannot distinguish every reused widget, and cross-process provider calls are not atomic."
     },
     "DATA-01": {
       "implementation": "partial",
       "tests": [
+        "test_table_rows.Rows.test_actual_replacement_cell_name_not_verified",
+        "test_table_rows.Rows.test_actual_replacement_provider_not_verified",
         "test_table_rows.Rows.test_disabled_or_hidden_table_refused_before_selection",
         "test_table_rows.Rows.test_exact_row_and_single_selection_normalization",
         "test_table_rows.Rows.test_extend_preserves_other_rows",
+        "test_table_rows.Rows.test_extend_reordered_prior_row_not_verified",
         "test_table_rows.Rows.test_ignored_provider_acceptance_not_verified",
+        "test_table_rows.Rows.test_missing_prior_row_anchor_refuses_before_mutation",
         "test_table_rows.Rows.test_name_budget_failure_after_selection_retains_uncertainty",
         "test_table_rows.Rows.test_offscreen_sentinel_refused_before_mutation",
         "test_table_rows.Rows.test_position_changed_before_action_refused",
         "test_table_rows.Rows.test_recycled_cell_meaning_after_selection_not_verified",
         "test_table_rows.Rows.test_unreliable_coordinates_refuse_viewport_claim"
       ],
-      "limits": "Exact current TableCell row identity, viewport/state checks, replace/add selection and post-action identity/readback are unit-tested. Offscreen or unreliable-coordinate rows refuse. No automatic scroll/reacquire or general virtualized-table qualification; live_semantic.py separately tests an owned GTK table."
+      "limits": "Current TableCell identity and viewport are checked; at most one same-column anchor per prior selected row is read, bounded to 500 selected rows. Missing anchors refuse before mutation; replacement or changed meaning cannot verify success. No automatic scroll/reacquire or general virtualized-grid support."
     },
     "DATA-02": {
       "implementation": "partial",
       "tests": [
+        "test_choice_identity.Choices.test_action_recycled_name_not_verified",
+        "test_choice_identity.Choices.test_action_replaced_object_not_verified_from_old_selected_proxy",
+        "test_choice_identity.Choices.test_action_stop_before_toggling_replaced_other_option",
+        "test_choice_identity.Choices.test_combo_recycled_name_not_verified",
+        "test_element_name_identity.Names.test_reused_path_with_changed_cropped_suffix_is_stale_before_action",
+        "test_table_rows.Rows.test_actual_replacement_cell_name_not_verified",
+        "test_table_rows.Rows.test_actual_replacement_provider_not_verified",
+        "test_table_rows.Rows.test_extend_reordered_prior_row_not_verified",
         "test_table_rows.Rows.test_position_changed_before_action_refused",
-        "test_table_rows.Rows.test_recycled_cell_meaning_after_selection_not_verified",
-        "test_element_name_identity.Names.test_reused_path_with_changed_cropped_suffix_is_stale_before_action"
+        "test_table_rows.Rows.test_recycled_cell_meaning_after_selection_not_verified"
       ],
-      "limits": "Recycled row position/name refuses or remains uncertain. Mock identity changes do not establish all actual sorted/filtered provider workflows or automatic reacquisition."
+      "limits": "Mock reordering/replacement of target and retained selection identities returns stale or uncertain results. Separate real GTK sorting/filtering evidence exists; no automatic record reacquisition or universal stable-record identity."
     },
     "SEM-01": {
       "implementation": "partial",
@@ -994,6 +1075,37 @@
         "test_invoke_default.InvokeDefault.test_unobserved_action_cannot_be_selected"
       ],
       "limits": " A sole cached observed action can be invoked without guessing its toolkit name; multiple actions require explicit choice and unobserved actions are refused. Mock tests do not verify application completion."
+    },
+    "ENV-08": {
+      "implementation": "partial",
+      "tests": [
+        "test_bus_generation.Generation.test_authenticated_guid_reads_exact_connection_and_frees_string",
+        "test_bus_generation.Generation.test_changed_or_missing_generation_refuses_before_traversal",
+        "test_bus_generation.Generation.test_generation_changes_during_target_resolution_refuses",
+        "test_bus_generation.Generation.test_malformed_guid_refused_and_freed",
+        "test_bus_generation.Generation.test_missing_connection_or_guid_refused",
+        "test_bus_generation.Generation.test_missing_library_diagnostic_is_sanitized",
+        "test_bus_generation.Generation.test_unavailable_generation_never_invokes_action",
+        "test_reconnect.ReconnectTests.test_bus_failure_preserves_old_and_closes_candidate",
+        "test_reconnect.ReconnectTests.test_environment_context_is_immutable_and_restores"
+      ],
+      "limits": "Authenticated AT-SPI bus GUID failure/change refuses old target traversal; reconnect validates the selected environment and preserves the old backend if the candidate bus fails. Mock native/provider contracts do not establish every session D-Bus outage or automatic application bridge reconnection. Private live_bus_generation.py is separate evidence."
+    },
+    "LIFE-06": {
+      "implementation": "partial",
+      "tests": [
+        "test_reconnect.ReconnectTests.test_closed_backend_discards_cached_targets",
+        "test_reconnect.ReconnectTests.test_server_success_swaps_then_closes"
+      ],
+      "limits": "Controlled backend replacement and closed-cache invalidation only. This is narrower than restarting an entire MCP process and reconnecting every client; accessibility bus replacement is mapped separately under ENV-08."
+    },
+    "ERR-08": {
+      "implementation": "partial",
+      "tests": [
+        "test_error_redaction.ErrorRedaction.test_public_secret_failure_response_history_and_streams_are_redacted",
+        "test_error_redaction.ErrorRedaction.test_unexpected_failure_does_not_clear_unfinished_recovery_owner"
+      ],
+      "limits": "Unexpected failures return fixed INTERNAL_ERROR diagnostics with operation ID and uncertain effect. Gate release permits recovery only when no separate unfinished cleanup owner remains. These deterministic error paths do not prove all native failure modes recover."
     }
   }
 }
