@@ -393,6 +393,14 @@ class TextAccess:
         return Atspi.Text.remove_selection(self.raw, index)
 
 
+def choice_identity(node, observed=None):
+    """Bounded option identity, shared by each supported selection provider."""
+    role = observed["role"] if observed is not None else node.get_role_name()
+    name = ((observed["name"], observed.get("name_fingerprint")) if observed is not None
+            else bounded_name_identity(node, "password" in role.lower()))
+    return (provider_identity(node), node.path, role, *name)
+
+
 def choose_table_row(node, current, extend, request=None):
     """Select a row through Table, preserving the exact observed cell identity."""
     cell = node.get_table_cell()
@@ -417,18 +425,33 @@ def choose_table_row(node, current, extend, request=None):
     table = table_node.get_table_iface()
     position = Atspi.TableCell.get_position(cell)
     row, column = position[-2:]
+    observed = choice_identity(node, current)
+    container = (provider_identity(table_node), table_node.path)
     def same_cell():
         position_now = Atspi.TableCell.get_position(cell)
         actual = table.get_accessible_at(row, column)
         return (tuple(position_now[-2:]) == (row, column) and actual is not None
-                and actual.path == node.path and bounded_name_identity(node, False) ==
-                (current["name"], current.get("name_fingerprint")))
+                and (provider_identity(table_node), table_node.path) == container
+                and choice_identity(actual) == observed and choice_identity(node) == observed)
     if row < 0 or column < 0 or not same_cell():
         return failure("STALE_TARGET", "Table cell position or meaning changed; inspect again.")
     selected = table.get_selected_rows()
     if len(selected) > 500:
         return failure("SELECTION_TOO_LARGE", "Table row selection normalization exceeds 500 rows.")
-    if not same_cell():
+    # At most one existing cell per selected row, in the target column; never
+    # scan the complete grid. Missing anchors cannot prove retained row meaning.
+    anchors = {}
+    for old_row in selected:
+        if type(old_row) is not int or old_row < 0:
+            return failure("SELECTION_UNVERIFIABLE", "Table exposes an invalid selected row.")
+        anchor = table.get_accessible_at(old_row, column)
+        if anchor is None:
+            return failure("SELECTION_UNVERIFIABLE", "Selected row has no stable cell identity in this column.")
+        anchors[old_row] = choice_identity(anchor)
+    def same_anchor(old_row):
+        actual = table.get_accessible_at(old_row, column)
+        return actual is not None and choice_identity(actual) == anchors[old_row]
+    if not same_cell() or not all(same_anchor(old_row) for old_row in anchors):
         return failure("STALE_TARGET", "Table changed while observing selection; inspect again.")
     expected = set(selected) | {row} if extend else {row}
     if set(selected) == expected:
@@ -441,16 +464,17 @@ def choose_table_row(node, current, extend, request=None):
         for old_row in selected:
             if old_row == row or old_row not in table.get_selected_rows():
                 continue
-            if not same_cell():
+            if not same_cell() or not same_anchor(old_row):
                 return {"effect": "uncertain", "accepted": accepted, "selected": False,
                         "verification": "Table changed while selecting; inspect again."}
             accepted = bool(table.remove_row_selection(old_row)) and accepted
-    matched = verify(lambda: same_cell() and set(table.get_selected_rows()) == expected)
+    matched = verify(lambda: same_cell() and set(table.get_selected_rows()) == expected
+                     and (not extend or all(same_anchor(old_row) for old_row in anchors)))
     return {"effect": "verified" if matched else "uncertain", "accepted": accepted,
             "selected": matched, "changed": matched, "selection_scope": "table_row", "extend": extend}
 
 
-def choose_combo_option(node, combo):
+def choose_combo_option(node, combo, current, request=None):
     """Commit a popup option, not merely highlight a menu row."""
     combo_states = states_of(combo)
     if "showing" not in combo_states or not {"enabled", "sensitive"}.intersection(combo_states):
@@ -463,27 +487,48 @@ def choose_combo_option(node, combo):
     if len(recognized) != 1:
         return failure("UNSUPPORTED_ACTION", "Combo option has no unambiguous activation action.")
     selection = combo.get_selection_iface()
+    observed = choice_identity(node, current)
+    container = (provider_identity(combo), combo.path)
+    if choice_identity(node) != observed:
+        return failure("STALE_TARGET", "Combo option meaning changed; inspect again.")
+    if request is not None:
+        request["_mutation_started"] = True
     accepted = bool(action.do_action(recognized[0]))
     def committed():
         if Atspi.Selection.get_n_selected_children(selection) != 1:
             return False
-        return Atspi.Selection.get_selected_child(selection, 0).path == node.path
+        actual = Atspi.Selection.get_selected_child(selection, 0)
+        return (actual is not None and (provider_identity(combo), combo.path) == container
+                and choice_identity(actual) == observed)
     matched = verify(committed)
     return {"effect": "verified" if matched else "uncertain", "accepted": accepted,
             "selected": matched, "selection_method": "combo_option_activation"}
 
 
-def choose_by_action(node, parent, current, extend):
+def choose_by_action(node, parent, current, extend, request=None):
     """Qt list items expose Toggle/selected instead of a Selection container."""
     if current["role"] != "list item" or "selectable" not in current["states"] or parent.get_role_name() not in ("list", "list box"):
         return failure("UNSUPPORTED", "Option parent has no supported selection interface.")
     count = parent.get_child_count()
     if count > 500:
         return failure("SELECTION_TOO_LARGE", "Action-based selection is limited to 500 direct options.")
+    container = (provider_identity(parent), parent.path)
     siblings = [parent.get_child_at_index(i) for i in range(count)]
-    changes = ([node] if "selected" not in states_of(node) else [])
+    identities = [choice_identity(other) for other in siblings]
+    observed = choice_identity(node, current)
+    index = node.get_index_in_parent()
+    if not 0 <= index < count or identities[index] != observed:
+        return failure("STALE_TARGET", "Option meaning changed before selection; inspect again.")
+    def live_siblings():
+        if (provider_identity(parent), parent.path) != container or parent.get_child_count() != count:
+            return None
+        actual = [parent.get_child_at_index(i) for i in range(count)]
+        return actual if [choice_identity(other) for other in actual] == identities else None
+    previous = {identities[i] for i, other in enumerate(siblings) if "selected" in states_of(other)}
+    expected = previous | {observed} if extend else {observed}
+    changes = ([node] if observed not in previous else [])
     if not extend:
-        changes += [other for other in siblings if other.path != node.path and "selected" in states_of(other)]
+        changes += [other for i, other in enumerate(siblings) if identities[i] != observed and identities[i] in previous]
     plan = []
     for other in changes:
         if "Action" not in other.get_interfaces():
@@ -493,15 +538,30 @@ def choose_by_action(node, parent, current, extend):
         if len(indices) != 1:
             return failure("UNSUPPORTED_ACTION", "Every changed option must advertise one unambiguous Toggle action.")
         plan.append((other, action, indices[0]))
+    def same_position(option):
+        position = option.get_index_in_parent()
+        if not 0 <= position < count:
+            return False
+        actual = parent.get_child_at_index(position)
+        return (actual is not None and choice_identity(actual) == identities[position]
+                and choice_identity(option) == identities[position])
     accepted = True
-    for other, action, index in plan:
-        child_index = other.get_index_in_parent()
-        if child_index < 0 or parent.get_child_at_index(child_index).path != other.path:
+    for other, action, action_index in plan:
+        # Check the target and next changed option per action; rereading all
+        # children for every toggle would make a 500-option plan quadratic.
+        if ((provider_identity(parent), parent.path) != container
+                or parent.get_child_count() != count
+                or not same_position(node) or not same_position(other)):
             return {"effect": "uncertain", "accepted": accepted, "selected": False,
                     "verification": "Option identity changed while selecting; inspect again."}
-        accepted = bool(action.do_action(index)) and accepted
-    matched = verify(lambda: "selected" in states_of(node) and (extend or all(
-        other.path == node.path or "selected" not in states_of(other) for other in siblings)))
+        if request is not None:
+            request["_mutation_started"] = True
+        accepted = bool(action.do_action(action_index)) and accepted
+    def matched_selection():
+        actual = live_siblings()
+        return actual is not None and {identities[i] for i, other in enumerate(actual)
+                                       if "selected" in states_of(other)} == expected
+    matched = verify(matched_selection)
     return {"effect": "verified" if matched else "uncertain", "accepted": accepted,
             "selected": matched, "changed": bool(plan) and matched, "extend": extend,
             "selection_method": "advertised_toggle_actions"}
@@ -552,7 +612,7 @@ def semantic(node, current, req):
             if ancestor.get_role_name() == "combo box":
                 if extend:
                     return failure("INVALID_ARGUMENT", "Combo options cannot extend a selection.")
-                return choose_combo_option(node, ancestor)
+                return choose_combo_option(node, ancestor, current, request=req)
             if ancestor.get_role_name() in ("frame", "window", "dialog", "application"):
                 break
             ancestor = ancestor.get_parent()
@@ -564,15 +624,11 @@ def semantic(node, current, req):
         if index < 0 or parent.get_child_at_index(index).path != node.path:
             return failure("STALE_TARGET", "Option position changed; inspect again.")
         if "Selection" not in parent.get_interfaces():
-            return choose_by_action(node, parent, current, extend)
+            return choose_by_action(node, parent, current, extend, request=req)
         selection = parent.get_selection_iface()
         parent_identity = (provider_identity(parent), parent.path)
-        expected_identity = (provider_identity(node), node.path, current["role"],
-                             current["name"], current.get("name_fingerprint"))
-        def option_identity(option):
-            role = option.get_role_name()
-            name, fingerprint = bounded_name_identity(option, "password" in role.lower())
-            return (provider_identity(option), option.path, role, name, fingerprint)
+        expected_identity = choice_identity(node, current)
+        option_identity = choice_identity
         def same_option():
             actual = parent.get_child_at_index(index)
             return (actual is not None and node.get_index_in_parent() == index

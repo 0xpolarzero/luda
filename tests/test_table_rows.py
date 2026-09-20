@@ -5,20 +5,23 @@ from test_semantic import load_worker
 w=load_worker()
 def rect(x=10,y=10,width=30,height=20):return types.SimpleNamespace(x=x,y=y,width=width,height=height)
 class Cell:
- path='/row';name='Record 1';position=(True,1,0)
+ path='/row';name='Record 1';position=(True,1,0);app=types.SimpleNamespace(bus_name=':1.42')
+ def get_role_name(self):return 'table cell'
  def get_table_cell(self):return self
  def get_table(self):return self.table
  def get_position(self):return self.position
  def get_name(self):return self.name
  def get_component_iface(self):return types.SimpleNamespace(get_extents=lambda _:self.bounds)
 class Table:
- path='/table'
+ path='/table';app=types.SimpleNamespace(bus_name=':1.42')
  def __init__(self,cell):self.cell=cell;self.rows=set();self.calls=[];self.ignore=False;self.recycle=False;self.states={'sensitive','showing'}
  def get_interfaces(self):return ['Table','Component']
  def get_state_set(self):return types.SimpleNamespace(get_states=lambda:[types.SimpleNamespace(value_nick=s) for s in self.states])
  def get_component_iface(self):return types.SimpleNamespace(get_extents=lambda _:rect(0,0,100,100))
  def get_table_iface(self):return self
- def get_accessible_at(self,row,col):return self.cell
+ def get_accessible_at(self,row,col):
+  if row==1:return self.cell
+  other=Cell();other.name='Record '+str(row);other.path='/row/'+str(row);return other
  def get_selected_rows(self):return list(self.rows)
  def add_row_selection(self,row):
   self.calls.append(('add',row))
@@ -29,7 +32,7 @@ class Table:
 class Rows(unittest.TestCase):
  def setUp(self):
   self.cell=Cell();self.cell.bounds=rect();self.table=Table(self.cell);self.cell.table=self.table
-  self.current={'interfaces':['Component'],'name':'Record 1','name_fingerprint':w.bounded_name_identity(self.cell,False)[1]}
+  self.current={'role':'table cell','interfaces':['Component'],'name':'Record 1','name_fingerprint':w.bounded_name_identity(self.cell,False)[1]}
   self.patches=[patch.object(w.Atspi,'TableCell',Cell,create=True),patch.object(w.Atspi,'CoordType',types.SimpleNamespace(SCREEN=0),create=True),patch.object(w,'verify',lambda fn:fn())]
   for p in self.patches:p.start()
  def tearDown(self):
@@ -62,4 +65,32 @@ class Rows(unittest.TestCase):
   with patch.object(w,'main',side_effect=lambda req:w.choose_table_row(self.cell,self.current,False,request=req)):
    result=w.dispatch({'op':'choose'})
   self.assertEqual(result['error'],'TARGET_IDENTITY_UNAVAILABLE');self.assertEqual(result['effect'],'uncertain')
+ def test_actual_replacement_cell_name_not_verified(self):
+  original=self.table.add_row_selection
+  def add(row):
+   result=original(row);replacement=Cell();replacement.name='Replacement';self.table.cell=replacement;return result
+  self.table.add_row_selection=add
+  self.assertEqual(self.call()['effect'],'uncertain')
+ def test_actual_replacement_provider_not_verified(self):
+  original=self.table.add_row_selection
+  def add(row):
+   result=original(row);replacement=Cell();replacement.app=types.SimpleNamespace(bus_name=':1.99');self.table.cell=replacement;return result
+  self.table.add_row_selection=add
+  self.assertEqual(self.call()['effect'],'uncertain')
+ def test_extend_reordered_prior_row_not_verified(self):
+  self.table.rows={2};original=self.table.get_accessible_at;changed=[False]
+  def cell(row,column):
+   value=original(row,column)
+   if row==2 and changed[0]:value.name='Replacement prior row'
+   return value
+  self.table.get_accessible_at=cell
+  add=self.table.add_row_selection
+  def select(row):
+   result=add(row);changed[0]=True;return result
+  self.table.add_row_selection=select
+  self.assertEqual(self.call(True)['effect'],'uncertain')
+ def test_missing_prior_row_anchor_refuses_before_mutation(self):
+  self.table.rows={2};original=self.table.get_accessible_at
+  self.table.get_accessible_at=lambda row,column:None if row==2 else original(row,column)
+  self.assertEqual(self.call(True)['error'],'SELECTION_UNVERIFIABLE');self.assertEqual(self.table.calls,[])
 if __name__=='__main__':unittest.main()
