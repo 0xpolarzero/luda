@@ -17,3 +17,5 @@ runuser -u silo-desktop -- env LUDA_ISOLATED_TEST_DISPLAY=1 \
 ```
 
 The worktree's `artifacts` directory must be writable by that account. Three focused unit tests cover delivery after 150 ms, stale prior payload refusal as an empty baseline, and missing/malformed state refusal: `PYTHONPATH=tests .venv/bin/python -m unittest test_fixture_oracle`. Evidence includes authored synthetic text only; gzip files use zero mtime.
+
+Hosted source `d193031` subsequently passed [desktop workflow 35506123995](https://github.com/0xpolarzero/luda/actions/runs/35506123995), including all 17 private native suites. The retained `hosted-d193031-paste-evidence.json.gz` records the actual 450 ms delayed-paste regression: one request, independent empty baseline, 702.7 ms tool reply, then 444.7 ms/23 read-only samples until exact application text. This verifies the new observation contract on hosted AMD64 as well as local ARM64; it still does not identify the earlier failure's cause.
