@@ -58,9 +58,10 @@ class SharedInput(unittest.TestCase):
     def test_shared_focus_checks_foreground_and_never_changes_it(self):
         keyboard=FakeKeyboard();keyboard.private.route='shared'
         keyboard.target_token=Mock(return_value='a'*32)
+        keyboard.x._property.return_value=None  # WM bookkeeping need not match core focus.
         keyboard.focus_target(99,'a'*32)
         keyboard.private.focus.assert_not_called()
-        keyboard.x._property.return_value=(33,32,[100],0)
+        keyboard.private.focus_window.return_value=100
         with self.assertRaises(DesktopError):keyboard.focus_target(99,'a'*32)
         keyboard.private.focus.assert_not_called()
 
