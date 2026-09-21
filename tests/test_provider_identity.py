@@ -20,7 +20,7 @@ class ProviderScope(unittest.TestCase):
     def setUp(self):
         self.a=Node(':1.10');self.b=Node(':1.11',x=200)
         self.desktop=Node(':1.0',children=[Node(':1.11','/app',children=[self.b]),Node(':1.10','/app',children=[self.a])])
-        self.description=dict(role='push button',name='Same visible identity',start='1',states=['showing','enabled'],protected=False)
+        self.description=dict(role='push button',name='Same visible identity',start='1',states=['showing','enabled'],interfaces=['Component'],protected=False)
         self.atspi=patch.object(w,'Atspi',N(get_desktop=lambda _:self.desktop,CoordType=N(SCREEN=0)));self.atspi.start();self.addCleanup(self.atspi.stop)
     def inspect(self):
         with patch.object(w,'describe',side_effect=lambda node,pid:dict(self.description,path=node.path,provider_marker=node.app.bus_name)):

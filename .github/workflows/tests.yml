@@ -38,6 +38,11 @@ jobs:
           python -m venv .venv
           .venv/bin/python -m pip install --require-hashes -r requirements.lock
           .venv/bin/python -m pip install --no-deps -e .
+      - name: Desktop identity visibility and composite GTK cells
+        run: |
+          .venv/bin/python -m unittest discover -s tests -p test_app_visibility.py
+          mkdir -p artifacts/composite-table
+          dbus-run-session -- xvfb-run -a /usr/bin/python3 tests/integration_composite_table.py > artifacts/composite-table/result.log
       - name: Native and MCP workflows on an isolated display
         run: LUDA_ISOLATED_TEST_DISPLAY=1 xvfb-run -a -s '-screen 0 1440x900x24 -nolisten tcp' dbus-run-session -- .venv/bin/python scripts/headless_tests.py
       - name: Independently observed window geometry
