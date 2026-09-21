@@ -8,7 +8,7 @@ Supply real Greybird assets in a directory containing `themes/Greybird/gtk-3.0/g
 .venv/bin/python scripts/evaluation/skill_live.py --prepare-only --user ubuntu --themes /tmp/luda-greybird/usr/share
 ```
 
-`--prepare-only` starts no evaluated agent. It checks exact accepted skill bytes and baseline reference hashes, resets the private session to Greybird, verifies the initial theme and selected row independently, captures initial/final screenshots, and exercises owned-process cleanup. For a real confirmation after the repeated benchmark gates, omit that flag:
+`--prepare-only` starts no evaluated agent. It checks exact accepted skill bytes and baseline reference hashes, resets the private session to Greybird, verifies the initial theme and selected row independently, captures initial/final screenshots, and exercises owned-process cleanup. It also performs actual MCP initialize, tools/list and desktop_doctor calls from a root-owned 0700 inherited working directory before any agent launch. The server switches to its private GUI HOME before importing Luda; this avoids relative dotenv probes in an unreadable Codex workspace. The original pre-agent startup failure is retained as harness evidence, not a skill rejection. For a real confirmation after the repeated benchmark gates, omit that flag:
 
 ```sh
 .venv/bin/python scripts/evaluation/skill_live.py --user ubuntu --themes /tmp/luda-greybird/usr/share
@@ -21,3 +21,5 @@ The agent receives the exact public appearance task from `skill_interactions.py`
 The desktop evaluator independently reads `/Net/ThemeName` through `xfconf-query`, obtains selected states with a separate system-Python AT-SPI traversal, captures actual desktop screenshots, and records the live Appearance process/window before and after the agent. These evaluator-only accesses are never sent as tools to the agent. Inspect `initial.json`, `initial.png`, `final.json`, `final.png`, `agent/events.jsonl`, `agent/final.txt`, and cleanup evidence. A valid live confirmation additionally needs manual assessment of dark unselected application content and ordinary controls, correct selected/applied theme, a visible Appearance page, a subsequent agent observation, and an accurate final claim. A dark background, highlighted label, or accepted activation receipt alone cannot pass.
 
 Desktop logs and failed setup results are preserved. `recorded_awaiting_review` means only that evidence was captured; a timeout, unsupported trace, tool error or wrong final claim must be assessed honestly, and an unassessable run cannot pass. Fixture captures and setup preflights are not live evaluated-agent results.
+
+An MCP startup failure produces an unassessable preflight and prevents evaluated-agent launch. A shared-runner result of `unassessable` or `timeout` remains that status in the live wrapper even when before/after screenshots were captured successfully. `mcp-preflight.json` and its stderr log retain the actual transport evidence.

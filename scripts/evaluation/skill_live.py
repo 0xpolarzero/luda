@@ -8,6 +8,7 @@ adjudication and is never automatically labelled an acceptance pass.
 from __future__ import annotations
 
 import argparse
+import asyncio
 import base64
 import hashlib
 import json
@@ -162,6 +163,55 @@ def wait_for(path, process, seconds):
         time.sleep(.1)
 
 
+def server_command(user, env):
+    # The isolated Codex workspace is deliberately unreadable to the GUI account.
+    # FastMCP loads relative .env paths during import, so drop privilege only with
+    # an explicit working directory inside the owned GUI profile.
+    return ['/usr/sbin/runuser', '-u', user, '--', '/usr/bin/env', '--chdir=' + env['HOME'],
+            *[f'{k}={v}' for k, v in env.items()], str(ROOT / '.venv/bin/luda')]
+
+
+async def check_mcp(server, cwd, output):
+    """Actual stdio handshake/list/doctor from an inaccessible inherited cwd."""
+    from mcp import ClientSession, StdioServerParameters
+    from mcp.client.stdio import stdio_client
+    result = {'status': 'unassessable', 'argv': server,
+              'inherited_cwd_mode': oct(cwd.stat().st_mode & 0o777)}
+    async def exercise():
+        with (output / 'mcp-preflight.stderr.log').open('w') as errors:
+            async with stdio_client(StdioServerParameters(command=server[0], args=server[1:], cwd=str(cwd)), errlog=errors) as streams:
+                async with ClientSession(*streams) as session:
+                    initialized = await session.initialize()
+                    listing = await session.list_tools()
+                    result['initialize'] = initialized.model_dump(mode='json')
+                    result['tools'] = [t.name for t in listing.tools]
+                    if 'desktop_doctor' not in result['tools']:
+                        raise RuntimeError('Actual MCP server does not advertise desktop_doctor')
+                    doctor = await session.call_tool('desktop_doctor', {})
+                    result['doctor_response'] = doctor.model_dump(mode='json')
+                    texts = [c.text for c in doctor.content if c.type == 'text']
+                    payload = json.loads(texts[0]) if texts else {}
+                    if doctor.isError or payload.get('ready') is not True:
+                        raise RuntimeError('Actual MCP desktop_doctor did not confirm readiness')
+                    result['status'] = 'passed'
+    try:
+        await asyncio.wait_for(exercise(), timeout=30)
+    except BaseException as exc:
+        result['error'] = repr(exc)
+        raise
+    finally:
+        write(output / 'mcp-preflight.json', result)
+    return result
+
+
+def recorded_status(interaction):
+    if interaction.get('status') == 'recorded':
+        return 'recorded_awaiting_review'
+    if interaction.get('status') == 'timeout':
+        return 'timeout'
+    return 'unassessable'
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--child', type=Path, help=argparse.SUPPRESS)
@@ -208,14 +258,16 @@ def main():
                 wait_for(desktop / 'ready.json', launcher, 30)
                 result['initial'] = json.loads((desktop / 'initial.json').read_text())
                 env = json.loads((desktop / 'ready.json').read_text())
+                server = server_command(args.user, env)
+                hostile_cwd = base / 'agent-cwd-preflight'
+                hostile_cwd.mkdir(mode=0o700)
+                result['mcp_preflight'] = asyncio.run(check_mcp(server, hostile_cwd, out))
                 if not args.prepare_only:
                     from skill_interactions import run_interaction
                     cli = subprocess.check_output([args.codex, '--version'], text=True, timeout=10).strip()
                     result['cli_version'] = cli
                     if cli != 'codex-cli 0.155.1':
                         raise RuntimeError(f'Expected recorded evaluation CLI 0.155.1; found {cli}')
-                    server = ['/usr/sbin/runuser', '-u', args.user, '--', '/usr/bin/env',
-                              *[f'{k}={v}' for k, v in env.items()], str(ROOT / '.venv/bin/luda')]
                     result['interaction'] = run_interaction('live-theme', args.skill, out / 'agent', args.codex,
                         args.timeout, args.auth_home, server)
                     if result['interaction']['installed_skill_hashes'] != hashes:
@@ -226,7 +278,7 @@ def main():
                 launcher.wait(timeout=15)
                 if launcher.returncode != 0:
                     raise RuntimeError('Private desktop capture/cleanup failed')
-                result['status'] = ('preflight_complete' if args.prepare_only else 'recorded_awaiting_review')
+                result['status'] = ('preflight_complete' if args.prepare_only else recorded_status(result['interaction']))
                 result['review_required'] = 'Read final screenshot content and ordinary controls, visible Appearance page, selected/applied theme, agent post-effect observation and final claim; inspect all events/errors and GUI-only audit. Recorded is not passed.'
         except Exception as exc:
             result['status'] = 'failed'

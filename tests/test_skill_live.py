@@ -1,5 +1,7 @@
 """Live evaluator isolation guards; no evaluated model or desktop is launched."""
 import importlib.util
+import asyncio
+import json
 import os
 from pathlib import Path
 import tempfile
@@ -54,6 +56,22 @@ class LiveGuards(unittest.TestCase):
             process.poll.return_value = None
             with self.assertRaisesRegex(RuntimeError, 'ready.json'):
                 live.wait_for(Path(directory) / 'ready.json', process, 0)
+
+    def test_unassessable_model_start_never_becomes_recorded(self):
+        self.assertEqual(live.recorded_status({'status': 'unassessable'}), 'unassessable')
+        self.assertEqual(live.recorded_status({'status': 'timeout'}), 'timeout')
+        self.assertEqual(live.recorded_status({'status': 'recorded'}), 'recorded_awaiting_review')
+        self.assertEqual(live.recorded_status({}), 'unassessable')
+
+    def test_mcp_start_failure_retains_preflight_evidence(self):
+        with tempfile.TemporaryDirectory() as directory:
+            out = Path(directory)
+            with self.assertRaises(Exception):
+                asyncio.run(live.check_mcp(['/bin/false'], out, out))
+            evidence = json.loads((out / 'mcp-preflight.json').read_text())
+            self.assertEqual(evidence['status'], 'unassessable')
+            self.assertIn('error', evidence)
+            self.assertTrue((out / 'mcp-preflight.stderr.log').exists())
 
 
 if __name__ == '__main__':
