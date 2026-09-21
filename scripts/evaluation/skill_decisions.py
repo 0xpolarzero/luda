@@ -34,7 +34,8 @@ def write_json(path: Path, value: object) -> None:
 
 def load_cases(path: Path) -> list[dict]:
     data = json.loads(path.read_text(encoding='utf-8'))
-    if set(data) != {'schema_version', 'cases'} or data['schema_version'] != 1:
+    if (set(data) not in ({'schema_version', 'cases'}, {'schema_version', 'benchmark_name', 'cases'})
+            or data['schema_version'] != 1):
         raise ValueError('Expected public cases schema version 1')
     seen = set()
     for case in data['cases']:

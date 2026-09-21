@@ -92,6 +92,8 @@ for e in [{'type':'thread.started','thread_id':'id'}, {'type':'item.completed','
                 runner.load_cases(path)
         path.write_text(json.dumps({'schema_version': 1, 'cases': [self.case]}))
         self.assertEqual(runner.load_cases(path), [self.case])
+        path.write_text(json.dumps({'schema_version': 1, 'benchmark_name': 'luda-recorded-decision-v1', 'cases': [self.case]}))
+        self.assertEqual(runner.load_cases(path), [self.case])
 
     def test_malformed_events_are_preserved_and_detected(self):
         path = self.base / 'events.jsonl'
