@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "created_at": "2026-09-21T21:21:35.455318+00:00",
+  "revision": "ca84c7bb4eeb55171acd4a7b0b3e6ab83a988c4a",
+  "environment": {
+    "system": "Linux",
+    "release": "6.12.99",
+    "architecture": "aarch64",
+    "python": "3.12.3",
+    "distribution": {
+      "NAME": "Ubuntu",
+      "ID": "ubuntu",
+      "PRETTY_NAME": "Ubuntu 24.04.4 LTS",
+      "VERSION_ID": "24.04",
+      "VERSION": "24.04.4 LTS (Noble Numbat)",
+      "VERSION_CODENAME": "noble",
+      "ID_LIKE": "debian",
+      "HOME_URL": "https://www.ubuntu.com/",
+      "SUPPORT_URL": "https://help.ubuntu.com/",
+      "BUG_REPORT_URL": "https://bugs.launchpad.net/ubuntu/",
+      "PRIVACY_POLICY_URL": "https://www.ubuntu.com/legal/terms-and-policies/privacy-policy",
+      "UBUNTU_CODENAME": "noble",
+      "LOGO": "ubuntu-logo"
+    },
+    "packages": {
+      "luda": "0.2.0",
+      "mcp": "1.30.0",
+      "Pillow": "12.3.0"
+    }
+  },
+  "source_unchanged": true,
+  "suite": "unit",
+  "policy": "Local tests are evidence for named assertions only. No case is automatically release-qualified.",
+  "outcomes": {
+    "passed": 1107,
+    "skipped": 2
+  },
+  "source_sha256": "5cdd682a34e3c858d5a301c6a8ef5a8432014877e10011ac92ae4a1e41fab2eb"
+}

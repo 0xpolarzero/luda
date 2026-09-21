@@ -24,6 +24,10 @@ python3 scripts/build_tools.py
 python3 scripts/build_live_coverage.py
 ```
 
+For the frozen application-outcome skill acceptance suite, fresh agent runners,
+and independent live checks, see [skill outcome evaluation](SKILL-OUTCOME-EVALUATION.md).
+Agent-behavior acceptance is separate from unit tests and package verification.
+
 ## Build downloadable packages
 
 Core Luda and the Editor Bridge are separate Python distributions and separate agent plugins. Core installation must not install the Editor Bridge. The add-on has its own browser dependencies, skill, and application adapter.

@@ -57,7 +57,7 @@ transitions are used. Only modeled window queries, inspections, observations, ta
 selection, advertised activation and grounded clicks are supported. Resizing, alternate
 targets, keyboard input and unmodeled controls are explicit limitations. A supported,
 assessable recovery can pass with its error preserved; unassessable runs cannot pass.
-The 18 fixture tests include real screenshot/state correspondence, negative/no-effect
+The 20 fixture tests include real screenshot/state correspondence, negative/no-effect
 transitions, forbidden opening, stale targets, and MCP initialize/list/call behavior.
 This reconstructed harness is not byte-identical to the unavailable historical one.
 
@@ -78,6 +78,21 @@ private session bus and disposable application state. Independently reset and re
 and ordinary controls, audit GUI-only task mutations, and confirm page visibility.
 Only clean up test-owned processes and files. Shared `:1` tests must hold
 `/tmp/luda-live-tests.lock` throughout; private displays avoid disturbing that desktop.
+
+For live confirmation after both complete benchmark passes, use the separate
+[private desktop runner](../scripts/evaluation/README-live.md):
+
+```sh
+.venv/bin/python scripts/evaluation/skill_live.py \
+  --user YOUR_TEST_ACCOUNT --themes /absolute/path/to/extracted/usr/share
+```
+
+Run twice in separate invocations, reviewing the first before starting the second.
+The theme directory must contain genuine Greybird and Greybird-dark assets. The
+account is explicit, never a product default. The runner supplies the same public
+appearance task to actual Luda, independently reads before/after xfconf and AT-SPI,
+captures screenshots, verifies installed hashes, and retains GUI-only trace audit.
+A successful preflight or `recorded_awaiting_review` is not an acceptance pass.
 
 ## Supplied historical evidence
 
@@ -119,3 +134,33 @@ not a Luda runtime or skill failure; the affected interactive gate must restart 
 the corrected runner is frozen and tested. Before that restart, review also corrected
 filtered-inspection parent IDs and public numeric-bound/doctor-response details to
 match the runtime. These are versioned fixture corrections, not waived failures.
+
+After integrating the runners, the repository suite passed 1,109 tests with two skips.
+The source fingerprint remained unchanged during this run.
+
+The first newly completed acceptance batch passed 23/23: 17 recorded decisions
+and six interactive cases. Recorded decisions received primary and independent
+semantic review; interactive cases received independent state/trace/final-claim
+review. Four explicit fixture errors were recovered: three depth-limited inspections
+and one unsupported wait. Every required result remained assessable; all errors and
+original responses are retained. This is new CLI 0.155.1 evidence, separate from the
+supplied CLI 0.145.0 historical results.
+
+The repeat batch also passed 23/23 with the same recorded runner, public corpus,
+skill/reference hashes, interactive runner, fixture and captures. It retained five
+recovered fixture errors. In the no-effect case, an unsupported blank-cell activation
+had no effect; a final supported re-selection also left state unchanged. Its final
+report remained accurately incomplete/light. The frozen criteria do not require an
+extra screenshot after every no-change action. This caveat is preserved in the
+independent semantic grade rather than hidden as an error-free run.
+
+The first live launch was unassessable before an evaluated-agent turn: privilege
+dropping left the MCP server in a root-only temporary working directory, and its
+settings dependency could not stat the relative `.env` path. Direct reproduction
+confirmed the permission error. Initial/final independent state remained Greybird;
+there were no agent tool events or final answer. The live wrapper is corrected to
+enter its own ordinary-account private directory before starting Luda, and must
+preflight real MCP initialize/list/doctor from the same restrictive launch context.
+This live-harness correction leaves the frozen benchmark runners and skill unchanged;
+the live gate restarts. The original startup evidence is retained, never counted as a
+live confirmation or silently treated as an error-free run.
