@@ -20,7 +20,7 @@ The agent can read accessible controls directly or work from screenshots. Action
 Run these commands **on the Linux machine whose desktop the agent will control**. You need an existing **Linux X11 desktop**, Python 3.12+, and Git. Ubuntu 24.04 with XFCE is the tested starting point. Wayland and Xwayland are not supported.
 
 ```sh
-git clone --branch v0.3.3 --depth 1 https://github.com/0xpolarzero/luda.git
+git clone --branch v0.3.4 --depth 1 https://github.com/0xpolarzero/luda.git
 cd luda
 sudo bash scripts/install.sh --user "$(id -un)"
 ```

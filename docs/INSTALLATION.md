@@ -120,11 +120,11 @@ Use this when the eventual agent account is not yet chosen. It installs the runt
 
 ## Install a downloaded wheel
 
-For an environment that already provides the system prerequisites, download the core `luda-0.3.3-py3-none-any.whl` from [GitHub releases](https://github.com/0xpolarzero/luda/releases). Install it in its own environment:
+For an environment that already provides the system prerequisites, download the core `luda-0.3.4-py3-none-any.whl` from [GitHub releases](https://github.com/0xpolarzero/luda/releases). Install it in its own environment:
 
 ```sh
 python3 -m venv ~/.local/share/luda/venv
-~/.local/share/luda/venv/bin/pip install /absolute/download/path/luda-0.3.3-py3-none-any.whl
+~/.local/share/luda/venv/bin/pip install /absolute/download/path/luda-0.3.4-py3-none-any.whl
 ~/.local/share/luda/venv/bin/luda doctor
 ```
 
