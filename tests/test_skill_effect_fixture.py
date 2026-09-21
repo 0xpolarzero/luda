@@ -34,8 +34,8 @@ def states():
     return entries
 
 
-def call(fixture, name, **args):
-    response = asyncio.run(fixture.call(name, args))
+def call(fixture, tool_name, **args):
+    response = asyncio.run(fixture.call(tool_name, args))
     return json.loads(response.content[0].text)
 
 
@@ -90,6 +90,26 @@ class Transitions(unittest.TestCase):
         result = call(fixture, 'desktop_observe')
         self.assertEqual(result['code'], 'FIXTURE_UNSUPPORTED')
         self.assertEqual(len(fixture.history), 3)
+
+    def test_filtered_inspection_never_returns_unseen_parent_ids(self):
+        captures = states()
+        for entry in captures:
+            if len(entry['inspect']['nodes']) > 1:
+                entry['inspect']['nodes'][1]['parent_element_id'] = entry['inspect']['nodes'][0]['element_id']
+        fixture = f.Fixture('theme', captures)
+        result = call(fixture, 'desktop_inspect', window_id='window', name='Greybird-dark')
+        self.assertEqual(len(result['nodes']), 1)
+        self.assertIsNone(result['nodes'][0]['parent_element_id'])
+        self.assertEqual(len(fixture.elements), 1)
+
+    def test_runtime_bounds_and_doctor_identity_are_preserved(self):
+        fixture = f.Fixture('theme', states())
+        for args in ({'limit': 0}, {'limit': 501}, {'max_depth': 61}):
+            result = call(fixture, 'desktop_inspect', window_id='window', **args)
+            self.assertEqual(result['code'], 'INVALID_ARGUMENT')
+        for width in (319, 2561):
+            self.assertEqual(call(fixture, 'desktop_observe', max_width=width)['code'], 'INVALID_ARGUMENT')
+        self.assertIn('versions', call(fixture, 'desktop_doctor'))
 
     def test_invalid_schema_never_mutates(self):
         fixture = f.Fixture('theme', states())

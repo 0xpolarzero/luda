@@ -24,6 +24,7 @@ from mcp.types import CallToolResult, ImageContent, TextContent
 from PIL import Image
 
 from luda.desktop import selection_feedback
+from luda.identity import version_identity
 from luda.server import mcp as real_mcp
 
 CASES = ('theme-clean', 'theme', 'instant-clean', 'select-only',
@@ -120,6 +121,8 @@ class Fixture:
                         next_offset=next_offset if next_offset < len(windows) else None), None
         if name == 'desktop_observe':
             payload = deepcopy(frame['observe'])
+            if not 320 <= args.get('max_width', 1280) <= 2560:
+                return dict(ok=False, code='INVALID_ARGUMENT', effect='none', message='max_width must be 320–2560.'), None
             if args.get('max_width', 1280) < payload['image_size']['width']:
                 raise Unsupported('Capture resizing is not modeled')
             token = uuid.uuid4().hex
@@ -131,22 +134,21 @@ class Fixture:
             payload = deepcopy(frame['inspect'])
             if args['window_id'] != payload['window_id']:
                 raise Unsupported('Unknown window')
+            if not 1 <= args.get('limit', 150) <= 500 or not 0 <= args.get('max_depth', 30) <= 60:
+                return dict(ok=False, code='INVALID_ARGUMENT', effect='none', message='Invalid inspection bounds.'), None
             if args.get('max_depth', 30) != 30:
                 raise Unsupported('Depth-limited traversal is not modeled')
-            nodes = payload['nodes']
-            for node in nodes:
-                node['element_id'] = uuid.uuid4().hex
-            # Captured parent IDs are remapped without changing tree relationships.
-            mapping = {old['element_id']: new['element_id'] for old, new in zip(frame['inspect']['nodes'], nodes)}
-            for node in nodes:
-                node['parent_element_id'] = mapping.get(node.get('parent_element_id'))
-                self.elements[node['element_id']] = (self.clock(), deepcopy(node))
-            nodes = [node for node in nodes if
-                     (not args.get('name') or args['name'].lower() in node.get('name', '').lower()) and
-                     (not args.get('role') or args['role'].lower() in node.get('role', '').lower()) and
+            nodes = [node for node in payload['nodes'] if
+                     (not args.get('name') or args['name'].casefold() in node.get('name', '').casefold()) and
+                     (not args.get('role') or args['role'].casefold() in node.get('role', '').casefold()) and
                      set(args.get('states') or []).issubset(node.get('states', []))]
             if len(nodes) > args.get('limit', 150):
                 raise Unsupported('Truncated inspection is not modeled')
+            mapping = {node['element_id']: uuid.uuid4().hex for node in nodes}
+            for node in nodes:
+                node['element_id'] = mapping[node['element_id']]
+                node['parent_element_id'] = mapping.get(node.get('parent_element_id'))
+                self.elements[node['element_id']] = (self.clock(), deepcopy(node))
             payload['nodes'] = nodes
             return payload, None
         if name in ('desktop_choose', 'desktop_invoke'):
@@ -204,6 +206,9 @@ class Fixture:
             else:
                 payload, image = self.dispatch(name, args)
                 payload.setdefault('ok', True)
+                if name == 'desktop_doctor' and payload['ok']:
+                    payload['versions'] = version_identity([tool.model_dump(mode='json', exclude_none=True)
+                                                           for tool in declarations.values()])
         except Unsupported as exc:
             self.unsupported_paths.append(str(exc))
             payload = dict(ok=False, code='FIXTURE_UNSUPPORTED', effect='none', message=str(exc))
