@@ -34,6 +34,7 @@ For a not-yet-known window title, poll `desktop_windows(query="...")` to discove
 | Situation | Response |
 |---|---|
 | `STALE_OBSERVATION` | Observe again, identify the target in current content, use the new snapshot. |
+| `NOT_INTERACTABLE` | Observe why the target is hidden, offscreen, or disabled; reveal it when appropriate and inspect again. Repeating unchanged input does not resolve it. |
 | `STALE_TARGET` | Reinspect and match current identity/context before using a new element ID. |
 | Focus/layout changed or target covered | Find/activate the intended window, inspect/observe again; account for possible already-delivered input. |
 | Accessibility unsupported/incomplete | Use screenshot-grounded input where it can satisfy the task; disclose verification limits. |
