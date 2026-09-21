@@ -30,3 +30,19 @@ jobs:
         with:
           name: codex-cli-registration-evidence
           path: artifacts/codex-cli-registration/
+  upstream-installers:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create an isolated installation account
+        run: sudo useradd --system --create-home --shell /bin/bash luda-installer-test
+      - name: Install the complete managed runtime and private installer dependencies
+        run: sudo bash scripts/install.sh --prefix /opt/luda-installer-test --user luda-installer-test --runtime-only --skip-system --yes
+      - name: Exercise real skill and MCP installers for every supported client
+        run: sudo python3 tests/integration_setup_installers.py --prefix /opt/luda-installer-test --user luda-installer-test --output "$GITHUB_WORKSPACE/artifacts/upstream-installers"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: upstream-installer-evidence
+          path: artifacts/upstream-installers/

@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """Fail closed when the pinned test CLI is absent; run private-profile contracts."""
+import contextlib
+import tempfile
 import hashlib
 import json
 import os
@@ -25,7 +27,17 @@ def main():
     for pattern in ('test_plugin_bundle.py',):
         suite.addTests(unittest.defaultTestLoader.discover(str(ROOT/'tests'), pattern=pattern))
     suite.addTests(unittest.defaultTestLoader.discover(str(TOOL), pattern='test_setup_discovery.py', top_level_dir=str(TOOL)))
-    result = unittest.TextTestRunner(verbosity=2).run(suite)
+    # Exercise real pinned upstream installers, not a parallel config writer.
+    with contextlib.ExitStack() as resources:
+        if not os.environ.get('LUDA_TEST_AGENT_TOOLS'):
+            (ROOT / 'artifacts').mkdir(exist_ok=True)
+            release = Path(resources.enter_context(tempfile.TemporaryDirectory(prefix='agent-tools-', dir=ROOT / 'artifacts')))
+            sys.path.insert(0, str(ROOT / 'scripts'))
+            from provision_agent_tools import provision
+            provision(release, ROOT / 'scripts/agent-tools')
+            os.environ['LUDA_TEST_AGENT_TOOLS'] = str(release / 'agent-tools')
+            resources.callback(os.environ.pop, 'LUDA_TEST_AGENT_TOOLS', None)
+        result = unittest.TextTestRunner(verbosity=2).run(suite)
     evidence = {'cli_version': version, 'package_lock_sha256': hashlib.sha256((TOOL/'package-lock.json').read_bytes()).hexdigest(),
                 'tests_run':result.testsRun, 'skipped':len(result.skipped), 'passed':result.wasSuccessful() and not result.skipped,
                 'scope':'Actual CLI registration/cache/resolved configuration and generated setup skill discovery via app-server in temporary profiles; no model calls or authentication-file access, graphical access tested separately.'}

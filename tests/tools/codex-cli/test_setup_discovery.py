@@ -9,7 +9,7 @@ import tempfile
 import time
 import unittest
 
-from luda.setup import apply_changes, plan_setup
+from luda.setup import configure
 
 ROOT = Path(__file__).resolve().parents[3]
 
@@ -24,8 +24,9 @@ class SetupDiscoveryTests(unittest.TestCase):
             config.mkdir()
             # Literal paths are deliberate: discovery must not execute the server.
             command = ['/opt/luda/current/.venv/bin/luda-session', '--user', 'desktop-fixture', '--', '/opt/luda/current/.venv/bin/luda']
-            changes, destinations = plan_setup(['codex'], home, ROOT / 'skills/luda', command, environ={})
-            apply_changes(changes)
+            tools = Path(os.environ['LUDA_TEST_AGENT_TOOLS'])
+            failures = configure(['codex'], home, ROOT / 'skills/luda', command, tools, environ={})
+            self.assertEqual(failures, [])
             # Do not inherit credentials, profile overrides, or a real user HOME.
             env = {key: os.environ[key] for key in ('PATH', 'LANG', 'LC_ALL', 'TMPDIR') if key in os.environ}
             env.update(HOME=str(home), CODEX_HOME=str(config), USER='luda-test', LOGNAME='luda-test')
@@ -36,7 +37,7 @@ class SetupDiscoveryTests(unittest.TestCase):
             self.assertTrue(server['enabled'])
             self.assertEqual(server['transport']['command'], command[0])
             self.assertEqual(server['transport']['args'], command[1:])
-            skill = destinations[0][2] / 'SKILL.md'
+            skill = home / '.agents/skills/luda/SKILL.md'
             with tempfile.TemporaryFile() as stderr:
                 process = subprocess.Popen([executable, 'app-server'], env=env, cwd=home,
                                            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=stderr)

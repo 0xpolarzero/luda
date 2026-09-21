@@ -1,0 +1,12 @@
+# Installer validation
+
+Validated September 21, 2026 for Luda 0.3.0 on Linux aarch64, Python 3.12, with private Node 24.21.0, Vercel skills 1.7.0 and add-mcp 2.4.0.
+
+- The unit suite ran 1,042 tests: 1,041 passed and the optional wheel-build test skipped in the runtime-only environment. All three build-source tests, including that wheel-build test, then passed in the locked build environment. Installer contracts cover argument validation, account ownership, immutable releases, provisioning failures, timeouts, partial registration, profiles and legacy migration.
+- `tests/integration_setup_installers.py` passed against an actual managed installation in a disposable ordinary account. It invokes the bundled upstream CLIs and independently reads their results for all seven supported clients: empty profiles with absent agents, existing/leftover configuration, named-entry replacement, unrelated setting/server/skill preservation, repeat installation, complete skill contents, and legacy migration. It also checks project paths containing spaces, `CODEX_HOME`, plugin export, and byte-for-byte preservation with a nonzero result for malformed configuration in every client.
+- The combined `scripts/install.sh --agent all --skip-system --yes` flow passed for a second disposable account using the same managed prefix. Runtime-only provisioning and subsequent `luda setup` also passed. System-package installation is covered by shell contract tests; these local runs used already-installed prerequisites.
+- The pinned Codex CLI 0.155.1 suite passed all seven checks, including real MCP registration reads and skill discovery through `app-server`, without login or model calls.
+
+CI runs both the real upstream installation suite and the pinned Codex registration suite in `.github/workflows/codex-registration.yml`. The integration suite requires a fresh disposable nonroot account; never point it at a real user's profile. Its `--output` directory records each invocation and a machine-readable result. The normal unit suite is `python -m unittest discover -s tests`; install `build-requirements.lock` to include the wheel-build test.
+
+These checks establish installer behavior, not every version of every agent's runtime discovery, authentication, approval, or desktop behavior. The installer changes do not alter computer-use tools. Live desktop readiness remains a separate `--check-desktop` or `luda doctor` check.
