@@ -36,10 +36,12 @@ class Names(unittest.TestCase):
  def test_public_inspection_hides_digest_but_handle_retains_it(self):
   desktop=Desktop.__new__(Desktop);desktop.elements={}
   desktop.target_window=Mock(return_value={'pid':42,'start':'1','bounds':{},'frame_bounds':{},'title':'Fixture'})
-  node={'path':'/field','parent_path':None,'root_path':'/root','root_bus_guid':'a'*32,'start':'1','name':'label','name_fingerprint':'private-digest','root_provider':':1.42'}
+  node={'path':'/field','parent_path':None,'root_path':'/root','root_bus_guid':'a'*32,'start':'1','name':'label','name_fingerprint':'private-digest','table_cell':{'row':1,'column':0},'root_provider':':1.42'}
   desktop.ax=Mock(return_value={'nodes':[node]})
   result=desktop.inspect('window');public=result['nodes'][0]
   self.assertNotIn('name_fingerprint',public)
+  self.assertNotIn('table_cell',public)
+  self.assertEqual(desktop.elements[public['element_id']]['node']['table_cell'],{'row':1,'column':0})
   self.assertNotIn('root_provider',public)
   self.assertNotIn('root_bus_guid',public)
   self.assertEqual(desktop.elements[public['element_id']]['node']['root_bus_guid'],'a'*32)

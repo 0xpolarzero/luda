@@ -631,7 +631,7 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
             self.elements[token]={'time':now,'window_id':window_id,'node':dict(node),'inspection_id':inspection_id,'inspection_order':order}
             node['element_id']=token
             node['parent_element_id']=tokens.get(node.pop('parent_path',None))
-            node.pop('path',None);node.pop('start',None);node.pop('root_path',None);node.pop('root_provider',None);node.pop('root_bus_guid',None);node.pop('name_fingerprint',None)
+            node.pop('path',None);node.pop('start',None);node.pop('root_path',None);node.pop('root_provider',None);node.pop('root_bus_guid',None);node.pop('name_fingerprint',None);node.pop('table_cell',None)
         while len(self.elements)>4000:self.elements.pop(next(iter(self.elements)))
         result['window_id']=window_id
         result['element_expiry_seconds']=60

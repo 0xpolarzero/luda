@@ -459,6 +459,52 @@ def choice_identity(node, observed=None):
     return (provider_identity(node), node.path, role, *name)
 
 
+def table_cell_ancestry(node, canonical_identity):
+    # GTK composite cells expose named renderer descendants separately from
+    # Table.get_accessible_at(). Prove each parent/child link rather than
+    # accepting another object just because it reports the same row.
+    current_node = node
+    chain = []
+    seen = set()
+    for _ in range(32):
+        identity = choice_identity(current_node)
+        key = identity[:2]
+        if key in seen or identity[0] != canonical_identity[0]:
+            return None
+        seen.add(key)
+        if identity == canonical_identity:
+            return tuple(chain)
+        parent = current_node.get_parent()
+        index = current_node.get_index_in_parent()
+        if parent is None or index < 0:
+            return None
+        child = parent.get_child_at_index(index)
+        if child is None or choice_identity(child) != identity:
+            return None
+        chain.append((identity, index))
+        current_node = parent
+    return None
+
+
+def table_cell_observation(node):
+    """Internal inspection token: exact position, canonical cell and ancestry."""
+    cell = node.get_table_cell()
+    owner = Atspi.TableCell.get_table(cell)
+    row, column = Atspi.TableCell.get_position(cell)[-2:]
+    if owner is None or row < 0 or column < 0:
+        return None
+    canonical = owner.get_table_iface().get_accessible_at(row, column)
+    if canonical is None:
+        return None
+    canonical_identity = choice_identity(canonical)
+    ancestry = table_cell_ancestry(node, canonical_identity)
+    if ancestry is None:
+        return None
+    return {"table": [provider_identity(owner), owner.path], "row": row, "column": column,
+            "canonical": list(canonical_identity),
+            "ancestry": [list(identity) + [index] for identity, index in ancestry]}
+
+
 def choose_table_row(node, current, extend, request=None):
     """Select a row through Table, preserving the exact observed cell identity."""
     cell = node.get_table_cell()
@@ -485,12 +531,32 @@ def choose_table_row(node, current, extend, request=None):
     row, column = position[-2:]
     observed = choice_identity(node, current)
     container = (provider_identity(table_node), table_node.path)
+    canonical = table.get_accessible_at(row, column) if row >= 0 and column >= 0 else None
+    canonical_identity = choice_identity(canonical) if canonical is not None else None
+
+    ancestry = table_cell_ancestry(node, canonical_identity) if canonical is not None else None
+    target = request.get("target", {}) if request else {}
+    if "parent_path" in target:
+        parent = node.get_parent()
+        if (parent.path if parent is not None else None) != target["parent_path"]:
+            return failure("STALE_TARGET", "Table cell ancestry changed; inspect again.")
+    if "table_cell" in target:
+        observed_cell = {"table": list(container), "row": row, "column": column,
+                         "canonical": list(canonical_identity) if canonical_identity is not None else None,
+                         "ancestry": [list(identity) + [index] for identity, index in ancestry] if ancestry is not None else None}
+        if target["table_cell"] is None or observed_cell != target["table_cell"]:
+            return failure("STALE_TARGET", "Inspected table cell position or ancestry changed; inspect again.")
+
     def same_cell():
         position_now = Atspi.TableCell.get_position(cell)
+        owner_now = Atspi.TableCell.get_table(cell)
         actual = table.get_accessible_at(row, column)
         return (tuple(position_now[-2:]) == (row, column) and actual is not None
-                and (provider_identity(table_node), table_node.path) == container
-                and choice_identity(actual) == observed and choice_identity(node) == observed)
+                and owner_now is not None
+                and (provider_identity(owner_now), owner_now.path) == container
+                and choice_identity(actual) == canonical_identity
+                and choice_identity(node) == observed
+                and ancestry is not None and table_cell_ancestry(node, canonical_identity) == ancestry)
     if row < 0 or column < 0 or not same_cell():
         return failure("STALE_TARGET", "Table cell position or meaning changed; inspect again.")
     selected = table.get_selected_rows()
@@ -1186,6 +1252,13 @@ def main(req):
                     continue
                 if not set(filters.get("states", [])).issubset(value["states"]):
                     continue
+                if "TableCell" in value["interfaces"]:
+                    try:
+                        value["table_cell"] = table_cell_observation(node)
+                    except Exception:
+                        # Keep the node inspectable, but do not authorize row
+                        # selection from an incomplete identity observation.
+                        value["table_cell"] = None
                 nodes.append(value)
             except Exception:
                 errors += 1

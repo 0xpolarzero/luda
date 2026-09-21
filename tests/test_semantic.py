@@ -152,7 +152,7 @@ class ScopeAndState(unittest.TestCase):
         self.old=w.Atspi;w.Atspi=types.SimpleNamespace(CoordType=types.SimpleNamespace(SCREEN=0))
         self.node=types.SimpleNamespace(app=types.SimpleNamespace(bus_name=':1.42'),path='/root',get_interfaces=lambda:['Component'],get_name=lambda:'Fixture',get_parent=lambda:None)
         self.node.get_component_iface=lambda:types.SimpleNamespace(get_extents=lambda _:types.SimpleNamespace(x=0,y=0,width=100,height=50))
-        self.description={'role':'frame','name':'Fixture','start':'1','states':['sensitive','showing'],'bounds':{'x':0,'y':0,'width':100,'height':50}}
+        self.description={'interfaces':['Component'],'role':'frame','name':'Fixture','start':'1','states':['sensitive','showing'],'bounds':{'x':0,'y':0,'width':100,'height':50}}
         self.req={'op':'inspect','pid':42,'bounds':{'x':10,'y':20,'width':100,'height':50},'frame_bounds':{'x':5,'y':15,'width':110,'height':60}}
     def tearDown(self):w.Atspi=self.old
     def inspect(self,**kw):
@@ -163,6 +163,17 @@ class ScopeAndState(unittest.TestCase):
         self.assertEqual(self.inspect(window_title='Different')['error'],'ACCESSIBILITY_UNAVAILABLE')
     def test_fallback_removes_unreliable_bounds(self):
         r=self.inspect(window_title='Fixture');self.assertEqual(r['window_mapping'],'unique_title_and_size');self.assertEqual(r['nodes'][0]['bounds_coordinates'],'unavailable');self.assertNotIn('bounds',r['nodes'][0])
+    def test_table_inspection_keeps_identity_snapshot(self):
+        self.description['interfaces'].append('TableCell')
+        snapshot={'row':1,'column':0,'canonical':[':1.42','/cell']}
+        with patch.object(w,'table_cell_observation',return_value=snapshot):
+            result=self.inspect(window_title='Fixture')
+        self.assertEqual(result['nodes'][0]['table_cell'],snapshot)
+    def test_table_inspection_failure_keeps_node_but_refuses_selection_token(self):
+        self.description['interfaces'].append('TableCell')
+        with patch.object(w,'table_cell_observation',side_effect=RuntimeError('provider failed')):
+            result=self.inspect(window_title='Fixture')
+        self.assertIsNone(result['nodes'][0]['table_cell'])
     def test_duplicate_fallback_refused(self):
         with patch.object(w,'candidates',return_value=[(self.node,1),(self.node,1)]):
             r=w.main({**self.req,'window_title':'Fixture'})

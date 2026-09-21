@@ -11,6 +11,9 @@ class Cell:
  def get_table(self):return self.table
  def get_position(self):return self.position
  def get_name(self):return self.name
+ def get_parent(self):return getattr(self,'parent',None)
+ def get_index_in_parent(self):return getattr(self,'index',0)
+ def get_child_at_index(self,index):return self.children[index] if index < len(self.children) else None
  def get_component_iface(self):return types.SimpleNamespace(get_extents=lambda _:self.bounds)
 class Table:
  path='/table';app=types.SimpleNamespace(bus_name=':1.42')
@@ -38,6 +41,89 @@ class Rows(unittest.TestCase):
  def tearDown(self):
   for p in self.patches:p.stop()
  def call(self,extend=False):return w.choose_table_row(self.cell,self.current,extend)
+ def composite(self):
+  canonical=Cell();canonical.path='/canonical';canonical.name='';canonical.children=[self.cell]
+  self.cell.parent=canonical;self.table.cell=canonical
+  return canonical
+ def test_stable_composite_renderer_selects_its_canonical_row(self):
+  self.composite()
+  result=self.call()
+  self.assertEqual(result.get('effect'),'verified',result)
+  self.assertEqual(self.table.rows,{1})
+ def test_nested_composite_renderer_keeps_all_parent_links(self):
+  canonical=self.composite();middle=Cell();middle.path='/middle';middle.children=[self.cell];middle.parent=canonical
+  canonical.children=[middle];self.cell.parent=middle
+  self.assertEqual(self.call()['effect'],'verified')
+ def test_composite_wrong_parent_refuses_before_selection(self):
+  self.composite();self.cell.parent=None
+  self.assertEqual(self.call()['error'],'STALE_TARGET');self.assertEqual(self.table.calls,[])
+ def test_composite_nonreciprocal_child_refuses_before_selection(self):
+  canonical=self.composite();replacement=Cell();replacement.path='/other';canonical.children=[replacement]
+  self.assertEqual(self.call()['error'],'STALE_TARGET');self.assertEqual(self.table.calls,[])
+ def test_composite_cyclic_ancestry_refuses_before_selection(self):
+  self.composite();self.cell.parent=self.cell;self.cell.children=[self.cell]
+  self.assertEqual(self.call()['error'],'STALE_TARGET');self.assertEqual(self.table.calls,[])
+ def test_composite_replaced_canonical_before_mutation_refused(self):
+  self.composite();original=self.table.get_selected_rows
+  def rows():
+   replacement=Cell();replacement.path='/replacement';replacement.name='';self.table.cell=replacement
+   return original()
+  self.table.get_selected_rows=rows
+  self.assertEqual(self.call()['error'],'STALE_TARGET');self.assertEqual(self.table.calls,[])
+ def test_composite_changed_ancestry_before_mutation_refused(self):
+  canonical=self.composite();original=self.table.get_selected_rows
+  def rows():
+   middle=Cell();middle.path='/new-middle';middle.children=[self.cell];middle.parent=canonical
+   self.cell.parent=middle;canonical.children=[middle]
+   return original()
+  self.table.get_selected_rows=rows
+  self.assertEqual(self.call()['error'],'STALE_TARGET');self.assertEqual(self.table.calls,[])
+ def test_composite_mutations_after_selection_are_uncertain(self):
+  for mutation in ('canonical','parent','index','position','owner','label','canonical-label'):
+   with self.subTest(mutation=mutation):
+    self.setUp_composite_mutation(mutation)
+ def setUp_composite_mutation(self,mutation):
+  self.cell=Cell();self.cell.bounds=rect();self.table=Table(self.cell);self.cell.table=self.table
+  canonical=self.composite();original=self.table.add_row_selection
+  def add(row):
+   result=original(row)
+   if mutation=='canonical':
+    replacement=Cell();replacement.path='/replacement';replacement.name='';self.table.cell=replacement
+   elif mutation=='parent':self.cell.parent=None
+   elif mutation=='index':self.cell.index=1
+   elif mutation=='position':self.cell.position=(True,2,0)
+   elif mutation=='owner':self.cell.table=Table(self.cell);self.cell.table.path='/other-table'
+   elif mutation=='label':self.cell.name='Different record'
+   elif mutation=='canonical-label':canonical.name='Different meaning'
+   return result
+  self.table.add_row_selection=add
+  result=self.call();self.assertEqual(result['effect'],'uncertain');self.assertFalse(result['selected'])
+ def test_inspected_composite_snapshot_roundtrips_json(self):
+  import json
+  canonical=self.composite()
+  observed=json.loads(json.dumps(w.table_cell_observation(self.cell)))
+  result=w.choose_table_row(self.cell,self.current,False,{'target':{'table_cell':observed,'parent_path':canonical.path}})
+  self.assertEqual(result['effect'],'verified')
+ def test_reparented_since_inspection_refused_before_selection(self):
+  canonical=self.composite();observed=w.table_cell_observation(self.cell)
+  replacement=Cell();replacement.path='/new-parent';replacement.name='';replacement.children=[self.cell]
+  self.cell.parent=replacement;self.table.cell=replacement
+  result=w.choose_table_row(self.cell,self.current,False,{'target':{'table_cell':observed,'parent_path':canonical.path}})
+  self.assertEqual(result['error'],'STALE_TARGET');self.assertEqual(self.table.calls,[])
+ def test_row_reordered_since_inspection_refused_before_selection(self):
+  canonical=self.composite();observed=w.table_cell_observation(self.cell)
+  self.cell.position=(True,2,0);self.table.get_accessible_at=lambda row,column:canonical
+  result=w.choose_table_row(self.cell,self.current,False,{'target':{'table_cell':observed}})
+  self.assertEqual(result['error'],'STALE_TARGET');self.assertEqual(self.table.calls,[])
+ def test_replaced_canonical_with_same_parent_path_since_inspection_refused(self):
+  canonical=self.composite();observed=w.table_cell_observation(self.cell)
+  canonical.app=types.SimpleNamespace(bus_name=':1.99')
+  result=w.choose_table_row(self.cell,self.current,False,{'target':{'table_cell':observed}})
+  self.assertEqual(result['error'],'STALE_TARGET');self.assertEqual(self.table.calls,[])
+ def test_unavailable_inspection_snapshot_refuses_before_selection(self):
+  self.composite()
+  result=w.choose_table_row(self.cell,self.current,False,{'target':{'table_cell':None}})
+  self.assertEqual(result['error'],'STALE_TARGET');self.assertEqual(self.table.calls,[])
  def test_exact_row_and_single_selection_normalization(self):
   self.table.rows={2,3};r=self.call();self.assertEqual(r['effect'],'verified');self.assertEqual(self.table.rows,{1})
  def test_extend_preserves_other_rows(self):
