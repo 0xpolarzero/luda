@@ -5,19 +5,17 @@ import argparse
 from contextlib import contextmanager
 from dataclasses import dataclass
 import fcntl
-import hashlib
 import json
 import os
 from pathlib import Path
 import pwd
 import shutil
+import shlex
 import subprocess
 import sys
 import tempfile
 
-from .setup_clients import CLIENTS, render_config
-
-ALIASES = {'claude': 'claude-code', 'gemini': 'gemini-cli', 'copilot': 'copilot-cli'}
+from .setup_clients import CLIENTS, ALIASES
 
 
 @dataclass
@@ -61,10 +59,6 @@ def tree_files(path):
         elif not item.is_dir():
             raise ValueError(f'Unsupported skill file: {item}')
     return result
-
-
-def fingerprints(files):
-    return {name: hashlib.sha256(data).hexdigest() for name, data in files.items()}
 
 
 def atomic_write(path, data):
@@ -120,77 +114,89 @@ def setup_lock(home):
         os.close(fd)
 
 
-def client_paths(client, home, scope, project=None, environ=None):
-    environ = os.environ if environ is None else environ
-    if scope == 'project':
-        if not client.project_config or not client.project_skill:
-            raise ValueError(f'{client.label} has no supported project setup; use --scope user or --export.')
-        config = project / client.project_config
-        if client.name == 'opencode':
-            config = opencode_config(config)
-        return regular_path(config), regular_path(project / client.project_skill / 'luda')
-    config = home / client.config
-    skill = home / client.skill / 'luda'
-    if client.name == 'codex' and environ.get('CODEX_HOME'):
-        base = Path(environ['CODEX_HOME'])
-        if not base.is_absolute():
-            raise ValueError('CODEX_HOME must be absolute.')
-        config = base / 'config.toml'
-    if client.name == 'copilot-cli' and environ.get('COPILOT_HOME'):
-        base = Path(environ['COPILOT_HOME'])
-        if not base.is_absolute():
-            raise ValueError('COPILOT_HOME must be absolute.')
-        config = base / 'mcp-config.json'
-        skill = base / 'skills/luda'
-    if environ.get('XDG_CONFIG_HOME'):
-        base = Path(environ['XDG_CONFIG_HOME'])
-        if not base.is_absolute():
-            raise ValueError('XDG_CONFIG_HOME must be absolute.')
-        if client.config.startswith('.config/'):
-            config = base / client.config.removeprefix('.config/')
-        if client.skill.startswith('.config/'):
-            skill = base / client.skill.removeprefix('.config/') / 'luda'
-    if client.name == 'opencode':
-        config = opencode_config(config)
-    return regular_path(config), regular_path(skill)
+def installer_environment(home, names, environ=None):
+    """Select a real account home; only honor profile overrides understood upstream."""
+    env = dict(os.environ if environ is None else environ)
+    rejected = {
+        'claude-code': ('CLAUDE_CONFIG_DIR',),
+        'gemini-cli': ('GEMINI_CLI_HOME',),
+        'opencode': ('OPENCODE_CONFIG', 'OPENCODE_CONFIG_DIR'),
+        'copilot-cli': ('COPILOT_HOME',),
+    }
+    for name in names:
+        for variable in rejected.get(name, ()):
+            if env.get(variable):
+                raise ValueError(f'{variable} is not supported by the bundled installers for {name}; unset it or use --export.')
+    supported = []
+    if 'codex' in names:
+        supported.append('CODEX_HOME')
+    if {'opencode', 'vscode', 'copilot-cli'} & set(names):
+        supported.append('XDG_CONFIG_HOME')
+    for variable in supported:
+        if env.get(variable) and not Path(env[variable]).is_absolute():
+            raise ValueError(f'{variable} must be absolute.')
+    if 'copilot-cli' in names and env.get('XDG_CONFIG_HOME'):
+        raise ValueError('XDG_CONFIG_HOME is not supported for Copilot CLI by the bundled installers; unset it or use --export.')
+    env.update(HOME=str(home), DISABLE_TELEMETRY='1', DO_NOT_TRACK='1', NO_COLOR='1', CI='1')
+    # Node flags can inject code; setup uses only the packaged runtime and CLIs.
+    env.pop('NODE_OPTIONS', None)
+    env.pop('NODE_PATH', None)
+    return env
 
 
-def opencode_config(config):
-    if config.with_suffix('.jsonc').exists():
-        if config.exists():
-            raise ValueError('Both opencode.json and opencode.jsonc exist; use manual configuration to choose the active file.')
-        config = config.with_suffix('.jsonc')
-    return config
+def installer_paths(tools_root):
+    paths = (tools_root / 'node/bin/node',
+             tools_root / 'node_modules/skills/bin/cli.mjs',
+             tools_root / 'node_modules/add-mcp/dist/index.js')
+    for path in paths:
+        if not path.is_file():
+            raise ValueError(f'Bundled agent installer missing: {path}. Rerun scripts/install.sh with this --prefix.')
+    if not os.access(paths[0], os.X_OK):
+        raise ValueError(f'Bundled Node runtime is not executable: {paths[0]}')
+    return paths
 
 
-def plan_setup(names, home, source, command, *, scope='user', project=None, environ=None):
-    expected = tree_files(source)
-    if 'SKILL.md' not in expected:
+def configure(names, home, source, command, tools_root, *, scope='user', project=None, environ=None):
+    """Delegate registration and return phase failures; no client executable needed."""
+    env = installer_environment(home, names, environ)
+    node, skills, mcp = installer_paths(tools_root)
+    if not (source / 'SKILL.md').is_file():
         raise ValueError(f'Complete Luda skill missing: {source}')
-    state_path = home / '.local/state/luda/setup.json'
-    previous_state = read_file(state_path)
-    state = json.loads(previous_state) if previous_state else {'version': 1, 'skills': {}}
-    if not isinstance(state, dict) or state.get('version') != 1 or not isinstance(state.get('skills'), dict):
-        raise ValueError(f'Unrecognized setup state: {state_path}')
-    changes = {}
-    destinations = []
+    cwd = project if scope == 'project' else home
+    global_args = ['--global'] if scope == 'user' else []
+    failures = []
     for name in names:
         client = CLIENTS[name]
-        config, skill = client_paths(client, home, scope, project, environ)
-        before = read_file(config)
-        after = render_config(client, before, command[0], command[1:])
-        changes[config] = Change(config, before, after)
-        actual = tree_files(skill)
-        if actual != expected and actual and state['skills'].get(str(skill)) != fingerprints(actual):
-            raise ValueError(f'{skill} contains unmanaged or edited files. Move it to a backup before retrying; nothing was changed.')
-        for relative in actual.keys() | expected.keys():
-            target = skill / relative
-            changes[target] = Change(target, actual.get(relative), expected.get(relative))
-        state['skills'][str(skill)] = fingerprints(expected)
-        destinations.append((client.label, config, skill))
-    after_state = (json.dumps(state, indent=2, sort_keys=True) + '\n').encode()
-    changes[state_path] = Change(state_path, previous_state, after_state)
-    return list(changes.values()), destinations
+        commands = (
+            ('skill', [str(node), str(skills), 'add', str(source), '--skill', 'luda',
+                       '--agent', client.skills_agent, '--copy', '--yes', '--json', *global_args]),
+            ('MCP', [str(node), str(mcp), command[0], '--name', 'luda',
+                     '--agent', client.mcp_agent, '--yes', *global_args,
+                     *['--args=' + arg for arg in command[1:]]]),
+        )
+        for phase, argv in commands:
+            try:
+                result = subprocess.run(argv, cwd=cwd, env=env, stdin=subprocess.DEVNULL,
+                                        capture_output=True, text=True, timeout=120)
+                if result.returncode:
+                    # Upstream diagnostics are shown to the invoking user, never stored.
+                    detail = (result.stderr or result.stdout).strip()
+                    raise ValueError(f'installer exited {result.returncode}' + (f': {detail}' if detail else ''))
+                if phase == 'skill':
+                    try:
+                        installed = json.loads(result.stdout)
+                    except json.JSONDecodeError as exc:
+                        raise ValueError('skill installer returned invalid JSON') from exc
+                    if not isinstance(installed, list) or not any(
+                        isinstance(item, dict) and item.get('name') == 'luda'
+                        and item.get('status') == 'installed' for item in installed
+                    ):
+                        raise ValueError('skill installer did not report installing Luda')
+                print(f'{client.label}: {phase} registered.')
+            except (ValueError, OSError, subprocess.SubprocessError) as exc:
+                failures.append((name, phase, str(exc)))
+                print(f'{client.label}: {phase} failed: {exc}', file=sys.stderr)
+    return failures
 
 
 def export_bundle(destination, source, command):
@@ -212,8 +218,8 @@ def export_bundle(destination, source, command):
 def parser():
     p = argparse.ArgumentParser(description=__doc__, epilog='Run on the machine hosting the agent backend. For Codex SSH remote projects, that is the VM. This command never installs or authenticates the agent itself.')
     p.add_argument('--prefix', type=Path, default=Path('/opt/luda'), help='Managed runtime prefix (default: /opt/luda)')
-    p.add_argument('--user', help='Agent and desktop account; root must select one explicitly')
-    p.add_argument('--agent', action='append', default=[], help='Agent ID; repeat for several, or auto for detected clients. Use --list-agents.')
+    p.add_argument('--user', help='Target Linux account; root must select one explicitly')
+    p.add_argument('--agent', action='append', default=[], help='Agent ID; repeat for several, all for every supported client, or auto for detected clients. Use --list-agents.')
     p.add_argument('--scope', choices=['user', 'project'], default='user')
     p.add_argument('--project', type=Path, help='Absolute existing project directory for project scope')
     p.add_argument('--yes', action='store_true', help='Apply explicit choices without a confirmation prompt')
@@ -230,7 +236,7 @@ def validate(args):
     if not prefix.is_absolute() or len(prefix.parts) < 3 or '..' in prefix.parts or any(ord(c) < 32 for c in str(prefix)):
         raise ValueError('Use a dedicated absolute prefix, such as /opt/luda.')
     if os.getuid() == 0 and args.user is None:
-        raise ValueError('Root must specify --user ACCOUNT (the agent and desktop account).')
+        raise ValueError('Root must specify --user ACCOUNT.')
     try:
         account = pwd.getpwnam(args.user) if args.user else pwd.getpwuid(os.getuid())
     except KeyError:
@@ -253,20 +259,19 @@ def validate(args):
         if args.export.exists():
             raise ValueError('Export destination already exists; choose a new directory.')
     names = list(dict.fromkeys(ALIASES.get(name, name) for name in args.agent))
-    unknown = set(names) - set(CLIENTS) - {'auto'}
+    unknown = set(names) - set(CLIENTS) - {'auto', 'all'}
     if unknown:
         raise ValueError('Unknown agent: ' + ', '.join(sorted(unknown)) + '. Run luda setup --list-agents, or use --export for a custom client.')
-    if 'auto' in names and len(names) > 1:
-        raise ValueError('Use --agent auto alone, or select explicit agent IDs.')
-    for name in names:
-        if name != 'auto':
-            client_paths(CLIENTS[name], Path(account.pw_dir), args.scope, args.project, {})
+    if {'auto', 'all'} & set(names) and len(names) > 1:
+        raise ValueError('Use --agent all or --agent auto alone, or select explicit agent IDs.')
+    if names == ['all']:
+        names = list(CLIENTS)
     return account, names
 
 
 def detect(home):
     return [name for name, client in CLIENTS.items()
-            if shutil.which(client.executable) or client_paths(client, home, 'user')[0].exists()]
+            if shutil.which(client.executable) or (home / client.detect_path).exists()]
 
 
 def choose_agents(home):
@@ -274,9 +279,13 @@ def choose_agents(home):
     print('Select one or more agents for this account (comma-separated IDs).')
     for name, client in CLIENTS.items():
         print(f'  {name:16} {client.label}' + (' [detected]' if name in detected else ''))
-    print('For other clients, cancel and use --export /absolute/new/plugin-directory.')
+    print('Use all for every supported client, including those not installed yet.\nFor other clients, cancel and use --export /absolute/new/plugin-directory.')
     answer = input('Agents: ').strip()
     names = list(dict.fromkeys(ALIASES.get(n.strip(), n.strip()) for n in answer.split(',') if n.strip()))
+    if names == ['all']:
+        return list(CLIENTS)
+    if names == ['auto']:
+        names = detected
     if not names or any(name not in CLIENTS for name in names):
         raise ValueError('Choose supported agent IDs, or use --export for a custom client.')
     return names
@@ -287,12 +296,16 @@ def main(argv=None):
     args = p.parse_args(argv)
     if args.list_agents:
         for name, client in CLIENTS.items():
-            print(f'{name:16} {client.label} (user' + (', project' if client.project_config and client.project_skill else '') + ')')
+            print(f'{name:16} {client.label} (user, project)')
         print('Custom clients: --export /absolute/new/plugin-directory')
         return
     try:
         account, names = validate(args)
         if args.validate_only:
+            if not args.export:
+                # Another account must never inherit the caller's profile overrides.
+                environment = {} if os.getuid() == 0 and account.pw_uid != 0 else os.environ
+                installer_environment(Path(account.pw_dir), names, environment)
             return
         # Account files are always written as their owner, including image builds.
         if os.getuid() == 0 and account.pw_uid != 0:
@@ -317,28 +330,39 @@ def main(argv=None):
                 raise ValueError('No agents detected. Select --agent explicitly (works before the agent is installed), or use --export.')
         if not names and not args.export:
             if not sys.stdin.isatty():
-                raise ValueError('Noninteractive setup requires --agent ID (repeatable), --agent auto, or --export PATH.')
+                raise ValueError('Noninteractive setup requires --agent ID (repeatable), --agent all, --agent auto, or --export PATH.')
             names = choose_agents(home)
         subprocess.run([str(runtime), '--version'], check=True, timeout=20, stdout=subprocess.DEVNULL)
+        tools_root = args.prefix / 'current/agent-tools'
+        if not args.export:
+            installer_environment(home, names)
+            installer_paths(tools_root)
         with setup_lock(home):
             if args.export:
                 print(f'Export tools and skill to {args.export}')
-                changes, destinations = [], []
             else:
-                changes, destinations = plan_setup(names, home, source, command, scope=args.scope, project=args.project)
-                for label, config, skill in destinations:
-                    print(f'{label}:\n  Tools: {config}\n  Skill: {skill}')
+                print(f'Configure {", ".join(names)} for {account.pw_name} ({args.scope} scope).')
+                print('Existing Luda skill and MCP entries will be updated; unrelated configuration is preserved.')
             if not args.yes:
                 if not sys.stdin.isatty():
-                    raise ValueError('Review the destinations above, then rerun with --yes for noninteractive setup.')
+                    raise ValueError('Review the selection above, then rerun with --yes for noninteractive setup.')
                 if input('Apply this setup? [y/N] ').strip().lower() not in ('y', 'yes'):
                     print('Cancelled; no agent configuration changed.')
                     return
             if args.export:
                 export_bundle(args.export, source, command)
             else:
-                count = apply_changes(changes)
-                print(f'Configured tools and skill ({count} files changed).')
+                failures = configure(names, home, source, command, tools_root,
+                                     scope=args.scope, project=args.project)
+                if failures:
+                    retry = [str(runtime), 'setup', '--prefix', str(args.prefix), '--user', account.pw_name,
+                             '--scope', args.scope, '--session', args.session, '--yes']
+                    if args.project:
+                        retry += ['--project', str(args.project)]
+                    for name in dict.fromkeys(item[0] for item in failures):
+                        retry += ['--agent', name]
+                    raise ValueError(f'{len(failures)} registration step(s) failed. Completed steps remain installed. '
+                                     + 'After resolving the errors, retry: ' + shlex.join(retry))
         print('Configuration prepared. Restart/reconnect the selected agent, then ask it to use Luda to inspect the desktop.')
         if args.export:
             print('Import this plugin with a compatible client, or use its mcp.json and skills/luda with your custom agent. Its command runs on this Linux machine.')
@@ -348,7 +372,6 @@ def main(argv=None):
             print('Desktop readiness check passed. Tool and skill discovery inside the agent still needs its first connection.')
         else:
             print('Live desktop not checked (image builds need no running GUI). After starting the desktop, check with:')
-            import shlex
             print('  ' + shlex.join([*command, 'doctor']))
     except (ValueError, OSError, subprocess.SubprocessError) as exc:
         p.exit(1, f'Setup failed: {exc}\n')
