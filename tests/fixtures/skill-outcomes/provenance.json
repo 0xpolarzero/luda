@@ -1,0 +1,819 @@
+{
+  "capture": "Real XFCE Appearance and Thunar on private Xvfb and DBus, ordinary ubuntu account, isolated HOME; unmodified scrot screenshot via Luda desktop_observe",
+  "source_commit": "eb268e820a9c96f2c934664b5edb18a0bd416c0a",
+  "theme_package": "https://ports.ubuntu.com/pool/universe/g/greybird-gtk-theme/greybird-gtk-theme_3.23.3-1_all.deb",
+  "states": {
+    "theme:Greybird:Greybird": {
+      "png": "theme-light-selected-light.png",
+      "observe": "theme-light-selected-light.observe.json",
+      "inspect": "theme-light-selected-light.inspect.json",
+      "sha256": "d483939538c89da56cadfb5ec872511c04eb76305446b6dbdfb2c75893ef2e53",
+      "selected": "Greybird",
+      "applied": "Greybird",
+      "selected_nodes": [
+        {
+          "pid": 25587,
+          "name": "Style",
+          "role": "page tab",
+          "states": [
+            "enabled",
+            "focused",
+            "multi-line",
+            "selectable",
+            "selected",
+            "sensitive",
+            "showing",
+            "visible"
+          ],
+          "interfaces": [
+            "Accessible",
+            "Collection",
+            "Component"
+          ],
+          "protected": false,
+          "bounds": {
+            "x": 333,
+            "y": 126,
+            "width": 30,
+            "height": 21
+          },
+          "depth": 4,
+          "bounds_coordinates": "screen",
+          "element_id": "0934903671894e84adfe74aa3a98c513",
+          "parent_element_id": "90e7ebe1d5894f3d92a0b865c01de7dd"
+        },
+        {
+          "pid": 25587,
+          "name": "",
+          "role": "table cell",
+          "states": [
+            "enabled",
+            "focusable",
+            "selectable",
+            "selected",
+            "sensitive",
+            "showing",
+            "transient",
+            "visible"
+          ],
+          "interfaces": [
+            "Accessible",
+            "Action",
+            "Collection",
+            "Component",
+            "TableCell"
+          ],
+          "protected": false,
+          "bounds": {
+            "x": 336,
+            "y": 209,
+            "width": 352,
+            "height": 42
+          },
+          "actions": [
+            "expand or contract",
+            "edit",
+            "activate"
+          ],
+          "depth": 9,
+          "bounds_coordinates": "screen",
+          "element_id": "a9c54ef08c664ec4bcf221cab4db36b5",
+          "parent_element_id": "d938e202636048b197e170ffaef1f1d1"
+        },
+        {
+          "pid": 25587,
+          "name": "",
+          "role": "table cell",
+          "states": [
+            "enabled",
+            "focusable",
+            "selectable",
+            "selected",
+            "sensitive",
+            "showing",
+            "transient",
+            "visible"
+          ],
+          "interfaces": [
+            "Accessible",
+            "Action",
+            "Collection",
+            "Component",
+            "Image",
+            "TableCell"
+          ],
+          "protected": false,
+          "bounds": {
+            "x": 336,
+            "y": 209,
+            "width": 0,
+            "height": 42
+          },
+          "actions": [
+            "expand or contract",
+            "edit",
+            "activate"
+          ],
+          "depth": 10,
+          "bounds_coordinates": "screen",
+          "element_id": "48b9b6cef99142ee8419cf0f65737895",
+          "parent_element_id": "a9c54ef08c664ec4bcf221cab4db36b5"
+        },
+        {
+          "pid": 25587,
+          "name": "Greybird\nGtk3, Gtk2, Xfwm4, Xfce4-notifyd",
+          "role": "table cell",
+          "states": [
+            "enabled",
+            "focusable",
+            "selectable",
+            "selected",
+            "sensitive",
+            "showing",
+            "single-line",
+            "transient",
+            "visible"
+          ],
+          "interfaces": [
+            "Accessible",
+            "Action",
+            "Collection",
+            "Component",
+            "TableCell",
+            "Text"
+          ],
+          "protected": false,
+          "bounds": {
+            "x": 336,
+            "y": 209,
+            "width": 356,
+            "height": 42
+          },
+          "actions": [
+            "expand or contract",
+            "edit",
+            "activate"
+          ],
+          "depth": 10,
+          "bounds_coordinates": "screen",
+          "element_id": "f3ea23ae349946ae8c2b6fa9d1156e85",
+          "parent_element_id": "a9c54ef08c664ec4bcf221cab4db36b5"
+        }
+      ],
+      "window_id": "532884471fe44e87888cf64b7948fb52:800007:25587:2578623:cb28ad6511c2db39ff860944ca8ae512",
+      "opened": null
+    },
+    "theme:Greybird-dark:Greybird": {
+      "png": "theme-dark-selected-light.png",
+      "observe": "theme-dark-selected-light.observe.json",
+      "inspect": "theme-dark-selected-light.inspect.json",
+      "sha256": "f4f1cdb63e2c7596b761fdd003af59f4a36e75d7836c0b771d71d01dbc2338ed",
+      "selected": "Greybird-dark",
+      "applied": "Greybird",
+      "selected_nodes": [
+        {
+          "pid": 25587,
+          "name": "Style",
+          "role": "page tab",
+          "states": [
+            "enabled",
+            "focused",
+            "multi-line",
+            "selectable",
+            "selected",
+            "sensitive",
+            "showing",
+            "visible"
+          ],
+          "interfaces": [
+            "Accessible",
+            "Collection",
+            "Component"
+          ],
+          "protected": false,
+          "bounds": {
+            "x": 333,
+            "y": 126,
+            "width": 30,
+            "height": 21
+          },
+          "depth": 4,
+          "bounds_coordinates": "screen",
+          "element_id": "eb1c2a852fbc410fb4c5cbfb2691a763",
+          "parent_element_id": "5163aa47e7b1466bb8a3df706311090f"
+        },
+        {
+          "pid": 25587,
+          "name": "",
+          "role": "table cell",
+          "states": [
+            "enabled",
+            "focusable",
+            "selectable",
+            "selected",
+            "sensitive",
+            "showing",
+            "transient",
+            "visible"
+          ],
+          "interfaces": [
+            "Accessible",
+            "Action",
+            "Collection",
+            "Component",
+            "TableCell"
+          ],
+          "protected": false,
+          "bounds": {
+            "x": 336,
+            "y": 165,
+            "width": 352,
+            "height": 42
+          },
+          "actions": [
+            "expand or contract",
+            "edit",
+            "activate"
+          ],
+          "depth": 9,
+          "bounds_coordinates": "screen",
+          "element_id": "740f1338a0d84bf6ba002130fee9ff2e",
+          "parent_element_id": "d7cfbc250e66434bb13964d24ab15085"
+        },
+        {
+          "pid": 25587,
+          "name": "",
+          "role": "table cell",
+          "states": [
+            "enabled",
+            "focusable",
+            "selectable",
+            "selected",
+            "sensitive",
+            "showing",
+            "transient",
+            "visible"
+          ],
+          "interfaces": [
+            "Accessible",
+            "Action",
+            "Collection",
+            "Component",
+            "Image",
+            "TableCell"
+          ],
+          "protected": false,
+          "bounds": {
+            "x": 336,
+            "y": 165,
+            "width": 0,
+            "height": 42
+          },
+          "actions": [
+            "expand or contract",
+            "edit",
+            "activate"
+          ],
+          "depth": 10,
+          "bounds_coordinates": "screen",
+          "element_id": "713ae7a6f8e0403fa42022836e71f8cc",
+          "parent_element_id": "740f1338a0d84bf6ba002130fee9ff2e"
+        },
+        {
+          "pid": 25587,
+          "name": "Greybird-dark\nGtk3, Gtk2, Xfwm4",
+          "role": "table cell",
+          "states": [
+            "enabled",
+            "focusable",
+            "selectable",
+            "selected",
+            "sensitive",
+            "showing",
+            "single-line",
+            "transient",
+            "visible"
+          ],
+          "interfaces": [
+            "Accessible",
+            "Action",
+            "Collection",
+            "Component",
+            "TableCell",
+            "Text"
+          ],
+          "protected": false,
+          "bounds": {
+            "x": 336,
+            "y": 165,
+            "width": 356,
+            "height": 42
+          },
+          "actions": [
+            "expand or contract",
+            "edit",
+            "activate"
+          ],
+          "depth": 10,
+          "bounds_coordinates": "screen",
+          "element_id": "640aeaf809da462eb8a857c2658407bc",
+          "parent_element_id": "740f1338a0d84bf6ba002130fee9ff2e"
+        }
+      ],
+      "window_id": "532884471fe44e87888cf64b7948fb52:800007:25587:2578623:cb28ad6511c2db39ff860944ca8ae512",
+      "opened": null
+    },
+    "theme:Greybird-dark:Greybird-dark": {
+      "png": "theme-dark-selected-dark.png",
+      "observe": "theme-dark-selected-dark.observe.json",
+      "inspect": "theme-dark-selected-dark.inspect.json",
+      "sha256": "52411f9997ba3408e54d1366eb5635d21cce6d8d27d695375f1f098fe79f4c8a",
+      "selected": "Greybird-dark",
+      "applied": "Greybird-dark",
+      "selected_nodes": [
+        {
+          "pid": 25587,
+          "name": "Style",
+          "role": "page tab",
+          "states": [
+            "enabled",
+            "focused",
+            "multi-line",
+            "selectable",
+            "selected",
+            "sensitive",
+            "showing",
+            "visible"
+          ],
+          "interfaces": [
+            "Accessible",
+            "Collection",
+            "Component"
+          ],
+          "protected": false,
+          "bounds": {
+            "x": 333,
+            "y": 126,
+            "width": 30,
+            "height": 21
+          },
+          "depth": 4,
+          "bounds_coordinates": "screen",
+          "element_id": "34f587f5a89043ff97fc1de6c69842f1",
+          "parent_element_id": "a100d7044e43482eba98c7b65d8abf3f"
+        },
+        {
+          "pid": 25587,
+          "name": "",
+          "role": "table cell",
+          "states": [
+            "enabled",
+            "focusable",
+            "selectable",
+            "selected",
+            "sensitive",
+            "showing",
+            "transient",
+            "visible"
+          ],
+          "interfaces": [
+            "Accessible",
+            "Action",
+            "Collection",
+            "Component",
+            "TableCell"
+          ],
+          "protected": false,
+          "bounds": {
+            "x": 336,
+            "y": 165,
+            "width": 352,
+            "height": 42
+          },
+          "actions": [
+            "expand or contract",
+            "edit",
+            "activate"
+          ],
+          "depth": 9,
+          "bounds_coordinates": "screen",
+          "element_id": "c8b6d3982c8840bb8995aa4adc542508",
+          "parent_element_id": "fa62498adffa45258b1b6a5d249401ab"
+        },
+        {
+          "pid": 25587,
+          "name": "",
+          "role": "table cell",
+          "states": [
+            "enabled",
+            "focusable",
+            "selectable",
+            "selected",
+            "sensitive",
+            "showing",
+            "transient",
+            "visible"
+          ],
+          "interfaces": [
+            "Accessible",
+            "Action",
+            "Collection",
+            "Component",
+            "Image",
+            "TableCell"
+          ],
+          "protected": false,
+          "bounds": {
+            "x": 336,
+            "y": 165,
+            "width": 0,
+            "height": 42
+          },
+          "actions": [
+            "expand or contract",
+            "edit",
+            "activate"
+          ],
+          "depth": 10,
+          "bounds_coordinates": "screen",
+          "element_id": "e21fdcc17c6c444fa454f505c01d9a40",
+          "parent_element_id": "c8b6d3982c8840bb8995aa4adc542508"
+        },
+        {
+          "pid": 25587,
+          "name": "Greybird-dark\nGtk3, Gtk2, Xfwm4",
+          "role": "table cell",
+          "states": [
+            "enabled",
+            "focusable",
+            "selectable",
+            "selected",
+            "sensitive",
+            "showing",
+            "single-line",
+            "transient",
+            "visible"
+          ],
+          "interfaces": [
+            "Accessible",
+            "Action",
+            "Collection",
+            "Component",
+            "TableCell",
+            "Text"
+          ],
+          "protected": false,
+          "bounds": {
+            "x": 336,
+            "y": 165,
+            "width": 356,
+            "height": 42
+          },
+          "actions": [
+            "expand or contract",
+            "edit",
+            "activate"
+          ],
+          "depth": 10,
+          "bounds_coordinates": "screen",
+          "element_id": "753468313d4645078fe2ce752249d431",
+          "parent_element_id": "c8b6d3982c8840bb8995aa4adc542508"
+        }
+      ],
+      "window_id": "532884471fe44e87888cf64b7948fb52:800007:25587:2578623:cb28ad6511c2db39ff860944ca8ae512",
+      "opened": null
+    },
+    "file::None": {
+      "png": "file-unselected.png",
+      "observe": "file-unselected.observe.json",
+      "inspect": "file-unselected.inspect.json",
+      "sha256": "cde52a0ba5450a83316ad9ca52c908fd185cec66e0ace341f4c719c5b421dc7e",
+      "selected": null,
+      "applied": "Greybird",
+      "selected_nodes": [
+        {
+          "pid": 25795,
+          "name": "",
+          "role": "page tab",
+          "states": [
+            "enabled",
+            "selectable",
+            "selected",
+            "showing",
+            "visible"
+          ],
+          "interfaces": [
+            "Accessible",
+            "Collection",
+            "Component"
+          ],
+          "protected": false,
+          "bounds": {
+            "x": -1,
+            "y": -1,
+            "width": -1,
+            "height": -1
+          },
+          "depth": 7,
+          "bounds_coordinates": "screen",
+          "element_id": "afb39c092e5743ed8456983557ffa281",
+          "parent_element_id": "53c726d34b184fa08311a96ddfcdb021"
+        }
+      ],
+      "window_id": "532884471fe44e87888cf64b7948fb52:800007:25795:2579402:3ccd37f28eeeaacd9eda53012fbd56de",
+      "opened": false
+    },
+    "file:target.txt:None": {
+      "png": "file-selected.png",
+      "observe": "file-selected.observe.json",
+      "inspect": "file-selected.inspect.json",
+      "sha256": "9f40a6edd6a1ad11d72fd19d2fab8d7e637e3ca6465d67f59ce92af145132f36",
+      "selected": "target.txt",
+      "applied": "Greybird",
+      "selected_nodes": [
+        {
+          "pid": 25795,
+          "name": "",
+          "role": "page tab",
+          "states": [
+            "enabled",
+            "selectable",
+            "selected",
+            "showing",
+            "visible"
+          ],
+          "interfaces": [
+            "Accessible",
+            "Collection",
+            "Component"
+          ],
+          "protected": false,
+          "bounds": {
+            "x": -1,
+            "y": -1,
+            "width": -1,
+            "height": -1
+          },
+          "depth": 7,
+          "bounds_coordinates": "screen",
+          "element_id": "ee8386e00ecd48fb9c16530803a705e2",
+          "parent_element_id": "4f41e7284851441c88274630b5c581a5"
+        },
+        {
+          "pid": 25795,
+          "name": "",
+          "role": "table cell",
+          "states": [
+            "active",
+            "enabled",
+            "focusable",
+            "focused",
+            "selectable",
+            "selected",
+            "sensitive",
+            "showing",
+            "transient",
+            "visible"
+          ],
+          "interfaces": [
+            "Accessible",
+            "Action",
+            "Collection",
+            "Component",
+            "TableCell"
+          ],
+          "protected": false,
+          "bounds": {
+            "x": 178,
+            "y": 121,
+            "width": 151,
+            "height": 26
+          },
+          "actions": [
+            "expand or contract",
+            "edit",
+            "activate"
+          ],
+          "depth": 10,
+          "bounds_coordinates": "screen",
+          "element_id": "0ca6f26b70734388b01fb13871a5cfdb",
+          "parent_element_id": "2cc08f85c12f42bc8a3c66c98e697ccf"
+        },
+        {
+          "pid": 25795,
+          "name": "30 bytes",
+          "role": "table cell",
+          "states": [
+            "enabled",
+            "focusable",
+            "selectable",
+            "selected",
+            "sensitive",
+            "showing",
+            "single-line",
+            "transient",
+            "visible"
+          ],
+          "interfaces": [
+            "Accessible",
+            "Action",
+            "Collection",
+            "Component",
+            "TableCell",
+            "Text"
+          ],
+          "protected": false,
+          "bounds": {
+            "x": 333,
+            "y": 121,
+            "width": 57,
+            "height": 26
+          },
+          "actions": [
+            "expand or contract",
+            "edit",
+            "activate"
+          ],
+          "depth": 10,
+          "bounds_coordinates": "screen",
+          "element_id": "175b61d9b65e4b9baa0ca5e5ddfa66a6",
+          "parent_element_id": "2cc08f85c12f42bc8a3c66c98e697ccf"
+        },
+        {
+          "pid": 25795,
+          "name": "Plain text document",
+          "role": "table cell",
+          "states": [
+            "enabled",
+            "focusable",
+            "selectable",
+            "selected",
+            "sensitive",
+            "showing",
+            "single-line",
+            "transient",
+            "visible"
+          ],
+          "interfaces": [
+            "Accessible",
+            "Action",
+            "Collection",
+            "Component",
+            "TableCell",
+            "Text"
+          ],
+          "protected": false,
+          "bounds": {
+            "x": 394,
+            "y": 121,
+            "width": 126,
+            "height": 26
+          },
+          "actions": [
+            "expand or contract",
+            "edit",
+            "activate"
+          ],
+          "depth": 10,
+          "bounds_coordinates": "screen",
+          "element_id": "ff1e603b3fde4eb1a69ffc84a17f0885",
+          "parent_element_id": "2cc08f85c12f42bc8a3c66c98e697ccf"
+        },
+        {
+          "pid": 25795,
+          "name": "Today",
+          "role": "table cell",
+          "states": [
+            "enabled",
+            "focusable",
+            "selectable",
+            "selected",
+            "sensitive",
+            "showing",
+            "single-line",
+            "transient",
+            "visible"
+          ],
+          "interfaces": [
+            "Accessible",
+            "Action",
+            "Collection",
+            "Component",
+            "TableCell",
+            "Text"
+          ],
+          "protected": false,
+          "bounds": {
+            "x": 524,
+            "y": 121,
+            "width": 119,
+            "height": 26
+          },
+          "actions": [
+            "expand or contract",
+            "edit",
+            "activate"
+          ],
+          "depth": 10,
+          "bounds_coordinates": "screen",
+          "element_id": "cdae96196b114a0a8f84847a06c2c750",
+          "parent_element_id": "2cc08f85c12f42bc8a3c66c98e697ccf"
+        },
+        {
+          "pid": 25795,
+          "name": "",
+          "role": "table cell",
+          "states": [
+            "active",
+            "enabled",
+            "focusable",
+            "focused",
+            "selectable",
+            "selected",
+            "sensitive",
+            "showing",
+            "transient",
+            "visible"
+          ],
+          "interfaces": [
+            "Accessible",
+            "Action",
+            "Collection",
+            "Component",
+            "TableCell"
+          ],
+          "protected": false,
+          "bounds": {
+            "x": 178,
+            "y": 121,
+            "width": 26,
+            "height": 26
+          },
+          "actions": [
+            "expand or contract",
+            "edit",
+            "activate"
+          ],
+          "depth": 11,
+          "bounds_coordinates": "screen",
+          "element_id": "b5b4e8fa087a4ec7a75cc1f88e5d0e7f",
+          "parent_element_id": "0ca6f26b70734388b01fb13871a5cfdb"
+        },
+        {
+          "pid": 25795,
+          "name": "target.txt",
+          "role": "table cell",
+          "states": [
+            "active",
+            "enabled",
+            "focusable",
+            "focused",
+            "selectable",
+            "selected",
+            "sensitive",
+            "showing",
+            "single-line",
+            "transient",
+            "visible"
+          ],
+          "interfaces": [
+            "Accessible",
+            "Action",
+            "Collection",
+            "Component",
+            "TableCell",
+            "Text"
+          ],
+          "protected": false,
+          "bounds": {
+            "x": 204,
+            "y": 121,
+            "width": 129,
+            "height": 26
+          },
+          "actions": [
+            "expand or contract",
+            "edit",
+            "activate"
+          ],
+          "depth": 11,
+          "bounds_coordinates": "screen",
+          "element_id": "efb81e9d2a71469cb6cdd716b28528b0",
+          "parent_element_id": "0ca6f26b70734388b01fb13871a5cfdb"
+        }
+      ],
+      "window_id": "532884471fe44e87888cf64b7948fb52:800007:25795:2579402:3ccd37f28eeeaacd9eda53012fbd56de",
+      "opened": false
+    }
+  },
+  "theme_package_sha256": "229bd6c832963109d4fd58d3d8f662b94d461c413f48c81ad7d18350c57d922e",
+  "review": {
+    "light": "Appearance unselected list white with dark text; tabs, Help and Close light gray with dark text; desktop dark gray.",
+    "dark": "Appearance unselected list dark charcoal with light text; tabs, Help and Close dark gray with light text; title bar remains light.",
+    "file": "Only Thunar visible, target.txt unhighlighted then blue-highlighted; no activation issued or document window launched.",
+    "selection_oracle": "Independent /usr/bin/python3 process traverses Atspi.get_desktop(0), reads SELECTED states; independent xfconf-query reads applied setting in same GUI bus."
+  },
+  "capture_failures": [
+    "First capture used Thunar Icon view, whose AT-SPI tree did not expose target.txt; capture rejected and rerun in Details view. No evaluated-agent run occurred."
+  ]
+}

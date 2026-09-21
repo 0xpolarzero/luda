@@ -1,0 +1,88 @@
+{
+  "snapshot_id": "191b8869f2f84d84ab05c69cd588fbbd",
+  "expires_after_seconds": 15,
+  "coordinate_space": "returned image pixels; pass snapshot_id with pointer actions",
+  "coordinate_spaces": {
+    "bounds": "native_x11_root_pixels",
+    "frame_bounds": "native_x11_root_pixels",
+    "image_bounds": "returned_image_pixels",
+    "pointer": "returned_image_pixels"
+  },
+  "image_bounds_semantics": "Half-open rectangles of integer screenshot pixel positions; clipped to image, not an occlusion check.",
+  "image_size": {
+    "width": 1024,
+    "height": 768
+  },
+  "desktop_size": {
+    "width": 1024,
+    "height": 768
+  },
+  "display_topology": {
+    "layout_id": "05ebd38cde5307de10d0ef9135350832866b53094107a66e7f2ed1b09300aa0f",
+    "root": {
+      "x": 0,
+      "y": 0,
+      "width": 1024,
+      "height": 768
+    },
+    "workspace": {
+      "status": "available",
+      "index": 0,
+      "count": 4
+    },
+    "monitor_source": "RandR logical monitors",
+    "monitors": [
+      {
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 1024,
+          "height": 768
+        },
+        "primary": false,
+        "image_bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 1024,
+          "height": 768
+        }
+      }
+    ],
+    "bounds_coordinate_space": "native_x11_root_pixels"
+  },
+  "windows": [
+    {
+      "window_id": "532884471fe44e87888cf64b7948fb52:800007:25587:2578623:cb28ad6511c2db39ff860944ca8ae512",
+      "xid": 8388615,
+      "pid": 25587,
+      "start": "2578623",
+      "title": "Appearance",
+      "workspace": 0,
+      "bounds": {
+        "x": 312,
+        "y": 114,
+        "width": 400,
+        "height": 540
+      },
+      "frame_bounds": {
+        "x": 307,
+        "y": 85,
+        "width": 410,
+        "height": 574
+      },
+      "active": true,
+      "wm_class": [
+        "xfce4-appearance-settings",
+        "Xfce4-appearance-settings"
+      ],
+      "unavailable_properties": [],
+      "image_bounds": {
+        "x": 312,
+        "y": 114,
+        "width": 400,
+        "height": 540
+      }
+    }
+  ],
+  "popups": []
+}

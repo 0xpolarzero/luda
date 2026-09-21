@@ -1,0 +1,88 @@
+{
+  "snapshot_id": "a3f86f07f5624f5b9db583decac9dce4",
+  "expires_after_seconds": 15,
+  "coordinate_space": "returned image pixels; pass snapshot_id with pointer actions",
+  "coordinate_spaces": {
+    "bounds": "native_x11_root_pixels",
+    "frame_bounds": "native_x11_root_pixels",
+    "image_bounds": "returned_image_pixels",
+    "pointer": "returned_image_pixels"
+  },
+  "image_bounds_semantics": "Half-open rectangles of integer screenshot pixel positions; clipped to image, not an occlusion check.",
+  "image_size": {
+    "width": 1024,
+    "height": 768
+  },
+  "desktop_size": {
+    "width": 1024,
+    "height": 768
+  },
+  "display_topology": {
+    "layout_id": "05ebd38cde5307de10d0ef9135350832866b53094107a66e7f2ed1b09300aa0f",
+    "root": {
+      "x": 0,
+      "y": 0,
+      "width": 1024,
+      "height": 768
+    },
+    "workspace": {
+      "status": "available",
+      "index": 0,
+      "count": 4
+    },
+    "monitor_source": "RandR logical monitors",
+    "monitors": [
+      {
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 1024,
+          "height": 768
+        },
+        "primary": false,
+        "image_bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 1024,
+          "height": 768
+        }
+      }
+    ],
+    "bounds_coordinate_space": "native_x11_root_pixels"
+  },
+  "windows": [
+    {
+      "window_id": "532884471fe44e87888cf64b7948fb52:800007:25795:2579402:3ccd37f28eeeaacd9eda53012fbd56de",
+      "xid": 8388615,
+      "pid": 25795,
+      "start": "2579402",
+      "title": "Selection trial - Thunar",
+      "workspace": 0,
+      "bounds": {
+        "x": 5,
+        "y": 29,
+        "width": 640,
+        "height": 480
+      },
+      "frame_bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 650,
+        "height": 514
+      },
+      "active": true,
+      "wm_class": [
+        "thunar",
+        "Thunar"
+      ],
+      "unavailable_properties": [],
+      "image_bounds": {
+        "x": 5,
+        "y": 29,
+        "width": 640,
+        "height": 480
+      }
+    }
+  ],
+  "popups": []
+}

@@ -1,0 +1,4141 @@
+{
+  "nodes": [
+    {
+      "pid": 25587,
+      "name": "Appearance",
+      "role": "dialog",
+      "states": [
+        "active",
+        "enabled",
+        "resizable",
+        "sensitive",
+        "showing",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 307,
+        "y": 85,
+        "width": 410,
+        "height": 574
+      },
+      "depth": 0,
+      "bounds_coordinates": "screen",
+      "element_id": "123fdab69b1942b3b7f64e263443ebaf",
+      "parent_element_id": null
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "filler",
+      "states": [
+        "enabled",
+        "sensitive",
+        "showing",
+        "vertical",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 312,
+        "y": 114,
+        "width": 400,
+        "height": 540
+      },
+      "depth": 1,
+      "bounds_coordinates": "screen",
+      "element_id": "5c2b24f2f0ab44bf99ba25731244c978",
+      "parent_element_id": "123fdab69b1942b3b7f64e263443ebaf"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "label",
+      "states": [
+        "enabled",
+        "multi-line",
+        "sensitive"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component",
+        "Hypertext",
+        "Text"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 1,
+        "height": 1
+      },
+      "depth": 2,
+      "bounds_coordinates": "screen",
+      "element_id": "5936d3d3c7c1437a97a2d1a6c4219535",
+      "parent_element_id": "5c2b24f2f0ab44bf99ba25731244c978"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "separator",
+      "states": [
+        "enabled",
+        "horizontal",
+        "sensitive"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 1,
+        "height": 1
+      },
+      "depth": 2,
+      "bounds_coordinates": "screen",
+      "element_id": "3ac191f02077499f84363d83135af5b7",
+      "parent_element_id": "5c2b24f2f0ab44bf99ba25731244c978"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "filler",
+      "states": [
+        "enabled",
+        "sensitive",
+        "showing",
+        "vertical",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 314,
+        "y": 116,
+        "width": 396,
+        "height": 536
+      },
+      "depth": 2,
+      "bounds_coordinates": "screen",
+      "element_id": "c84e3bd41c8141dfac88058d8a64c2f3",
+      "parent_element_id": "5c2b24f2f0ab44bf99ba25731244c978"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "page tab list",
+      "states": [
+        "enabled",
+        "focusable",
+        "sensitive",
+        "showing",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component",
+        "Selection"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 320,
+        "y": 122,
+        "width": 384,
+        "height": 482
+      },
+      "depth": 3,
+      "bounds_coordinates": "screen",
+      "element_id": "90e7ebe1d5894f3d92a0b865c01de7dd",
+      "parent_element_id": "c84e3bd41c8141dfac88058d8a64c2f3"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "filler",
+      "states": [
+        "enabled",
+        "horizontal",
+        "sensitive",
+        "showing",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 314,
+        "y": 612,
+        "width": 396,
+        "height": 40
+      },
+      "depth": 3,
+      "bounds_coordinates": "screen",
+      "element_id": "9f92205ba51248fea7fe6430a334e430",
+      "parent_element_id": "c84e3bd41c8141dfac88058d8a64c2f3"
+    },
+    {
+      "pid": 25587,
+      "name": "Style",
+      "role": "page tab",
+      "states": [
+        "enabled",
+        "focused",
+        "multi-line",
+        "selectable",
+        "selected",
+        "sensitive",
+        "showing",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 333,
+        "y": 126,
+        "width": 30,
+        "height": 21
+      },
+      "depth": 4,
+      "bounds_coordinates": "screen",
+      "element_id": "0934903671894e84adfe74aa3a98c513",
+      "parent_element_id": "90e7ebe1d5894f3d92a0b865c01de7dd"
+    },
+    {
+      "pid": 25587,
+      "name": "Icons",
+      "role": "page tab",
+      "states": [
+        "enabled",
+        "multi-line",
+        "selectable",
+        "sensitive",
+        "showing",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 393,
+        "y": 126,
+        "width": 33,
+        "height": 20
+      },
+      "depth": 4,
+      "bounds_coordinates": "screen",
+      "element_id": "0534a4987aaa4d1ea803ff15089f36ff",
+      "parent_element_id": "90e7ebe1d5894f3d92a0b865c01de7dd"
+    },
+    {
+      "pid": 25587,
+      "name": "Fonts",
+      "role": "page tab",
+      "states": [
+        "enabled",
+        "multi-line",
+        "selectable",
+        "sensitive",
+        "showing",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 456,
+        "y": 126,
+        "width": 34,
+        "height": 20
+      },
+      "depth": 4,
+      "bounds_coordinates": "screen",
+      "element_id": "8504271f3cd940faafa8df2d984a9271",
+      "parent_element_id": "90e7ebe1d5894f3d92a0b865c01de7dd"
+    },
+    {
+      "pid": 25587,
+      "name": "Settings",
+      "role": "page tab",
+      "states": [
+        "enabled",
+        "multi-line",
+        "selectable",
+        "sensitive",
+        "showing",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 520,
+        "y": 126,
+        "width": 50,
+        "height": 20
+      },
+      "depth": 4,
+      "bounds_coordinates": "screen",
+      "element_id": "b168ac4e6dc64654a9fa2c8614cb9005",
+      "parent_element_id": "90e7ebe1d5894f3d92a0b865c01de7dd"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "filler",
+      "states": [
+        "enabled",
+        "horizontal",
+        "sensitive",
+        "showing",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 314,
+        "y": 612,
+        "width": 396,
+        "height": 40
+      },
+      "depth": 4,
+      "bounds_coordinates": "screen",
+      "element_id": "0047c9fd74a44aa19efd71a004fee79a",
+      "parent_element_id": "9f92205ba51248fea7fe6430a334e430"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "filler",
+      "states": [
+        "enabled",
+        "sensitive",
+        "showing",
+        "vertical",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 333,
+        "y": 163,
+        "width": 358,
+        "height": 428
+      },
+      "depth": 5,
+      "bounds_coordinates": "screen",
+      "element_id": "22ac7d86bc45487896952735eb2031d6",
+      "parent_element_id": "0934903671894e84adfe74aa3a98c513"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "filler",
+      "states": [
+        "enabled",
+        "sensitive",
+        "vertical",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 358,
+        "height": 428
+      },
+      "depth": 5,
+      "bounds_coordinates": "screen",
+      "element_id": "e9cf9d63ff1d45bfbba3083b761a94e5",
+      "parent_element_id": "0534a4987aaa4d1ea803ff15089f36ff"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "scroll pane",
+      "states": [
+        "enabled",
+        "focusable",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 382,
+        "height": 452
+      },
+      "depth": 5,
+      "bounds_coordinates": "screen",
+      "element_id": "05fc94f624cf432db063df3ad953c729",
+      "parent_element_id": "8504271f3cd940faafa8df2d984a9271"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "scroll pane",
+      "states": [
+        "enabled",
+        "focusable",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 382,
+        "height": 452
+      },
+      "depth": 5,
+      "bounds_coordinates": "screen",
+      "element_id": "86f6cce22b094609813cb6b0c82afde9",
+      "parent_element_id": "b168ac4e6dc64654a9fa2c8614cb9005"
+    },
+    {
+      "pid": 25587,
+      "name": "Close",
+      "role": "push button",
+      "states": [
+        "enabled",
+        "focusable",
+        "sensitive",
+        "showing",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "Image"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 619,
+        "y": 618,
+        "width": 85,
+        "height": 28
+      },
+      "actions": [
+        "click"
+      ],
+      "depth": 5,
+      "bounds_coordinates": "screen",
+      "element_id": "62304f42aef94cd89a02267b24637e4e",
+      "parent_element_id": "0047c9fd74a44aa19efd71a004fee79a"
+    },
+    {
+      "pid": 25587,
+      "name": "Help",
+      "role": "push button",
+      "states": [
+        "enabled",
+        "focusable",
+        "sensitive",
+        "showing",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "Image"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 320,
+        "y": 618,
+        "width": 85,
+        "height": 28
+      },
+      "actions": [
+        "click"
+      ],
+      "depth": 5,
+      "bounds_coordinates": "screen",
+      "element_id": "6d8b99b98e784edab82425274cd8050d",
+      "parent_element_id": "0047c9fd74a44aa19efd71a004fee79a"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "scroll pane",
+      "states": [
+        "enabled",
+        "focusable",
+        "sensitive",
+        "showing",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 333,
+        "y": 163,
+        "width": 358,
+        "height": 359
+      },
+      "depth": 6,
+      "bounds_coordinates": "screen",
+      "element_id": "7cc76e9611894d75856a2eb4927637dd",
+      "parent_element_id": "22ac7d86bc45487896952735eb2031d6"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "filler",
+      "states": [
+        "enabled",
+        "sensitive",
+        "showing",
+        "vertical",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 333,
+        "y": 522,
+        "width": 358,
+        "height": 35
+      },
+      "depth": 6,
+      "bounds_coordinates": "screen",
+      "element_id": "7cdc6b2773aa40278fbbc30331d5e55a",
+      "parent_element_id": "22ac7d86bc45487896952735eb2031d6"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "filler",
+      "states": [
+        "enabled",
+        "horizontal",
+        "sensitive",
+        "showing",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 333,
+        "y": 569,
+        "width": 358,
+        "height": 22
+      },
+      "depth": 6,
+      "bounds_coordinates": "screen",
+      "element_id": "e170d87503894f0da11aadf80da387d2",
+      "parent_element_id": "22ac7d86bc45487896952735eb2031d6"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "scroll pane",
+      "states": [
+        "enabled",
+        "focusable",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 358,
+        "height": 393
+      },
+      "depth": 6,
+      "bounds_coordinates": "screen",
+      "element_id": "b4cff255c4b940069d3e44f2d09f1155",
+      "parent_element_id": "e9cf9d63ff1d45bfbba3083b761a94e5"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "filler",
+      "states": [
+        "enabled",
+        "sensitive",
+        "vertical",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 358,
+        "height": 35
+      },
+      "depth": 6,
+      "bounds_coordinates": "screen",
+      "element_id": "7ae3ef493d82488ba3615f622bfc9325",
+      "parent_element_id": "e9cf9d63ff1d45bfbba3083b761a94e5"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "viewport",
+      "states": [
+        "enabled",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 382,
+        "height": 452
+      },
+      "depth": 6,
+      "bounds_coordinates": "screen",
+      "element_id": "a3490739d1344823918f8fbd853c20a5",
+      "parent_element_id": "05fc94f624cf432db063df3ad953c729"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "scroll bar",
+      "states": [
+        "enabled",
+        "horizontal",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component",
+        "Value"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 1,
+        "height": 1
+      },
+      "value": {
+        "current": 0.0,
+        "minimum": 0.0,
+        "maximum": 0.0,
+        "increment": 38.2
+      },
+      "depth": 6,
+      "bounds_coordinates": "screen",
+      "element_id": "00b309f754154c7291d5f25b85bffe93",
+      "parent_element_id": "05fc94f624cf432db063df3ad953c729"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "scroll bar",
+      "states": [
+        "enabled",
+        "sensitive",
+        "vertical",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component",
+        "Value"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 1,
+        "height": 1
+      },
+      "value": {
+        "current": 0.0,
+        "minimum": 0.0,
+        "maximum": 0.0,
+        "increment": 45.2
+      },
+      "depth": 6,
+      "bounds_coordinates": "screen",
+      "element_id": "9b78e88e8cee4c3bb2d99b6fb1384240",
+      "parent_element_id": "05fc94f624cf432db063df3ad953c729"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "viewport",
+      "states": [
+        "enabled",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 382,
+        "height": 452
+      },
+      "depth": 6,
+      "bounds_coordinates": "screen",
+      "element_id": "ca497e7e72954da8b231d2276b9375a3",
+      "parent_element_id": "86f6cce22b094609813cb6b0c82afde9"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "scroll bar",
+      "states": [
+        "enabled",
+        "horizontal",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component",
+        "Value"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 1,
+        "height": 1
+      },
+      "value": {
+        "current": 0.0,
+        "minimum": 0.0,
+        "maximum": 0.0,
+        "increment": 38.2
+      },
+      "depth": 6,
+      "bounds_coordinates": "screen",
+      "element_id": "4313a11373bf41f3a802e8c5ef57442c",
+      "parent_element_id": "86f6cce22b094609813cb6b0c82afde9"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "scroll bar",
+      "states": [
+        "enabled",
+        "sensitive",
+        "vertical",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component",
+        "Value"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 1,
+        "height": 1
+      },
+      "value": {
+        "current": 0.0,
+        "minimum": 0.0,
+        "maximum": 0.0,
+        "increment": 45.2
+      },
+      "depth": 6,
+      "bounds_coordinates": "screen",
+      "element_id": "a2f07ebcdcc545acb576dceec56c8e15",
+      "parent_element_id": "86f6cce22b094609813cb6b0c82afde9"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "viewport",
+      "states": [
+        "enabled",
+        "sensitive",
+        "showing",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 334,
+        "y": 164,
+        "width": 356,
+        "height": 357
+      },
+      "depth": 7,
+      "bounds_coordinates": "screen",
+      "element_id": "fbfda082dbc442db80e4f17ab71ab747",
+      "parent_element_id": "7cc76e9611894d75856a2eb4927637dd"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "scroll bar",
+      "states": [
+        "enabled",
+        "horizontal",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component",
+        "Value"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 1,
+        "height": 1
+      },
+      "value": {
+        "current": 0.0,
+        "minimum": 0.0,
+        "maximum": 0.0,
+        "increment": 35.6
+      },
+      "depth": 7,
+      "bounds_coordinates": "screen",
+      "element_id": "1a66abea5c38432287efba0857967657",
+      "parent_element_id": "7cc76e9611894d75856a2eb4927637dd"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "scroll bar",
+      "states": [
+        "enabled",
+        "sensitive",
+        "vertical",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component",
+        "Value"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 1,
+        "height": 1
+      },
+      "value": {
+        "current": 0.0,
+        "minimum": 0.0,
+        "maximum": 0.0,
+        "increment": 35.7
+      },
+      "depth": 7,
+      "bounds_coordinates": "screen",
+      "element_id": "1795c18392b840ff8ad367a52aea2b55",
+      "parent_element_id": "7cc76e9611894d75856a2eb4927637dd"
+    },
+    {
+      "pid": 25587,
+      "name": "Add",
+      "role": "push button",
+      "states": [
+        "enabled",
+        "focusable",
+        "sensitive",
+        "showing",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "Image"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 337,
+        "y": 525,
+        "width": 49,
+        "height": 28
+      },
+      "actions": [
+        "click"
+      ],
+      "depth": 7,
+      "bounds_coordinates": "screen",
+      "element_id": "e2cb9745c9f442878935d4fa72992841",
+      "parent_element_id": "7cdc6b2773aa40278fbbc30331d5e55a"
+    },
+    {
+      "pid": 25587,
+      "name": "Set matching Xfwm4 theme if there is one",
+      "role": "label",
+      "states": [
+        "enabled",
+        "multi-line",
+        "sensitive",
+        "showing",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component",
+        "Hypertext",
+        "Text"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 333,
+        "y": 569,
+        "width": 316,
+        "height": 22
+      },
+      "depth": 7,
+      "bounds_coordinates": "screen",
+      "element_id": "aa0db97f71b846fb9153157e04f5aeec",
+      "parent_element_id": "e170d87503894f0da11aadf80da387d2"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "toggle button",
+      "states": [
+        "enabled",
+        "focusable",
+        "sensitive",
+        "showing",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 649,
+        "y": 569,
+        "width": 42,
+        "height": 22
+      },
+      "actions": [
+        "toggle"
+      ],
+      "depth": 7,
+      "bounds_coordinates": "screen",
+      "element_id": "eebaecf457554904aed00413acdcfe6b",
+      "parent_element_id": "e170d87503894f0da11aadf80da387d2"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "table",
+      "states": [
+        "enabled",
+        "focusable",
+        "has-tooltip",
+        "sensitive",
+        "visible",
+        "manages-descendants"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component",
+        "Selection",
+        "Table"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 356,
+        "height": 391
+      },
+      "depth": 7,
+      "bounds_coordinates": "screen",
+      "element_id": "090fc56d82a147a586f89581d27bd5a7",
+      "parent_element_id": "b4cff255c4b940069d3e44f2d09f1155"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "scroll bar",
+      "states": [
+        "enabled",
+        "horizontal",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component",
+        "Value"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 1,
+        "height": 1
+      },
+      "value": {
+        "current": 0.0,
+        "minimum": 0.0,
+        "maximum": 0.0,
+        "increment": 35.6
+      },
+      "depth": 7,
+      "bounds_coordinates": "screen",
+      "element_id": "b256ed7a16e143a6b7bc535a0f534652",
+      "parent_element_id": "b4cff255c4b940069d3e44f2d09f1155"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "scroll bar",
+      "states": [
+        "enabled",
+        "sensitive",
+        "vertical",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component",
+        "Value"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 1,
+        "height": 1
+      },
+      "value": {
+        "current": 0.0,
+        "minimum": 0.0,
+        "maximum": 0.0,
+        "increment": 39.1
+      },
+      "depth": 7,
+      "bounds_coordinates": "screen",
+      "element_id": "aa28e6885513447ebca1bf2b42bd07af",
+      "parent_element_id": "b4cff255c4b940069d3e44f2d09f1155"
+    },
+    {
+      "pid": 25587,
+      "name": "Add",
+      "role": "push button",
+      "states": [
+        "enabled",
+        "focusable",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "Image"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 49,
+        "height": 28
+      },
+      "actions": [
+        "click"
+      ],
+      "depth": 7,
+      "bounds_coordinates": "screen",
+      "element_id": "edd7490f593a4dcb90d402491c5a01a9",
+      "parent_element_id": "7ae3ef493d82488ba3615f622bfc9325"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "filler",
+      "states": [
+        "enabled",
+        "sensitive",
+        "vertical",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 358,
+        "height": 428
+      },
+      "depth": 7,
+      "bounds_coordinates": "screen",
+      "element_id": "13198e5539c340af83f6dce8d948cf1c",
+      "parent_element_id": "a3490739d1344823918f8fbd853c20a5"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "filler",
+      "states": [
+        "enabled",
+        "sensitive",
+        "vertical",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 358,
+        "height": 428
+      },
+      "depth": 7,
+      "bounds_coordinates": "screen",
+      "element_id": "a2efad23b3c149f2963c6925bbc344bc",
+      "parent_element_id": "ca497e7e72954da8b231d2276b9375a3"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "table",
+      "states": [
+        "enabled",
+        "focusable",
+        "has-tooltip",
+        "sensitive",
+        "showing",
+        "visible",
+        "manages-descendants"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component",
+        "Selection",
+        "Table"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 334,
+        "y": 164,
+        "width": 356,
+        "height": 357
+      },
+      "depth": 8,
+      "bounds_coordinates": "screen",
+      "element_id": "d938e202636048b197e170ffaef1f1d1",
+      "parent_element_id": "fbfda082dbc442db80e4f17ab71ab747"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "table column header",
+      "states": [
+        "enabled",
+        "focusable",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "Image"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 1,
+        "height": 1
+      },
+      "actions": [
+        "click"
+      ],
+      "depth": 8,
+      "bounds_coordinates": "screen",
+      "element_id": "4d5ba3eff42241e5a0a6c164665b8f9d",
+      "parent_element_id": "090fc56d82a147a586f89581d27bd5a7"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "table cell",
+      "states": [
+        "enabled",
+        "focusable",
+        "selectable",
+        "sensitive",
+        "transient",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "TableCell"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 2097151,
+        "y": -1749675308,
+        "width": 0,
+        "height": 0
+      },
+      "actions": [
+        "expand or contract",
+        "edit",
+        "activate"
+      ],
+      "depth": 8,
+      "bounds_coordinates": "screen",
+      "element_id": "dc18dc5f4271411bb82a8a371e22daae",
+      "parent_element_id": "090fc56d82a147a586f89581d27bd5a7"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "table cell",
+      "states": [
+        "enabled",
+        "focusable",
+        "selectable",
+        "sensitive",
+        "transient",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "TableCell"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 2097151,
+        "y": -1749675308,
+        "width": 0,
+        "height": 0
+      },
+      "actions": [
+        "expand or contract",
+        "edit",
+        "activate"
+      ],
+      "depth": 8,
+      "bounds_coordinates": "screen",
+      "element_id": "680bce4448db49a892e2ab80e09fbb7e",
+      "parent_element_id": "090fc56d82a147a586f89581d27bd5a7"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "table cell",
+      "states": [
+        "enabled",
+        "focusable",
+        "selectable",
+        "sensitive",
+        "transient",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "TableCell"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 2097151,
+        "y": -1749675308,
+        "width": 0,
+        "height": 0
+      },
+      "actions": [
+        "expand or contract",
+        "edit",
+        "activate"
+      ],
+      "depth": 8,
+      "bounds_coordinates": "screen",
+      "element_id": "9374e392bda547fda45c886d826710d7",
+      "parent_element_id": "090fc56d82a147a586f89581d27bd5a7"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "table cell",
+      "states": [
+        "enabled",
+        "focusable",
+        "selectable",
+        "sensitive",
+        "transient",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "TableCell"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 2097151,
+        "y": -1749675308,
+        "width": 0,
+        "height": 0
+      },
+      "actions": [
+        "expand or contract",
+        "edit",
+        "activate"
+      ],
+      "depth": 8,
+      "bounds_coordinates": "screen",
+      "element_id": "e3af8c6c66464380b83969f2ab1d3c60",
+      "parent_element_id": "090fc56d82a147a586f89581d27bd5a7"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "table cell",
+      "states": [
+        "enabled",
+        "focusable",
+        "selectable",
+        "sensitive",
+        "transient",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "TableCell"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 2097151,
+        "y": -1749675308,
+        "width": 0,
+        "height": 0
+      },
+      "actions": [
+        "expand or contract",
+        "edit",
+        "activate"
+      ],
+      "depth": 8,
+      "bounds_coordinates": "screen",
+      "element_id": "299c4253040244b58f4e22f7156d8a3d",
+      "parent_element_id": "090fc56d82a147a586f89581d27bd5a7"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "table cell",
+      "states": [
+        "enabled",
+        "focusable",
+        "selectable",
+        "sensitive",
+        "transient",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "TableCell"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 2097151,
+        "y": -1749675308,
+        "width": 0,
+        "height": 0
+      },
+      "actions": [
+        "expand or contract",
+        "edit",
+        "activate"
+      ],
+      "depth": 8,
+      "bounds_coordinates": "screen",
+      "element_id": "37074f1e9c3b407eac75f4cd52aca92c",
+      "parent_element_id": "090fc56d82a147a586f89581d27bd5a7"
+    },
+    {
+      "pid": 25587,
+      "name": "Default Font",
+      "role": "panel",
+      "states": [
+        "enabled",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 358,
+        "height": 53
+      },
+      "depth": 8,
+      "bounds_coordinates": "screen",
+      "element_id": "2855cccc5f5d44448d458137e441f265",
+      "parent_element_id": "13198e5539c340af83f6dce8d948cf1c"
+    },
+    {
+      "pid": 25587,
+      "name": "Default Monospace Font",
+      "role": "panel",
+      "states": [
+        "enabled",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 358,
+        "height": 53
+      },
+      "depth": 8,
+      "bounds_coordinates": "screen",
+      "element_id": "af4d49b4683d44cc949fa582d468b6ae",
+      "parent_element_id": "13198e5539c340af83f6dce8d948cf1c"
+    },
+    {
+      "pid": 25587,
+      "name": "Rendering",
+      "role": "panel",
+      "states": [
+        "enabled",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 358,
+        "height": 116
+      },
+      "depth": 8,
+      "bounds_coordinates": "screen",
+      "element_id": "e9fba654f69d4a0ea831697be16b53c9",
+      "parent_element_id": "13198e5539c340af83f6dce8d948cf1c"
+    },
+    {
+      "pid": 25587,
+      "name": "DPI",
+      "role": "panel",
+      "states": [
+        "enabled",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 358,
+        "height": 55
+      },
+      "depth": 8,
+      "bounds_coordinates": "screen",
+      "element_id": "3a8426dd62dd4483bebca411f93597a2",
+      "parent_element_id": "13198e5539c340af83f6dce8d948cf1c"
+    },
+    {
+      "pid": 25587,
+      "name": "Menus and Buttons",
+      "role": "panel",
+      "states": [
+        "enabled",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 358,
+        "height": 135
+      },
+      "depth": 8,
+      "bounds_coordinates": "screen",
+      "element_id": "12ef77d303c14ad8a0f2da1f0c4ecd4e",
+      "parent_element_id": "a2efad23b3c149f2963c6925bbc344bc"
+    },
+    {
+      "pid": 25587,
+      "name": "Event sounds",
+      "role": "panel",
+      "states": [
+        "enabled",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 358,
+        "height": 77
+      },
+      "depth": 8,
+      "bounds_coordinates": "screen",
+      "element_id": "a15c4e6b8a154a0b9efe399d11e06817",
+      "parent_element_id": "a2efad23b3c149f2963c6925bbc344bc"
+    },
+    {
+      "pid": 25587,
+      "name": "Window Scaling",
+      "role": "panel",
+      "states": [
+        "enabled",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 358,
+        "height": 53
+      },
+      "depth": 8,
+      "bounds_coordinates": "screen",
+      "element_id": "962a25fe13064d44940a8bdd74078703",
+      "parent_element_id": "a2efad23b3c149f2963c6925bbc344bc"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "table column header",
+      "states": [
+        "enabled",
+        "sensitive"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "Image"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 1,
+        "height": 1
+      },
+      "actions": [
+        "click"
+      ],
+      "depth": 9,
+      "bounds_coordinates": "screen",
+      "element_id": "0ffee421ad814b668a3ac95ba547e07c",
+      "parent_element_id": "d938e202636048b197e170ffaef1f1d1"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "table cell",
+      "states": [
+        "enabled",
+        "focusable",
+        "selectable",
+        "sensitive",
+        "showing",
+        "transient",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "TableCell"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 336,
+        "y": 165,
+        "width": 352,
+        "height": 42
+      },
+      "actions": [
+        "expand or contract",
+        "edit",
+        "activate"
+      ],
+      "depth": 9,
+      "bounds_coordinates": "screen",
+      "element_id": "c754660a6194425bb901399014aff06d",
+      "parent_element_id": "d938e202636048b197e170ffaef1f1d1"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "table cell",
+      "states": [
+        "enabled",
+        "focusable",
+        "selectable",
+        "selected",
+        "sensitive",
+        "showing",
+        "transient",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "TableCell"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 336,
+        "y": 209,
+        "width": 352,
+        "height": 42
+      },
+      "actions": [
+        "expand or contract",
+        "edit",
+        "activate"
+      ],
+      "depth": 9,
+      "bounds_coordinates": "screen",
+      "element_id": "a9c54ef08c664ec4bcf221cab4db36b5",
+      "parent_element_id": "d938e202636048b197e170ffaef1f1d1"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "table cell",
+      "states": [
+        "enabled",
+        "focusable",
+        "selectable",
+        "sensitive",
+        "transient",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "Image",
+        "TableCell"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 2097151,
+        "y": -1749675308,
+        "width": 44,
+        "height": 0
+      },
+      "actions": [
+        "expand or contract",
+        "edit",
+        "activate"
+      ],
+      "depth": 9,
+      "bounds_coordinates": "screen",
+      "element_id": "426708c98e7443eeaa534fd20556b279",
+      "parent_element_id": "dc18dc5f4271411bb82a8a371e22daae"
+    },
+    {
+      "pid": 25587,
+      "name": "Adwaita\nThe Only One",
+      "role": "table cell",
+      "states": [
+        "enabled",
+        "focusable",
+        "selectable",
+        "sensitive",
+        "single-line",
+        "transient",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "TableCell",
+        "Text"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 2097195,
+        "y": -1749675308,
+        "width": 312,
+        "height": 0
+      },
+      "actions": [
+        "expand or contract",
+        "edit",
+        "activate"
+      ],
+      "depth": 9,
+      "bounds_coordinates": "screen",
+      "element_id": "e191ecffc8de4ca4b00d73f18444d536",
+      "parent_element_id": "dc18dc5f4271411bb82a8a371e22daae"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "table cell",
+      "states": [
+        "enabled",
+        "focusable",
+        "selectable",
+        "sensitive",
+        "transient",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "Image",
+        "TableCell"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 2097151,
+        "y": -1749675308,
+        "width": 0,
+        "height": 0
+      },
+      "actions": [
+        "expand or contract",
+        "edit",
+        "activate"
+      ],
+      "depth": 9,
+      "bounds_coordinates": "screen",
+      "element_id": "e46257962aa54940b6d44d33606065d7",
+      "parent_element_id": "dc18dc5f4271411bb82a8a371e22daae"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "table cell",
+      "states": [
+        "enabled",
+        "focusable",
+        "selectable",
+        "sensitive",
+        "transient",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "Image",
+        "TableCell"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 2097151,
+        "y": -1749675308,
+        "width": 44,
+        "height": 0
+      },
+      "actions": [
+        "expand or contract",
+        "edit",
+        "activate"
+      ],
+      "depth": 9,
+      "bounds_coordinates": "screen",
+      "element_id": "c37e31950dfa4b078947a6df7e007327",
+      "parent_element_id": "680bce4448db49a892e2ab80e09fbb7e"
+    },
+    {
+      "pid": 25587,
+      "name": "Humanity-Dark\nSmooth modern theme designed to be intuitive.",
+      "role": "table cell",
+      "states": [
+        "enabled",
+        "focusable",
+        "selectable",
+        "sensitive",
+        "single-line",
+        "transient",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "TableCell",
+        "Text"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 2097195,
+        "y": -1749675308,
+        "width": 312,
+        "height": 0
+      },
+      "actions": [
+        "expand or contract",
+        "edit",
+        "activate"
+      ],
+      "depth": 9,
+      "bounds_coordinates": "screen",
+      "element_id": "5cad337e855f4d0ab1cce898f7e9ce62",
+      "parent_element_id": "680bce4448db49a892e2ab80e09fbb7e"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "table cell",
+      "states": [
+        "enabled",
+        "focusable",
+        "selectable",
+        "sensitive",
+        "transient",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "Image",
+        "TableCell"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 2097151,
+        "y": -1749675308,
+        "width": 0,
+        "height": 0
+      },
+      "actions": [
+        "expand or contract",
+        "edit",
+        "activate"
+      ],
+      "depth": 9,
+      "bounds_coordinates": "screen",
+      "element_id": "eb9a372f32d54c4ca5d1d0cc017f4de8",
+      "parent_element_id": "680bce4448db49a892e2ab80e09fbb7e"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "table cell",
+      "states": [
+        "enabled",
+        "focusable",
+        "selectable",
+        "sensitive",
+        "transient",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "Image",
+        "TableCell"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 2097151,
+        "y": -1749675308,
+        "width": 44,
+        "height": 0
+      },
+      "actions": [
+        "expand or contract",
+        "edit",
+        "activate"
+      ],
+      "depth": 9,
+      "bounds_coordinates": "screen",
+      "element_id": "24e52fa2e4334ff18f09f11640c8d2e5",
+      "parent_element_id": "9374e392bda547fda45c886d826710d7"
+    },
+    {
+      "pid": 25587,
+      "name": "Humanity\nSmooth modern theme designed to be intuitive.",
+      "role": "table cell",
+      "states": [
+        "enabled",
+        "focusable",
+        "selectable",
+        "sensitive",
+        "single-line",
+        "transient",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "TableCell",
+        "Text"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 2097195,
+        "y": -1749675308,
+        "width": 312,
+        "height": 0
+      },
+      "actions": [
+        "expand or contract",
+        "edit",
+        "activate"
+      ],
+      "depth": 9,
+      "bounds_coordinates": "screen",
+      "element_id": "b495a39c80d34828ad27d12fa3cbf27a",
+      "parent_element_id": "9374e392bda547fda45c886d826710d7"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "table cell",
+      "states": [
+        "enabled",
+        "focusable",
+        "selectable",
+        "sensitive",
+        "transient",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "Image",
+        "TableCell"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 2097151,
+        "y": -1749675308,
+        "width": 0,
+        "height": 0
+      },
+      "actions": [
+        "expand or contract",
+        "edit",
+        "activate"
+      ],
+      "depth": 9,
+      "bounds_coordinates": "screen",
+      "element_id": "0b0e1289b7464dd38c81bfbbd1292aec",
+      "parent_element_id": "9374e392bda547fda45c886d826710d7"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "table cell",
+      "states": [
+        "enabled",
+        "focusable",
+        "selectable",
+        "sensitive",
+        "transient",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "Image",
+        "TableCell"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 2097151,
+        "y": -1749675308,
+        "width": 44,
+        "height": 0
+      },
+      "actions": [
+        "expand or contract",
+        "edit",
+        "activate"
+      ],
+      "depth": 9,
+      "bounds_coordinates": "screen",
+      "element_id": "463fbca140f9442fb76c7344cf09897d",
+      "parent_element_id": "e3af8c6c66464380b83969f2ab1d3c60"
+    },
+    {
+      "pid": 25587,
+      "name": "LoginIcons\nSpecial icons for the Ubuntu login experience",
+      "role": "table cell",
+      "states": [
+        "enabled",
+        "focusable",
+        "selectable",
+        "sensitive",
+        "single-line",
+        "transient",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "TableCell",
+        "Text"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 2097195,
+        "y": -1749675308,
+        "width": 312,
+        "height": 0
+      },
+      "actions": [
+        "expand or contract",
+        "edit",
+        "activate"
+      ],
+      "depth": 9,
+      "bounds_coordinates": "screen",
+      "element_id": "b5a4b8d0ef4b4eeca84930d77931db98",
+      "parent_element_id": "e3af8c6c66464380b83969f2ab1d3c60"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "table cell",
+      "states": [
+        "enabled",
+        "focusable",
+        "selectable",
+        "sensitive",
+        "transient",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "Image",
+        "TableCell"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 2097151,
+        "y": -1749675308,
+        "width": 0,
+        "height": 0
+      },
+      "actions": [
+        "expand or contract",
+        "edit",
+        "activate"
+      ],
+      "depth": 9,
+      "bounds_coordinates": "screen",
+      "element_id": "f6ebd78a9c10478a9eb3347ddf5d07e3",
+      "parent_element_id": "e3af8c6c66464380b83969f2ab1d3c60"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "table cell",
+      "states": [
+        "enabled",
+        "focusable",
+        "selectable",
+        "sensitive",
+        "transient",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "Image",
+        "TableCell"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 2097151,
+        "y": -1749675308,
+        "width": 44,
+        "height": 0
+      },
+      "actions": [
+        "expand or contract",
+        "edit",
+        "activate"
+      ],
+      "depth": 9,
+      "bounds_coordinates": "screen",
+      "element_id": "d766900ec4914e528b795690f26df6c2",
+      "parent_element_id": "299c4253040244b58f4e22f7156d8a3d"
+    },
+    {
+      "pid": 25587,
+      "name": "Ubuntu-Mono-Dark\nSmooth modern theme designed to be intuitive.",
+      "role": "table cell",
+      "states": [
+        "enabled",
+        "focusable",
+        "selectable",
+        "sensitive",
+        "single-line",
+        "transient",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "TableCell",
+        "Text"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 2097195,
+        "y": -1749675308,
+        "width": 312,
+        "height": 0
+      },
+      "actions": [
+        "expand or contract",
+        "edit",
+        "activate"
+      ],
+      "depth": 9,
+      "bounds_coordinates": "screen",
+      "element_id": "6f9c679b01c24ae5b951070bec7d70b8",
+      "parent_element_id": "299c4253040244b58f4e22f7156d8a3d"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "table cell",
+      "states": [
+        "enabled",
+        "focusable",
+        "selectable",
+        "sensitive",
+        "transient",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "Image",
+        "TableCell"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 2097151,
+        "y": -1749675308,
+        "width": 0,
+        "height": 0
+      },
+      "actions": [
+        "expand or contract",
+        "edit",
+        "activate"
+      ],
+      "depth": 9,
+      "bounds_coordinates": "screen",
+      "element_id": "4acf259f17e444b5bb3708d37f0da15c",
+      "parent_element_id": "299c4253040244b58f4e22f7156d8a3d"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "table cell",
+      "states": [
+        "enabled",
+        "focusable",
+        "selectable",
+        "sensitive",
+        "transient",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "Image",
+        "TableCell"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 2097151,
+        "y": -1749675308,
+        "width": 44,
+        "height": 0
+      },
+      "actions": [
+        "expand or contract",
+        "edit",
+        "activate"
+      ],
+      "depth": 9,
+      "bounds_coordinates": "screen",
+      "element_id": "da2104455311494291f6001acd2ec0da",
+      "parent_element_id": "37074f1e9c3b407eac75f4cd52aca92c"
+    },
+    {
+      "pid": 25587,
+      "name": "Ubuntu-Mono-Light\nSmooth modern theme designed to be intuitive.",
+      "role": "table cell",
+      "states": [
+        "enabled",
+        "focusable",
+        "selectable",
+        "sensitive",
+        "single-line",
+        "transient",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "TableCell",
+        "Text"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 2097195,
+        "y": -1749675308,
+        "width": 312,
+        "height": 0
+      },
+      "actions": [
+        "expand or contract",
+        "edit",
+        "activate"
+      ],
+      "depth": 9,
+      "bounds_coordinates": "screen",
+      "element_id": "f228d734f177493783970c1d603828a6",
+      "parent_element_id": "37074f1e9c3b407eac75f4cd52aca92c"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "table cell",
+      "states": [
+        "enabled",
+        "focusable",
+        "selectable",
+        "sensitive",
+        "transient",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "Image",
+        "TableCell"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 2097151,
+        "y": -1749675308,
+        "width": 0,
+        "height": 0
+      },
+      "actions": [
+        "expand or contract",
+        "edit",
+        "activate"
+      ],
+      "depth": 9,
+      "bounds_coordinates": "screen",
+      "element_id": "1388f8cd7f944417ad550f35cba79701",
+      "parent_element_id": "37074f1e9c3b407eac75f4cd52aca92c"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "panel",
+      "states": [
+        "enabled",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 358,
+        "height": 34
+      },
+      "depth": 9,
+      "bounds_coordinates": "screen",
+      "element_id": "7519766fd30b48e78fb8bda6237c8758",
+      "parent_element_id": "2855cccc5f5d44448d458137e441f265"
+    },
+    {
+      "pid": 25587,
+      "name": "Default Font",
+      "role": "label",
+      "states": [
+        "enabled",
+        "multi-line",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component",
+        "Hypertext",
+        "Text"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 83,
+        "height": 19
+      },
+      "depth": 9,
+      "bounds_coordinates": "screen",
+      "element_id": "d86b281ad2ea4bf48a686568463521e2",
+      "parent_element_id": "2855cccc5f5d44448d458137e441f265"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "panel",
+      "states": [
+        "enabled",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 358,
+        "height": 34
+      },
+      "depth": 9,
+      "bounds_coordinates": "screen",
+      "element_id": "d43803f9ce8b494ba41847e1ad72ee52",
+      "parent_element_id": "af4d49b4683d44cc949fa582d468b6ae"
+    },
+    {
+      "pid": 25587,
+      "name": "Default Monospace Font",
+      "role": "label",
+      "states": [
+        "enabled",
+        "multi-line",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component",
+        "Hypertext",
+        "Text"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 162,
+        "height": 19
+      },
+      "depth": 9,
+      "bounds_coordinates": "screen",
+      "element_id": "9462dffe9a6840b4b6b55d019ca86160",
+      "parent_element_id": "af4d49b4683d44cc949fa582d468b6ae"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "panel",
+      "states": [
+        "enabled",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 358,
+        "height": 97
+      },
+      "depth": 9,
+      "bounds_coordinates": "screen",
+      "element_id": "e89062a155e94861ae9166dceacb76b4",
+      "parent_element_id": "e9fba654f69d4a0ea831697be16b53c9"
+    },
+    {
+      "pid": 25587,
+      "name": "Rendering",
+      "role": "label",
+      "states": [
+        "enabled",
+        "multi-line",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component",
+        "Hypertext",
+        "Text"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 69,
+        "height": 19
+      },
+      "depth": 9,
+      "bounds_coordinates": "screen",
+      "element_id": "4f55ac9712304560bdb70d003d419707",
+      "parent_element_id": "e9fba654f69d4a0ea831697be16b53c9"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "panel",
+      "states": [
+        "enabled",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 358,
+        "height": 36
+      },
+      "depth": 9,
+      "bounds_coordinates": "screen",
+      "element_id": "95feb8006da34c0796aa1fefc131a8c9",
+      "parent_element_id": "3a8426dd62dd4483bebca411f93597a2"
+    },
+    {
+      "pid": 25587,
+      "name": "DPI",
+      "role": "label",
+      "states": [
+        "enabled",
+        "multi-line",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component",
+        "Hypertext",
+        "Text"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 23,
+        "height": 19
+      },
+      "depth": 9,
+      "bounds_coordinates": "screen",
+      "element_id": "eef17f349aa14238b649adff037d1158",
+      "parent_element_id": "3a8426dd62dd4483bebca411f93597a2"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "panel",
+      "states": [
+        "enabled",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 358,
+        "height": 116
+      },
+      "depth": 9,
+      "bounds_coordinates": "screen",
+      "element_id": "f46a249b6e6a40c9a9923adef5daf315",
+      "parent_element_id": "12ef77d303c14ad8a0f2da1f0c4ecd4e"
+    },
+    {
+      "pid": 25587,
+      "name": "Menus and Buttons",
+      "role": "label",
+      "states": [
+        "enabled",
+        "multi-line",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component",
+        "Hypertext",
+        "Text"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 131,
+        "height": 19
+      },
+      "depth": 9,
+      "bounds_coordinates": "screen",
+      "element_id": "5fab8f1ef1424adf87cdc1fec474a800",
+      "parent_element_id": "12ef77d303c14ad8a0f2da1f0c4ecd4e"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "panel",
+      "states": [
+        "enabled",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 358,
+        "height": 58
+      },
+      "depth": 9,
+      "bounds_coordinates": "screen",
+      "element_id": "0fa0c23b40d54da1a0cbee1828efc963",
+      "parent_element_id": "a15c4e6b8a154a0b9efe399d11e06817"
+    },
+    {
+      "pid": 25587,
+      "name": "Event sounds",
+      "role": "label",
+      "states": [
+        "enabled",
+        "multi-line",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component",
+        "Hypertext",
+        "Text"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 89,
+        "height": 19
+      },
+      "depth": 9,
+      "bounds_coordinates": "screen",
+      "element_id": "e467a6b3f6c241e4a2fddabf7657e4e3",
+      "parent_element_id": "a15c4e6b8a154a0b9efe399d11e06817"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "panel",
+      "states": [
+        "enabled",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 358,
+        "height": 34
+      },
+      "depth": 9,
+      "bounds_coordinates": "screen",
+      "element_id": "73d1aeff26cf45cd8e609745ec82740d",
+      "parent_element_id": "962a25fe13064d44940a8bdd74078703"
+    },
+    {
+      "pid": 25587,
+      "name": "Window Scaling",
+      "role": "label",
+      "states": [
+        "enabled",
+        "multi-line",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component",
+        "Hypertext",
+        "Text"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 103,
+        "height": 19
+      },
+      "depth": 9,
+      "bounds_coordinates": "screen",
+      "element_id": "1c3437aa35da4d84a6254ad283c6381a",
+      "parent_element_id": "962a25fe13064d44940a8bdd74078703"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "table cell",
+      "states": [
+        "enabled",
+        "focusable",
+        "selectable",
+        "sensitive",
+        "showing",
+        "transient",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "Image",
+        "TableCell"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 336,
+        "y": 165,
+        "width": 0,
+        "height": 42
+      },
+      "actions": [
+        "expand or contract",
+        "edit",
+        "activate"
+      ],
+      "depth": 10,
+      "bounds_coordinates": "screen",
+      "element_id": "88ba75975926468591cc4717721b47b7",
+      "parent_element_id": "c754660a6194425bb901399014aff06d"
+    },
+    {
+      "pid": 25587,
+      "name": "Greybird-dark\nGtk3, Gtk2, Xfwm4",
+      "role": "table cell",
+      "states": [
+        "enabled",
+        "focusable",
+        "selectable",
+        "sensitive",
+        "showing",
+        "single-line",
+        "transient",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "TableCell",
+        "Text"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 336,
+        "y": 165,
+        "width": 356,
+        "height": 42
+      },
+      "actions": [
+        "expand or contract",
+        "edit",
+        "activate"
+      ],
+      "depth": 10,
+      "bounds_coordinates": "screen",
+      "element_id": "7713bb0c3af24c81bc9455fd2a4754a1",
+      "parent_element_id": "c754660a6194425bb901399014aff06d"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "table cell",
+      "states": [
+        "enabled",
+        "focusable",
+        "selectable",
+        "selected",
+        "sensitive",
+        "showing",
+        "transient",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "Image",
+        "TableCell"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 336,
+        "y": 209,
+        "width": 0,
+        "height": 42
+      },
+      "actions": [
+        "expand or contract",
+        "edit",
+        "activate"
+      ],
+      "depth": 10,
+      "bounds_coordinates": "screen",
+      "element_id": "48b9b6cef99142ee8419cf0f65737895",
+      "parent_element_id": "a9c54ef08c664ec4bcf221cab4db36b5"
+    },
+    {
+      "pid": 25587,
+      "name": "Greybird\nGtk3, Gtk2, Xfwm4, Xfce4-notifyd",
+      "role": "table cell",
+      "states": [
+        "enabled",
+        "focusable",
+        "selectable",
+        "selected",
+        "sensitive",
+        "showing",
+        "single-line",
+        "transient",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "TableCell",
+        "Text"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": 336,
+        "y": 209,
+        "width": 356,
+        "height": 42
+      },
+      "actions": [
+        "expand or contract",
+        "edit",
+        "activate"
+      ],
+      "depth": 10,
+      "bounds_coordinates": "screen",
+      "element_id": "f3ea23ae349946ae8c2b6fa9d1156e85",
+      "parent_element_id": "a9c54ef08c664ec4bcf221cab4db36b5"
+    },
+    {
+      "pid": 25587,
+      "name": "Sans Regular",
+      "role": "push button",
+      "states": [
+        "enabled",
+        "focusable",
+        "has-tooltip",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "Image"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 346,
+        "height": 28
+      },
+      "actions": [
+        "click"
+      ],
+      "depth": 10,
+      "bounds_coordinates": "screen",
+      "element_id": "97d4f38b2b904ea983d84ba9abdf268b",
+      "parent_element_id": "7519766fd30b48e78fb8bda6237c8758"
+    },
+    {
+      "pid": 25587,
+      "name": "Monospace Regular",
+      "role": "push button",
+      "states": [
+        "enabled",
+        "focusable",
+        "has-tooltip",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "Image"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 346,
+        "height": 28
+      },
+      "actions": [
+        "click"
+      ],
+      "depth": 10,
+      "bounds_coordinates": "screen",
+      "element_id": "fbb29a8fbd4147d0b728a1e3e60009f4",
+      "parent_element_id": "d43803f9ce8b494ba41847e1ad72ee52"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "filler",
+      "states": [
+        "enabled",
+        "sensitive",
+        "vertical",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 346,
+        "height": 91
+      },
+      "depth": 10,
+      "bounds_coordinates": "screen",
+      "element_id": "dd57b206a2434be8a930518b458459c3",
+      "parent_element_id": "e89062a155e94861ae9166dceacb76b4"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "filler",
+      "states": [
+        "enabled",
+        "horizontal",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 346,
+        "height": 30
+      },
+      "depth": 10,
+      "bounds_coordinates": "screen",
+      "element_id": "f78d61ccd2d7467bbeb5cad2f495e36f",
+      "parent_element_id": "95feb8006da34c0796aa1fefc131a8c9"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "filler",
+      "states": [
+        "enabled",
+        "sensitive",
+        "vertical",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 346,
+        "height": 110
+      },
+      "depth": 10,
+      "bounds_coordinates": "screen",
+      "element_id": "9bab9a495c6d4bf3b2a5068279199610",
+      "parent_element_id": "f46a249b6e6a40c9a9923adef5daf315"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "filler",
+      "states": [
+        "enabled",
+        "sensitive",
+        "vertical",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 346,
+        "height": 52
+      },
+      "depth": 10,
+      "bounds_coordinates": "screen",
+      "element_id": "c04794a805fb47cd821444b53ad1ec67",
+      "parent_element_id": "0fa0c23b40d54da1a0cbee1828efc963"
+    },
+    {
+      "pid": 25587,
+      "name": "1x (no scaling)",
+      "role": "combo box",
+      "states": [
+        "enabled",
+        "has-tooltip",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "Selection"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 346,
+        "height": 28
+      },
+      "actions": [
+        "press"
+      ],
+      "depth": 10,
+      "bounds_coordinates": "screen",
+      "element_id": "86f0905804c1456b9faa960a33b66538",
+      "parent_element_id": "73d1aeff26cf45cd8e609745ec82740d"
+    },
+    {
+      "pid": 25587,
+      "name": "Enable anti-aliasing",
+      "role": "check box",
+      "states": [
+        "checked",
+        "focusable",
+        "has-tooltip",
+        "sensitive",
+        "visible",
+        "indeterminate"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "Image"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 144,
+        "height": 23
+      },
+      "actions": [
+        "click"
+      ],
+      "depth": 11,
+      "bounds_coordinates": "screen",
+      "element_id": "b50d35d51eaa46cfb37fa79a0ceadff3",
+      "parent_element_id": "dd57b206a2434be8a930518b458459c3"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "panel",
+      "states": [
+        "enabled",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 346,
+        "height": 62
+      },
+      "depth": 11,
+      "bounds_coordinates": "screen",
+      "element_id": "f4b8dea7d6654d6c9e78cce9dc9748f0",
+      "parent_element_id": "dd57b206a2434be8a930518b458459c3"
+    },
+    {
+      "pid": 25587,
+      "name": "Custom DPI setting:",
+      "role": "check box",
+      "states": [
+        "checked",
+        "enabled",
+        "focusable",
+        "has-tooltip",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "Image"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 151,
+        "height": 30
+      },
+      "actions": [
+        "click"
+      ],
+      "depth": 11,
+      "bounds_coordinates": "screen",
+      "element_id": "804c07bfc12843048304ad8bba4e0671",
+      "parent_element_id": "f78d61ccd2d7467bbeb5cad2f495e36f"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "spin button",
+      "states": [
+        "editable",
+        "enabled",
+        "focusable",
+        "horizontal",
+        "sensitive",
+        "single-line",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "EditableText",
+        "Text",
+        "Value"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 112,
+        "height": 30
+      },
+      "actions": [
+        "activate"
+      ],
+      "value": {
+        "current": 96.0,
+        "minimum": 48.0,
+        "maximum": 1000.0,
+        "increment": 1.0
+      },
+      "native_text_mutation_supported": true,
+      "depth": 11,
+      "bounds_coordinates": "screen",
+      "element_id": "6bc75786ace147ae999b99c82cf2e491",
+      "parent_element_id": "f78d61ccd2d7467bbeb5cad2f495e36f"
+    },
+    {
+      "pid": 25587,
+      "name": "Show images on buttons",
+      "role": "check box",
+      "states": [
+        "checked",
+        "enabled",
+        "focusable",
+        "has-tooltip",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "Image"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 178,
+        "height": 23
+      },
+      "actions": [
+        "click"
+      ],
+      "depth": 11,
+      "bounds_coordinates": "screen",
+      "element_id": "072ba818f6944437818fd9fe8a06c2f3",
+      "parent_element_id": "9bab9a495c6d4bf3b2a5068279199610"
+    },
+    {
+      "pid": 25587,
+      "name": "Show images in menus",
+      "role": "check box",
+      "states": [
+        "checked",
+        "enabled",
+        "focusable",
+        "has-tooltip",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "Image"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 167,
+        "height": 23
+      },
+      "actions": [
+        "click"
+      ],
+      "depth": 11,
+      "bounds_coordinates": "screen",
+      "element_id": "9519caeb1b23482c9573c5b9111d4889",
+      "parent_element_id": "9bab9a495c6d4bf3b2a5068279199610"
+    },
+    {
+      "pid": 25587,
+      "name": "Enable editable accelerators",
+      "role": "check box",
+      "states": [
+        "enabled",
+        "focusable",
+        "has-tooltip",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "Image"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 200,
+        "height": 23
+      },
+      "actions": [
+        "click"
+      ],
+      "depth": 11,
+      "bounds_coordinates": "screen",
+      "element_id": "5ee0e6e6fcd5435585e3c73b7dde22b5",
+      "parent_element_id": "9bab9a495c6d4bf3b2a5068279199610"
+    },
+    {
+      "pid": 25587,
+      "name": "Enable header bars in dialogs",
+      "role": "check box",
+      "states": [
+        "enabled",
+        "focusable",
+        "has-tooltip",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "Image"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 207,
+        "height": 23
+      },
+      "actions": [
+        "click"
+      ],
+      "depth": 11,
+      "bounds_coordinates": "screen",
+      "element_id": "7c6ae25791414a1ea653ac536ca512c5",
+      "parent_element_id": "9bab9a495c6d4bf3b2a5068279199610"
+    },
+    {
+      "pid": 25587,
+      "name": "Enable event sounds",
+      "role": "check box",
+      "states": [
+        "enabled",
+        "focusable",
+        "has-tooltip",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "Image"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 154,
+        "height": 23
+      },
+      "actions": [
+        "click"
+      ],
+      "depth": 11,
+      "bounds_coordinates": "screen",
+      "element_id": "9cf67a7eec6a4a209aee007d0c58c6b9",
+      "parent_element_id": "c04794a805fb47cd821444b53ad1ec67"
+    },
+    {
+      "pid": 25587,
+      "name": "Enable input feedback sounds",
+      "role": "check box",
+      "states": [
+        "focusable",
+        "has-tooltip",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "Image"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 211,
+        "height": 23
+      },
+      "actions": [
+        "click"
+      ],
+      "depth": 11,
+      "bounds_coordinates": "screen",
+      "element_id": "c8c30e446b5245819300f398d91b6cac",
+      "parent_element_id": "c04794a805fb47cd821444b53ad1ec67"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "menu",
+      "states": [
+        "enabled",
+        "sensitive"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component",
+        "Selection"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 1,
+        "height": 1
+      },
+      "depth": 11,
+      "bounds_coordinates": "screen",
+      "element_id": "c7964b19ef9e44c4aecc1401a8296512",
+      "parent_element_id": "86f0905804c1456b9faa960a33b66538"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "panel",
+      "states": [
+        "enabled",
+        "horizontal",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 334,
+        "height": 62
+      },
+      "depth": 12,
+      "bounds_coordinates": "screen",
+      "element_id": "2e33746112044ad4bc1cb2e366f5abd8",
+      "parent_element_id": "f4b8dea7d6654d6c9e78cce9dc9748f0"
+    },
+    {
+      "pid": 25587,
+      "name": "1x (no scaling)",
+      "role": "menu item",
+      "states": [
+        "enabled",
+        "selectable",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "Selection"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 1,
+        "height": 1
+      },
+      "actions": [
+        "click"
+      ],
+      "depth": 12,
+      "bounds_coordinates": "screen",
+      "element_id": "dec2cf9110d24def8cc85d5a27e588c7",
+      "parent_element_id": "c7964b19ef9e44c4aecc1401a8296512"
+    },
+    {
+      "pid": 25587,
+      "name": "2x",
+      "role": "menu item",
+      "states": [
+        "enabled",
+        "selectable",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "Selection"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 1,
+        "height": 1
+      },
+      "actions": [
+        "click"
+      ],
+      "depth": 12,
+      "bounds_coordinates": "screen",
+      "element_id": "1e4784d0e3de42e9b9a0b70485866827",
+      "parent_element_id": "c7964b19ef9e44c4aecc1401a8296512"
+    },
+    {
+      "pid": 25587,
+      "name": "None",
+      "role": "combo box",
+      "states": [
+        "enabled",
+        "has-tooltip",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "Selection"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 224,
+        "height": 28
+      },
+      "actions": [
+        "press"
+      ],
+      "depth": 13,
+      "bounds_coordinates": "screen",
+      "element_id": "ca17c3999de74f02a2758cda3861e2d8",
+      "parent_element_id": "2e33746112044ad4bc1cb2e366f5abd8"
+    },
+    {
+      "pid": 25587,
+      "name": "Sub-pixel order:",
+      "role": "label",
+      "states": [
+        "enabled",
+        "multi-line",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component",
+        "Hypertext",
+        "Text"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 98,
+        "height": 28
+      },
+      "depth": 13,
+      "bounds_coordinates": "screen",
+      "element_id": "920c1df4184f42e38e117b1df1cc7953",
+      "parent_element_id": "2e33746112044ad4bc1cb2e366f5abd8"
+    },
+    {
+      "pid": 25587,
+      "name": "None",
+      "role": "combo box",
+      "states": [
+        "enabled",
+        "has-tooltip",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "Selection"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 224,
+        "height": 28
+      },
+      "actions": [
+        "press"
+      ],
+      "depth": 13,
+      "bounds_coordinates": "screen",
+      "element_id": "b825d12725464f6c975469bd77bd95b2",
+      "parent_element_id": "2e33746112044ad4bc1cb2e366f5abd8"
+    },
+    {
+      "pid": 25587,
+      "name": "Hinting:",
+      "role": "label",
+      "states": [
+        "enabled",
+        "multi-line",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component",
+        "Hypertext",
+        "Text"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 49,
+        "height": 28
+      },
+      "depth": 13,
+      "bounds_coordinates": "screen",
+      "element_id": "a92f231c4cf745abae5c2efb74ace67b",
+      "parent_element_id": "2e33746112044ad4bc1cb2e366f5abd8"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "menu",
+      "states": [
+        "enabled",
+        "sensitive"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component",
+        "Selection"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 1,
+        "height": 1
+      },
+      "depth": 14,
+      "bounds_coordinates": "screen",
+      "element_id": "947187260fb14d0887c825ac7a1760bd",
+      "parent_element_id": "ca17c3999de74f02a2758cda3861e2d8"
+    },
+    {
+      "pid": 25587,
+      "name": "",
+      "role": "menu",
+      "states": [
+        "enabled",
+        "sensitive"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Collection",
+        "Component",
+        "Selection"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 1,
+        "height": 1
+      },
+      "depth": 14,
+      "bounds_coordinates": "screen",
+      "element_id": "080b24abe3be4ea795add9a7facea618",
+      "parent_element_id": "b825d12725464f6c975469bd77bd95b2"
+    },
+    {
+      "pid": 25587,
+      "name": "None",
+      "role": "menu item",
+      "states": [
+        "enabled",
+        "selectable",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "Selection"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 1,
+        "height": 1
+      },
+      "actions": [
+        "click"
+      ],
+      "depth": 15,
+      "bounds_coordinates": "screen",
+      "element_id": "ca9ff1b0663941d29fbf991febc4b3ed",
+      "parent_element_id": "947187260fb14d0887c825ac7a1760bd"
+    },
+    {
+      "pid": 25587,
+      "name": "RGB",
+      "role": "menu item",
+      "states": [
+        "enabled",
+        "selectable",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "Selection"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 1,
+        "height": 1
+      },
+      "actions": [
+        "click"
+      ],
+      "depth": 15,
+      "bounds_coordinates": "screen",
+      "element_id": "fdebcb1999e645258bc241901aa99a12",
+      "parent_element_id": "947187260fb14d0887c825ac7a1760bd"
+    },
+    {
+      "pid": 25587,
+      "name": "BGR",
+      "role": "menu item",
+      "states": [
+        "enabled",
+        "selectable",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "Selection"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 1,
+        "height": 1
+      },
+      "actions": [
+        "click"
+      ],
+      "depth": 15,
+      "bounds_coordinates": "screen",
+      "element_id": "c0e45db260d84ad2aaca46a44a9796a6",
+      "parent_element_id": "947187260fb14d0887c825ac7a1760bd"
+    },
+    {
+      "pid": 25587,
+      "name": "Vertical RGB",
+      "role": "menu item",
+      "states": [
+        "enabled",
+        "selectable",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "Selection"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 1,
+        "height": 1
+      },
+      "actions": [
+        "click"
+      ],
+      "depth": 15,
+      "bounds_coordinates": "screen",
+      "element_id": "661e1bab86064ac79b4c40dc6125fb67",
+      "parent_element_id": "947187260fb14d0887c825ac7a1760bd"
+    },
+    {
+      "pid": 25587,
+      "name": "Vertical BGR",
+      "role": "menu item",
+      "states": [
+        "enabled",
+        "selectable",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "Selection"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 1,
+        "height": 1
+      },
+      "actions": [
+        "click"
+      ],
+      "depth": 15,
+      "bounds_coordinates": "screen",
+      "element_id": "015882c49cfc4bfb9f8fce1b334dbc2a",
+      "parent_element_id": "947187260fb14d0887c825ac7a1760bd"
+    },
+    {
+      "pid": 25587,
+      "name": "None",
+      "role": "menu item",
+      "states": [
+        "enabled",
+        "selectable",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "Selection"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 1,
+        "height": 1
+      },
+      "actions": [
+        "click"
+      ],
+      "depth": 15,
+      "bounds_coordinates": "screen",
+      "element_id": "1cd543b28a854e5fa3f59582eee790cd",
+      "parent_element_id": "080b24abe3be4ea795add9a7facea618"
+    },
+    {
+      "pid": 25587,
+      "name": "Slight",
+      "role": "menu item",
+      "states": [
+        "enabled",
+        "selectable",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "Selection"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 1,
+        "height": 1
+      },
+      "actions": [
+        "click"
+      ],
+      "depth": 15,
+      "bounds_coordinates": "screen",
+      "element_id": "29b8032480ca465b8d00a9d731f55ca3",
+      "parent_element_id": "080b24abe3be4ea795add9a7facea618"
+    },
+    {
+      "pid": 25587,
+      "name": "Medium",
+      "role": "menu item",
+      "states": [
+        "enabled",
+        "selectable",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "Selection"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 1,
+        "height": 1
+      },
+      "actions": [
+        "click"
+      ],
+      "depth": 15,
+      "bounds_coordinates": "screen",
+      "element_id": "9811b65f8e074710845a5d954ef80410",
+      "parent_element_id": "080b24abe3be4ea795add9a7facea618"
+    },
+    {
+      "pid": 25587,
+      "name": "Full",
+      "role": "menu item",
+      "states": [
+        "enabled",
+        "selectable",
+        "sensitive",
+        "visible"
+      ],
+      "interfaces": [
+        "Accessible",
+        "Action",
+        "Collection",
+        "Component",
+        "Selection"
+      ],
+      "protected": false,
+      "bounds": {
+        "x": -2147483648,
+        "y": -2147483648,
+        "width": 1,
+        "height": 1
+      },
+      "actions": [
+        "click"
+      ],
+      "depth": 15,
+      "bounds_coordinates": "screen",
+      "element_id": "7bdf3b4ef2904f65ae08b3c1d69523ff",
+      "parent_element_id": "080b24abe3be4ea795add9a7facea618"
+    }
+  ],
+  "truncated": false,
+  "truncation": {
+    "result_or_time_limit": false,
+    "budget_pruned": false,
+    "depth_pruned": false,
+    "unreadable_branches": 0
+  },
+  "visited_nodes": 131,
+  "max_depth": 30,
+  "unreadable_nodes": 0,
+  "unreadable_branches": 0,
+  "coverage": "selected accessible top-level window",
+  "available": true,
+  "window_mapping": "screen_bounds",
+  "bounds_coordinates": "screen",
+  "window_id": "532884471fe44e87888cf64b7948fb52:800007:25587:2578623:cb28ad6511c2db39ff860944ca8ae512",
+  "element_expiry_seconds": 60,
+  "bounds_coordinate_space": "native_x11_root_pixels"
+}

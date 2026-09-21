@@ -1,0 +1,184 @@
+{
+  "version": "0.3.3",
+  "backend": "X11 + AT-SPI",
+  "dependencies": {
+    "xdotool": true,
+    "wmctrl": true,
+    "scrot": true,
+    "xclip": true,
+    "xprop": true
+  },
+  "display": ":102",
+  "session_bus": true,
+  "uid": 1000,
+  "transport": "stdio",
+  "support": "experimental X11; Wayland unsupported",
+  "ime_composition": {
+    "state": "unknown",
+    "detection_supported": false,
+    "explicit_commit_supported": false,
+    "explicit_cancel_supported": false,
+    "conflicting_input_guard_supported": false,
+    "text_verification_scope": "Exposed text at readback; pending IME composition is not verified.",
+    "guidance": "If composition is active or suspected, preserve it and have it explicitly completed or cancelled before focus, selection, typing or paste. Do not send Escape or Return as automatic cleanup."
+  },
+  "owned_browser": {
+    "available": false,
+    "dependency": "optional browser extra; explicit LUDA_CHROMIUM_EXECUTABLE",
+    "managed_selection_verified": false,
+    "managed_verification_scope": null,
+    "verified_executable_version": null,
+    "launch_verified": false,
+    "playwright_version": null,
+    "automatic_downloads": false,
+    "lifetime": "temporary_session",
+    "unsaved_content_survives_disconnect": false,
+    "field_limit": 64000
+  },
+  "limitations": [
+    "Human viewer input is not locked out.",
+    "No automatic clipboard restoration.",
+    "Accessibility mapping requires a uniquely identified application window.",
+    "No automatic retry of mutations."
+  ],
+  "geometry": {
+    "x": 0,
+    "y": 0,
+    "width": 1024,
+    "height": 768
+  },
+  "display_available": true,
+  "display_topology": {
+    "layout_id": "05ebd38cde5307de10d0ef9135350832866b53094107a66e7f2ed1b09300aa0f",
+    "root": {
+      "x": 0,
+      "y": 0,
+      "width": 1024,
+      "height": 768
+    },
+    "workspace": {
+      "status": "available",
+      "index": 0,
+      "count": 4
+    },
+    "monitor_source": "RandR logical monitors",
+    "monitors": [
+      {
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 1024,
+          "height": 768
+        },
+        "primary": false
+      }
+    ],
+    "bounds_coordinate_space": "native_x11_root_pixels"
+  },
+  "topology_available": true,
+  "accessible_applications": 3,
+  "accessibility_available": true,
+  "font_coverage": {
+    "available": true,
+    "status": "covered",
+    "pango_version": "1.52.1",
+    "samples": [
+      {
+        "sample": "Japanese",
+        "unknown_glyphs": 0
+      },
+      {
+        "sample": "Simplified Chinese",
+        "unknown_glyphs": 0
+      },
+      {
+        "sample": "Traditional Chinese",
+        "unknown_glyphs": 0
+      },
+      {
+        "sample": "Korean",
+        "unknown_glyphs": 0
+      },
+      {
+        "sample": "Emoji ZWJ and skin tone",
+        "unknown_glyphs": 0
+      },
+      {
+        "sample": "Combining marks",
+        "unknown_glyphs": 0
+      },
+      {
+        "sample": "Arabic",
+        "unknown_glyphs": 0
+      },
+      {
+        "sample": "Devanagari",
+        "unknown_glyphs": 0
+      }
+    ],
+    "missing_samples": [],
+    "scope": "Fixed sample glyph coverage only; not universal Unicode coverage, typography, or application-specific font validation.",
+    "blocks_input": false,
+    "next_step": "These samples have glyphs; verify the actual application when font rendering matters."
+  },
+  "ocr": {
+    "available": true,
+    "engine": "tesseract",
+    "scope": "Optional executable availability only; requested language and recognition checked by desktop_ocr."
+  },
+  "recording": {
+    "available": true,
+    "scope": "Optional executables only; start validates capture support. No audio."
+  },
+  "session_state": {
+    "state": "unknown",
+    "input_ready": null,
+    "providers": [
+      {
+        "provider": "org.xfce.ScreenSaver",
+        "kind": "screensaver",
+        "available": false,
+        "reason": "unavailable"
+      },
+      {
+        "provider": "org.gnome.ScreenSaver",
+        "kind": "screensaver",
+        "available": false,
+        "reason": "unavailable"
+      },
+      {
+        "provider": "org.freedesktop.ScreenSaver",
+        "kind": "screensaver",
+        "available": false,
+        "reason": "unavailable"
+      }
+    ],
+    "verification": "Reported desktop-service hints only; inactive or unavailable providers do not prove the display is unlocked."
+  },
+  "keyboard": {
+    "available": true,
+    "backend": "private XI2 + XKB + XTest",
+    "group": 0,
+    "locked_mods": 0,
+    "input_held": false,
+    "latched_input": false,
+    "mapping": "Current group, named keys with ordinary Shift; unsupported symbols are refused.",
+    "cleanup": "Owned injector termination and release on the private agent devices only."
+  },
+  "control": {
+    "available": true,
+    "paused": false,
+    "revision": 0
+  },
+  "capabilities": {
+    "screen_observation": "backend_available",
+    "pointer_input": "backend_available",
+    "keyboard_input": "backend_available",
+    "clipboard_paste": "backend_available",
+    "accessibility_read": "backend_available",
+    "verified_text_editing": "application_dependent",
+    "ime_composition": "unsupported"
+  },
+  "capability_scope": "Backend availability only; target focus, current input state and application support are checked per action.",
+  "ready": true
+}

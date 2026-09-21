@@ -1,0 +1,28 @@
+[
+  {
+    "window_id": "532884471fe44e87888cf64b7948fb52:800007:25587:2578623:cb28ad6511c2db39ff860944ca8ae512",
+    "xid": 8388615,
+    "pid": 25587,
+    "start": "2578623",
+    "title": "Appearance",
+    "workspace": 0,
+    "bounds": {
+      "x": 312,
+      "y": 114,
+      "width": 400,
+      "height": 540
+    },
+    "frame_bounds": {
+      "x": 307,
+      "y": 85,
+      "width": 410,
+      "height": 574
+    },
+    "active": true,
+    "wm_class": [
+      "xfce4-appearance-settings",
+      "Xfce4-appearance-settings"
+    ],
+    "unavailable_properties": []
+  }
+]

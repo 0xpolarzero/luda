@@ -1,0 +1,10 @@
+{
+  "effect": "verified",
+  "accepted": true,
+  "selected": true,
+  "changed": true,
+  "selection_scope": "table_row",
+  "extend": false,
+  "verification_scope": "selection",
+  "next_step": "Only selection is verified, not whether the item was opened, applied, or executed. If the user requested selection only, stop. If they requested an effect, verify whether that effect occurred; some controls apply on selection. If it did not, inspect for an advertised activation action or Apply/Open control, use the appropriate action, then verify the application outcome."
+}
