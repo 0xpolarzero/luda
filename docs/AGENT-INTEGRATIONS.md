@@ -12,9 +12,9 @@ The [full installer](INSTALLATION.md#install-everything-for-your-agent) register
 /opt/luda/current/.venv/bin/luda setup --agent codex --yes
 ```
 
-Repeat `--agent` for multiple clients. Use `setup --list-agents` for the supported identifiers, or `setup --export /absolute/new/plugin` for another client. Root must pass `--user ACCOUNT`. No agent executable or login is required to preconfigure an image. Account-wide setup is the default; project scope is available explicitly.
+Repeat `--agent` for multiple clients, or use `--agent all` to prepare all seven supported clients even before they are installed. Use `setup --list-agents` for the supported identifiers, or `setup --export /absolute/new/plugin` for another client. Root must pass `--user ACCOUNT`. No agent executable or login is required to preconfigure an image. Account-wide setup is the default; project scope is available explicitly.
 
-Automatic setup supports the seven standard Linux profiles listed below. Client-specific approval, project trust, remote-profile selection and skill loading remain controlled by each client. Settings are preserved, but an existing different Luda entry requires review. These adapters have configuration tests; they are not universal client-version acceptance claims.
+Automatic setup supports the seven standard Linux profiles listed below. Client-specific approval, project trust, remote-profile selection and skill loading remain controlled by each client. Installation uses pinned Vercel `skills` and `add-mcp` packages. Unrelated settings are preserved; an existing same-name Luda skill or MCP entry is updated, so back up customizations first. Configuration tests are not universal client-version acceptance claims.
 
 | ID | Official tool/skill documentation |
 | --- | --- |

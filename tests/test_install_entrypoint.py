@@ -89,6 +89,27 @@ if '--validate-only' in sys.argv and os.environ.get('REJECT_SETUP'):
         self.assertEqual(self.calls()[-1].count('--agent'), 2)
         self.assertFalse(any(c[0] == 'apt-get' for c in self.calls()))
 
+    def test_all_agents_forwarded_for_explicit_root_profile(self):
+        result = self.run_install('--prefix', self.prefix, '--user', 'root',
+                                  '--agent', 'all', '--skip-system', '--yes')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        calls = self.calls()
+        for call in (next(c for c in calls if '--validate-only' in c), calls[-1]):
+            self.assertEqual(call[call.index('--agent') + 1], 'all')
+            self.assertEqual(call[call.index('--user') + 1], 'root')
+        self.assertFalse(any(c[0] == 'apt-get' for c in calls))
+
+    def test_rejected_all_combination_stops_before_mutation(self):
+        result = self.run_install('--prefix', self.prefix, '--user', 'alice',
+                                  '--agent', 'all', '--agent', 'codex', reject=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertFalse(any(c[0] == 'apt-get' or 'install' in c for c in self.calls()))
+
+    def test_listing_does_not_install(self):
+        result = self.run_install('--list-agents')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.calls(), [['python3', '-m', 'luda.setup', '--list-agents']])
+
     def test_runtime_image_does_not_run_setup_or_doctor(self):
         result = self.run_install('--prefix', self.prefix, '--user', 'alice', '--runtime-only', '--skip-system', '--yes')
         self.assertEqual(result.returncode, 0, result.stderr)

@@ -22,31 +22,27 @@ Doctor distinguishes available capabilities. Missing `wmctrl` prevents target en
 
 Read the checkout's `docs/INSTALLATION.md` and `docs/AGENT-INTEGRATIONS.md` for the current commands and client-native configuration. Official source: https://github.com/0xpolarzero/luda. Use a trusted selected checkout/release rather than silently executing code from an unrelated similarly named package.
 
-The managed Linux installer uses a chosen prefix and desktop account, for example:
+The managed Linux installer installs runtime, MCP registration and the complete skill together:
 
 ```sh
-sudo bash scripts/install.sh /opt/luda --user "$(id -un)"
+sudo bash scripts/install.sh --user "$(id -un)" --agent codex --yes
 ```
 
-Run that command from the checkout as the intended desktop account, so `id -un` is expanded before sudo. When already root, explicitly name the real desktop account instead. The Debian/Ubuntu installer provisions system packages; on other distributions install equivalents and use its `--skip-system` option. Installing prerequisites or changing agent configuration must stay within the user's requested scope and available permissions.
+Run from the checkout as the intended agent account, so `id -un` expands before sudo. When already root, name the target account explicitly; `--user root` is supported. Repeat `--agent NAME` for a subset, or use `--agent all` for every supported client, even before clients are installed. Use `--list-agents` to see identifiers. The Debian/Ubuntu installer provisions system packages but requires Python 3.12+ already available; on other distributions provision equivalent prerequisites and use `--skip-system`.
 
-After installation, the selected release's server is `/opt/luda/current/.venv/bin/luda`. A direct graphical-session invocation can run:
+The installer supplies pinned Vercel `skills`, `add-mcp` and their private runtime automatically. It copies the complete skill and merges MCP configuration through those upstream tools. Unrelated settings, servers and skills are preserved. Existing same-name Luda entries are updated, including customizations: preserve any desired customizations before reinstalling. Installation or configuration changes must stay within the user’s requested scope.
+
+After installation, the selected release’s server is `/opt/luda/current/.venv/bin/luda`. To configure more clients without reinstalling the runtime:
 
 ```sh
-/opt/luda/current/.venv/bin/luda doctor
+/opt/luda/current/.venv/bin/luda setup --agent all --yes
 ```
 
-## Install this skill for the current agent
+User scope is default. For one project add `--scope project --project /absolute/project`. Root must specify `--user ACCOUNT`. The target account must exist; no installed agent executable, login or running desktop is required to configure it. Default profile locations belong to the selected OS user. Read `docs/INSTALLATION.md` before using custom client-profile environment overrides; unsupported overrides are rejected.
 
-From the trusted checkout, the skill helper copies the complete folder and does not install runtime or register MCP:
+For an image that will create the agent account later, install with `--runtime-only`, then run `luda setup --user ACCOUNT --agent all --yes` after account creation. Runtime-only does not register tools or skills. Setup failures may leave successful registrations in place; read the reported failed phase and rerun the same command after fixing it.
 
-```sh
-python3 scripts/install_skill.py --agent codex --scope user
-```
-
-Choose the actual supported client: `codex`, `claude`, `cursor`, `gemini`, or `opencode`. For project scope, use `--scope project --project /absolute/project`. `--source /absolute/skill/folder` selects an already installed complete skill folder. Read the helper's `--help` and its result for destination details. It treats identical files as a no-op and refuses differing existing content; preserve or explicitly relocate customized skills before replacement.
-
-Use the client's documented native MCP registration for the server. Do not overwrite unrelated settings or guess that a universal MCP JSON file is consumed by every agent. Reload/reconnect the client as its documentation requires, confirm its Luda tools are exposed, then call `desktop_doctor`. An agent that supports MCP but not this skill format can use the same tool server with these instructions provided through its supported mechanism; that is integration configuration, not a new desktop backend.
+Reload/reconnect the client as its documentation requires, confirm Luda tools are exposed, then call `desktop_doctor`. Client trust or MCP approval can still be necessary. Installing configuration does not prove the client loaded it or that the desktop is ready. Use `luda setup --export /absolute/new/plugin --yes` for a portable skill/MCP bundle rather than guessing another client’s configuration. Export does not activate the plugin.
 
 ## SSH and session attachment
 

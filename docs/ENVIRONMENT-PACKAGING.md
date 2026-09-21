@@ -1,6 +1,6 @@
 # Include Luda in a Linux image
 
-Use the same installer as a normal machine installation. It can install the runtime, register MCP tools, and install the complete skill before any desktop or agent is running. There is no Silo-specific dependency: an image builder, cloud-init script, or ordinary provisioning script can run it.
+Use the same installer as a normal machine installation. It can install the runtime, register MCP tools, and install the complete skill before any desktop or agent is running. An image builder, cloud-init script, or ordinary provisioning script can run it.
 
 ## Account known during the build
 
@@ -8,10 +8,10 @@ Use the same installer as a normal machine installation. It can install the runt
 2. Download/check out a pinned Luda release. From that source directory, run as root, replacing `YOUR_ACCOUNT`:
 
    ```sh
-   bash scripts/install.sh --user YOUR_ACCOUNT --agent codex --yes
+   bash scripts/install.sh --user YOUR_ACCOUNT --agent all --yes
    ```
 
-   Repeat `--agent` for each client the image is intended to support, for example `--agent codex --agent claude-code`. The client executables need not exist yet. This installs Luda into `/opt/luda`, registers its tools for the selected account, and installs its skill into the selected clients' discovery directories. Account files belong to that account, not root. Use `--skip-system` when your recipe already provides the listed [system prerequisites](INSTALLATION.md#prerequisites).
+   `--agent all` configures the seven supported clients. To select a subset, repeat `--agent`, for example `--agent codex --agent claude-code`. The client executables need not exist yet. Existing configurations, including files left behind after removing an agent, are also supported: unrelated settings are preserved and Luda’s named entries are updated. This installs Luda into `/opt/luda`, registers its tools for the selected account, and installs its skill into the selected clients' discovery directories. Account files belong to that account. Use `--user root` explicitly if root is the intended agent account. Use `--skip-system` when your recipe already provides the listed [system prerequisites](INSTALLATION.md#prerequisites).
 
 3. Save the image, preserving `/opt/luda` and the account's configuration and skill directories. Do not relocate the installed Python environment: its executable paths are absolute. No build checkout is needed for later `luda setup` runs.
 
@@ -28,10 +28,10 @@ bash scripts/install.sh --user BUILD_ACCOUNT --runtime-only --yes
 After your first-boot mechanism creates the actual account and home, run as root:
 
 ```sh
-/opt/luda/current/.venv/bin/luda setup --user YOUR_ACCOUNT --agent codex --yes
+/opt/luda/current/.venv/bin/luda setup --user YOUR_ACCOUNT --agent all --yes
 ```
 
-This step needs no package downloads or Node.js. It writes tools and skill for the new account. Repeat for each account and its chosen clients; do not assume one account's configuration applies to all users.
+The managed runtime includes private installer tooling, so this step needs no separately installed Node.js or package downloads. It writes tools and skill for the new account. Repeat for each account and its chosen clients; do not assume one account's configuration applies to all users.
 
 ## When a VM starts
 
@@ -62,6 +62,6 @@ Then in the actual agent, confirm the Luda skill is discoverable and call `deskt
 
 ## Updating an image or running machine
 
-Build new images from a pinned release. For running machines, rerun the installer with the same account and selected agents, then reconnect them. Managed, unmodified skill copies update with the runtime; edited or conflicting client settings stop setup for review. See [upgrade and rollback](INSTALLATION.md#upgrade). Keep credentials out of image artifacts.
+Build new images from a pinned release. For running machines, rerun the installer with the same account and selected agents, then reconnect them. Luda’s skill and named MCP registration are updated, including customized Luda entries; unrelated settings are preserved. Back up any Luda customizations before updating. See [upgrade and rollback](INSTALLATION.md#upgrade). Keep credentials out of image artifacts.
 
 The optional Editor Bridge remains a separate add-on. Core installation does not include or enable it.

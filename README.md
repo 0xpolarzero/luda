@@ -20,7 +20,7 @@ The agent can read accessible controls directly or work from screenshots. Action
 Run these commands **on the Linux machine whose desktop the agent will control**. You need an existing **Linux X11 desktop**, Python 3.12+, and Git. Ubuntu 24.04 with XFCE is the tested starting point. Wayland and Xwayland are not supported.
 
 ```sh
-git clone --branch v0.2.0 --depth 1 https://github.com/0xpolarzero/luda.git
+git clone --branch v0.3.0 --depth 1 https://github.com/0xpolarzero/luda.git
 cd luda
 sudo bash scripts/install.sh --user "$(id -un)"
 ```
@@ -33,17 +33,17 @@ Already know your agent? Use `--agent codex --yes`, for example:
 sudo bash scripts/install.sh --user "$(id -un)" --agent codex --yes
 ```
 
-Use `bash scripts/install.sh --list-agents` for all supported identifiers. Other agents can use a [portable tools-and-skill export](docs/INSTALLATION.md#other-agents-and-custom-profiles). The installer preserves unrelated settings and does not install or authenticate the agent itself.
+Use `bash scripts/install.sh --list-agents` for all supported identifiers. Other agents can use a [portable tools-and-skill export](docs/INSTALLATION.md#other-agents-and-custom-profiles). Installation delegates to pinned versions of [Vercel `skills`](https://github.com/vercel-labs/skills) and [`add-mcp`](https://github.com/neon-solutions/add-mcp). It preserves unrelated settings, updates Luda’s own skill and MCP entry, and does not install or authenticate the agent itself. Required installer tooling is supplied automatically; no separate Node installation is needed.
 
 **Codex connected to a VM through its built-in SSH connection?** Run installation **inside the VM**, selecting the Linux account used by that connection. Codex's backend there loads the skill and tool registration. Running an ordinary `ssh` command from a local agent does not automatically load the VM's configuration.
 
-**Building a VM or machine image?** Run the same installer as root with an explicit account and agent:
+**Building a VM or machine image?** Run the same installer as root with an explicit account and all supported agents:
 
 ```sh
-bash scripts/install.sh --user YOUR_ACCOUNT --agent codex --yes
+bash scripts/install.sh --user YOUR_ACCOUNT --agent all --yes
 ```
 
-The account must already exist. No running desktop or agent credentials are needed during the build. Start the desktop before using the tools. See the [image recipe and first-boot checks](docs/ENVIRONMENT-PACKAGING.md).
+The account must already exist; use `--user root` explicitly when root is the intended agent account. Supported agents do not need to be installed yet, and existing agent settings can already be present. Use repeated `--agent NAME` options to select a subset instead. No running desktop or agent credentials are needed during the build. Start the desktop before using the tools. See the [image recipe and first-boot checks](docs/ENVIRONMENT-PACKAGING.md).
 
 You can also ask your agent:
 

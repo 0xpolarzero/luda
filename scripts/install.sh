@@ -10,8 +10,8 @@ Install Luda on the Linux machine whose desktop the agent will control.
 Requires Python 3.12+. System dependencies use apt-get and require root.
 
   --prefix PATH          Dedicated absolute installation path (default /opt/luda)
-  --user ACCOUNT         Account that runs the agent and desktop (required as root)
-  --agent NAME           Connect an agent; repeat for multiple agents, or use auto
+  --user ACCOUNT         Target agent account, including root (required as root)
+  --agent NAME           Connect an agent; repeat, or select all / auto
   --list-agents          Show supported agent identifiers without installing
   --scope user|project   Agent configuration scope (default user)
   --project PATH         Project directory for project-scoped configuration
@@ -19,7 +19,7 @@ Requires Python 3.12+. System dependencies use apt-get and require root.
   --check-desktop        Check the running desktop after agent setup (not image builds)
   --session MODE         discover (default, XFCE session) or direct (inherited GUI environment)
   --yes                  Noninteractive setup; still requires explicit selection
-  --runtime-only         Install runtime without configuring any agent (image builds)
+  --runtime-only         Install runtime without configuring any agent
   --skip-system          Skip apt; use only when dependencies are already installed
   --browser-config FILE  Existing managed Chromium configuration (optional)
   -h, --help             Show this help
@@ -27,11 +27,14 @@ Requires Python 3.12+. System dependencies use apt-get and require root.
 Examples:
   sudo scripts/install.sh --user alice --agent codex --yes
   sudo scripts/install.sh --user alice --agent codex --agent claude-code --yes
+  sudo scripts/install.sh --user alice --agent all --yes
   sudo scripts/install.sh --user alice --runtime-only --yes
   scripts/install.sh --prefix "$HOME/.local/share/luda" --skip-system --agent codex
 
 With no agent selection, a terminal prompts you to choose agents. Automated
-installation must specify --agent or --runtime-only. No desktop or credentials
+installation must specify --agent, --export, or --runtime-only. Explicit agents
+need not be installed. All means every client supported by this Luda release.
+No desktop or credentials
 are needed to bake the runtime, skill and tool configuration into an image.
 HELP
 }
@@ -77,7 +80,7 @@ done
 [[ "$runtime_only" == false || ${#agents[@]} -eq 0 ]] || fail '--runtime-only cannot be combined with --agent'
 if [[ "$legacy" == true && ${#agents[@]} -eq 0 && "$export_selected" == false ]]; then runtime_only=true; fi
 if [[ "$runtime_only" == false && ${#agents[@]} -eq 0 && "$export_selected" == false ]] && { [[ ! -t 0 ]] || [[ "$assume_yes" == true ]]; }; then
-  fail 'Choose --agent NAME (repeatable), --agent auto, or --runtime-only for noninteractive installation'
+  fail 'Choose --agent NAME (repeatable), --agent all, --agent auto, --export PATH, or --runtime-only for noninteractive installation'
 fi
 command -v python3 >/dev/null || fail 'Python 3.12 or newer is required; install it first'
 python3 -c 'import sys; sys.exit(0 if sys.version_info >= (3,12) else 1)' || fail 'Python 3.12 or newer is required; install it first'
