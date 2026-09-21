@@ -1,0 +1,14 @@
+{
+  "skill_sha256": "e90eae580e187882b7d6308eb35c77ff19a5a483857a5a0202a52ca7d6f88260",
+  "skill_words": 1999,
+  "baseline_commit": "eb268e820a9c96f2c934664b5edb18a0bd416c0a",
+  "references": {
+    "controls.md": "4b502a217b930dd68059ce8f48ba56581e23a94bbc3bc64ec7204efc7b768b91",
+    "optional.md": "50e6a3fff18dff670cedc902b17a42d82cbde3dccb11a93ec2a045259ea41111",
+    "recovery.md": "da36ab08477fe1559097731e8406872209b10c4f9e39dfeb33a883db38c07f27",
+    "setup.md": "64cdb2c931f4d9c7511759deb564f3861841f3bd8ade6eb23445407e25260e8e",
+    "targeting.md": "841be5e7a99e9326ecaf4621a86668759ed7652ac2cd459eb23515f14896e396",
+    "text.md": "1c9ab43ea8ed640dd4af15bf7576997283c4d87aa4dcd8719dd7102af7dbcc9b",
+    "workflows.md": "f8a3dd3cba6dd34e6368348b86a725ae1f9654baeae2021388735ed6c36c41d4"
+  }
+}
