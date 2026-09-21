@@ -215,3 +215,5 @@ Provider numeric metadata must be finite. Inspection retains a control with `val
 ### Selection verification scope
 
 Successful `desktop_choose` results retain `effect: "verified"` and the existing provider fields, and add `verification_scope: "selection"` plus `next_step`. This also applies when the requested selection was already present. Verification establishes the selection state only; it does not establish opening, applying, or executing the selected item. Selection-only tasks can stop there. For other tasks, check the application effect first, since some controls apply changes on selection. If the effect is absent, use an advertised activation action or Apply/Open control, then verify the application result. Luda does not automatically activate every selection. Uncertain or failed selection results do not acquire a verified selection scope.
+
+See the [tool regression and fresh-agent evidence](../tests/evidence/selection-feedback/README.md) for observed outcomes and limits.

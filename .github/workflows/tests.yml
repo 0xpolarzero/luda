@@ -34,7 +34,7 @@ jobs:
       - name: Install real desktop dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y xvfb xfwm4 dbus-x11 at-spi2-core python3-gi gir1.2-atspi-2.0 gir1.2-gtk-3.0 xdotool wmctrl scrot xclip x11-utils x11-xserver-utils libxrandr2
+          sudo apt-get install -y xvfb xfwm4 xfce4-settings xfconf dbus-x11 at-spi2-core python3-gi gir1.2-atspi-2.0 gir1.2-gtk-3.0 xdotool wmctrl scrot xclip x11-utils x11-xserver-utils libxrandr2
           python -m venv .venv
           .venv/bin/python -m pip install --require-hashes -r requirements.lock
           .venv/bin/python -m pip install --no-deps -e .
@@ -43,6 +43,8 @@ jobs:
           .venv/bin/python -m unittest discover -s tests -p test_app_visibility.py
           mkdir -p artifacts/composite-table
           dbus-run-session -- xvfb-run -a /usr/bin/python3 tests/integration_composite_table.py > artifacts/composite-table/result.log
+      - name: Selection feedback and actual XFCE setting effects
+        run: .venv/bin/python tests/integration_xfce_activation.py --output artifacts/xfce-activation
       - name: Native and MCP workflows on an isolated display
         run: LUDA_ISOLATED_TEST_DISPLAY=1 xvfb-run -a -s '-screen 0 1440x900x24 -nolisten tcp' dbus-run-session -- .venv/bin/python scripts/headless_tests.py
       - name: Independently observed window geometry

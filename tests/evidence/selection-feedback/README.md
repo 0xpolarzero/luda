@@ -4,9 +4,11 @@
 No model override was supplied; the CLI JSON did not expose the resolved model.
 Each attempt used a fresh ephemeral agent, copied complete skill, private workspace,
 and ordinary `ubuntu` desktop/MCP account with private Xvfb, D-Bus and profile.
-No credentials were read/copied and no shared desktop or system packages changed.
+The harness did not read or copy credentials; the CLI reused its existing authentication. No shared desktop or system packages changed.
 Budget: 180 seconds per attempt. All eight attempts are retained in `runs.json`.
 This is a small observed sample, not a reliability estimate.
+
+Tool correctness was checked separately: 1,068 unit tests ran successfully with two environment skips, and the three wheel-build tests passed separately. The real XFCE regression confirmed that both changed and already-selected results carry selection-only feedback, both leave the actual theme setting unchanged, and advertised activation applies it. Existing result fields and selection behavior are preserved; failures and uncertain results do not acquire verified-selection guidance.
 
 | Attempt | Seconds | Independent outcome | Agent's final assessment |
 |---|---:|---|---|
