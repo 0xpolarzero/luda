@@ -32,7 +32,7 @@ desktop_choose(element_id="<option_id>")
 desktop_choose(element_id="<additional_item_id>", extend=True)
 ```
 
-Choose the observed option, not the collapsed combo box. Open hidden/collapsed choices and inspect first. Default selection is exclusive; `extend=True` preserves other list/table selections where supported. Selecting a visible table cell selects its **whole row**, not its text or a spreadsheet range. A verified selection can be only a highlight; it does not prove the choice was applied or opened. If the requested outcome requires more than selection, inspect for an advertised activation action or Apply control and invoke it when needed, then verify the resulting application state. Do not activate merely because selection succeeded.
+Choose the observed option, not the collapsed combo box. Open hidden/collapsed choices and inspect first. Default selection is exclusive; `extend=True` preserves other list/table selections where supported. Selecting a visible table cell selects its **whole row**, not its text or a spreadsheet range. The result's `verification_scope: "selection"` applies equally to changed and already-selected choices; it does not establish that an item was opened, applied, or executed. If selection alone was requested, stop after verifying it. Otherwise check the requested application effect first. Some controls apply changes on selection; if the effect is absent, inspect for an advertised activation action or Apply/Open control, use the appropriate action, then verify the outcome. A selected row by itself is not that outcome.
 
 For an inclusive range:
 
