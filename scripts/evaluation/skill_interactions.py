@@ -164,7 +164,7 @@ def main() -> int:
     for case in cases:
         case_out = out / case
         server = ([args.live_command, *args.live_arg] if args.live_command else [
-            str(args.fixture_python.resolve()), str(ROOT / 'scripts/evaluation/skill_effect_fixture.py'),
+            str(args.fixture_python.absolute()), str(ROOT / 'scripts/evaluation/skill_effect_fixture.py'),
             '--case', case, '--captures', str(args.captures.resolve()), '--history', str(case_out / 'oracle.json')])
         server_env = json.loads(args.live_env_file.read_text()) if args.live_env_file else None
         result = run_interaction(case, args.skill, case_out, args.codex, args.timeout, args.auth_home, server, server_env)

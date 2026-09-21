@@ -5,6 +5,8 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
+from types import SimpleNamespace
 
 DIRECTORY = Path(__file__).resolve().parents[1] / 'scripts/evaluation'
 sys.path.insert(0, str(DIRECTORY))
@@ -72,6 +74,27 @@ for e in [{'type':'thread.started','thread_id':'fresh'}, {'type':'item.completed
         result = self.run_case()
         self.assertEqual(result['status'], 'unassessable')
         self.assertFalse(result['gui_tools_only'])
+
+    def test_fixture_launch_preserves_virtualenv_interpreter_symlink(self):
+        # Resolving this link bypasses pyvenv.cfg and loses installed MCP dependencies.
+        executable = self.base / 'venv/bin/python'
+        executable.parent.mkdir(parents=True)
+        executable.symlink_to(sys.executable)
+        captures = self.base / 'captures.json'
+        captures.write_text('{}')
+        source = self.base / 'repo/scripts/evaluation/skill_effect_fixture.py'
+        source.parent.mkdir(parents=True)
+        source.write_text('# fixture')
+        arguments = ['runner', '--skill', str(self.skill), '--output', str(self.base / 'results'),
+                     '--captures', str(captures), '--fixture-python', str(executable), '--case', 'theme']
+        with patch.object(sys, 'argv', arguments), patch.object(runner, 'ROOT', self.base / 'repo'), \
+                patch.object(runner.subprocess, 'run', return_value=SimpleNamespace(stdout='codex test')), \
+                patch.object(runner, 'run_interaction', return_value={'status': 'recorded'}) as run, \
+                patch('builtins.print'):
+            self.assertEqual(runner.main(), 0)
+        command = run.call_args.args[6]
+        self.assertEqual(command[0], str(executable.absolute()))
+        self.assertNotEqual(command[0], str(executable.resolve()))
 
     def test_selection_prompt_is_exact(self):
         self.assertEqual(runner.public_task('select-already'), runner.SELECTION_TASK)
