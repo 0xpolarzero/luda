@@ -49,3 +49,16 @@ pass: its nested interaction is explicitly unassessable and both independent set
 are Greybird. A root-only inherited working directory caused a dependency's relative
 `.env` stat to fail after dropping privileges. The corrected wrapper changes only the
 server working directory and adds a real MCP preflight before the restarted live gate.
+
+`live-mcp-preflight.tar.gz` preserves the corrected initialize/list/doctor preflight
+and restrictive-cwd reproduction. `live-confirmation-1.tar.gz` and
+`live-confirmation-2.tar.gz` retain two independently accepted fresh actual-Luda runs:
+exact task/hash/session/events, independent before/after xfconf+AT-SPI, original PNGs,
+final reports, primary/independent reviews and cleanup. Live1 had no MCP errors; live2
+recovered one initial diagnostic BUSY error with no effect. Each changed actual theme
+from Greybird to Greybird-dark and kept the Style page visible. These are the two new
+live passes, distinct from supplied historical claims and from preflight captures.
+`resource-cleanup.json` records final disposal of test-created inputs and theme files.
+
+`release-unit-summary.json` records the final candidate check: 1,111 tests,
+1,109 passes and two skips, with unchanged source bytes during execution.

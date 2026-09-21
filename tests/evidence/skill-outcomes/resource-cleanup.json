@@ -1,0 +1,11 @@
+{
+  "removed_test_owned_resources": [
+    "/workspace/Selection trial/target.txt",
+    "/workspace/Selection trial",
+    "/tmp/luda-greybird",
+    "/tmp/luda-greybird.deb",
+    "/tmp/luda-greybird-index.html"
+  ],
+  "credentials": "Existing credentials preserved; no credentials provisioned. Temporary authentication links and agent homes removed by runners.",
+  "desktop": "Private Xvfb sessions only; each live cleanup records no surviving tagged processes. Shared :1 never used."
+}

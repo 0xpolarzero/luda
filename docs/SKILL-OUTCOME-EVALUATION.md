@@ -164,3 +164,35 @@ preflight real MCP initialize/list/doctor from the same restrictive launch conte
 This live-harness correction leaves the frozen benchmark runners and skill unchanged;
 the live gate restarts. The original startup evidence is retained, never counted as a
 live confirmation or silently treated as an error-free run.
+
+## New live acceptance and release candidate
+
+Both fresh live confirmations passed primary and independent review on Ubuntu 24.04
+ARM64, ordinary account `ubuntu`, private Xvfb/DBus/HOME, genuine Greybird 3.23.3,
+Codex CLI 0.155.1 and explicitly selected `gpt-5.6-sol` without reasoning override.
+Each independently started at Greybird, selected/activated Greybird-dark through actual
+Luda GUI tools, observed the resulting dark content and controls, reported the exact
+theme accurately, and left Appearance → Style visible. Separate xfconf and AT-SPI
+readbacks agree with the screenshots. The first had ten successful GUI calls and no
+MCP errors; the second had seven successful GUI calls plus one recovered diagnostic
+`desktop_doctor` BUSY response with no effect. Both had fresh thread/application
+identities and zero surviving test processes. No shell/file mutation by the agents
+occurred. The supplied historical live runs were error-free; these new runs are
+reported separately and are not described as uniformly error-free.
+
+New acceptance totals: **23/23 + 23/23, followed by 2/2 actual-Luda live confirmations**.
+The corrected live MCP preflight and original failed launch are archived separately;
+neither is counted as a live confirmation. Temporary desktops, agent homes and auth
+links were removed; test-created theme extraction/download and Selection trial file
+were removed. Existing credentials, other desktops and user-created files were
+preserved. No account reset credit was used and no credential was provisioned.
+
+The release candidate is 0.3.4. Its only production workflow change is the exact entry
+skill. Core metadata/download examples advance to 0.3.4; all seven guides, runtime,
+MCP schemas, native input and cursor behavior remain unchanged. Editor Bridge remains
+a separate 0.2.0 distribution. Publication requires package-byte checks and passing CI for the exact committed
+release candidate; release.json and SHA256SUMS identify the published assets. This finite adaptive suite does
+not establish universal GUI reliability or support across untested models.
+
+Final local release check: 1,111 tests ran successfully (1,109 passed, two skipped);
+source bytes remained unchanged during the run.
