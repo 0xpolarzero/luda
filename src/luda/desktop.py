@@ -39,6 +39,19 @@ from .diagnostics import capability_summary
 from .storage import storage_errors, staged_payload
 
 
+def selection_feedback(result):
+    """Scope successful choose readback without inferring application completion."""
+    if result.get('effect') == 'verified' and not result.get('error'):
+        return {**result, 'verification_scope': 'selection',
+                'next_step': (
+                    'Only selection is verified, not whether the item was opened, applied, or executed. '
+                    'If the user requested selection only, stop. If they requested an effect, verify '
+                    'whether that effect occurred; some controls apply on selection. If it did not, '
+                    'inspect for an advertised activation action or Apply/Open control, use the '
+                    'appropriate action, then verify the application outcome.')}
+    return result
+
+
 class Desktop(InteractionMixin, ConditionWaitsMixin):
     browser_class = OwnedBrowser
     def __init__(self, environment=None):
@@ -656,7 +669,8 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
             kwargs['range_end']=end['node'];kwargs['range_nodes']=[v['node'] for v in observed]
         if target.get('provider') == 'owned_browser':
             if op=='secret':validate_text(kwargs['text'])
-            return self.browser.element(target,op,**kwargs)
+            result = self.browser.element(target,op,**kwargs)
+            return selection_feedback(result) if op == 'choose' else result
         w=self.target_window(target['window_id'],False)
         node=target['node']
         if node['start']!=w['start']:
@@ -700,6 +714,8 @@ class Desktop(InteractionMixin, ConditionWaitsMixin):
                 self.activate(target['window_id'])
                 with self.prepare_input_window(target['window_id']) as current:
                     result = dispatch(current)
+        if op == 'choose':
+            return selection_feedback(result)
         return native_text_readback(result) if op in ('read','set','insert') else result
 
     def type_text(self, element_id, text, mode='insert'):

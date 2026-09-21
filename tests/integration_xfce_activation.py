@@ -65,6 +65,9 @@ def child(output):
         evidence['choose'] = desktop.element(target['element_id'], 'choose')
         assert evidence['choose'].get('effect') == 'verified', evidence
         assert evidence['choose'].get('selected') is True, evidence
+        assert evidence['choose'].get('changed') is True, evidence
+        assert evidence['choose'].get('verification_scope') == 'selection', evidence
+        assert evidence['choose'].get('next_step'), evidence
         target = row()  # Fresh inspection verifies row state, not task completion.
         evidence['selected_states'] = target['states']
         assert 'selected' in target['states'], target
@@ -72,6 +75,13 @@ def child(output):
         time.sleep(.3)
         evidence['after_choose'] = setting()
         assert evidence['after_choose'] == BEFORE, evidence
+        evidence['choose_again'] = desktop.element(target['element_id'], 'choose')
+        assert evidence['choose_again'].get('effect') == 'verified', evidence
+        assert evidence['choose_again'].get('changed') is False, evidence
+        assert evidence['choose_again'].get('verification_scope') == 'selection', evidence
+        assert evidence['choose_again']['next_step'] == evidence['choose']['next_step'], evidence
+        evidence['after_choose_again'] = setting()
+        assert evidence['after_choose_again'] == BEFORE, evidence
         evidence['invoke'] = desktop.element(target['element_id'], 'invoke', action='activate')
         deadline = time.monotonic() + 3
         while setting() != AFTER and time.monotonic() < deadline:
