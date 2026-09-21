@@ -1,0 +1,19 @@
+{
+  "luda-0.3.3.tar.gz": {
+    "skill_files": 8,
+    "skill_sha256": "e90eae580e187882b7d6308eb35c77ff19a5a483857a5a0202a52ca7d6f88260"
+  },
+  "luda-0.3.3-py3-none-any.whl": {
+    "skill_files": 8,
+    "skill_sha256": "e90eae580e187882b7d6308eb35c77ff19a5a483857a5a0202a52ca7d6f88260"
+  },
+  "luda-plugin-0.3.3.zip": {
+    "skill_files": 8,
+    "skill_sha256": "e90eae580e187882b7d6308eb35c77ff19a5a483857a5a0202a52ca7d6f88260"
+  },
+  "temporary_project_install": {
+    "skill_files": 8,
+    "skill_sha256": "e90eae580e187882b7d6308eb35c77ff19a5a483857a5a0202a52ca7d6f88260",
+    "cleaned": true
+  }
+}
