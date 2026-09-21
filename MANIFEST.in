@@ -1,6 +1,6 @@
 include requirements.lock requirements-browser.lock uv.lock build-requirements.in build-requirements.lock
 recursive-include docs *.md *.json
-recursive-include scripts *.py *.sh *.js *.mjs
+recursive-include scripts *.py *.sh *.js *.mjs *.json
 recursive-include skills *.md
 recursive-include tests *.py *.sh *.html *.js *.json *.md *.c
 recursive-include tests/evidence *.log *.gz *.png *.jsonl
@@ -17,3 +17,5 @@ recursive-include .codex-plugin *.json
 recursive-include integrations *.py *.json *.md *.patch *.mjs
 
 prune tests/evidence/historical-reports
+
+prune scripts/agent-tools/node_modules

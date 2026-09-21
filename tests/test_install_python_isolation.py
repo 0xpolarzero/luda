@@ -47,6 +47,8 @@ class InstallerPythonIsolation(unittest.TestCase):
             args = list(map(str, command)); commands.append(args)
             self.assertEqual(args[1], '-I')
             if 'pip' in args: self.assertIn('--isolated', args)
+            if any(part.endswith('provision_agent_tools.py') for part in args):
+                return  # External installer payload is covered separately.
             if '--require-hashes' in args:
                 return  # Synthetic no-dependency wheel; no network or production package install.
             if 'wheel' in args:

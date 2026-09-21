@@ -40,6 +40,10 @@ class Installation(unittest.TestCase):
             path = Path(args[4]) / 'bin'
             path.mkdir(parents=True)
             (path / 'python').write_text('fixture interpreter')
+        elif any(part.endswith('provision_agent_tools.py') for part in args):
+            path = Path(args[args.index('--release') + 1]) / 'agent-tools/node/bin'
+            path.mkdir(parents=True)
+            (path / 'node').write_text('fixture node')
         elif 'wheel' in args:
             path = Path(args[args.index('--wheel-dir') + 1])
             path.mkdir()
@@ -65,9 +69,33 @@ class Installation(unittest.TestCase):
         self.assertIn('--require-hashes', self.commands[2])
         self.assertIn('--no-build-isolation', self.commands[3])
 
+    def test_agent_tools_are_manifested_and_modifications_preserved(self):
+        first = installer.install(self.prefix, self.source, self.runner)
+        node = self.prefix / 'current/agent-tools/node/bin/node'
+        manifest = json.loads((self.prefix / 'current/release.json').read_text())
+        self.assertIn('agent-tools/node/bin/node', manifest['files'])
+        node.write_text('modified dependency')
+        with self.assertRaisesRegex(installer.InstallError, 'changed'):
+            installer.install(self.prefix, self.source, self.runner)
+        result = installer.uninstall(self.prefix)
+        self.assertEqual(result['retained_modified_releases'], [first['release']])
+        self.assertEqual((self.prefix / 'releases' / first['release'] / 'agent-tools/node/bin/node').read_text(), 'modified dependency')
+
+    def test_agent_tool_failure_preserves_selected_release(self):
+        first = installer.install(self.prefix, self.source, self.runner)
+        (self.source / 'src/file.py').write_text('upgrade')
+        def fail_tools(command):
+            self.runner(command)
+            if any(str(part).endswith('provision_agent_tools.py') for part in command):
+                raise installer.InstallError('agent installer download failed')
+        with self.assertRaisesRegex(installer.InstallError, 'download failed'):
+            installer.install(self.prefix, self.source, fail_tools)
+        self.assertEqual((self.prefix / 'current').readlink().name, first['release'])
+        self.assertEqual(len(list((self.prefix / 'releases').iterdir())), 1)
+
     def test_packaged_source_changes_alter_release_identity(self):
         previous=installer.release_identity(self.source)
-        for name in ('.mcp.json','.codex-plugin/plugin.json','scripts/manage_install.py','docs/example.md','tests/fixtures/page.html','tests/fixtures/editor/package-lock.json','tests/fixtures/editor/THIRD_PARTY_NOTICES.md','integrations/prosemirror/luda-prosemirror.mjs'):
+        for name in ('.mcp.json','.codex-plugin/plugin.json','scripts/manage_install.py','scripts/agent-tools/package-lock.json','docs/example.md','tests/fixtures/page.html','tests/fixtures/editor/package-lock.json','tests/fixtures/editor/THIRD_PARTY_NOTICES.md','integrations/prosemirror/luda-prosemirror.mjs'):
             path=self.source/name;path.parent.mkdir(parents=True,exist_ok=True);path.write_text('package content')
             current=installer.release_identity(self.source)
             self.assertNotEqual(previous,current);previous=current

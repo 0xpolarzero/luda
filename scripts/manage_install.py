@@ -111,6 +111,11 @@ for name in ('luda','luda-session'):
     assert os.access(root/'.venv/bin'/name,os.X_OK)
 with (root/'skills/luda/SKILL.md').open('rb') as stream:
     assert stream.read(1)
+if (root/'agent-tools').exists():
+    assert os.access(root/'agent-tools/node/bin/node',os.X_OK)
+    for entry in ('skills/bin/cli.mjs','add-mcp/dist/index.js'):
+        with (root/'agent-tools/node_modules'/entry).open('rb') as stream:
+            assert stream.read(1)
 """
     desktop_probe([release/'.venv/bin/python', '-I', '-c', program, release], user)
 
@@ -273,6 +278,8 @@ def install(prefix, source, runner=invoke, browser_config=None, user=None):
             runner([python, '-I', '-m', 'pip', '--isolated', 'install', '--no-deps', wheels[0]])
             runner([python, '-I', '-c', 'import luda.server; from importlib.metadata import version; print("Installed Luda", version("luda"))'])
             shutil.copytree(source / 'skills/luda', release / 'skills/luda')
+            runner([sys.executable, '-I', source / 'scripts/provision_agent_tools.py',
+                    '--release', release, '--source', source / 'scripts/agent-tools'])
             if browser is not None:
                 verify_browser(browser, user)
                 atomic_json(release / '.venv/luda-browser.json', browser)
