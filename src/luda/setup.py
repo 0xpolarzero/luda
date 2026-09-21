@@ -5,6 +5,7 @@ import argparse
 from contextlib import contextmanager
 from dataclasses import dataclass
 import fcntl
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -156,6 +157,129 @@ def installer_paths(tools_root):
     return paths
 
 
+def migrate_legacy_skills(names, home, source, *, scope='user', project=None, environ=None):
+    """Remove only unchanged copies made by the pre-upstream Luda installer.
+
+    These are migration paths, not current client adapters. Upstream installs the
+    replacement in .agents/skills; Claude and Codex already used the new paths.
+    """
+    state_path = home / '.local/state/luda/setup.json'
+    if not state_path.exists():
+        return
+    env = os.environ if environ is None else environ
+    base = project if scope == 'project' else home
+    legacy = {
+        'cursor': '.cursor/skills/luda',
+        'gemini-cli': '.gemini/skills/luda',
+        'opencode': '.opencode/skills/luda' if scope == 'project' else '.config/opencode/skills/luda',
+        'vscode': '.github/skills/luda' if scope == 'project' else '.copilot/skills/luda',
+        'copilot-cli': '.github/skills/luda' if scope == 'project' else '.copilot/skills/luda',
+    }
+    try:
+        before = read_file(state_path)
+        state = json.loads(before)
+        if not isinstance(state, dict) or state.get('version') != 1 or not isinstance(state.get('skills'), dict):
+            raise ValueError('unrecognized legacy setup state')
+        changed = False
+        for name in names:
+            if name not in legacy:
+                continue
+            destination = base / legacy[name]
+            if scope == 'user' and name == 'opencode' and env.get('XDG_CONFIG_HOME'):
+                destination = Path(env['XDG_CONFIG_HOME']) / 'opencode/skills/luda'
+            # Never follow an arbitrary path supplied by the old state file.
+            if not destination.is_relative_to(base):
+                continue
+            saved = state['skills'].get(str(destination))
+            if saved is None:
+                continue
+            try:
+                actual = tree_files(destination)
+                fingerprints = {key: hashlib.sha256(value).hexdigest() for key, value in actual.items()}
+                if fingerprints != saved:
+                    raise ValueError('contains edited or added files')
+                apply_changes([Change(destination / key, value, None) for key, value in actual.items()])
+                if destination.exists():
+                    for directory in sorted((p for p in destination.rglob('*') if p.is_dir()),
+                                            key=lambda p: len(p.parts), reverse=True):
+                        directory.rmdir()
+                    destination.rmdir()
+                del state['skills'][str(destination)]
+                changed = True
+                print(f'Removed unchanged legacy skill copy: {destination}')
+            except (ValueError, OSError) as exc:
+                print(f'Legacy skill preserved at {destination}: {exc}. Review and move this old copy '
+                      'aside if it shadows the updated .agents/skills/luda skill.', file=sys.stderr)
+        if changed:
+            after = (json.dumps(state, indent=2, sort_keys=True) + '\n').encode()
+            apply_changes([Change(state_path, before, after)])
+    except (ValueError, OSError, TypeError) as exc:
+        print(f'Legacy skill cleanup skipped: {exc}. Review {state_path}; existing files were preserved.', file=sys.stderr)
+
+
+# add-mcp 2.4.0 accepts malformed JSONC without checking parse errors. Keep this
+# read-only guard until upstream fails closed. Paths and formats still come from
+# its public adapter metadata; all configuration writes remain upstream-owned.
+MCP_PREFLIGHT = r"""
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { createRequire } from 'node:module';
+try {
+  const [cli, name, scope] = process.argv.slice(1);
+  const require = createRequire(pathToFileURL(cli));
+  const { agents } = await import(pathToFileURL(join(dirname(cli), 'lib.js')));
+  const agent = agents[name];
+  const local = scope === 'project';
+  const cwd = process.cwd();
+  const path = agent.resolveConfigPath ? agent.resolveConfigPath(agent, { local, cwd })
+    : local ? join(cwd, agent.localConfigPath) : agent.configPath;
+  let text;
+  try { text = readFileSync(path, 'utf8'); }
+  catch (error) { if (error.code === 'ENOENT') process.exit(0); throw error; }
+  let data;
+  if (agent.format === 'toml') data = require('@iarna/toml').parse(text);
+  else if (agent.format === 'json') {
+    const jsonc = require('jsonc-parser');
+    const errors = [];
+    const tree = jsonc.parseTree(text, errors, { allowTrailingComma: true });
+    if (errors.length) throw new Error(`Malformed configuration: ${path}`);
+    function checkDuplicates(node) {
+      if (!node) return;
+      if (node.type === 'object') {
+        const keys = new Set();
+        for (const property of node.children || []) {
+          const key = property.children[0].value;
+          if (keys.has(key)) throw new Error(`Duplicate configuration key in ${path}: ${key}`);
+          keys.add(key);
+        }
+      }
+      for (const child of node.children || []) checkDuplicates(child);
+    }
+    checkDuplicates(tree);
+    data = jsonc.getNodeValue(tree);
+  } else throw new Error(`Unsupported configuration format: ${agent.format}`);
+  const object = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
+  if (!object(data)) throw new Error(`Configuration must be an object: ${path}`);
+  const key = local && agent.localConfigKey ? agent.localConfigKey : agent.configKey;
+  let current = data;
+  for (const part of key.split('.')) {
+    if (!Object.hasOwn(current, part)) break;
+    current = current[part];
+    if (!object(current)) throw new Error(`MCP configuration must be an object: ${path}`);
+  }
+} catch (error) { console.error(error.message); process.exitCode = 1; }
+"""
+
+
+def preflight_mcp(node, mcp, client, scope, cwd, env):
+    result = subprocess.run([str(node), '--input-type=module', '-e', MCP_PREFLIGHT,
+                             str(mcp), client.mcp_agent, scope], cwd=cwd, env=env,
+                            stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=20)
+    if result.returncode:
+        raise ValueError(result.stderr.strip() or 'MCP configuration preflight failed')
+
+
 def configure(names, home, source, command, tools_root, *, scope='user', project=None, environ=None):
     """Delegate registration and return phase failures; no client executable needed."""
     env = installer_environment(home, names, environ)
@@ -176,6 +300,8 @@ def configure(names, home, source, command, tools_root, *, scope='user', project
         )
         for phase, argv in commands:
             try:
+                if phase == 'MCP':
+                    preflight_mcp(node, mcp, client, scope, cwd, env)
                 result = subprocess.run(argv, cwd=cwd, env=env, stdin=subprocess.DEVNULL,
                                         capture_output=True, text=True, timeout=120)
                 if result.returncode:
@@ -196,6 +322,8 @@ def configure(names, home, source, command, tools_root, *, scope='user', project
             except (ValueError, OSError, subprocess.SubprocessError) as exc:
                 failures.append((name, phase, str(exc)))
                 print(f'{client.label}: {phase} failed: {exc}', file=sys.stderr)
+    successful = [name for name in names if not any(failure[0] == name for failure in failures)]
+    migrate_legacy_skills(successful, home, source, scope=scope, project=project, environ=env)
     return failures
 
 

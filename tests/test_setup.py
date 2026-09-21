@@ -39,6 +39,7 @@ class SetupTests(unittest.TestCase):
         self.node.write_text('''#!/usr/bin/python3
 import json, os, pathlib, sys
 home = pathlib.Path(os.environ['HOME'])
+if '-e' in sys.argv: sys.exit(0)
 with (home / 'calls.jsonl').open('a') as f:
     f.write(json.dumps({'argv': sys.argv[1:], 'cwd': os.getcwd(), 'home': str(home),
                        'uid': os.getuid(), 'codex_home': os.environ.get('CODEX_HOME')}) + '\\n')
@@ -113,14 +114,14 @@ if 'skills' in sys.argv[1]:
     def test_failure_continues_other_phases_and_clients(self):
         ok_skill = subprocess.CompletedProcess([], 0, '[{"name":"luda","status":"installed"}]', '')
         failed = subprocess.CompletedProcess([], 1, '', 'cannot merge existing file')
-        with patch.object(subprocess, 'run', side_effect=[ok_skill, failed, ok_skill, subprocess.CompletedProcess([], 0, '', '')]) as runner:
+        with patch.object(setup, 'preflight_mcp'), patch.object(subprocess, 'run', side_effect=[ok_skill, failed, ok_skill, subprocess.CompletedProcess([], 0, '', '')]) as runner:
             failures = self.configure(('codex', 'claude-code'))
         self.assertEqual(runner.call_count, 4)
         self.assertEqual(failures[0][:2], ('codex', 'MCP'))
         self.assertIn('cannot merge', failures[0][2])
 
     def test_timeout_is_reported_and_next_phase_still_runs(self):
-        with patch.object(subprocess, 'run', side_effect=[subprocess.TimeoutExpired('skills', 120), subprocess.CompletedProcess([], 0, '', '')]):
+        with patch.object(setup, 'preflight_mcp'), patch.object(subprocess, 'run', side_effect=[subprocess.TimeoutExpired('skills', 120), subprocess.CompletedProcess([], 0, '', '')]):
             failures = self.configure()
         self.assertEqual(failures[0][:2], ('codex', 'skill'))
         self.assertIn('120', failures[0][2])
@@ -231,6 +232,72 @@ if 'skills' in sys.argv[1]:
         with patch.object(subprocess, 'run', side_effect=run), self.assertRaises(SystemExit):
             self.main([*self.args, '--check-desktop'])
         self.assertEqual(len(self.calls()), 2)
+
+    def legacy_skill(self, relative='.gemini/skills/luda', *, base=None):
+        import hashlib
+        destination = (base or self.home) / relative
+        destination.mkdir(parents=True)
+        (destination / 'SKILL.md').write_bytes(b'old managed skill')
+        state_path = self.home / '.local/state/luda/setup.json'
+        state_path.parent.mkdir(parents=True, exist_ok=True)
+        state = json.loads(state_path.read_text()) if state_path.exists() else {'version': 1, 'skills': {}}
+        state['skills'][str(destination)] = {'SKILL.md': hashlib.sha256(b'old managed skill').hexdigest()}
+        state_path.write_text(json.dumps(state))
+        return destination, state_path
+
+    def test_legacy_unchanged_copy_removed_after_selected_client_success(self):
+        legacy, state_path = self.legacy_skill()
+        self.configure(['gemini-cli'])
+        self.assertFalse(legacy.exists())
+        self.assertNotIn(str(legacy), json.loads(state_path.read_text())['skills'])
+
+    def test_legacy_modified_copy_preserved_with_actionable_warning(self):
+        legacy, state_path = self.legacy_skill()
+        (legacy / 'SKILL.md').write_text('user changed')
+        original = state_path.read_bytes()
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            setup.migrate_legacy_skills(['gemini-cli'], self.home, self.source, environ={})
+        self.assertEqual((legacy / 'SKILL.md').read_text(), 'user changed')
+        self.assertEqual(state_path.read_bytes(), original)
+        self.assertIn('move this old copy', stderr.getvalue())
+
+    def test_legacy_unselected_and_unmanaged_copies_preserved(self):
+        legacy, _ = self.legacy_skill()
+        self.configure(['cursor'])
+        self.assertTrue(legacy.exists())
+        unmanaged = self.home / '.cursor/skills/luda'
+        unmanaged.mkdir(parents=True)
+        (unmanaged / 'SKILL.md').write_text('unmanaged')
+        self.configure(['cursor'])
+        self.assertEqual((unmanaged / 'SKILL.md').read_text(), 'unmanaged')
+
+    def test_failed_registration_never_removes_legacy_copy(self):
+        legacy, _ = self.legacy_skill()
+        with patch.object(setup, 'preflight_mcp', side_effect=ValueError('invalid config')):
+            self.assertTrue(self.configure(['gemini-cli']))
+        self.assertTrue(legacy.exists())
+
+    def test_manifest_cannot_authorize_removal_of_arbitrary_path(self):
+        outside = self.base / 'outside'
+        legacy, _ = self.legacy_skill('arbitrary', base=outside)
+        self.configure(['gemini-cli'])
+        self.assertTrue(legacy.exists())
+
+    def test_project_legacy_cleanup_scoped_to_explicit_project(self):
+        project = self.base / 'project'
+        project.mkdir()
+        legacy, _ = self.legacy_skill('.github/skills/luda', base=project)
+        user_legacy, _ = self.legacy_skill('.copilot/skills/luda')
+        self.configure(['copilot-cli'], scope='project', project=project)
+        self.assertFalse(legacy.exists())
+        self.assertTrue(user_legacy.exists())
+
+    def test_mcp_preflight_failure_skips_writer(self):
+        with patch.object(setup, 'preflight_mcp', side_effect=ValueError('malformed config')):
+            failures = self.configure()
+        self.assertEqual(failures[0][:2], ('codex', 'MCP'))
+        self.assertEqual(len(self.calls()), 1)
 
     def test_export_contains_complete_skill_and_argv_without_node(self):
         shutil.rmtree(self.tools)
