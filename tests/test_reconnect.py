@@ -65,6 +65,20 @@ class ReconnectTests(unittest.TestCase):
                 with held_button('1'):pass
             self.assertEqual(proof.read_text(),':replacement')
 
+    def test_reconnect_replaces_or_clears_old_desktop_identity(self):
+        keys = ('XDG_CURRENT_DESKTOP', 'XDG_SESSION_DESKTOP', 'DESKTOP_SESSION')
+        for identity in ({}, dict(zip(keys, ('Example:Secondary', 'example', 'example-session')))):
+            with self.subTest(identity=identity):
+                self.old.environment.update(dict.fromkeys(keys, 'old-desktop'))
+                self.selected['environment'] = {
+                    'DISPLAY': ':new', 'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/new', **identity}
+                factory = Mock(side_effect=lambda **kw: Candidate(**kw))
+                with reconnect.prepare_reconnect(self.old, None, factory) as (new, result):
+                    env = subprocess_environment()
+                    self.assertEqual({key: env[key] for key in keys if key in env}, identity)
+                    self.assertEqual(new.environment, dict(env))
+                self.assertEqual(self.old.environment['XDG_CURRENT_DESKTOP'], 'old-desktop')
+
     def test_success_retains_pause_and_locks_during_swap(self):
         with reconnect.prepare_reconnect(self.old,None,lambda **kw:self.new) as (new,result):
             self.assertTrue(self.old.locked and new.locked)
@@ -153,6 +167,16 @@ class SessionSelectionTests(unittest.TestCase):
         with patch.object(reconnect.Path,'iterdir',return_value=[reconnect.Path('/proc/41'),reconnect.Path('/proc/42')]),patch.object(reconnect,'_session',side_effect=lambda pid,uid:{'pid':pid,'environment':{'SECRET':'never return'}}),self.assertRaises(DesktopError) as caught:reconnect.select_session()
         self.assertEqual(caught.exception.code,'SESSION_AMBIGUOUS')
         self.assertEqual(caught.exception.details,{'candidate_count':2,'session_pids':[41,42]})
+    def test_desktop_identity_change_during_validation_is_rejected(self):
+        for key in ('XDG_CURRENT_DESKTOP', 'XDG_SESSION_DESKTOP', 'DESKTOP_SESSION'):
+            selected = {'pid': 42, 'start': 'a', 'environment': {key: 'example'}}
+            for environment in ({key: 'replacement'}, {}):
+                with self.subTest(key=key, environment=environment), \
+                        patch.object(reconnect, '_session', return_value={**selected, 'environment': environment}), \
+                        self.assertRaises(DesktopError) as caught:
+                    reconnect._unchanged(selected)
+                self.assertEqual(caught.exception.code, 'SESSION_CHANGED')
+
     def test_changed_process_identity_rejected(self):
         selected={'pid':42,'start':'a','environment':{}}
         with patch.object(reconnect,'_session',return_value={**selected,'start':'b'}),self.assertRaises(DesktopError) as caught:reconnect._unchanged(selected)

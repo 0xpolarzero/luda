@@ -9,6 +9,14 @@ import pwd
 import sys
 
 
+# Copy only session-owned connection and identity fields, never the SSH caller's
+# desktop identity. Gio uses XDG_CURRENT_DESKTOP for desktop-entry visibility.
+SESSION_ENVIRONMENT_KEYS = (
+    'DISPLAY', 'DBUS_SESSION_BUS_ADDRESS', 'XDG_RUNTIME_DIR', 'XAUTHORITY', 'XDG_SESSION_ID',
+    'XDG_CURRENT_DESKTOP', 'XDG_SESSION_DESKTOP', 'DESKTOP_SESSION',
+)
+
+
 class SessionDiscoveryError(SystemExit):
     def __init__(self, count):
         self.count = count
@@ -74,7 +82,7 @@ def main():
     env = {'PATH': '/usr/local/bin:/usr/bin:/bin', 'HOME': account.pw_dir,
            'USER': account.pw_name, 'LOGNAME': account.pw_name, 'LANG': 'C.UTF-8',
            'PYTHONUNBUFFERED': '1', 'NO_AT_BRIDGE': '0'}
-    for key in ('DISPLAY', 'DBUS_SESSION_BUS_ADDRESS', 'XDG_RUNTIME_DIR', 'XAUTHORITY', 'XDG_SESSION_ID'):
+    for key in SESSION_ENVIRONMENT_KEYS:
         if key in session:
             env[key] = session[key]
     env.setdefault('XAUTHORITY', str(Path(account.pw_dir)/'.Xauthority'))

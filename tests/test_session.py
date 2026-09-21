@@ -79,6 +79,18 @@ class SessionLaunchTests(unittest.TestCase):
             session.main()
         lookup.assert_called_once_with(1001)
         self.assertEqual(execute.call_args.args[2]['USER'],'generic')
+    def test_launch_preserves_selected_desktop_identity_without_inheriting_callers(self):
+        self.setup_launch(1001)
+        keys = ('XDG_CURRENT_DESKTOP', 'XDG_SESSION_DESKTOP', 'DESKTOP_SESSION')
+        for identity in ({}, dict(zip(keys, ('Example:Secondary', 'example', 'example-session')))):
+            with self.subTest(identity=identity), patch.dict(os.environ, dict.fromkeys(keys, 'caller-desktop')), \
+                    patch('luda.session.discover', return_value={
+                        'DISPLAY': ':7', 'DBUS_SESSION_BUS_ADDRESS': 'unix:path=/bus', **identity}), \
+                    patch('luda.session.os.execvpe') as execute:
+                session.main()
+                env = execute.call_args.args[2]
+                self.assertEqual({key: env[key] for key in keys if key in env}, identity)
+
     def test_privilege_drop_precedes_exec_and_environment_is_allowlisted(self):
         self.setup_launch();events=[]
         def capture(name):return lambda *args:events.append((name,args))

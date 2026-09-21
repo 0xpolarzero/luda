@@ -4,8 +4,7 @@ import os
 from pathlib import Path
 
 from .common import DesktopError, checkpoint, display_identity, environment_scope, process_identity, run
-
-_SESSION_KEYS = ('DISPLAY', 'DBUS_SESSION_BUS_ADDRESS', 'XDG_RUNTIME_DIR', 'XAUTHORITY', 'XDG_SESSION_ID')
+from .session import SESSION_ENVIRONMENT_KEYS
 
 
 def _session(pid, uid):
@@ -48,7 +47,7 @@ def select_session(session_pid=None):
 def _unchanged(selected):
     current = _session(selected['pid'], os.getuid())
     if current is None or current['start'] != selected['start'] or any(
-            current['environment'].get(k) != selected['environment'].get(k) for k in _SESSION_KEYS):
+            current['environment'].get(k) != selected['environment'].get(k) for k in SESSION_ENVIRONMENT_KEYS):
         raise DesktopError('SESSION_CHANGED', 'Selected session changed during validation; existing backend preserved.')
 
 
@@ -65,7 +64,7 @@ def prepare_reconnect(old, session_pid, factory):
 def _prepared(old, session_pid, factory):
     selected = select_session(session_pid)
     env = dict(old.environment)
-    for key in _SESSION_KEYS:
+    for key in SESSION_ENVIRONMENT_KEYS:
         env.pop(key, None)
         if key in selected['environment']:
             env[key] = selected['environment'][key]
