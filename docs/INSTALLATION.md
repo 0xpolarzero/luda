@@ -1,6 +1,6 @@
 # Linux installation
 
-Luda attaches to an existing graphical session. It does not install a desktop, start a login session, or require a particular machine manager.
+Luda attaches to an existing graphical session. It does not install a desktop, start a login session, or require a particular machine manager. The session should provide its desktop identity (`XDG_CURRENT_DESKTOP`) so desktop-specific applications appear correctly. Luda preserves the selected session’s identity during launch and reconnect; it does not invent one when it is missing.
 
 ## Prerequisites
 
@@ -120,11 +120,11 @@ Use this when the eventual agent account is not yet chosen. It installs the runt
 
 ## Install a downloaded wheel
 
-For an environment that already provides the system prerequisites, download the core `luda-0.3.0-py3-none-any.whl` from [GitHub releases](https://github.com/0xpolarzero/luda/releases). Install it in its own environment:
+For an environment that already provides the system prerequisites, download the core `luda-0.3.1-py3-none-any.whl` from [GitHub releases](https://github.com/0xpolarzero/luda/releases). Install it in its own environment:
 
 ```sh
 python3 -m venv ~/.local/share/luda/venv
-~/.local/share/luda/venv/bin/pip install /absolute/download/path/luda-0.3.0-py3-none-any.whl
+~/.local/share/luda/venv/bin/pip install /absolute/download/path/luda-0.3.1-py3-none-any.whl
 ~/.local/share/luda/venv/bin/luda doctor
 ```
 
