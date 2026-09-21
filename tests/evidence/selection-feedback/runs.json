@@ -1,0 +1,810 @@
+[
+  {
+    "label": "baseline",
+    "task": null,
+    "prompt": "Change XFCE application appearance to a dark theme. Use only public Luda desktop MCP tools. Read the installed Luda skill first; you may use cat to read .agents/skills/luda/SKILL.md and its linked Markdown references within that skill folder. Do not read application source, hidden files or oracle data, run other programs, modify files directly, or browse websites.",
+    "source_commit": "adba0834504d22e42e97a68e87c7f61759d18aba",
+    "source_hashes": null,
+    "codex": "codex-cli 0.155.1",
+    "resolved_model": "Not exposed by CLI JSON; existing default, no model override.",
+    "returncode": 0,
+    "timeout": null,
+    "seconds": 110.68,
+    "initial_oracle": null,
+    "oracle": {
+      "theme": "Greybird-dark"
+    },
+    "final_messages": [
+      "I’ll read the Luda skill, then use the desktop settings to select a dark application theme.",
+      "Greybird-dark is selected. I’m checking that the theme has applied to the application window.",
+      "Selected Greybird-dark in XFCE Appearance. The window still appears light, so I couldn’t verify that the dark theme applied."
+    ],
+    "harness_error": null,
+    "artifact_directory": "artifacts/agent-selection-effect/baseline-1790005455560820886",
+    "mcp_calls": [
+      "desktop_doctor",
+      "desktop_windows",
+      "desktop_inspect",
+      "desktop_inspect",
+      "desktop_choose",
+      "desktop_observe",
+      "desktop_invoke",
+      "desktop_observe",
+      "desktop_inspect",
+      "desktop_observe",
+      "desktop_activate",
+      "desktop_observe",
+      "desktop_click",
+      "desktop_observe",
+      "desktop_press_keys",
+      "desktop_inspect",
+      "desktop_press_keys",
+      "desktop_observe",
+      "desktop_press_keys",
+      "desktop_observe",
+      "desktop_click",
+      "desktop_observe"
+    ],
+    "trace_constraints_passed": true,
+    "selection_and_activation": [
+      {
+        "tool": "desktop_choose",
+        "arguments": {
+          "element_id": "018b6914912b4a4ebad0e6501df3ce38"
+        },
+        "result": [
+          {
+            "ok": true,
+            "operation_id": "84dc3c5512ba48958d84ec292c406c47",
+            "elapsed_ms": 234,
+            "effect": "verified",
+            "accepted": true,
+            "selected": true,
+            "changed": true,
+            "selection_scope": "table_row",
+            "extend": false
+          }
+        ]
+      },
+      {
+        "tool": "desktop_invoke",
+        "arguments": {
+          "element_id": "018b6914912b4a4ebad0e6501df3ce38",
+          "action": "activate"
+        },
+        "result": [
+          {
+            "ok": true,
+            "operation_id": "2226cd87b22144729921a659e3c4d5cd",
+            "elapsed_ms": 206,
+            "effect": "dispatched",
+            "accepted": true,
+            "verification": "Application outcome not verified; observe next."
+          }
+        ]
+      }
+    ],
+    "qualification": "Setup-limited: no xfsettingsd. Actual setting changed; agent honestly uncertain. Not comparable to remaining theme runs.",
+    "oracle_passed": true,
+    "passed": true,
+    "retrospective_committed_product_hashes": {
+      "src/luda/desktop.py": "3addda9d39c58e780ae6f9d9efbd458eac5f6675977fd6a507e1d1801c7904eb",
+      "src/luda/server.py": "2661bfb0376cb30eed207c32fd461f72d722d568f94a344d0dde6eb6e50a1b1c",
+      "src/luda/ax_worker.py": "64f39cf30618173253d4cb9946c914052e52f9113131cebddccbfbc8a76ab132",
+      "skills/luda/SKILL.md": "53be98e6fa85b7141ea9e47e7114386c82dd5cca95a8721a30670e711a40e16e",
+      "skills/luda/references/controls.md": "97a282df84a49f7a129c0d5b421e3b20ff6b3ab645be266df1e33133728be736",
+      "skills/luda/references/optional.md": "50e6a3fff18dff670cedc902b17a42d82cbde3dccb11a93ec2a045259ea41111",
+      "skills/luda/references/recovery.md": "da36ab08477fe1559097731e8406872209b10c4f9e39dfeb33a883db38c07f27",
+      "skills/luda/references/setup.md": "64cdb2c931f4d9c7511759deb564f3861841f3bd8ade6eb23445407e25260e8e",
+      "skills/luda/references/targeting.md": "841be5e7a99e9326ecaf4621a86668759ed7652ac2cd459eb23515f14896e396",
+      "skills/luda/references/text.md": "1c9ab43ea8ed640dd4af15bf7576997283c4d87aa4dcd8719dd7102af7dbcc9b",
+      "skills/luda/references/workflows.md": "f8a3dd3cba6dd34e6368348b86a725ae1f9654baeae2021388735ed6c36c41d4"
+    }
+  },
+  {
+    "label": "baseline2",
+    "task": "theme",
+    "prompt": "Change XFCE application appearance to a dark theme. Use only public Luda desktop MCP tools. Read the installed Luda skill first; you may use cat to read .agents/skills/luda/SKILL.md and its linked Markdown references within that skill folder. Do not read application source, hidden files or oracle data, run other programs, modify files directly, or browse websites.",
+    "source_commit": "adba0834504d22e42e97a68e87c7f61759d18aba",
+    "source_hashes": null,
+    "codex": "codex-cli 0.155.1",
+    "resolved_model": "Not exposed by CLI JSON; existing default, no model override.",
+    "returncode": 0,
+    "timeout": null,
+    "seconds": 110.88,
+    "initial_oracle": {
+      "theme": "Greybird"
+    },
+    "oracle": {
+      "theme": "Greybird-dark"
+    },
+    "final_messages": [
+      "I’ll read the Luda skill, then use the desktop settings to select a dark application theme.",
+      "Greybird-dark is available and selected. I’m checking that the theme is actually applied, since the window still appears light.",
+      "Changed XFCE application appearance to **Greybird-dark**. Reopened Appearance settings and verified the dark theme is applied."
+    ],
+    "harness_error": null,
+    "artifact_directory": "artifacts/agent-selection-effect/baseline2-1790005587303469782",
+    "mcp_calls": [
+      "desktop_doctor",
+      "desktop_windows",
+      "desktop_inspect",
+      "desktop_inspect",
+      "desktop_observe",
+      "desktop_choose",
+      "desktop_observe",
+      "desktop_inspect",
+      "desktop_invoke",
+      "desktop_observe",
+      "desktop_observe",
+      "desktop_click",
+      "desktop_observe",
+      "desktop_click",
+      "desktop_observe",
+      "desktop_click",
+      "desktop_observe",
+      "desktop_applications",
+      "desktop_window",
+      "desktop_launch",
+      "desktop_observe"
+    ],
+    "trace_constraints_passed": true,
+    "selection_and_activation": [
+      {
+        "tool": "desktop_choose",
+        "arguments": {
+          "element_id": "21f7044dfd124f6096ece5866a5f7f25"
+        },
+        "result": [
+          {
+            "ok": true,
+            "operation_id": "40d559a4aad347a4b3d2000a11fa5fb3",
+            "elapsed_ms": 240,
+            "effect": "verified",
+            "accepted": true,
+            "selected": true,
+            "changed": true,
+            "selection_scope": "table_row",
+            "extend": false
+          }
+        ]
+      },
+      {
+        "tool": "desktop_invoke",
+        "arguments": {
+          "element_id": "c626aec827f84eb3a9a4896b16509a13",
+          "action": "activate"
+        },
+        "result": [
+          {
+            "ok": true,
+            "operation_id": "fbcf086671be47c9af46767af55a97e8",
+            "elapsed_ms": 224,
+            "effect": "dispatched",
+            "accepted": true,
+            "verification": "Application outcome not verified; observe next."
+          }
+        ]
+      }
+    ],
+    "qualification": "Independent observable initial/final state available.",
+    "oracle_passed": true,
+    "passed": true,
+    "retrospective_committed_product_hashes": {
+      "src/luda/desktop.py": "3addda9d39c58e780ae6f9d9efbd458eac5f6675977fd6a507e1d1801c7904eb",
+      "src/luda/server.py": "2661bfb0376cb30eed207c32fd461f72d722d568f94a344d0dde6eb6e50a1b1c",
+      "src/luda/ax_worker.py": "64f39cf30618173253d4cb9946c914052e52f9113131cebddccbfbc8a76ab132",
+      "skills/luda/SKILL.md": "53be98e6fa85b7141ea9e47e7114386c82dd5cca95a8721a30670e711a40e16e",
+      "skills/luda/references/controls.md": "97a282df84a49f7a129c0d5b421e3b20ff6b3ab645be266df1e33133728be736",
+      "skills/luda/references/optional.md": "50e6a3fff18dff670cedc902b17a42d82cbde3dccb11a93ec2a045259ea41111",
+      "skills/luda/references/recovery.md": "da36ab08477fe1559097731e8406872209b10c4f9e39dfeb33a883db38c07f27",
+      "skills/luda/references/setup.md": "64cdb2c931f4d9c7511759deb564f3861841f3bd8ade6eb23445407e25260e8e",
+      "skills/luda/references/targeting.md": "841be5e7a99e9326ecaf4621a86668759ed7652ac2cd459eb23515f14896e396",
+      "skills/luda/references/text.md": "1c9ab43ea8ed640dd4af15bf7576997283c4d87aa4dcd8719dd7102af7dbcc9b",
+      "skills/luda/references/workflows.md": "f8a3dd3cba6dd34e6368348b86a725ae1f9654baeae2021388735ed6c36c41d4"
+    }
+  },
+  {
+    "label": "baseline3",
+    "task": "theme",
+    "prompt": "Change XFCE application appearance to a dark theme. Use only public Luda desktop MCP tools. Read the installed Luda skill first; you may use cat to read .agents/skills/luda/SKILL.md and its linked Markdown references within that skill folder. Do not read application source, hidden files or oracle data, run other programs, modify files directly, or browse websites.",
+    "source_commit": "adba0834504d22e42e97a68e87c7f61759d18aba",
+    "source_hashes": null,
+    "codex": "codex-cli 0.155.1",
+    "resolved_model": "Not exposed by CLI JSON; existing default, no model override.",
+    "returncode": 0,
+    "timeout": null,
+    "seconds": 147.31,
+    "initial_oracle": {
+      "theme": "Greybird"
+    },
+    "oracle": {
+      "theme": "Greybird-dark"
+    },
+    "final_messages": [
+      "I’ll read the Luda skill, then use the desktop settings to select a dark application theme.",
+      "Greybird-dark is available and selected. I’m checking that the theme is actually applied, since the dialog still appears light.",
+      "Changed XFCE application appearance to **Greybird-dark**. Reopened Appearance settings and verified the dark theme is applied and saved."
+    ],
+    "harness_error": null,
+    "artifact_directory": "artifacts/agent-selection-effect/baseline3-1790005603975046831",
+    "mcp_calls": [
+      "desktop_doctor",
+      "desktop_windows",
+      "desktop_inspect",
+      "desktop_inspect",
+      "desktop_choose",
+      "desktop_observe",
+      "desktop_inspect",
+      "desktop_invoke",
+      "desktop_observe",
+      "desktop_observe",
+      "desktop_activate",
+      "desktop_observe",
+      "desktop_click",
+      "desktop_observe",
+      "desktop_wait",
+      "desktop_inspect",
+      "desktop_inspect",
+      "desktop_applications",
+      "desktop_invoke",
+      "desktop_windows",
+      "desktop_launch",
+      "desktop_inspect",
+      "desktop_observe"
+    ],
+    "trace_constraints_passed": true,
+    "selection_and_activation": [
+      {
+        "tool": "desktop_choose",
+        "arguments": {
+          "element_id": "2af16a8d389948f7961aba43f6e90a20"
+        },
+        "result": [
+          {
+            "ok": true,
+            "operation_id": "1e1afa5af1264c0b82fa0fde9e86c273",
+            "elapsed_ms": 234,
+            "effect": "verified",
+            "accepted": true,
+            "selected": true,
+            "changed": true,
+            "selection_scope": "table_row",
+            "extend": false
+          }
+        ]
+      },
+      {
+        "tool": "desktop_invoke",
+        "arguments": {
+          "element_id": "91babf171faa4cefbd2ff9408626e93b",
+          "action": "activate"
+        },
+        "result": [
+          {
+            "ok": true,
+            "operation_id": "a687935684b34f02b971b1eb95df0319",
+            "elapsed_ms": 206,
+            "effect": "dispatched",
+            "accepted": true,
+            "verification": "Application outcome not verified; observe next."
+          }
+        ]
+      },
+      {
+        "tool": "desktop_invoke",
+        "arguments": {
+          "element_id": "5ca893839f924009af8a8c537bab1cfd"
+        },
+        "result": [
+          {
+            "ok": true,
+            "operation_id": "8e307311ba9b4bf291423db5239cba90",
+            "elapsed_ms": 190,
+            "effect": "dispatched",
+            "accepted": true,
+            "verification": "Application outcome not verified; observe next."
+          }
+        ]
+      }
+    ],
+    "qualification": "Independent observable initial/final state available.",
+    "oracle_passed": true,
+    "passed": true,
+    "retrospective_committed_product_hashes": {
+      "src/luda/desktop.py": "3addda9d39c58e780ae6f9d9efbd458eac5f6675977fd6a507e1d1801c7904eb",
+      "src/luda/server.py": "2661bfb0376cb30eed207c32fd461f72d722d568f94a344d0dde6eb6e50a1b1c",
+      "src/luda/ax_worker.py": "64f39cf30618173253d4cb9946c914052e52f9113131cebddccbfbc8a76ab132",
+      "skills/luda/SKILL.md": "53be98e6fa85b7141ea9e47e7114386c82dd5cca95a8721a30670e711a40e16e",
+      "skills/luda/references/controls.md": "97a282df84a49f7a129c0d5b421e3b20ff6b3ab645be266df1e33133728be736",
+      "skills/luda/references/optional.md": "50e6a3fff18dff670cedc902b17a42d82cbde3dccb11a93ec2a045259ea41111",
+      "skills/luda/references/recovery.md": "da36ab08477fe1559097731e8406872209b10c4f9e39dfeb33a883db38c07f27",
+      "skills/luda/references/setup.md": "64cdb2c931f4d9c7511759deb564f3861841f3bd8ade6eb23445407e25260e8e",
+      "skills/luda/references/targeting.md": "841be5e7a99e9326ecaf4621a86668759ed7652ac2cd459eb23515f14896e396",
+      "skills/luda/references/text.md": "1c9ab43ea8ed640dd4af15bf7576997283c4d87aa4dcd8719dd7102af7dbcc9b",
+      "skills/luda/references/workflows.md": "f8a3dd3cba6dd34e6368348b86a725ae1f9654baeae2021388735ed6c36c41d4"
+    }
+  },
+  {
+    "label": "file1",
+    "task": "file",
+    "prompt": "Select Report.txt in the file manager without opening it. Leave it selected and leave the window open. Use only public Luda desktop MCP tools. Read the installed Luda skill first; you may use cat to read .agents/skills/luda/SKILL.md and its linked Markdown references within that skill folder. Do not read application source, hidden files or oracle data, run other programs, modify files directly, or browse websites.",
+    "source_commit": "069f6f8dcd357581c83c8532345d7614fc74a457",
+    "source_hashes": {
+      "scripts/agent_selection_effect_eval.py": "d006d746f2a68852110aaafedeb61a7ccb35a9cdd0570c2340297dd3c84e4478",
+      "skills/luda/SKILL.md": "a8df5ad8f055d75eee16ccd33d7739441ca8cdaf146ad305827ffafa1cff9051",
+      "src/luda/ax_worker.py": "64f39cf30618173253d4cb9946c914052e52f9113131cebddccbfbc8a76ab132"
+    },
+    "codex": "codex-cli 0.155.1",
+    "resolved_model": "Not exposed by CLI JSON; existing CLI default (no override).",
+    "returncode": 0,
+    "timeout": null,
+    "seconds": 42.95,
+    "initial_oracle": {
+      "selected": [],
+      "opened": false
+    },
+    "oracle": {
+      "selected": [],
+      "opened": false
+    },
+    "final_messages": [
+      "I’ll read the Luda skill, then select Report.txt in the file manager and leave the window open.",
+      "Report.txt is selected without being opened. The file manager window remains open."
+    ],
+    "harness_error": null,
+    "artifact_directory": "artifacts/agent-selection-effect/file1-1790005796166839298",
+    "mcp_calls": [
+      "desktop_doctor",
+      "desktop_windows",
+      "desktop_inspect",
+      "desktop_inspect",
+      "desktop_observe",
+      "desktop_click",
+      "desktop_observe"
+    ],
+    "trace_constraints_passed": true,
+    "selection_and_activation": [],
+    "qualification": "Selection oracle invalid: icon view did not expose filename; cannot grade selection. No open recorded. Retained, not counted as pass/failure.",
+    "oracle_passed": null,
+    "passed": null,
+    "retrospective_committed_product_hashes": {
+      "src/luda/desktop.py": "31832556c7d9072d360b7db777d45777a39d4d850688386cd970acb27b2387ab",
+      "src/luda/server.py": "613fbbfbc985b96d532427d1ec008984a105cdb1153e78dd2249f6c877ab5ba3",
+      "src/luda/ax_worker.py": "64f39cf30618173253d4cb9946c914052e52f9113131cebddccbfbc8a76ab132",
+      "skills/luda/SKILL.md": "a8df5ad8f055d75eee16ccd33d7739441ca8cdaf146ad305827ffafa1cff9051",
+      "skills/luda/references/controls.md": "4b502a217b930dd68059ce8f48ba56581e23a94bbc3bc64ec7204efc7b768b91",
+      "skills/luda/references/optional.md": "50e6a3fff18dff670cedc902b17a42d82cbde3dccb11a93ec2a045259ea41111",
+      "skills/luda/references/recovery.md": "da36ab08477fe1559097731e8406872209b10c4f9e39dfeb33a883db38c07f27",
+      "skills/luda/references/setup.md": "64cdb2c931f4d9c7511759deb564f3861841f3bd8ade6eb23445407e25260e8e",
+      "skills/luda/references/targeting.md": "841be5e7a99e9326ecaf4621a86668759ed7652ac2cd459eb23515f14896e396",
+      "skills/luda/references/text.md": "1c9ab43ea8ed640dd4af15bf7576997283c4d87aa4dcd8719dd7102af7dbcc9b",
+      "skills/luda/references/workflows.md": "f8a3dd3cba6dd34e6368348b86a725ae1f9654baeae2021388735ed6c36c41d4"
+    }
+  },
+  {
+    "label": "file2",
+    "task": "file",
+    "prompt": "Select Report.txt in the file manager without opening it. Leave it selected and leave the window open. Use only public Luda desktop MCP tools. Read the installed Luda skill first; you may use cat to read .agents/skills/luda/SKILL.md and its linked Markdown references within that skill folder. Do not read application source, hidden files or oracle data, run other programs, modify files directly, or browse websites.",
+    "source_commit": "069f6f8dcd357581c83c8532345d7614fc74a457",
+    "source_hashes": {
+      "scripts/agent_selection_effect_eval.py": "e832d167b67852a131b1b581e71bfd6e128a8f0fa621392e0ebffd47484ee9b1",
+      "skills/luda/SKILL.md": "a8df5ad8f055d75eee16ccd33d7739441ca8cdaf146ad305827ffafa1cff9051",
+      "src/luda/ax_worker.py": "64f39cf30618173253d4cb9946c914052e52f9113131cebddccbfbc8a76ab132",
+      "src/luda/desktop.py": "31832556c7d9072d360b7db777d45777a39d4d850688386cd970acb27b2387ab",
+      "src/luda/server.py": "613fbbfbc985b96d532427d1ec008984a105cdb1153e78dd2249f6c877ab5ba3",
+      "skills/luda/references/controls.md": "4b502a217b930dd68059ce8f48ba56581e23a94bbc3bc64ec7204efc7b768b91",
+      "skills/luda/references/optional.md": "50e6a3fff18dff670cedc902b17a42d82cbde3dccb11a93ec2a045259ea41111",
+      "skills/luda/references/recovery.md": "da36ab08477fe1559097731e8406872209b10c4f9e39dfeb33a883db38c07f27",
+      "skills/luda/references/setup.md": "64cdb2c931f4d9c7511759deb564f3861841f3bd8ade6eb23445407e25260e8e",
+      "skills/luda/references/targeting.md": "841be5e7a99e9326ecaf4621a86668759ed7652ac2cd459eb23515f14896e396",
+      "skills/luda/references/text.md": "1c9ab43ea8ed640dd4af15bf7576997283c4d87aa4dcd8719dd7102af7dbcc9b",
+      "skills/luda/references/workflows.md": "f8a3dd3cba6dd34e6368348b86a725ae1f9654baeae2021388735ed6c36c41d4"
+    },
+    "codex": "codex-cli 0.155.1",
+    "resolved_model": "Not exposed by CLI JSON; existing CLI default (no override).",
+    "returncode": 0,
+    "timeout": null,
+    "seconds": 24.09,
+    "initial_oracle": {
+      "observed_file_roles": [
+        "table cell"
+      ],
+      "selected": [],
+      "opened": false
+    },
+    "oracle": {
+      "observed_file_roles": [
+        "table cell"
+      ],
+      "selected": [
+        "Report.txt"
+      ],
+      "opened": false
+    },
+    "final_messages": [
+      "I’ll read the Luda skill, then select Report.txt in the file manager and leave the window open.",
+      "Report.txt is selected without being opened. The file manager window remains open."
+    ],
+    "harness_error": null,
+    "artifact_directory": "artifacts/agent-selection-effect/file2-1790005982858206970",
+    "mcp_calls": [
+      "desktop_doctor",
+      "desktop_windows",
+      "desktop_inspect",
+      "desktop_choose"
+    ],
+    "trace_constraints_passed": true,
+    "selection_and_activation": [
+      {
+        "tool": "desktop_choose",
+        "arguments": {
+          "element_id": "d3ad043c728a4317ace5fd38c85bf779"
+        },
+        "result": [
+          {
+            "ok": true,
+            "operation_id": "376bc49aaa2c45dd91e140db12a35700",
+            "elapsed_ms": 258,
+            "effect": "verified",
+            "accepted": true,
+            "selected": true,
+            "changed": true,
+            "selection_scope": "table_row",
+            "extend": false,
+            "verification_scope": "selection",
+            "next_step": "Only selection is verified, not whether the item was opened, applied, or executed. If the user requested selection only, stop. If they requested an effect, verify whether that effect occurred; some controls apply on selection. If it did not, inspect for an advertised activation action or Apply/Open control, use the appropriate action, then verify the application outcome."
+          }
+        ]
+      }
+    ],
+    "qualification": "Independent observable initial/final state available.",
+    "oracle_passed": true,
+    "passed": true,
+    "retrospective_committed_product_hashes": {
+      "src/luda/desktop.py": "31832556c7d9072d360b7db777d45777a39d4d850688386cd970acb27b2387ab",
+      "src/luda/server.py": "613fbbfbc985b96d532427d1ec008984a105cdb1153e78dd2249f6c877ab5ba3",
+      "src/luda/ax_worker.py": "64f39cf30618173253d4cb9946c914052e52f9113131cebddccbfbc8a76ab132",
+      "skills/luda/SKILL.md": "a8df5ad8f055d75eee16ccd33d7739441ca8cdaf146ad305827ffafa1cff9051",
+      "skills/luda/references/controls.md": "4b502a217b930dd68059ce8f48ba56581e23a94bbc3bc64ec7204efc7b768b91",
+      "skills/luda/references/optional.md": "50e6a3fff18dff670cedc902b17a42d82cbde3dccb11a93ec2a045259ea41111",
+      "skills/luda/references/recovery.md": "da36ab08477fe1559097731e8406872209b10c4f9e39dfeb33a883db38c07f27",
+      "skills/luda/references/setup.md": "64cdb2c931f4d9c7511759deb564f3861841f3bd8ade6eb23445407e25260e8e",
+      "skills/luda/references/targeting.md": "841be5e7a99e9326ecaf4621a86668759ed7652ac2cd459eb23515f14896e396",
+      "skills/luda/references/text.md": "1c9ab43ea8ed640dd4af15bf7576997283c4d87aa4dcd8719dd7102af7dbcc9b",
+      "skills/luda/references/workflows.md": "f8a3dd3cba6dd34e6368348b86a725ae1f9654baeae2021388735ed6c36c41d4"
+    }
+  },
+  {
+    "label": "fixed1",
+    "task": "theme",
+    "prompt": "Change XFCE application appearance to a dark theme. Use only public Luda desktop MCP tools. Read the installed Luda skill first; you may use cat to read .agents/skills/luda/SKILL.md and its linked Markdown references within that skill folder. Do not read application source, hidden files or oracle data, run other programs, modify files directly, or browse websites.",
+    "source_commit": "069f6f8dcd357581c83c8532345d7614fc74a457",
+    "source_hashes": {
+      "scripts/agent_selection_effect_eval.py": "d006d746f2a68852110aaafedeb61a7ccb35a9cdd0570c2340297dd3c84e4478",
+      "skills/luda/SKILL.md": "a8df5ad8f055d75eee16ccd33d7739441ca8cdaf146ad305827ffafa1cff9051",
+      "src/luda/ax_worker.py": "64f39cf30618173253d4cb9946c914052e52f9113131cebddccbfbc8a76ab132"
+    },
+    "codex": "codex-cli 0.155.1",
+    "resolved_model": "Not exposed by CLI JSON; existing CLI default (no override).",
+    "returncode": 0,
+    "timeout": null,
+    "seconds": 105.45,
+    "initial_oracle": {
+      "theme": "Greybird"
+    },
+    "oracle": {
+      "theme": "Greybird-dark"
+    },
+    "final_messages": [
+      "I’ll read the Luda skill, then use the desktop settings to select a dark application theme.",
+      "Greybird-dark is available, but selecting it hasn’t changed the visible appearance yet. I’m checking that it actually applies.",
+      "Selected Greybird-dark in XFCE Appearance. The window still renders light, so I couldn’t verify that the dark theme applied successfully."
+    ],
+    "harness_error": null,
+    "artifact_directory": "artifacts/agent-selection-effect/fixed1-1790005792691062005",
+    "mcp_calls": [
+      "desktop_doctor",
+      "desktop_windows",
+      "desktop_inspect",
+      "desktop_inspect",
+      "desktop_choose",
+      "desktop_observe",
+      "desktop_invoke",
+      "desktop_observe",
+      "desktop_observe",
+      "desktop_activate",
+      "desktop_observe",
+      "desktop_click",
+      "desktop_observe",
+      "desktop_wait",
+      "desktop_inspect",
+      "desktop_press_keys",
+      "desktop_inspect",
+      "desktop_press_keys",
+      "desktop_observe"
+    ],
+    "trace_constraints_passed": true,
+    "selection_and_activation": [
+      {
+        "tool": "desktop_choose",
+        "arguments": {
+          "element_id": "a4b4195408f542cdabe951f9b17ed6ea"
+        },
+        "result": [
+          {
+            "ok": true,
+            "operation_id": "d3693e4d19c54ab0a9bcdb6633891bbe",
+            "elapsed_ms": 232,
+            "effect": "verified",
+            "accepted": true,
+            "selected": true,
+            "changed": true,
+            "selection_scope": "table_row",
+            "extend": false,
+            "verification_scope": "selection",
+            "next_step": "Only selection is verified, not whether the item was opened, applied, or executed. If the user requested selection only, stop. If they requested an effect, verify whether that effect occurred; some controls apply on selection. If it did not, inspect for an advertised activation action or Apply/Open control, use the appropriate action, then verify the application outcome."
+          }
+        ]
+      },
+      {
+        "tool": "desktop_invoke",
+        "arguments": {
+          "element_id": "a4b4195408f542cdabe951f9b17ed6ea",
+          "action": "activate"
+        },
+        "result": [
+          {
+            "ok": true,
+            "operation_id": "ca55bd977553412dbdede49aece0e6e0",
+            "elapsed_ms": 216,
+            "effect": "dispatched",
+            "accepted": true,
+            "verification": "Application outcome not verified; observe next."
+          }
+        ]
+      }
+    ],
+    "qualification": "Actual requested theme setting verified independently. Agent completion is reported separately from tool/oracle correctness.",
+    "oracle_passed": true,
+    "passed": true,
+    "retrospective_committed_product_hashes": {
+      "src/luda/desktop.py": "31832556c7d9072d360b7db777d45777a39d4d850688386cd970acb27b2387ab",
+      "src/luda/server.py": "613fbbfbc985b96d532427d1ec008984a105cdb1153e78dd2249f6c877ab5ba3",
+      "src/luda/ax_worker.py": "64f39cf30618173253d4cb9946c914052e52f9113131cebddccbfbc8a76ab132",
+      "skills/luda/SKILL.md": "a8df5ad8f055d75eee16ccd33d7739441ca8cdaf146ad305827ffafa1cff9051",
+      "skills/luda/references/controls.md": "4b502a217b930dd68059ce8f48ba56581e23a94bbc3bc64ec7204efc7b768b91",
+      "skills/luda/references/optional.md": "50e6a3fff18dff670cedc902b17a42d82cbde3dccb11a93ec2a045259ea41111",
+      "skills/luda/references/recovery.md": "da36ab08477fe1559097731e8406872209b10c4f9e39dfeb33a883db38c07f27",
+      "skills/luda/references/setup.md": "64cdb2c931f4d9c7511759deb564f3861841f3bd8ade6eb23445407e25260e8e",
+      "skills/luda/references/targeting.md": "841be5e7a99e9326ecaf4621a86668759ed7652ac2cd459eb23515f14896e396",
+      "skills/luda/references/text.md": "1c9ab43ea8ed640dd4af15bf7576997283c4d87aa4dcd8719dd7102af7dbcc9b",
+      "skills/luda/references/workflows.md": "f8a3dd3cba6dd34e6368348b86a725ae1f9654baeae2021388735ed6c36c41d4"
+    }
+  },
+  {
+    "label": "fixed2",
+    "task": "theme",
+    "prompt": "Change XFCE application appearance to a dark theme. Use only public Luda desktop MCP tools. Read the installed Luda skill first; you may use cat to read .agents/skills/luda/SKILL.md and its linked Markdown references within that skill folder. Do not read application source, hidden files or oracle data, run other programs, modify files directly, or browse websites.",
+    "source_commit": "069f6f8dcd357581c83c8532345d7614fc74a457",
+    "source_hashes": {
+      "scripts/agent_selection_effect_eval.py": "d006d746f2a68852110aaafedeb61a7ccb35a9cdd0570c2340297dd3c84e4478",
+      "skills/luda/SKILL.md": "a8df5ad8f055d75eee16ccd33d7739441ca8cdaf146ad305827ffafa1cff9051",
+      "src/luda/ax_worker.py": "64f39cf30618173253d4cb9946c914052e52f9113131cebddccbfbc8a76ab132"
+    },
+    "codex": "codex-cli 0.155.1",
+    "resolved_model": "Not exposed by CLI JSON; existing CLI default (no override).",
+    "returncode": 0,
+    "timeout": null,
+    "seconds": 134.75,
+    "initial_oracle": {
+      "theme": "Greybird"
+    },
+    "oracle": {
+      "theme": "Greybird-dark"
+    },
+    "final_messages": [
+      "I’ll read the Luda skill, then use the desktop settings to select a dark application theme.",
+      "Greybird-dark is available and selected. I’m checking that the theme has actually applied.",
+      "Selected Greybird-dark in XFCE Appearance. The window still appears light, so I couldn’t verify that the dark theme applied."
+    ],
+    "harness_error": null,
+    "artifact_directory": "artifacts/agent-selection-effect/fixed2-1790005793850603964",
+    "mcp_calls": [
+      "desktop_doctor",
+      "desktop_windows",
+      "desktop_inspect",
+      "desktop_inspect",
+      "desktop_choose",
+      "desktop_observe",
+      "desktop_inspect",
+      "desktop_invoke",
+      "desktop_observe",
+      "desktop_observe",
+      "desktop_activate",
+      "desktop_observe",
+      "desktop_click",
+      "desktop_observe",
+      "desktop_wait",
+      "desktop_activate",
+      "desktop_observe",
+      "desktop_window",
+      "desktop_observe",
+      "desktop_click",
+      "desktop_observe",
+      "desktop_press_keys",
+      "desktop_window",
+      "desktop_observe",
+      "desktop_press_keys",
+      "desktop_inspect",
+      "desktop_press_keys",
+      "desktop_observe"
+    ],
+    "trace_constraints_passed": true,
+    "selection_and_activation": [
+      {
+        "tool": "desktop_choose",
+        "arguments": {
+          "element_id": "cf8005ae1ff644c786a21725cd0197bc"
+        },
+        "result": [
+          {
+            "ok": true,
+            "operation_id": "c7ec555932fa4570820b6a94de13b1b7",
+            "elapsed_ms": 240,
+            "effect": "verified",
+            "accepted": true,
+            "selected": true,
+            "changed": true,
+            "selection_scope": "table_row",
+            "extend": false,
+            "verification_scope": "selection",
+            "next_step": "Only selection is verified, not whether the item was opened, applied, or executed. If the user requested selection only, stop. If they requested an effect, verify whether that effect occurred; some controls apply on selection. If it did not, inspect for an advertised activation action or Apply/Open control, use the appropriate action, then verify the application outcome."
+          }
+        ]
+      },
+      {
+        "tool": "desktop_invoke",
+        "arguments": {
+          "element_id": "d58c05ac5f6d449a996d08ee402136c8",
+          "action": "activate"
+        },
+        "result": [
+          {
+            "ok": true,
+            "operation_id": "fbb49f13e50a4475a45bc763778f200c",
+            "elapsed_ms": 216,
+            "effect": "dispatched",
+            "accepted": true,
+            "verification": "Application outcome not verified; observe next."
+          }
+        ]
+      }
+    ],
+    "qualification": "Actual requested theme setting verified independently. Agent completion is reported separately from tool/oracle correctness.",
+    "oracle_passed": true,
+    "passed": true,
+    "retrospective_committed_product_hashes": {
+      "src/luda/desktop.py": "31832556c7d9072d360b7db777d45777a39d4d850688386cd970acb27b2387ab",
+      "src/luda/server.py": "613fbbfbc985b96d532427d1ec008984a105cdb1153e78dd2249f6c877ab5ba3",
+      "src/luda/ax_worker.py": "64f39cf30618173253d4cb9946c914052e52f9113131cebddccbfbc8a76ab132",
+      "skills/luda/SKILL.md": "a8df5ad8f055d75eee16ccd33d7739441ca8cdaf146ad305827ffafa1cff9051",
+      "skills/luda/references/controls.md": "4b502a217b930dd68059ce8f48ba56581e23a94bbc3bc64ec7204efc7b768b91",
+      "skills/luda/references/optional.md": "50e6a3fff18dff670cedc902b17a42d82cbde3dccb11a93ec2a045259ea41111",
+      "skills/luda/references/recovery.md": "da36ab08477fe1559097731e8406872209b10c4f9e39dfeb33a883db38c07f27",
+      "skills/luda/references/setup.md": "64cdb2c931f4d9c7511759deb564f3861841f3bd8ade6eb23445407e25260e8e",
+      "skills/luda/references/targeting.md": "841be5e7a99e9326ecaf4621a86668759ed7652ac2cd459eb23515f14896e396",
+      "skills/luda/references/text.md": "1c9ab43ea8ed640dd4af15bf7576997283c4d87aa4dcd8719dd7102af7dbcc9b",
+      "skills/luda/references/workflows.md": "f8a3dd3cba6dd34e6368348b86a725ae1f9654baeae2021388735ed6c36c41d4"
+    }
+  },
+  {
+    "label": "fixed3",
+    "task": "theme",
+    "prompt": "Change XFCE application appearance to a dark theme. Use only public Luda desktop MCP tools. Read the installed Luda skill first; you may use cat to read .agents/skills/luda/SKILL.md and its linked Markdown references within that skill folder. Do not read application source, hidden files or oracle data, run other programs, modify files directly, or browse websites.",
+    "source_commit": "069f6f8dcd357581c83c8532345d7614fc74a457",
+    "source_hashes": {
+      "scripts/agent_selection_effect_eval.py": "d006d746f2a68852110aaafedeb61a7ccb35a9cdd0570c2340297dd3c84e4478",
+      "skills/luda/SKILL.md": "a8df5ad8f055d75eee16ccd33d7739441ca8cdaf146ad305827ffafa1cff9051",
+      "src/luda/ax_worker.py": "64f39cf30618173253d4cb9946c914052e52f9113131cebddccbfbc8a76ab132"
+    },
+    "codex": "codex-cli 0.155.1",
+    "resolved_model": "Not exposed by CLI JSON; existing CLI default (no override).",
+    "returncode": 0,
+    "timeout": null,
+    "seconds": 94.29,
+    "initial_oracle": {
+      "theme": "Greybird"
+    },
+    "oracle": {
+      "theme": "Greybird-dark"
+    },
+    "final_messages": [
+      "I’ll read the Luda skill, then use the desktop settings to choose a dark application theme.",
+      "Greybird-dark is selected. I’m checking that activating it applies the dark appearance.",
+      "Changed XFCE application appearance to **Greybird-dark** and verified the dark theme is applied."
+    ],
+    "harness_error": null,
+    "artifact_directory": "artifacts/agent-selection-effect/fixed3-1790005795014986298",
+    "mcp_calls": [
+      "desktop_doctor",
+      "desktop_windows",
+      "desktop_inspect",
+      "desktop_inspect",
+      "desktop_choose",
+      "desktop_observe",
+      "desktop_inspect",
+      "desktop_invoke",
+      "desktop_observe",
+      "desktop_observe",
+      "desktop_activate",
+      "desktop_observe",
+      "desktop_click",
+      "desktop_observe",
+      "desktop_wait",
+      "desktop_inspect",
+      "desktop_applications",
+      "desktop_window",
+      "desktop_launch",
+      "desktop_inspect",
+      "desktop_observe"
+    ],
+    "trace_constraints_passed": true,
+    "selection_and_activation": [
+      {
+        "tool": "desktop_choose",
+        "arguments": {
+          "element_id": "614e47f038894711b81290477a649038"
+        },
+        "result": [
+          {
+            "ok": true,
+            "operation_id": "efc01abbb77e4a16a4416dabb10c34b4",
+            "elapsed_ms": 234,
+            "effect": "verified",
+            "accepted": true,
+            "selected": true,
+            "changed": true,
+            "selection_scope": "table_row",
+            "extend": false,
+            "verification_scope": "selection",
+            "next_step": "Only selection is verified, not whether the item was opened, applied, or executed. If the user requested selection only, stop. If they requested an effect, verify whether that effect occurred; some controls apply on selection. If it did not, inspect for an advertised activation action or Apply/Open control, use the appropriate action, then verify the application outcome."
+          }
+        ]
+      },
+      {
+        "tool": "desktop_invoke",
+        "arguments": {
+          "element_id": "63c47654134640cabf370f324d079a70",
+          "action": "activate"
+        },
+        "result": [
+          {
+            "ok": true,
+            "operation_id": "8bed695e220e4c4d8d2c990c8f418df7",
+            "elapsed_ms": 216,
+            "effect": "dispatched",
+            "accepted": true,
+            "verification": "Application outcome not verified; observe next."
+          }
+        ]
+      }
+    ],
+    "qualification": "Actual requested theme setting verified independently. Agent completion is reported separately from tool/oracle correctness.",
+    "oracle_passed": true,
+    "passed": true,
+    "retrospective_committed_product_hashes": {
+      "src/luda/desktop.py": "31832556c7d9072d360b7db777d45777a39d4d850688386cd970acb27b2387ab",
+      "src/luda/server.py": "613fbbfbc985b96d532427d1ec008984a105cdb1153e78dd2249f6c877ab5ba3",
+      "src/luda/ax_worker.py": "64f39cf30618173253d4cb9946c914052e52f9113131cebddccbfbc8a76ab132",
+      "skills/luda/SKILL.md": "a8df5ad8f055d75eee16ccd33d7739441ca8cdaf146ad305827ffafa1cff9051",
+      "skills/luda/references/controls.md": "4b502a217b930dd68059ce8f48ba56581e23a94bbc3bc64ec7204efc7b768b91",
+      "skills/luda/references/optional.md": "50e6a3fff18dff670cedc902b17a42d82cbde3dccb11a93ec2a045259ea41111",
+      "skills/luda/references/recovery.md": "da36ab08477fe1559097731e8406872209b10c4f9e39dfeb33a883db38c07f27",
+      "skills/luda/references/setup.md": "64cdb2c931f4d9c7511759deb564f3861841f3bd8ade6eb23445407e25260e8e",
+      "skills/luda/references/targeting.md": "841be5e7a99e9326ecaf4621a86668759ed7652ac2cd459eb23515f14896e396",
+      "skills/luda/references/text.md": "1c9ab43ea8ed640dd4af15bf7576997283c4d87aa4dcd8719dd7102af7dbcc9b",
+      "skills/luda/references/workflows.md": "f8a3dd3cba6dd34e6368348b86a725ae1f9654baeae2021388735ed6c36c41d4"
+    }
+  }
+]
