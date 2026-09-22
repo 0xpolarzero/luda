@@ -1,9 +1,5 @@
-# Use LCU instead
-
-> [!IMPORTANT]
-> **[LCU (Linux Computer Use)](https://github.com/0xpolarzero/lcu)** is the new package. Use it instead of Luda. **[Install LCU](https://github.com/0xpolarzero/lcu#install)**.
-
----
+> [!WARNING]
+> **Luda is deprecated.** Use **[LCU (Linux Computer Use)](https://github.com/0xpolarzero/lcu)** instead. **[Install LCU](https://github.com/0xpolarzero/lcu#install)**.
 
 # Luda
 
